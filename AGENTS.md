@@ -83,6 +83,11 @@ verified; FreeBSD/macOS are the same POSIX path).
   → canonical source, round-trip contract
   `Transcribe(From*(x)) ≡ Transcribe(x)`. Malformed input → error
   ledger, never guessed.
+- Decode glue guard (`NbGuardCmd`): a `\name` symbol pack followed by
+  a letter cell decodes space-delimited — TeX rule, otherwise the
+  source re-parses as one unknown command. `FromUni` treats ASCII
+  space as the blank cell and skips tab/CR (pasted unicode-braille
+  formatting); other foreign chars error with the char shown.
 - `BRAILLE`/`NEMETH ... END` raw blocks; `BRF`/`UNI`/`NBRF`/`NUNI`/
   `UNBRF`/`UNUNI` builtins; captures expose `name_brf/_uni/_cells/
   _errs/_latex/_mathml/_rsrc`.
