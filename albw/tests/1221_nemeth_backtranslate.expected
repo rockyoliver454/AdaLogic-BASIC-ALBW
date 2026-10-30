@@ -30,6 +30,9 @@ css RT-OK  \begin{cases} a & b  \\ c & d  \end{cases}
 vmt RT-OK  \begin{vmatrix} a  \\ b  \end{vmatrix}
 brf->x^{2} + y_{1}
 uni->x^{2} + y_{1}
+glue=\therefore iea
+ws=\therefore ia
+ws-errs=0
 ub=x^{2}
 uu=x+1
 rsrc=x_{1}^{2}\n

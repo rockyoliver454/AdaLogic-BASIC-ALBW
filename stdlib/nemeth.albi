@@ -188,6 +188,9 @@ DECLARE MODULE Nemeth
     PROCEDURE NbScrPush(k AS S64)
     PROCEDURE NbNum()
     PROCEDURE NbWord()
+    FUNCTION NbLetCh(ch AS STRING) AS S64
+    FUNCTION NbEndsCmd(s AS STRING) AS S64
+    PROCEDURE NbGuardCmd(t AS STRING)
     FUNCTION NbSymOut(i AS S64) AS STRING
     FUNCTION NbGrpL(k AS S64) AS STRING
     FUNCTION NbGrpR(k AS S64) AS STRING
@@ -3625,8 +3628,53 @@ CALL LxFlush()
         END IF
     END PROCEDURE
 
+    --  TeX rule for the glue guard:  \name followed by a letter is
+    --  ONE command token.  A decoded pack like \therefore must be
+    --  space-terminated before a letter lands or the next word glues
+    --  into an unknown command (\thereforeimacumCreek was a real bug).
+    FUNCTION NbLetCh(ch AS STRING) AS S64
+        LET a AS S64 = 0
+        a = ASC(ch)
+        IF (a >= 65 AND a <= 90) ORELSE (a >= 97 AND a <= 122) THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    --  does s end inside a \name word?  (\ + letters, unterminated)
+    FUNCTION NbEndsCmd(s AS STRING) AS S64
+        LET n AS S64 = 0
+        LET i AS S64 = 0
+        n = LEN(s)
+        IF n < 2 THEN RETURN 0 END IF
+        IF NbLetCh(MID(s, n, 1)) = 0 THEN RETURN 0 END IF
+        i = n
+        WHILE i > 1 AND NbLetCh(MID(s, i - 1, 1)) = 1
+            i = i - 1
+        END WHILE
+        IF i > 1 AND MID(s, i - 1, 1) = "\" THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    --  t is about to be emitted;  space-terminate a pending \name so
+    --  a letter can't glue onto the command word.
+    PROCEDURE NbGuardCmd(t AS STRING)
+        IF LEN(t) = 0 THEN RETURN END IF
+        IF NbLetCh(MID(t, 1, 1)) = 0 THEN RETURN END IF
+        IF nb_have = 1 THEN
+            IF NbEndsCmd(nb_bas) = 1 THEN
+                nb_bas = nb_bas | " "
+            END IF
+        ELSEIF NbEndsCmd(nb_cur) = 1 THEN
+            nb_cur = nb_cur | " "
+        END IF
+    END PROCEDURE
+
     --  a scriptable unit lands:  letters, numerals, symbols, groups
     PROCEDURE NbUnit(t AS STRING)
+CALL NbGuardCmd(t)
 CALL NbFlush()
         nb_bas = t
         nb_have = 1
@@ -3635,6 +3683,7 @@ CALL NbFlush()
 
     --  committed text that can't take scripts:  ops, spaces
     PROCEDURE NbOp(t AS STRING)
+CALL NbGuardCmd(t)
 CALL NbFlush()
         nb_cur = nb_cur | t
     END PROCEDURE
@@ -4497,8 +4546,17 @@ CALL NErr("FromBrf: bad char '" | ch | "'")
                         nb_cell[nb_nc] = hit
                         nb_nc = nb_nc + 1
                     END IF
-                ELSE
-CALL NErr("FromUni: non-braille char")
+                ELSEIF ch = " " THEN
+                    --  pasted unicode-braille often uses ASCII space
+                    --  as the word break;  it IS the blank cell (0).
+                    IF nb_nc < #NEM_MAX THEN
+                        nb_cell[nb_nc] = 0
+                        nb_nc = nb_nc + 1
+                    END IF
+                ELSEIF ch <> CHR(9) AND ch <> CHR(13) THEN
+                    --  tab/CR are paste formatting junk;  skip them.
+                    --  anything else really is foreign input.
+CALL NErr("FromUni: non-braille char '" | ch | "'")
                 END IF
             END IF
             i = i + 1

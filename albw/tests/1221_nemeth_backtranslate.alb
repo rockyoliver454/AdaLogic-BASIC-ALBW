@@ -77,6 +77,18 @@ BEGIN
     PRINT "brf->" | Nemeth.FromBrf(Nemeth.ToBrf())
     PRINT "uni->" | Nemeth.FromUni(Nemeth.ToUni())
 
+    --  \name glue guard:  a symbol pack followed by letter cells must
+    --  decode space-delimited or the source re-parses as one unknown
+    --  command (real bug:  \thereforeimacumCreek).  cells 32,33 =
+    --  \therefore pack;  10,17,1 = letters i,e,a.
+    PRINT "glue=" | Nemeth.FromUni(CHR(10272) | CHR(10273) | CHR(10250) | CHR(10257) | CHR(10241))
+
+    --  paste tolerance:  ASCII space = blank cell, tab/CR skipped,
+    --  foreign chars still report.  10272/10273 therefore, " " space,
+    --  10250 i, CR junk, 10241 a.
+    PRINT "ws=" | Nemeth.FromUni(CHR(10272) | CHR(10273) | " " | CHR(10250) | CHR(13) | CHR(10241))
+    PRINT "ws-errs=" | Nemeth.ErrCount()
+
     --  inline builtins (auto-weave) + capture re-read surface
     LET ub AS STRING = UNBRF(";X^2")
     LET uu AS STRING = UNUNI(NUNI("x+1"))
