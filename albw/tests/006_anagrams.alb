@@ -1,0 +1,44 @@
+-- 006 | Anagrams: same letters, different order.
+DECLARE MODULE An
+    FUNCTION IsAnagram(a AS STRING, b AS STRING) AS S32
+END DECLARE MODULE
+
+MODULE An
+    FUNCTION Sorted(a AS STRING) AS STRING
+        STRICT ch[32] AS S32;
+        LET n AS S32 = LEN(a);
+        FOR i = 1 TO n
+            ch[i - 1] = ASC(MID$(a, i, 1));
+        END FOR
+        FOR i = 0 TO n - 2
+            FOR j = 0 TO n - 2 - i
+                IF ch[j] > ch[j + 1] THEN
+                    LET t AS S32 = ch[j];
+                    ch[j] = ch[j + 1];
+                    ch[j + 1] = t;
+                END IF
+            END FOR
+        END FOR
+        LET res AS STRING = "";
+        FOR i = 0 TO n - 1
+            res = res | CHR(ch[i]);
+        END FOR
+        RETURN res
+    END FUNCTION
+    FUNCTION IsAnagram(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN
+            RETURN 0
+        END IF
+        IF Sorted(a) = Sorted(b) THEN
+            RETURN -1
+        END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+IMPORT An
+BEGIN
+    PRINT An.IsAnagram("listen", "silent");
+    PRINT An.IsAnagram("triangle", "integral");
+    PRINT An.IsAnagram("apple", "pabble");
+END

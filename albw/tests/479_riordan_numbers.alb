@@ -1,0 +1,27 @@
+-- 479 | Riordan numbers: first 30 via
+-- (n+1)*R(n) = (n-1)*(2*R(n-1) + 3*R(n-2)).
+DECLARE MODULE Rio
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rio
+    STRICT r[31] AS S64
+
+    PROCEDURE Run()
+        r[1] = 1
+        r[2] = 0
+        FOR n = 2 TO 29
+            r[n + 1] = (n - 1) * (2 * r[n] + 3 * r[n - 1]) / (n + 1)
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 1 TO 30
+            s = s | r[i] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Rio
+BEGIN
+    Rio.Run()
+END

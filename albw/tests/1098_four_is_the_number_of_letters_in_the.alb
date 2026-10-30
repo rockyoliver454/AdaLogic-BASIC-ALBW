@@ -1,0 +1,35 @@
+VERSION 1.0
+
+
+STRICT lw[20] AS S64
+
+
+BEGIN
+    lw[0] = 4
+    lw[1] = 3
+    lw[2] = 3
+    lw[3] = 5
+    lw[4] = 4
+    lw[5] = 4
+    lw[6] = 3
+    lw[7] = 5
+    lw[8] = 5
+    lw[9] = 4
+    lw[10] = 3
+    lw[11] = 6
+    lw[12] = 6
+    lw[13] = 8
+    lw[14] = 8
+    lw[15] = 7
+    lw[16] = 7
+    lw[17] = 9
+    lw[18] = 8
+    lw[19] = 8
+
+    LET n AS S64 = 7
+    WHILE n <> 4
+        PRINT n | " is " | lw[n]
+        n = lw[n]
+    END WHILE
+    PRINT "4 is cosmic"
+END

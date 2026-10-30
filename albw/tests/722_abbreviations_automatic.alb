@@ -1,0 +1,42 @@
+-- 722 | Abbreviations, automatic: shortest unique prefix for
+-- each command in a list.
+DECLARE MODULE Aa
+    FUNCTION MinPrefix(i AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Aa
+    STRICT wd[6] AS STRING
+
+    FUNCTION MinPrefix(i AS S64) AS S64
+        FOR n = 1 TO LEN(wd[i])
+            LET uniq AS S32 = 1
+            FOR j = 1 TO 5
+                IF j <> i THEN
+                    LET p AS STRING = MID$(wd[i], 1, n)
+                    LET q AS STRING = MID$(wd[j], 1, n)
+                    IF p = q THEN uniq = 0 END IF
+                END IF
+            END FOR
+            IF uniq = 1 THEN RETURN n END IF
+        END FOR
+        RETURN LEN(wd[i])
+    END FUNCTION
+
+    PROCEDURE Run()
+        wd[1] = "copy"
+        wd[2] = "count"
+        wd[3] = "move"
+        wd[4] = "make"
+        wd[5] = "map"
+        FOR i = 1 TO 5
+            LET n AS S64 = MinPrefix(i)
+            PRINT wd[i] | " -> " | MID$(wd[i], 1, n)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Aa
+BEGIN
+    Aa.Run()
+END

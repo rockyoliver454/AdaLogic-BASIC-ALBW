@@ -1,0 +1,58 @@
+-- 511 | Sorting algorithms/Cycle sort.
+DECLARE MODULE Cyc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cyc
+    STRICT a[10] AS S64
+
+    PROCEDURE Run()
+        a[1] = 44
+        a[2] = 2
+        a[3] = 9
+        a[4] = 76
+        a[5] = 51
+        a[6] = 33
+        a[7] = 60
+        a[8] = 15
+        a[9] = 88
+        a[10] = 27
+        FOR cs = 1 TO 9
+            LET item AS S64 = a[cs]
+            LET pos AS S64 = cs
+            FOR i = cs + 1 TO 10
+                IF a[i] < item THEN pos = pos + 1 END IF
+            END FOR
+            IF pos <> cs THEN
+                WHILE item = a[pos]
+                    pos = pos + 1
+                END WHILE
+                LET t AS S64 = a[pos]
+                a[pos] = item
+                item = t
+                WHILE pos <> cs
+                    pos = cs
+                    FOR i2 = cs + 1 TO 10
+                        IF a[i2] < item THEN pos = pos + 1 END IF
+                    END FOR
+                    WHILE item = a[pos]
+                        pos = pos + 1
+                    END WHILE
+                    LET t2 AS S64 = a[pos]
+                    a[pos] = item
+                    item = t2
+                END WHILE
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 10
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Cyc
+BEGIN
+    Cyc.Run()
+END

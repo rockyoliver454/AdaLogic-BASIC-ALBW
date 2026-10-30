@@ -1,0 +1,2196 @@
+-- ============================================================================
+--  ueb.albi - Unified English Braille (literary) transcription for ALB
+--  module for nwstudio (stitchforge suite / Threadit.co)
+--
+--  Grade 2 (contracted) + Grade 1 (uncontracted) transcription.
+--  Cell values are 6-bit dot masks (dot1=bit0 .. dot6=bit5); -1 is the
+--  line-break sentinel.  Three layers out: raw cells, BRF (NABCC braille
+--  ascii), and Unicode U+2800.
+--
+--  Contraction inventory follows ICEB Rules of UEB 2024 sections
+--  10.1-10.9, validated against the liblouis en-ueb-g2 tables:
+--    * alphabetic wordsigns  (a lone letter = its word, automatic)
+--    * strong wordsigns       child/shall/this/which/out/still
+--    * strong contractions    and/for/of/the/with (word or groupsign)
+--    * strong groupsigns      ch gh sh th wh ed er ou ow st ing ar
+--    * lower wordsigns        be/enough/were/his/in/was (standalone only)
+--    * lower groupsigns       ea be bb con cc dis en ff gg in
+--    * initial-letter         dot5 / dots45 / dots456 prefix words
+--    * final-letter groupsigns ound ance sion less ount ence ong ful
+--                              tion ness ment ity
+--    * shortforms             ~71 whole-word abbreviations
+--
+--  HONEST GAPS (documented, not silent):  syllable-boundary contraction
+--  blocking is approximate (greedy longest match); grade-1 symbol/word/
+--  passage indicators are not emitted except the numeric-mode letter
+--  guard; typeforms, foreign-language switching and table formatting
+--  are future work.  Unknown characters land in the error ledger.
+-- ============================================================================
+
+DECLARE MODULE Ueb
+    PROCEDURE Reset()
+
+    -- cell stream
+    PROCEDURE Put(c AS S64)
+    PROCEDURE Space()
+    PROCEDURE Newline()
+
+    -- buffer access / encoders
+    FUNCTION Count() AS S64
+    FUNCTION Cell(i AS S64) AS S64
+    FUNCTION ToBrf() AS STRING
+    FUNCTION ToUni() AS STRING
+
+    -- error ledger
+    FUNCTION ErrCount() AS S64
+    FUNCTION ErrText(i AS S64) AS STRING
+
+    -- emitters
+    PROCEDURE Letter(ch AS S64)          -- one literary letter cell
+    PROCEDURE Digit(ch AS S64)           -- one digit cell (numeric mode)
+    PROCEDURE Punct(a AS S64)            -- punctuation by ascii
+    PROCEDURE Word(w AS STRING, alone AS S64, wiso AS S64,
+                   capmode AS S64)
+    FUNCTION NumRun(s AS STRING, i0 AS S64) AS S64  -- digit run +seps
+
+    -- drivers
+    PROCEDURE Transcribe(s AS STRING)    -- grade 2, contracted
+    PROCEDURE TranscribeG1(s AS STRING)  -- grade 1, uncontracted
+    PROCEDURE Seg(s AS STRING)           -- transcribe, no Reset (mixed)
+
+    FUNCTION BrfChar(c AS S64) AS S64    -- brf ascii for a cell
+END DECLARE MODULE
+
+MODULE Ueb
+
+    #U_MAX   = 8192
+    #U_ERR   = 64
+    #U_LF    = -1
+    #UW_MAX  = 128
+    #UG_MAX  = 48
+    #UI_MAX  = 40
+    #UW_LEN  = 64
+    #UD_MAX  = 96
+    #UX_MAX  = 64
+    #UO_MAX  = 64
+
+    STRICT ucell[#U_MAX] AS S64
+    STRICT uerr[#U_ERR]  AS STRING
+    LET ucnt   AS S64 = 0
+    LET uen    AS S64 = 0
+    LET uq     AS S64 = 0        -- double-quote toggle (unused; 8.6
+                                 --  nonspecific quote = 32,54 always)
+    LET ug1    AS S64 = 0        -- grade: 1 = uncontracted
+    LET usp    AS S64 = 0        -- last emitted was space/start
+    LET ucp    AS S64 = 0        -- inside a caps passage
+    LET unum   AS S64 = 0        -- last token was a number
+    LET unum_bare AS S64 = 0     --  ... emitted as a lone bare digit
+    LET unsp   AS S64 = 0        --  number follows a numeric space
+    LET upg    AS S64 = 0        --  lone letter is standing alone
+    LET upr    AS S64 = 0        --  char before current punct
+    LET unx    AS S64 = 0        --  char after current punct
+
+    -- tables
+    STRICT ulet[26]  AS S64      -- a-z literary cells
+    STRICT ubrfa[64] AS S64      -- cell -> BRF ascii
+    STRICT uw_txt[#UW_MAX] AS STRING   -- whole-word: wordsigns+shortforms
+    STRICT uw_pk[#UW_MAX]  AS S64
+    STRICT uw_alone[#UW_MAX] AS S64
+    LET uw_n AS S64 = 0
+    STRICT ug_txt[#UG_MAX] AS STRING   -- groupsign patterns
+    STRICT ug_pk[#UG_MAX]  AS S64
+    STRICT ug_mask[#UG_MAX] AS S64     -- 1=start 2=mid 4=end
+    STRICT ug_vwl[#UG_MAX] AS S64      -- 1 = needs consonant before
+    STRICT ug_f2[#UG_MAX]  AS S64      -- 1=cons-onset 2=no-'e' 4=no-'r'
+                                       -- 8=not whole-word (en)
+    LET ug_n AS S64 = 0
+    STRICT ui_txt[#UI_MAX] AS STRING   -- initial-letter contractions
+    STRICT ui_pk[#UI_MAX]  AS S64
+    STRICT ui_fol[#UI_MAX] AS S64      -- 0=word only 1=anywhere 2=start
+                                       -- 3=cons-before-mid
+    STRICT ui_nxt[#UI_MAX] AS STRING   -- blocked follower letters ("one"+d)
+    LET ui_n AS S64 = 0
+    STRICT uw_mid[#UW_MAX] AS S64      -- 1=prefix 2=anywhere 3=whitelst
+    STRICT uw_nxt[#UW_MAX] AS STRING   -- blocked follower letters
+    STRICT ud_txt[#UD_MAX] AS STRING   -- shortform spellings:  grade-1
+    LET ud_n AS S64 = 0
+    STRICT ux_pat[#UX_MAX] AS STRING   -- per-word contraction blocks
+    STRICT ux_wrd[#UX_MAX] AS STRING
+    LET ux_n AS S64 = 0
+    STRICT ua_pre[#UX_MAX] AS STRING   -- whitelist prefixes (said)
+    LET ua_n AS S64 = 0
+    STRICT ub_pre[#UX_MAX] AS STRING   -- whitelist prefixes (paid)
+    LET ub_n AS S64 = 0
+    STRICT uons_txt[#UO_MAX] AS STRING -- legal syllable-onset clusters
+    LET uons_n AS S64 = 0
+
+    PROCEDURE UErr(s AS STRING)
+        IF uen < #U_ERR THEN
+            uerr[uen] = s
+            uen = uen + 1
+        END IF
+    END PROCEDURE
+
+    FUNCTION ErrCount() AS S64
+        RETURN uen
+    END FUNCTION
+
+    FUNCTION ErrText(i AS S64) AS STRING
+        IF i < 0 ORELSE i >= uen THEN RETURN "" END IF
+        RETURN uerr[i]
+    END FUNCTION
+
+    PROCEDURE Put(c AS S64)
+        IF c < -1 ORELSE c > 63 THEN
+            CALL UErr("bad cell value " | c)
+            RETURN
+        END IF
+        IF ucnt >= #U_MAX THEN
+            CALL UErr("cell buffer full")
+            RETURN
+        END IF
+        ucell[ucnt] = c
+        ucnt = ucnt + 1
+        usp = 0
+    END PROCEDURE
+
+    PROCEDURE Space()
+        --  every input space is a blank cell (liblouis preserves
+        --  runs);  only start-of-stream and post-newline collapse
+        IF ucnt = 0 THEN
+            usp = 1
+            RETURN
+        END IF
+        IF ucell[ucnt - 1] = #U_LF THEN RETURN END IF
+        CALL Put(0)
+        usp = 1
+        unum = 0
+        unum_bare = 0
+        unsp = 0
+    END PROCEDURE
+
+    PROCEDURE Newline()
+        IF ucnt >= #U_MAX THEN
+            CALL UErr("cell buffer full")
+            RETURN
+        END IF
+        ucell[ucnt] = #U_LF
+        ucnt = ucnt + 1
+        usp = 1
+        unum = 0
+        unum_bare = 0
+        unsp = 0
+    END PROCEDURE
+
+    FUNCTION Count() AS S64
+        RETURN ucnt
+    END FUNCTION
+
+    FUNCTION Cell(i AS S64) AS S64
+        IF i < 0 ORELSE i >= ucnt THEN RETURN -2 END IF
+        RETURN ucell[i]
+    END FUNCTION
+
+    FUNCTION BrfChar(c AS S64) AS S64
+        IF c < 0 ORELSE c > 63 THEN RETURN 32 END IF
+        RETURN ubrfa[c]
+    END FUNCTION
+
+    FUNCTION ToBrf() AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ucnt
+            c = ucell[i]
+            IF c = #U_LF THEN
+                s = s | CHR(10)
+            ELSE
+                s = s | CHR(ubrfa[c])
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION ToUni() AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ucnt
+            c = ucell[i]
+            IF c = #U_LF THEN
+                s = s | CHR(10)
+            ELSE
+                s = s | CHR(10240 + c)
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Reset()
+        ucnt = 0
+        uen = 0
+        uq = 0
+        usp = 1
+        ucp = 0
+        unum = 0
+        unum_bare = 0
+        unsp = 0
+CALL FillUTabs()
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  packed cell sequences:  c0 | c1<<8 .. | c4<<32 | n<<40
+    -- ---------------------------------------------------------------
+    FUNCTION Pk2(a AS S64, b AS S64) AS S64
+        RETURN a + b * 256 + 2199023255552
+    END FUNCTION
+
+    FUNCTION Pk3(a AS S64, b AS S64, c AS S64) AS S64
+        RETURN a + b * 256 + c * 65536 + 3298534883328
+    END FUNCTION
+
+    FUNCTION Pk4(a AS S64, b AS S64, c AS S64, d AS S64) AS S64
+        RETURN a + b * 256 + c * 65536 + d * 16777216 + 4398046511104
+    END FUNCTION
+
+    FUNCTION Pk5(a AS S64, b AS S64, c AS S64, d AS S64, e AS S64) AS S64
+        RETURN a + b * 256 + c * 65536 + d * 16777216 + e * 4294967296 +
+               5497558138880
+    END FUNCTION
+
+    FUNCTION Pk1(a AS S64) AS S64
+        RETURN a + 1099511627776
+    END FUNCTION
+
+    PROCEDURE EmitPk(pk AS S64)
+        LET n AS S64 = 0
+        LET k AS S64 = 0
+        n = pk / 1099511627776
+        k = 0
+        WHILE k < n
+            CALL Put((pk / (256 ^ k)) AND 255)
+            k = k + 1
+        END WHILE
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  table registration
+    -- ---------------------------------------------------------------
+    PROCEDURE UW(txt AS STRING, alone AS S64, pk AS S64)
+        IF uw_n >= #UW_MAX THEN
+            CALL UErr("wordsign table full")
+            RETURN
+        END IF
+        uw_txt[uw_n] = txt
+        uw_alone[uw_n] = alone
+        uw_pk[uw_n] = pk
+        uw_mid[uw_n] = 0
+        uw_nxt[uw_n] = ""
+        uw_n = uw_n + 1
+    END PROCEDURE
+
+    PROCEDURE UG(txt AS STRING, mask AS S64, vwl AS S64, pk AS S64)
+        IF ug_n >= #UG_MAX THEN
+            CALL UErr("groupsign table full")
+            RETURN
+        END IF
+        ug_txt[ug_n] = txt
+        ug_mask[ug_n] = mask
+        ug_vwl[ug_n] = vwl
+        ug_f2[ug_n] = 0
+        ug_pk[ug_n] = pk
+        ug_n = ug_n + 1
+    END PROCEDURE
+
+    PROCEDURE UI(txt AS STRING, pk AS S64)
+        IF ui_n >= #UI_MAX THEN
+            CALL UErr("initial-contraction table full")
+            RETURN
+        END IF
+        ui_txt[ui_n] = txt
+        ui_pk[ui_n] = pk
+        ui_fol[ui_n] = 1
+        ui_nxt[ui_n] = ""
+        ui_n = ui_n + 1
+    END PROCEDURE
+
+    --  shortform usable as a word prefix (abv+board, gd+bye)
+    PROCEDURE UWM(txt AS STRING, pk AS S64)
+        CALL UW(txt, 0, pk)
+        uw_mid[uw_n - 1] = 1
+    END PROCEDURE
+
+    --  whitelist prefix for mode-3 mid-shortforms ("said":  unsaid,
+    --  gainsaid, missaid, foresaid fire;  resaid/oversaid don't)
+    PROCEDURE UA(txt AS STRING)
+        IF ua_n >= #UX_MAX THEN
+            CALL UErr("allow-prefix table full")
+            RETURN
+        END IF
+        ua_pre[ua_n] = txt
+        ua_n = ua_n + 1
+    END PROCEDURE
+
+    --  whitelist prefix for mode-4 mid-shortforms ("paid":
+    --  re/un/mis/over/pre/under+paid fire;  apaid/appaid don't)
+    PROCEDURE UB(txt AS STRING)
+        IF ub_n >= #UX_MAX THEN
+            CALL UErr("allow-prefix-2 table full")
+            RETURN
+        END IF
+        ub_pre[ub_n] = txt
+        ub_n = ub_n + 1
+    END PROCEDURE
+
+    --  dangerous spelling:  a word spelled exactly like a shortform's
+    --  letter-code needs a grade-1 sign (input "alt" is not "altogether")
+    PROCEDURE UD(txt AS STRING)
+        IF ud_n >= #UD_MAX THEN
+            CALL UErr("dangerous-spelling table full")
+            RETURN
+        END IF
+        ud_txt[ud_n] = txt
+        ud_n = ud_n + 1
+    END PROCEDURE
+
+    --  per-word contraction block (abalone's "one", adulthood's "th"):
+    --  blocks pat anywhere inside words starting with wrd
+    PROCEDURE UX(pat AS STRING, wrd AS STRING)
+        IF ux_n >= #UX_MAX THEN
+            CALL UErr("exception table full")
+            RETURN
+        END IF
+        ux_pat[ux_n] = pat
+        ux_wrd[ux_n] = wrd
+        ux_n = ux_n + 1
+    END PROCEDURE
+
+    --  legal syllable-onset clusters for the be- rule
+    PROCEDURE UONS(txt AS STRING)
+        IF uons_n >= #UO_MAX THEN
+            CALL UErr("onset table full")
+            RETURN
+        END IF
+        uons_txt[uons_n] = txt
+        uons_n = uons_n + 1
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  contraction tables (ICEB UEB 10.1-10.9)
+    -- ---------------------------------------------------------------
+    PROCEDURE FillUeb()
+        uw_n = 0
+        ug_n = 0
+        ui_n = 0
+        ud_n = 0
+        ux_n = 0
+        uons_n = 0
+        ua_n = 0
+        ub_n = 0
+        -- alphabetic wordsigns:  word -> single letter cell
+        CALL UW("but", 0, Pk1(3))
+        CALL UW("can", 0, Pk1(9))
+        CALL UW("do", 0, Pk1(25))
+        CALL UW("every", 0, Pk1(17))
+        CALL UW("from", 0, Pk1(11))
+        CALL UW("go", 0, Pk1(27))
+        CALL UW("have", 0, Pk1(19))
+        CALL UW("just", 0, Pk1(26))
+        CALL UW("knowledge", 0, Pk1(5))
+        CALL UW("like", 0, Pk1(7))
+        CALL UW("more", 0, Pk1(13))
+        CALL UW("not", 0, Pk1(29))
+        CALL UW("people", 0, Pk1(15))
+        CALL UW("quite", 0, Pk1(31))
+        CALL UW("rather", 0, Pk1(23))
+        CALL UW("so", 0, Pk1(14))
+        CALL UW("that", 0, Pk1(30))
+        CALL UW("us", 0, Pk1(37))
+        CALL UW("very", 0, Pk1(39))
+        CALL UW("will", 0, Pk1(58))
+        CALL UW("it", 0, Pk1(45))
+        CALL UW("you", 0, Pk1(61))
+        CALL UW("as", 0, Pk1(53))
+        -- strong wordsigns (whole word = one cell)
+        CALL UW("child", 0, Pk1(33))
+        CALL UW("shall", 0, Pk1(41))
+        CALL UW("this", 0, Pk1(57))
+        CALL UW("which", 0, Pk1(49))
+        CALL UW("out", 0, Pk1(51))
+        CALL UW("still", 0, Pk1(12))
+        -- lower wordsigns: standalone only (no adjacent signs)
+        CALL UW("be", 1, Pk1(6))
+        CALL UW("enough", 1, Pk1(34))
+        CALL UW("were", 1, Pk1(54))
+        CALL UW("his", 1, Pk1(38))
+        CALL UW("in", 1, Pk1(20))
+        CALL UW("was", 1, Pk1(52))
+        -- shortforms (ICEB Appendix 1); UWM = fires inside longer
+        -- words (liblouis-verified: abv+board, af+taste, brl+r,
+        -- bl+ness, gd+bye, imm+ly, lr+ly, ll+ly, sd in aforesaid)
+        CALL UW("about", 0, Pk2(1, 3))
+        CALL UWM("above", Pk3(1, 3, 39))
+        CALL UWM("according", Pk2(1, 9))
+        CALL UW("across", 0, Pk3(1, 9, 23))
+        CALL UWM("after", Pk2(1, 11))
+        uw_nxt[uw_n - 1] = "aeiou"      --  af before a vowel spells
+                                        --  af,t,er (aftereffect)
+        CALL UWM("afternoon", Pk3(1, 11, 29))
+        CALL UWM("afterward", Pk3(1, 11, 58))
+        CALL UW("again", 0, Pk2(1, 27))
+        CALL UW("against", 0, Pk3(1, 27, 12))
+        CALL UW("also", 0, Pk2(1, 7))
+        CALL UW("almost", 0, Pk3(1, 7, 13))
+        CALL UW("already", 0, Pk3(1, 7, 23))
+        CALL UWM("altogether", Pk3(1, 7, 30))
+        CALL UW("although", 0, Pk3(1, 7, 57))
+        CALL UW("always", 0, Pk3(1, 7, 58))
+        CALL UWM("blind", Pk2(3, 7))
+        uw_mid[uw_n - 1] = 2   --  interior too (unblindfolded =
+                               --  un,bl,folded)
+        CALL UWM("braille", Pk3(3, 23, 7))
+        CALL UW("could", 0, Pk2(9, 25))
+        CALL UW("declare", 0, Pk3(25, 9, 7))
+        CALL UW("declaring", 0, Pk4(25, 9, 7, 27))
+        CALL UW("deceive", 0, Pk3(25, 9, 39))
+        CALL UW("deceiving", 0, Pk4(25, 9, 39, 27))
+        CALL UW("either", 0, Pk2(17, 10))
+        CALL UW("first", 0, Pk2(11, 12))
+        uw_mid[uw_n - 1] = 1   --  fires in compounds (firsts =
+                               --  first+s)
+        CALL UWM("friend", Pk2(11, 23))
+        uw_mid[uw_n - 1] = 2   --  interior too (unfriendship =
+                               --  un,fr,ship)
+        CALL UWM("good", Pk2(27, 25))
+        CALL UW("great", 0, Pk3(27, 23, 30))
+        CALL UW("him", 0, Pk2(19, 13))
+        CALL UW("himself", 0, Pk3(19, 13, 11))
+        CALL UW("herself", 0, Pk3(19, 59, 11))
+        CALL UWM("immediate", Pk3(10, 13, 13))
+        CALL UWM("little", Pk2(7, 7))
+        CALL UWM("letter", Pk2(7, 23))
+        CALL UW("myself", 0, Pk3(13, 61, 11))
+        CALL UW("much", 0, Pk2(13, 33))
+        CALL UW("must", 0, Pk2(13, 12))
+        CALL UW("necessary", 0, Pk3(29, 17, 9))
+        CALL UW("neither", 0, Pk3(29, 17, 10))
+        CALL UW("paid", 0, Pk2(15, 25))
+        uw_mid[uw_n - 1] = 4   --  whitelisted prefixes only:
+                               --  re/un/mis/over/pre/under+paid
+                               --  (apaid/appaid spell it)
+        CALL UB("re")
+        CALL UB("un")
+        CALL UB("mis")
+        CALL UB("over")
+        CALL UB("pre")
+        CALL UB("under")
+        CALL UW("perceive", 0, Pk4(15, 59, 9, 39))
+        CALL UW("perceiving", 0, Pk5(15, 59, 9, 39, 27))
+        CALL UW("perhaps", 0, Pk3(15, 59, 19))
+        CALL UW("quick", 0, Pk2(31, 5))
+        uw_mid[uw_n - 1] = 1   --  fires in compounds (quickened,
+                               --  quicksilver = qk@0)
+        CALL UW("receive", 0, Pk3(23, 9, 39))
+        CALL UW("receiving", 0, Pk4(23, 9, 39, 27))
+        CALL UW("rejoice", 0, Pk3(23, 26, 9))
+        CALL UW("rejoicing", 0, Pk4(23, 26, 9, 27))
+        CALL UW("said", 0, Pk2(14, 25))
+        uw_mid[uw_n - 1] = 3   --  whitelisted compounds only:
+                               --  un/mis/gain/fore+said
+        CALL UA("un")
+        CALL UA("mis")
+        CALL UA("gain")
+        CALL UA("fore")
+        CALL UW("such", 0, Pk2(14, 33))
+        CALL UWM("today", Pk2(30, 25))
+        uw_nxt[uw_n - 1] = "n"          --  today+ness blocks td
+        CALL UWM("together", Pk3(30, 27, 23))
+        CALL UWM("tomorrow", Pk2(30, 13))
+        uw_nxt[uw_n - 1] = "n"          --  tomorrow+ness blocks tm
+        CALL UWM("tonight", Pk2(30, 29))
+        CALL UW("itself", 0, Pk2(45, 11))
+        CALL UW("its", 0, Pk2(45, 14))
+        CALL UW("your", 0, Pk2(61, 23))
+        CALL UW("yourself", 0, Pk3(61, 23, 11))
+        CALL UW("yourselves", 0, Pk4(61, 23, 39, 14))
+        CALL UW("themselves", 0, Pk4(46, 13, 39, 14))
+        CALL UW("children", 0, Pk2(33, 29))
+        uw_mid[uw_n - 1] = 2   --  interior too (moonchildren =
+                               --  moon+children)
+        CALL UW("should", 0, Pk2(41, 25))
+        CALL UW("thyself", 0, Pk3(57, 61, 11))
+        CALL UW("ourselves", 0, Pk4(51, 23, 39, 14))
+        CALL UW("would", 0, Pk2(58, 25))
+        CALL UW("because", 0, Pk2(6, 9))
+        CALL UW("before", 0, Pk2(6, 11))
+        CALL UW("behind", 0, Pk2(6, 19))
+        CALL UW("below", 0, Pk2(6, 7))
+        CALL UW("beneath", 0, Pk2(6, 29))
+        CALL UW("beside", 0, Pk2(6, 14))
+        CALL UW("between", 0, Pk2(6, 30))
+        CALL UW("beyond", 0, Pk2(6, 61))
+        CALL UW("conceive", 0, Pk3(18, 9, 39))
+        CALL UW("conceiving", 0, Pk4(18, 9, 39, 27))
+        CALL UW("oneself", 0, Pk3(16, 21, 11))
+        -- dangerous spellings:  words spelled like a shortform's
+        -- letter-code take a grade-1 sign ("alt" != "altogether")
+        CALL UD("ab")
+        CALL UD("abv")
+        CALL UD("ac")
+        CALL UD("acr")
+        CALL UD("af")
+        CALL UD("afn")
+        CALL UD("afw")
+        CALL UD("ag")
+        CALL UD("agst")
+        CALL UD("al")
+        CALL UD("alm")
+        CALL UD("alr")
+        CALL UD("alt")
+        CALL UD("alth")
+        CALL UD("alw")
+        CALL UD("bl")
+        CALL UD("brl")
+        CALL UD("cd")
+        CALL UD("dcl")
+        CALL UD("dclg")
+        CALL UD("dcv")
+        CALL UD("dcvg")
+        CALL UD("ei")
+        CALL UD("fr")
+        CALL UD("fst")
+        CALL UD("gd")
+        CALL UD("grt")
+        CALL UD("hm")
+        CALL UD("hmf")
+        CALL UD("herf")
+        CALL UD("imm")
+        CALL UD("ll")
+        CALL UD("lr")
+        CALL UD("myf")
+        CALL UD("mch")
+        CALL UD("mst")
+        CALL UD("nec")
+        CALL UD("nei")
+        CALL UD("pd")
+        CALL UD("percv")
+        CALL UD("percvg")
+        CALL UD("perh")
+        CALL UD("qk")
+        CALL UD("rcv")
+        CALL UD("rcvg")
+        CALL UD("rjc")
+        CALL UD("rjcg")
+        CALL UD("sd")
+        CALL UD("sch")
+        CALL UD("td")
+        CALL UD("tgr")
+        CALL UD("tm")
+        CALL UD("tn")
+        CALL UD("xf")
+        CALL UD("xs")
+        CALL UD("yr")
+        CALL UD("yrf")
+        CALL UD("yrvs")
+        CALL UD("themvs")
+        CALL UD("thyf")
+        CALL UD("ourvs")
+        CALL UD("wd")
+        CALL UD("shd")
+        CALL UD("chn")
+        CALL UD("bec")
+        CALL UD("bef")
+        CALL UD("beh")
+        CALL UD("bel")
+        CALL UD("ben")
+        CALL UD("bes")
+        CALL UD("bet")
+        CALL UD("bey")
+        CALL UD("concv")
+        CALL UD("concvg")
+        CALL UD("onef")
+        -- per-word contraction blocks (liblouis exceptions)
+        CALL UX("one", "abalone")
+        CALL UX("one", "anemone")
+        CALL UX("one", "onerous")
+        CALL UX("these", "antithese")
+        CALL UX("ment", "aforemention")
+        CALL UX("above", "aboved")
+        CALL UX("time", "altimeter")
+        CALL UX("th", "adulthood")
+        CALL UX("th", "anthill")
+        CALL UX("th", "foothill")
+        CALL UX("th", "hothead")
+        CALL UX("th", "warthog")
+        CALL UX("th", "knighthood")
+        CALL UX("th", "parenthoo")
+        CALL UX("th", "penthous")
+        CALL UX("th", "sweetheart")
+        CALL UX("the", "sweetheart")
+        CALL UX("the", "southeast")
+        CALL UX("the", "northeast")
+        CALL UX("had", "hades")
+        CALL UX("tion", "catio")
+        CALL UX("ence", "electroencephalo")
+        CALL UX("of", "retrofit")
+        CALL UX("be", "bechalk")
+        CALL UX("be", "beriber")
+        CALL UX("be", "bestad")
+        CALL UX("be", "bestial")
+        CALL UX("be", "besting")
+        CALL UX("be", "bethrall")
+        CALL UX("be", "benefit")      --  not beneficence (be+n fires)
+        CALL UX("ed", "shaked")       --  shakedown is a closed compound
+        CALL UX("ness", "iness")      --  inessential = in,e,s,s not i,ness
+        CALL UX("ful", "overful")     --  overfull = o,v,er,f,u,l,l
+        CALL UX("be", "benedict")
+        CALL UX("be", "benzen")
+        CALL UX("en", "forenoo")
+        CALL UX("bb", "subbing")
+        -- syllable onsets for the be- rule (be+spoke fires, be+nd
+        -- doesn't:  "nd" can't start a syllable, "sp" can)
+        CALL UONS("bl")
+        CALL UONS("br")
+        CALL UONS("ch")
+        CALL UONS("chr")
+        CALL UONS("cl")
+        CALL UONS("cr")
+        CALL UONS("dr")
+        CALL UONS("dw")
+        CALL UONS("fl")
+        CALL UONS("fr")
+        CALL UONS("gh")
+        CALL UONS("gl")
+        CALL UONS("gn")
+        CALL UONS("gr")
+        CALL UONS("gu")
+        CALL UONS("gw")
+        CALL UONS("kn")
+        CALL UONS("kr")
+        CALL UONS("kw")
+        CALL UONS("ph")
+        CALL UONS("pl")
+        CALL UONS("pn")
+        CALL UONS("pr")
+        CALL UONS("ps")
+        CALL UONS("pt")
+        CALL UONS("qu")
+        CALL UONS("rh")
+        CALL UONS("sc")
+        CALL UONS("sch")
+        CALL UONS("scr")
+        CALL UONS("sf")
+        CALL UONS("sh")
+        CALL UONS("shl")
+        CALL UONS("shr")
+        CALL UONS("sk")
+        CALL UONS("skr")
+        CALL UONS("skw")
+        CALL UONS("sl")
+        CALL UONS("sm")
+        CALL UONS("sn")
+        CALL UONS("sp")
+        CALL UONS("spl")
+        CALL UONS("spr")
+        CALL UONS("squ")
+        CALL UONS("st")
+        CALL UONS("str")
+        CALL UONS("sv")
+        CALL UONS("sw")
+        CALL UONS("th")
+        CALL UONS("thr")
+        CALL UONS("tr")
+        CALL UONS("tw")
+        CALL UONS("vl")
+        CALL UONS("vr")
+        CALL UONS("wh")
+        CALL UONS("wr")
+        CALL UONS("zw")
+        -- strong contractions + groupsigns: anywhere in a word (mask 7)
+        CALL UG("and", 7, 0, Pk1(47))
+        CALL UG("for", 7, 0, Pk1(63))
+        CALL UG("of", 7, 0, Pk1(55))
+        CALL UG("the", 7, 0, Pk1(46))
+        ug_f2[ug_n - 1] = 16      --  blocked inside "sthes" (aesthesia)
+        CALL UG("with", 7, 0, Pk1(62))
+        CALL UG("ch", 7, 0, Pk1(33))
+        CALL UG("gh", 7, 0, Pk1(35))
+        CALL UG("sh", 7, 0, Pk1(41))
+        CALL UG("th", 7, 0, Pk1(57))
+        CALL UG("wh", 7, 0, Pk1(49))
+        CALL UG("ed", 7, 0, Pk1(43))
+        CALL UG("er", 7, 0, Pk1(59))
+        CALL UG("ou", 7, 0, Pk1(51))
+        CALL UG("ow", 7, 0, Pk1(42))
+        CALL UG("st", 7, 0, Pk1(12))
+        ug_f2[ug_n - 1] = 128     --  suppressed when "the" can fire at
+                                  --  pos+1 (aesthete s+the;  aesthesia
+                                  --  keeps st because the is blocked)
+        CALL UG("ing", 6, 0, Pk1(44))     --  never word-initial
+                                        --  (ingot = in,g,ot)
+        CALL UG("ar", 7, 0, Pk1(28))
+        CALL UG("ea", 2, 0, Pk1(2))       --  mid only;  blocked before r
+        ug_f2[ug_n - 1] = 516   --  4|512:  also blocked before "nce"
+                                --  (alleg+e+ance)
+        CALL UG("in", 7, 0, Pk1(20))
+        ug_f2[ug_n - 1] = 32   --  never opens "...iness" (business)
+        -- lower groupsigns: position rules (mask 1=start 2=mid)
+        CALL UG("be", 1, 0, Pk1(6))       --  be- prefix: onset rule +
+        ug_f2[ug_n - 1] = 1               --  extras in OkAt (bed*/bev*)
+        CALL UG("con", 1, 0, Pk1(18))     --  con- prefix: blocked bef 'e'
+        ug_f2[ug_n - 1] = 4098            --  2|4096: and before 'ch'
+                                          --  (conch, conchitis)
+        CALL UG("dis", 1, 0, Pk1(50))     --  suppressed by a legal 'sh'
+                                          --  at pos+2 (dis|hrags);  fires
+                                          --  everywhere else (dis|honor,
+                                          --  disyllabify, dishdashas)
+        -- doubled letters: mid only, vowel before (arccosine's cc
+        -- after r is blocked; accent's cc after a fires)
+        CALL UG("bb", 2, 2, Pk1(6))
+        CALL UG("cc", 2, 2, Pk1(18))
+        ug_f2[ug_n - 1] = 1024            --  yields to 'ch' at pos+1
+                                          --  (saccharine = c,ch,ar)
+        CALL UG("ff", 2, 2, Pk1(22))
+        ug_f2[ug_n - 1] = 256     --  never before 'o': af+for+d,
+                                  --  ef+for+t (for wins the overlap)
+        CALL UG("gg", 2, 2, Pk1(54))
+        CALL UG("en", 7, 0, Pk1(34))      --  but never the word "en"
+        ug_f2[ug_n - 1] = 40   --  8|32: also never opens "...eness"
+                               --  (ample+ness = e,ness — the n is
+                               --  ness's;  greenness' en is inside
+                               --  "green" and next is "nes")
+        -- the -ceive family: cv = ceive / eceive / ceivin / eceivin
+        -- (d+cv+d=deceived, con+cv+s=conceives, r+cv+g=receiving,
+        -- p+er+cv+g=perceiving, ap+p+er+cv=apperceive)
+        CALL UG("eceivin", 7, 0, Pk2(9, 39))
+        CALL UG("eceive", 7, 0, Pk2(9, 39))
+        CALL UG("ceivin", 7, 0, Pk2(9, 39))
+        CALL UG("ceive", 7, 0, Pk2(9, 39))
+        -- final-letter groupsigns: mid|end
+        CALL UG("ound", 6, 0, Pk2(40, 25))
+        CALL UG("ance", 6, 0, Pk2(40, 17))
+        CALL UG("sion", 6, 0, Pk2(40, 29))
+        CALL UG("less", 6, 0, Pk2(40, 14))
+        CALL UG("ount", 6, 0, Pk2(40, 30))
+        CALL UG("ence", 6, 0, Pk2(48, 17))
+        CALL UG("ong", 6, 0, Pk2(48, 27))
+        CALL UG("ful", 6, 0, Pk2(48, 7))
+        CALL UG("tion", 6, 0, Pk2(48, 29))
+        CALL UG("ness", 6, 0, Pk2(48, 14))
+        CALL UG("ment", 6, 0, Pk2(48, 30))
+        CALL UG("ity", 6, 0, Pk2(48, 61))
+        -- initial-letter contractions: word-start prefix
+        CALL UI("upon", Pk2(24, 37))
+        CALL UI("these", Pk2(24, 46))
+        CALL UI("those", Pk2(24, 57))
+        CALL UI("whose", Pk2(24, 49))
+        CALL UI("word", Pk2(24, 58))
+        CALL UI("cannot", Pk2(56, 9))
+        CALL UI("had", Pk2(56, 19))
+        ui_fol[ui_n - 1] = 1          --  fires mid-word too (jehadism,
+                                      --  hadedah, hadrosaur) — "hades"
+                                      --  is a UX exception
+        CALL UI("many", Pk2(56, 13))
+        CALL UI("spirit", Pk2(56, 14))
+        CALL UI("their", Pk2(56, 46))
+        CALL UI("world", Pk2(56, 58))
+        CALL UI("day", Pk2(16, 25))
+        CALL UI("ever", Pk2(16, 17))
+        ui_fol[ui_n - 1] = 3          --  mid-word needs consonant
+                                       --  before (clever yes, achieve no)
+        CALL UI("father", Pk2(16, 11))
+        CALL UI("here", Pk2(16, 19))  --  follower rules in OkAt
+        CALL UI("know", Pk2(16, 5))
+        CALL UI("lord", Pk2(16, 7))
+        CALL UI("mother", Pk2(16, 13))
+        CALL UI("name", Pk2(16, 29))
+        CALL UI("one", Pk2(16, 21))
+        ui_nxt[ui_n - 1] = "dr"   --  one+d and one+r don't contract
+                                   --  (honed, almoner;  one+a/y/end do)
+        CALL UI("part", Pk2(16, 15))
+        CALL UI("question", Pk2(16, 31))
+        CALL UI("right", Pk2(16, 23))
+        CALL UI("some", Pk2(16, 14))
+        CALL UI("time", Pk2(16, 30))
+        CALL UI("under", Pk2(16, 37))
+        CALL UI("young", Pk2(16, 61))
+        CALL UI("there", Pk2(16, 46))
+        ui_fol[ui_n - 1] = 2          --  word-start only (ethered no)
+        ui_nxt[ui_n - 1] = "aeiou"    --  there+vowel spells the,r,e
+                                      --  (thereabout/unto/upon/in/of)
+        CALL UI("character", Pk2(16, 33))   --  fires interior
+                                            --  (uncharacteristic,
+                                            --  mischaracterizes)
+        CALL UI("through", Pk2(16, 57))
+        ui_fol[ui_n - 1] = 1            --  fires interior (drivethrough)
+        CALL UI("where", Pk2(16, 49))
+        CALL UI("ought", Pk2(16, 51))
+        CALL UI("work", Pk2(16, 58))
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  lookup tables
+    -- ---------------------------------------------------------------
+    PROCEDURE FillUTabs()
+        ulet[0]  = 1     --  a
+        ulet[1]  = 3     --  b
+        ulet[2]  = 9     --  c
+        ulet[3]  = 25    --  d
+        ulet[4]  = 17    --  e
+        ulet[5]  = 11    --  f
+        ulet[6]  = 27    --  g
+        ulet[7]  = 19    --  h
+        ulet[8]  = 10    --  i
+        ulet[9]  = 26    --  j
+        ulet[10] = 5     --  k
+        ulet[11] = 7     --  l
+        ulet[12] = 13    --  m
+        ulet[13] = 29    --  n
+        ulet[14] = 21    --  o
+        ulet[15] = 15    --  p
+        ulet[16] = 31    --  q
+        ulet[17] = 23    --  r
+        ulet[18] = 14    --  s
+        ulet[19] = 30    --  t
+        ulet[20] = 37    --  u
+        ulet[21] = 39    --  v
+        ulet[22] = 58    --  w
+        ulet[23] = 45    --  x
+        ulet[24] = 61    --  y
+        ulet[25] = 53    --  z
+        --  BRF map (NABCC):  cell -> ascii  (same verified map as
+        --  nemeth.albi;  switch indicators: _% = cells 56,41 and
+        --  _: = cells 56,49 per BANA code-switch table)
+        ubrfa[0]  = 32   --  space
+        ubrfa[1]  = 65   --  A
+        ubrfa[2]  = 49   --  1
+        ubrfa[3]  = 66   --  B
+        ubrfa[4]  = 39   --  '
+        ubrfa[5]  = 75   --  K
+        ubrfa[6]  = 50   --  2
+        ubrfa[7]  = 76   --  L
+        ubrfa[8]  = 64   --  @
+        ubrfa[9]  = 67   --  C
+        ubrfa[10] = 73   --  I
+        ubrfa[11] = 70   --  F
+        ubrfa[12] = 47   --  /
+        ubrfa[13] = 77   --  M
+        ubrfa[14] = 83   --  S
+        ubrfa[15] = 80   --  P
+        ubrfa[16] = 34   --  "
+        ubrfa[17] = 69   --  E
+        ubrfa[18] = 51   --  3
+        ubrfa[19] = 72   --  H
+        ubrfa[20] = 57   --  9
+        ubrfa[21] = 79   --  O
+        ubrfa[22] = 54   --  6
+        ubrfa[23] = 82   --  R
+        ubrfa[24] = 94   --  ^
+        ubrfa[25] = 68   --  D
+        ubrfa[26] = 74   --  J
+        ubrfa[27] = 71   --  G
+        ubrfa[28] = 62   --  >
+        ubrfa[29] = 78   --  N
+        ubrfa[30] = 84   --  T
+        ubrfa[31] = 81   --  Q
+        ubrfa[32] = 44   --  ,
+        ubrfa[33] = 42   --  *
+        ubrfa[34] = 53   --  5
+        ubrfa[35] = 60   --  <
+        ubrfa[36] = 45   --  -
+        ubrfa[37] = 85   --  U
+        ubrfa[38] = 56   --  8
+        ubrfa[39] = 86   --  V
+        ubrfa[40] = 46   --  .
+        ubrfa[41] = 37   --  %
+        ubrfa[42] = 91   --  [
+        ubrfa[43] = 36   --  $
+        ubrfa[44] = 43   --  +
+        ubrfa[45] = 88   --  X
+        ubrfa[46] = 33   --  !
+        ubrfa[47] = 38   --  &
+        ubrfa[48] = 59   --  ;
+        ubrfa[49] = 58   --  :
+        ubrfa[50] = 52   --  4
+        ubrfa[51] = 92   --  \
+        ubrfa[52] = 48   --  0
+        ubrfa[53] = 90   --  Z
+        ubrfa[54] = 55   --  7
+        ubrfa[55] = 40   --  (
+        ubrfa[56] = 95   --  _
+        ubrfa[57] = 63   --  ?
+        ubrfa[58] = 87   --  W
+        ubrfa[59] = 93   --  ]
+        ubrfa[60] = 35   --  #
+        ubrfa[61] = 89   --  Y
+        ubrfa[62] = 41   --  )
+        ubrfa[63] = 61   --  =
+CALL FillUeb()
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  primitives
+    -- ---------------------------------------------------------------
+    PROCEDURE Letter(ch AS S64)
+        IF ch < 0 ORELSE ch > 25 THEN
+            CALL UErr("bad letter " | ch)
+            RETURN
+        END IF
+        CALL Put(ulet[ch])
+    END PROCEDURE
+
+    PROCEDURE Digit(ch AS S64)
+        --  UEB digits:  1-9 = a-i cells, 0 = j cell
+        IF ch < 0 ORELSE ch > 9 THEN
+            CALL UErr("bad digit " | ch)
+            RETURN
+        END IF
+        IF ch = 0 THEN
+            CALL Put(26)
+        ELSE
+            CALL Put(ulet[ch - 1])
+        END IF
+    END PROCEDURE
+
+    FUNCTION IsVowel(ch AS S64) AS S64
+        IF ch = 0 ORELSE ch = 4 ORELSE ch = 8 ORELSE ch = 14 ORELSE
+           ch = 20 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION StrEq(a AS STRING, b AS STRING) AS S64
+        LET i AS S64 = 0
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        i = 1
+        WHILE i <= LEN(a)
+            IF MID(a, i, 1) <> MID(b, i, 1) THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    --  does pat occur in lw at absolute position pos (1-based start)?
+    FUNCTION AtPat(lw AS STRING, pat AS STRING, pos AS S64) AS S64
+        LET i AS S64 = 0
+        LET pl AS S64 = 0
+        pl = LEN(pat)
+        IF pos + pl - 1 > LEN(lw) THEN RETURN 0 END IF
+        i = 1
+        WHILE i <= pl
+            IF MID(lw, pos + i - 1, 1) <> MID(pat, i, 1) THEN
+                RETURN 0
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    --  be- rule:  the consonant cluster after "be" must be a legal
+    --  syllable onset followed by a vowel (belong/bespoke/betwixt
+    --  fire;  bend/bing/bean/byre block;  "being" is the exception)
+    FUNCTION OnsetOk(lw AS STRING, pos AS S64) AS S64
+        LET wlen AS S64 = 0
+        LET i AS S64 = 0
+        LET cl AS S64 = 0
+        LET stp AS S64 = 0
+        LET ch AS S64 = 0
+        LET k AS S64 = 0
+        LET hit AS S64 = 0
+        LET clst AS STRING = ""
+        wlen = LEN(lw)
+        i = pos
+        clst = ""
+        stp = 0          --  0 = still in cluster, 1 = vowel, 2 = 'y'
+        WHILE i < wlen AND stp = 0 AND cl < 4
+            ch = ASC(MID(lw, i + 1, 1)) - 97
+            IF IsVowel(ch) = 1 THEN stp = 1 END IF
+            IF stp = 0 AND ch = 24 THEN stp = 2 END IF
+            IF stp = 0 THEN
+                clst = clst | MID(lw, i + 1, 1)
+                cl = cl + 1
+                i = i + 1
+            END IF
+        END WHILE
+        IF cl = 0 THEN RETURN 0 END IF      --  be + vowel:  no onset
+        IF cl >= 4 THEN RETURN 0 END IF     --  cluster too long
+        IF stp <> 1 THEN RETURN 0 END IF    --  no vowel after cluster
+        IF cl = 1 THEN RETURN 1 END IF      --  single consonant onset
+        k = 0
+        hit = 0
+        WHILE k < uons_n AND hit = 0
+            IF StrEq(clst, uons_txt[k]) = 1 THEN hit = 1 END IF
+            k = k + 1
+        END WHILE
+        RETURN hit
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  candidate legality:  enc = kind*1000 + table index
+    --  kind 0 = initial-letter (ui), 1 = groupsign (ug),
+    --  2 = mid-word shortform (uw).  pos is 0-based in lw.
+    -- ---------------------------------------------------------------
+    --  is "the" legal at (0-based) pos?  blocked inside sthes-
+    --  (aesthesia family) unless the word is anesthe-/anaesthe-;
+    --  and even there the anesthetise/-ization/-ses/-sis and
+    --  -ologies derivatives go back to st
+    FUNCTION TheLegal(lw AS STRING, pos AS S64) AS S64
+        --  'the' at (0-based) pos is illegal in *s-the-* contexts
+        --  (aesthesia, asthenia, hyperesthetic, prosthesis) unless it
+        --  sits inside an anes-/anaes-/aesthe- stem with an allowed
+        --  tail:  anes fires sia/tic/tist/tiz (anesthesia,
+        --  anesthetize, unanesthetise still blocks +tise);  anaes and
+        --  aesthe fire only tic/tist/tiz (aesthetically yes;
+        --  aesthete's +te and panaesthesia's +sia block)
+        LET anes AS S64 = 0
+        IF pos <= 0 THEN RETURN 1 END IF
+        IF MID(lw, pos, 1) <> "s" THEN RETURN 1 END IF
+        IF pos = 4 AND AtPat(lw, "anes", 1) = 1 THEN anes = 1 END IF
+        IF pos = 5 AND AtPat(lw, "anaes", 1) = 1 THEN anes = 2 END IF
+        IF pos = 3 AND AtPat(lw, "aesthe", 1) = 1 THEN anes = 3 END IF
+        IF anes = 0 THEN RETURN 0 END IF
+        IF MID(lw, pos + 4, 3) = "tic" THEN RETURN 1 END IF
+        IF MID(lw, pos + 4, 4) = "tist" THEN RETURN 1 END IF
+        IF MID(lw, pos + 4, 3) = "tiz" AND
+           MID(lw, pos + 4, 6) <> "tizati" THEN RETURN 1 END IF
+        IF anes <= 2 AND MID(lw, pos + 4, 3) = "sia" THEN RETURN 1
+        END IF
+        IF anes = 1 AND MID(lw, pos + 4, 3) = "sio" AND
+           MID(lw, pos + 4, 9) <> "siologies" THEN RETURN 1 END IF
+        IF MID(lw, pos + 4, 2) = "te" AND anes >= 2 THEN RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION ShLegal(lw AS STRING, pos AS S64) AS S64
+        --  would 'sh' be legal at (0-based) pos?  The s|h crossing
+        --  can't open a vowel morpheme:  after an ss tail (ass|holes,
+        --  grass|hopper) unless the s is a right-morpheme's own
+        --  (mis|shapen, trans|shipping, dis|shivering) or the word is
+        --  glass/cross;  after plural gs (hogs|heads — long|shoring's
+        --  s starts "shoring" so it fires);  after dish- (dish|onor)
+        --  and mis- tails except {e,i} (mis|hapt blocks a/o/u,
+        --  mis|heard fires e).  A consonant follower survives —
+        --  only dish* words block d/f/g/l (dish|dock/ful/gown/like).
+        LET n1 AS S64 = -1
+        IF pos + 2 >= LEN(lw) THEN RETURN 1 END IF
+        n1 = ASC(MID(lw, pos + 3, 1)) - 97
+        IF IsVowel(n1) = 1 OR n1 = 24 THEN
+            IF pos > 0 AND MID(lw, pos, 1) = "s" THEN
+                IF AtPat(lw, "glass", 1) = 0 AND
+                   AtPat(lw, "cross", 1) = 0 THEN
+                    IF pos = 3 THEN
+                        IF AtPat(lw, "mis", 1) = 1 OR
+                           AtPat(lw, "dis", 1) = 1 THEN RETURN 1
+                        END IF
+                    END IF
+                    IF pos = 5 AND AtPat(lw, "trans", 1) = 1 THEN
+                        RETURN 1
+                    END IF
+                    RETURN 0
+                END IF
+            END IF
+            IF pos >= 2 AND MID(lw, pos, 1) = "g" THEN
+                IF IsVowel(ASC(MID(lw, pos - 1, 1)) - 97) = 1 THEN
+                    IF n1 = 0 OR n1 = 4 THEN RETURN 0 END IF
+                END IF
+            END IF
+            IF pos = 2 AND AtPat(lw, "dish", 1) = 1 THEN RETURN 0
+            END IF
+            IF pos = 2 AND AtPat(lw, "mish", 1) = 1 THEN
+                IF n1 = 0 OR n1 = 14 OR n1 = 20 THEN RETURN 0 END IF
+            END IF
+        ELSE
+            IF pos = 2 AND AtPat(lw, "dish", 1) = 1 THEN
+                IF n1 = 3 OR n1 = 5 OR n1 = 6 OR n1 = 11 THEN
+                    RETURN 0
+                END IF
+            END IF
+        END IF
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION OkAt(lw AS STRING, pos AS S64, enc AS S64) AS S64
+        LET kind AS S64 = 0
+        LET idx AS S64 = 0
+        LET wlen AS S64 = 0
+        LET pl AS S64 = 0
+        LET ok AS S64 = 0
+        LET ch AS S64 = 0
+        LET k AS S64 = 0
+        LET fol AS S64 = 0
+        LET txt AS STRING = ""
+        kind = enc / 1000
+        idx = enc - kind * 1000
+        wlen = LEN(lw)
+        IF kind = 0 THEN txt = ui_txt[idx] END IF
+        IF kind = 1 THEN txt = ug_txt[idx] END IF
+        IF kind = 2 THEN txt = uw_txt[idx] END IF
+        pl = LEN(txt)
+        --  per-word contraction blocks (abalone's "one", adulthood's
+        --  "th"):  block when the word starts with the exception word
+        --  AND the match sits inside it
+        k = 0
+        WHILE k < ux_n
+            IF StrEq(ux_pat[k], txt) = 1 THEN
+                IF pos < LEN(ux_wrd[k]) THEN
+                    IF AtPat(lw, ux_wrd[k], 1) = 1 THEN
+                        RETURN 0
+                    END IF
+                END IF
+            END IF
+            k = k + 1
+        END WHILE
+        --  mid-word shortforms:  1 = word prefix only (abv+board,
+        --  gd+bye;  "agood" stays letters),  2 = anywhere,
+        --  3 = whitelisted prefix only (un/mis/gain/fore+said;
+        --  resaid, aforesaid, oversaid all spell s,a,i,d)
+        IF kind = 2 THEN
+            IF uw_mid[idx] = 1 AND pos = 0 THEN ok = 1 END IF
+            IF uw_mid[idx] = 2 THEN ok = 1 END IF
+            IF uw_mid[idx] = 3 THEN
+                --  the immediate prefix must be whitelisted:
+                --  a+fore+said counts because "fore" ends at pos
+                k = 0
+                WHILE k < ua_n
+                    IF pos >= LEN(ua_pre[k]) THEN
+                        IF AtPat(lw, ua_pre[k],
+                                 pos - LEN(ua_pre[k]) + 1) = 1 THEN
+                            ok = 1
+                        END IF
+                    END IF
+                    k = k + 1
+                END WHILE
+            END IF
+            IF uw_mid[idx] = 4 THEN
+                k = 0
+                WHILE k < ub_n
+                    IF pos >= LEN(ub_pre[k]) THEN
+                        IF AtPat(lw, ub_pre[k],
+                                 pos - LEN(ub_pre[k]) + 1) = 1 THEN
+                            ok = 1
+                        END IF
+                    END IF
+                    k = k + 1
+                END WHILE
+            END IF
+            IF ok = 1 AND uw_nxt[idx] <> "" AND pos + pl < wlen THEN
+                k = 1
+                WHILE k <= LEN(uw_nxt[idx]) AND ok = 1
+                    IF MID(lw, pos + pl + 1, 1) =
+                       MID(uw_nxt[idx], k, 1) THEN
+                        ok = 0
+                    END IF
+                    k = k + 1
+                END WHILE
+            END IF
+            RETURN ok
+        END IF
+        IF kind = 0 THEN
+            fol = ui_fol[idx]
+            IF fol = 0 THEN
+                --  whole word only ("had";  haddock is the exception)
+                IF pos = 0 AND pl = wlen THEN
+                    ok = 1
+                ELSE
+                    ok = 0
+                    IF txt = "had" AND pos = 0 THEN
+                        IF StrEq(MID(lw, 1, 7), "haddock") = 1 THEN
+                            ok = 1
+                        END IF
+                    END IF
+                END IF
+            END IF
+            IF fol = 1 THEN ok = 1 END IF
+            IF fol = 2 THEN
+                ok = 1
+                IF pos > 0 THEN ok = 0 END IF
+            END IF
+            IF fol = 3 THEN
+                --  "ever" interior is follower-driven:  fires after
+                --  'o' (whoever),  at the tail except after 'i'
+                --  (clever yes, achiever no),  +s at end, +a/+w/+n
+                --  (beverage, feverwort, cleverness),  +i unless it
+                --  opens "it" (reverifies yes, severity no),  +e
+                --  non-final (reverence, irreverential;  severe and
+                --  persevere's final e blocks),  +l unless it opens
+                --  "le" (neverland/cleverly yes, leveler no),  +t
+                --  when pos > 1 (sievert, antevert;  revert@1
+                --  blocks),  and before "sion" (anteversion).
+                ok = 0
+                IF pos = 0 THEN ok = 1 END IF
+                IF pos > 0 THEN
+                    IF MID(lw, pos, 1) = "o" THEN ok = 1 END IF
+                    IF pos + pl = wlen THEN
+                        IF MID(lw, pos, 1) <> "i" THEN ok = 1 END IF
+                    END IF
+                    IF pos + pl + 1 = wlen THEN
+                        IF MID(lw, pos + pl + 1, 1) = "s" AND
+                           MID(lw, pos, 1) <> "i" THEN ok = 1 END IF
+                    END IF
+                    IF pos + pl < wlen THEN
+                        IF MID(lw, pos + pl + 1, 1) = "a" THEN ok = 1
+                        END IF
+                        IF MID(lw, pos + pl + 1, 1) = "w" THEN ok = 1
+                        END IF
+                        IF MID(lw, pos + pl + 1, 1) = "n" THEN ok = 1
+                        END IF
+                        IF MID(lw, pos + pl + 1, 1) = "i" AND
+                           MID(lw, pos + pl + 1, 2) <> "it" THEN
+                            ok = 1
+                        END IF
+                        IF MID(lw, pos + pl + 1, 1) = "e" AND
+                           pos + pl + 1 < wlen THEN ok = 1 END IF
+                        IF MID(lw, pos + pl + 1, 1) = "l" AND
+                           MID(lw, pos + pl + 1, 2) <> "le" THEN
+                            ok = 1
+                        END IF
+                        IF pos > 1 AND
+                           MID(lw, pos + pl + 1, 1) = "t" THEN ok = 1
+                        END IF
+                        IF MID(lw, pos + pl + 1, 4) = "sion" THEN
+                            ok = 1
+                        END IF
+                    END IF
+                END IF
+            END IF
+            IF fol = 4 THEN
+                --  interior only at word end (adhere) — interior
+                --  mid-word spells out (adhered, adherent)
+                ok = 1
+                IF pos > 0 AND pos + pl < wlen THEN ok = 0 END IF
+            END IF
+            --  "here" follower blocks — position dependent:
+            --  pos0 blocks s/ti/id (heresy, hereticated, heredity);
+            --  interior blocks d/i/nt/nc (adhered, cohering,
+            --  adherent, adherence).  hereto(+to), hereditarily(+d),
+            --  adheres(+s), apheretic(+t) all fire.
+            IF ok = 1 AND txt = "here" AND pos + pl < wlen THEN
+                IF pos = 0 THEN
+                    --  heresy/heresies block;  heresiarch(+sia) fires
+                    IF MID(lw, pos + pl + 1, 2) = "sy" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 3) = "sie" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 2) = "ti" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 2) = "id" THEN ok = 0
+                    END IF
+                ELSE
+                    IF MID(lw, pos + pl + 1, 1) = "d" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 1) = "i" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 2) = "nt" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 2) = "nc" THEN ok = 0
+                    END IF
+                END IF
+            END IF
+            --  "one" interior extras:  +n blocks unless it opens
+            --  "ness" (exponent no,  loneness yes);  +t/+m block
+            --  only after 'r' (coroneted) or in a word-initial
+            --  "phon" (phonemes/phonetics — acetonemia fires);
+            --  and it's suppressed when "ness" can start at
+            --  pos+1 (lioness = o,ness;  baroness = o,ness).
+            --  pos0 keeps the dr blocklist.
+            IF ok = 1 AND txt = "one" AND pos > 0 THEN
+                IF MID(lw, pos + 2, 4) = "ness" THEN ok = 0 END IF
+                IF pos + pl < wlen THEN
+                    --  +n blocks only when it opens "nt" (exponent);
+                    --  componencies(+nc), conenose(+no),
+                    --  nonenforcement(+nf), loneness(+nes) all fire
+                    IF MID(lw, pos + pl + 1, 2) = "nt" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 1) = "t" OR
+                       MID(lw, pos + pl + 1, 1) = "m" THEN
+                        IF MID(lw, pos, 1) = "r" THEN ok = 0 END IF
+                        IF pos = 2 AND
+                           AtPat(lw, "phon", 1) = 1 THEN ok = 0
+                        END IF
+                    END IF
+                END IF
+            END IF
+            --  "under" interior after 'a' blocks (launder, daunder,
+            --  maunderer);  thunder/plunder fire it
+            IF ok = 1 AND txt = "under" AND pos > 0 THEN
+                IF MID(lw, pos, 1) = "a" THEN ok = 0 END IF
+            END IF
+            --  "name" interior is suppressed when 'ment' can overlap
+            --  it at pos+2 and opens an ornament-family tail
+            --  (orna|ment, orna|mental, orna|ments block);
+            --  ment+i/o are Italian-plural tails that let it fire
+            --  (aggiornamenti/o = name,nt)
+            IF ok = 1 AND txt = "name" AND pos > 0 AND
+               pos + pl < wlen THEN
+                IF MID(lw, pos + 3, 4) = "ment" THEN
+                    IF pos + 6 = wlen THEN ok = 0 END IF
+                    IF MID(lw, pos + 7, 1) = "a" OR
+                       MID(lw, pos + 7, 1) = "s" THEN ok = 0 END IF
+                END IF
+            END IF
+            --  "time" interior before e/n/s blocks near the start
+            --  (centimes, sentimental+ize) but fires deeper inside
+            --  (anti+sentimental, sometimes) and at the end always
+            --  (daytime, lifetime)
+            IF ok = 1 AND txt = "time" AND pos > 0 AND pos <= 3 AND
+               pos + pl < wlen THEN
+                IF MID(lw, pos + pl + 1, 1) = "e" OR
+                   MID(lw, pos + pl + 1, 1) = "n" THEN ok = 0 END IF
+            END IF
+            --  "time" interior after 'n' blocks before s or nt
+            --  (cen|times, senti|ment);  anti|me* compounds and
+            --  nt-continuations fire it (anti|meres, senti|mental)
+            IF ok = 1 AND txt = "time" AND pos > 0 AND
+               pos + pl < wlen THEN
+                IF MID(lw, pos, 1) = "n" THEN
+                    IF MID(lw, pos + pl + 1, 1) = "s" THEN ok = 0
+                    END IF
+                    IF MID(lw, pos + pl + 1, 2) = "nt" AND
+                       MID(lw, pos + pl + 3, 1) <> "a" THEN ok = 0
+                    END IF
+                END IF
+            END IF
+            --  "some" before r:  fires for somer/somers/somerled
+            --  but blocks when "rs" continues (somer|set/sault =
+            --  s,o,m,er)
+            IF ok = 1 AND txt = "some" AND pos = 0 AND
+               pos + pl < wlen THEN
+                IF MID(lw, pos + pl + 1, 2) = "rs" AND
+                   pos + pl + 2 < wlen THEN ok = 0 END IF
+            END IF
+            --  follower blocklist ("one"+d/r in honed/almoner)
+            IF ok = 1 AND ui_nxt[idx] <> "" AND pos + pl < wlen THEN
+                k = 1
+                WHILE k <= LEN(ui_nxt[idx]) AND ok = 1
+                    IF MID(lw, pos + pl + 1, 1) =
+                       MID(ui_nxt[idx], k, 1) THEN
+                        ok = 0
+                    END IF
+                    k = k + 1
+                END WHILE
+            END IF
+            RETURN ok
+        END IF
+        --  kind 1:  groupsigns — position mask vs whole-word bounds
+        ok = 0
+        IF pos = 0 AND pos + pl = wlen THEN
+            IF (ug_mask[idx] AND 5) = 5 THEN ok = 1 END IF
+        ELSE
+            IF pos = 0 AND (ug_mask[idx] AND 1) <> 0 THEN ok = 1 END IF
+            IF pos > 0 AND pos + pl = wlen AND
+               (ug_mask[idx] AND 4) <> 0 THEN ok = 1 END IF
+            IF pos > 0 AND pos + pl < wlen AND
+               (ug_mask[idx] AND 2) <> 0 THEN ok = 1 END IF
+        END IF
+        --  vwl:  1 = consonant before (ound/ong/ount),
+        --        2 = vowel before (bb/cc/ff/gg),
+        --        3 = 'n' before (ess)
+        IF ok = 1 AND ug_vwl[idx] = 1 AND pos > 0 THEN
+            ch = ASC(MID(lw, pos, 1)) - 97
+            IF IsVowel(ch) = 1 THEN ok = 0 END IF
+        END IF
+        IF ok = 1 AND ug_vwl[idx] = 2 AND pos > 0 THEN
+            ch = ASC(MID(lw, pos, 1)) - 97
+            --  'y' counts as a vowel here (sybbes' bb)
+            IF IsVowel(ch) = 0 AND ch <> 24 THEN ok = 0 END IF
+        END IF
+        IF ok = 1 AND ug_vwl[idx] = 3 AND pos > 0 THEN
+            IF MID(lw, pos, 1) <> "n" THEN ok = 0 END IF
+        END IF
+        --  f2 bitmask:  1 = be/dis- onset rule;  2 = no 'e' after
+        --  (con-);  4 = no 'r' after (ea);  8 = not the whole word
+        --  (en);  16 = sthes- (the);  32 = -en/-in+ess;  128 = st
+        --  suppressed by the/tion;  256 = ff suppressed by for+dte;
+        --  512 = ea rules;  1024 = cc yields to ch;  4096 = con+ch
+        IF ok = 1 AND (ug_f2[idx] AND 1) <> 0 THEN
+            ok = OnsetOk(lw, pos + pl)
+            IF ok = 0 AND ug_txt[idx] = "be" THEN
+                IF AtPat(lw, "being", 1) = 1 THEN ok = 1 END IF
+            END IF
+        END IF
+        --  'dis' is suppressed only when the overlapping 'sh' at
+        --  pos+2 is legal (dis|hrags = d,i,sh,rags;  dish|cloth =
+        --  d,i,sh,cloth;  but dis|honor keeps dis,h,onor — that
+        --  'sh' is illegal)
+        IF ok = 1 AND ug_txt[idx] = "dis" THEN
+            IF MID(lw, pos + pl, 2) = "sh" THEN
+                IF ShLegal(lw, pos + pl - 1) = 1 THEN ok = 0 END IF
+            END IF
+        END IF
+        --  'sh' gets the s|h boundary rules shared with 'dis'
+        IF ok = 1 AND ug_txt[idx] = "sh" THEN
+            ok = ShLegal(lw, pos)
+        END IF
+        --  'be' extras:  never before v/k (beveler, beknown) and
+        --  "bed" is a morpheme — blocked before d except the
+        --  be+verb family (bedazzle, bedevil, bedew = beda*/bede*)
+        IF ok = 1 AND ug_txt[idx] = "be" AND pos + pl < wlen THEN
+            ch = ASC(MID(lw, pos + pl + 1, 1)) - 97
+            IF ch = 21 OR ch = 10 THEN ok = 0 END IF
+            IF ch = 3 THEN
+                IF AtPat(lw, "beda", 1) = 0 AND
+                   AtPat(lw, "bede", 1) = 0 THEN ok = 0 END IF
+            END IF
+        END IF
+        IF ok = 1 AND (ug_f2[idx] AND 2) <> 0 AND pos + pl < wlen THEN
+            IF MID(lw, pos + pl + 1, 1) = "e" THEN ok = 0 END IF
+        END IF
+        IF ok = 1 AND (ug_f2[idx] AND 4) <> 0 AND pos + pl < wlen THEN
+            IF MID(lw, pos + pl + 1, 1) = "r" THEN ok = 0 END IF
+        END IF
+        IF ok = 1 AND (ug_f2[idx] AND 8) <> 0 THEN
+            IF pos = 0 AND pos + pl = wlen THEN ok = 0 END IF
+        END IF
+        --  "the" legality (sthes-, anesthe family) is shared
+        --  with the 'st' suppression rule
+        IF ok = 1 AND (ug_f2[idx] AND 16) <> 0 THEN
+            ok = TheLegal(lw, pos)
+        END IF
+        --  -en-/-in- never open "...eness"/"...iness" — the n is
+        --  ness's morpheme letter (ample+ness = e,ness;  business
+        --  = i,ness;  carefree+ness = e,ness).  greenness still
+        --  contracts because its en sits inside "green" and the
+        --  next run is "nes", not "ess".
+        IF ok = 1 AND (ug_f2[idx] AND 32) <> 0 AND pos > 0 THEN
+            IF MID(lw, pos + pl + 1, 3) = "ess" THEN ok = 0 END IF
+        END IF
+        --  'st' is suppressed when "the" or "tion" can legally
+        --  fire at pos+1 (aesthete = s,the;  suggestion =
+        --  s,gg,e,s,tion;  in aesthesia the is blocked so st
+        --  survives;  anesthetise blocks the -> st survives)
+        IF ok = 1 AND (ug_f2[idx] AND 128) <> 0 THEN
+            IF MID(lw, pos + 2, 3) = "the" THEN
+                IF TheLegal(lw, pos + 1) = 1 THEN ok = 0 END IF
+            END IF
+            IF MID(lw, pos + 2, 4) = "tion" THEN ok = 0 END IF
+        END IF
+        --  'st' can't cross an s|t boundary (guess|timate = s,t)
+        --  unless the s is a right-morpheme's own (mis|steps,
+        --  mis|stamped fire) or "str" can onset (brems|strahlung)
+        IF ok = 1 AND ug_txt[idx] = "st" AND pos > 0 THEN
+            IF MID(lw, pos, 1) = "s" AND
+               MID(lw, pos + pl + 1, 1) <> "r" THEN
+                ok = 0
+                IF pos = 3 THEN
+                    IF AtPat(lw, "mis", 1) = 1 OR
+                       AtPat(lw, "dis", 1) = 1 THEN ok = 1 END IF
+                END IF
+                IF pos = 5 AND AtPat(lw, "trans", 1) = 1 THEN ok = 1
+                END IF
+            END IF
+        END IF
+        --  'ff' is suppressed when 'for' can start at pos+1 AND
+        --  the tail is a d/t/e morpheme (af+for+d, ef+for+t,
+        --  af+for+est);  for+ce keeps ff (af+force, ef+for+d
+        --  only in real words)
+        IF ok = 1 AND (ug_f2[idx] AND 256) <> 0 THEN
+            IF pos <= 2 AND MID(lw, pos + 2, 3) = "for" THEN
+                IF MID(lw, pos + 5, 1) = "d" OR
+                   MID(lw, pos + 5, 1) = "e" OR
+                   MID(lw, pos + 5, 1) = "t" THEN ok = 0 END IF
+            END IF
+        END IF
+        --  'ea' is suppressed when "and" or "ance" can open at
+        --  pos+1 (meander+ing = e,and,er;  alleg+e+ance), and it
+        --  can't bridge "re|a" where 'a' begins a new morpheme
+        --  (re+apply, re+act — monomorphemic rea-words excepted)
+        IF ok = 1 AND (ug_f2[idx] AND 512) <> 0 THEN
+            IF MID(lw, pos + 2, 3) = "and" THEN ok = 0 END IF
+            IF MID(lw, pos + 2, 4) = "ance" THEN ok = 0 END IF
+            IF ok = 1 AND pos = 1 AND MID(lw, 1, 1) = "r" THEN
+                ok = 0
+                IF AtPat(lw, "real", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "read", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reap", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reaso", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reach", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "ream", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reav", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reak", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reab", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reacc", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reacq", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reatt", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reau", 1) = 1 THEN ok = 1 END IF
+                IF AtPat(lw, "reapp", 1) = 1 THEN ok = 0 END IF
+                IF AtPat(lw, "readm", 1) = 1 THEN ok = 0 END IF
+                IF AtPat(lw, "readd", 1) = 1 THEN ok = 0 END IF
+                IF AtPat(lw, "readj", 1) = 1 THEN ok = 0 END IF
+                IF AtPat(lw, "reado", 1) = 1 THEN ok = 0 END IF
+                IF AtPat(lw, "readv", 1) = 1 THEN ok = 0 END IF
+                --  reallot/reallocate block but really/realm fire
+                IF AtPat(lw, "reall", 1) = 1 THEN
+                    IF MID(lw, 6, 1) <> "y" THEN ok = 0 END IF
+                END IF
+            END IF
+        END IF
+        --  'cc' yields to 'ch' at pos+1 only for the saccharin
+        --  family (saccharine = s,a,c,ch,ar;  bacchantes' ch+an,
+        --  zucchetti's ch+e, antibacchii's ch+i, saccharometer's
+        --  ch+aro all keep cc)
+        IF ok = 1 AND (ug_f2[idx] AND 1024) <> 0 THEN
+            IF MID(lw, pos + 2, 5) = "chari" THEN ok = 0 END IF
+        END IF
+        --  'con' can't precede 'ch' (conch, conchitis)
+        IF ok = 1 AND (ug_f2[idx] AND 4096) <> 0 THEN
+            IF MID(lw, pos + pl + 1, 2) = "ch" THEN ok = 0 END IF
+        END IF
+        --  'ment' can't open "ion" (mention = m,en,tion;  but
+        --  cementing/lamenting fire ment+ing)
+        IF ok = 1 AND ug_txt[idx] = "ment" THEN
+            IF MID(lw, pos + pl + 1, 3) = "ion" THEN ok = 0 END IF
+        END IF
+        --  the -ceive family can't follow an interior "con"
+        --  (mis|conceived/pre|conceived spell it;  con+ceive@0
+        --  and d+cv still fire)
+        IF ok = 1 AND pos > 3 AND MID(lw, pos - 2, 3) = "con" THEN
+            IF ug_txt[idx] = "ceive" OR ug_txt[idx] = "ceivin" OR
+               ug_txt[idx] = "eceive" OR ug_txt[idx] = "eceivin" THEN
+                ok = 0
+            END IF
+        END IF
+        --  'ow' can't cross into "ee" (loco|weeds;  bowel/towel/
+        --  narrowest/power all fire it)
+        IF ok = 1 AND ug_txt[idx] = "ow" AND pos > 0 AND
+           pos + pl < wlen THEN
+            IF MID(lw, pos + pl + 1, 2) = "ee" THEN ok = 0 END IF
+        END IF
+        RETURN ok
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  contraction scan:  greedy left-to-right longest-match inside
+    --  lw[s..e).  liblouis commits the longest legal contraction at
+    --  each position without lookahead (a,g,r,of,... beats the
+    --  cheaper a,f,for,... in agroforester).
+    -- ---------------------------------------------------------------
+    PROCEDURE ContractRun(lw AS STRING, s AS S64, e AS S64, wstart AS S64)
+        LET pos AS S64 = 0
+        LET i AS S64 = 0
+        LET pl AS S64 = 0
+        LET blen AS S64 = 0
+        LET bpk AS S64 = 0
+        LET a AS S64 = 0
+        pos = s
+        WHILE pos < e
+            blen = 0
+            bpk = -1
+            IF ug1 = 0 THEN
+                i = 0
+                WHILE i < ui_n
+                    pl = LEN(ui_txt[i])
+                    IF pl > blen AND pos + pl <= e THEN
+                        IF AtPat(lw, ui_txt[i], pos + 1) = 1 THEN
+                            IF OkAt(lw, pos, i) = 1 THEN
+                                blen = pl
+                                bpk = ui_pk[i]
+                            END IF
+                        END IF
+                    END IF
+                    i = i + 1
+                END WHILE
+                i = 0
+                WHILE i < ug_n
+                    pl = LEN(ug_txt[i])
+                    IF pl > blen AND pos + pl <= e THEN
+                        IF AtPat(lw, ug_txt[i], pos + 1) = 1 THEN
+                            IF OkAt(lw, pos, 1000 + i) = 1 THEN
+                                blen = pl
+                                bpk = ug_pk[i]
+                            END IF
+                        END IF
+                    END IF
+                    i = i + 1
+                END WHILE
+                i = 0
+                WHILE i < uw_n
+                    IF uw_mid[i] <> 0 THEN
+                        pl = LEN(uw_txt[i])
+                        IF pl > blen AND pos + pl <= e THEN
+                            IF AtPat(lw, uw_txt[i], pos + 1) = 1 THEN
+                                IF OkAt(lw, pos, 2000 + i) = 1 THEN
+                                    blen = pl
+                                    bpk = uw_pk[i]
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                    i = i + 1
+                END WHILE
+            END IF
+            IF bpk >= 0 THEN
+                CALL EmitPk(bpk)
+                pos = pos + blen
+            ELSE
+                a = ASC(MID(lw, pos + 1, 1)) - 97
+                CALL Letter(a)
+                pos = pos + 1
+            END IF
+        END WHILE
+    END PROCEDURE
+
+
+    -- ---------------------------------------------------------------
+    --  word emission:  caps handling + whole-word dictionary +
+    --  cap-split contraction runs
+    -- ---------------------------------------------------------------
+    PROCEDURE Word(w AS STRING, alone AS S64, wiso AS S64,
+                   capmode AS S64)
+        LET n AS S64 = 0
+        LET i AS S64 = 0
+        LET j AS S64 = 0
+        LET nc AS S64 = 0
+        LET a AS S64 = 0
+        LET lw AS STRING = ""
+        LET ch AS STRING = ""
+        LET dict AS S64 = 0
+        LET allc AS S64 = 0
+        n = LEN(w)
+        unum = 0
+        unum_bare = 0
+        unsp = 0
+        IF n = 0 THEN RETURN END IF
+        --  lowercase copy + cap count + mid-cap flag
+        nc = 0
+        i = 1
+        lw = ""
+        WHILE i <= n
+            ch = MID(w, i, 1)
+            a = ASC(ch)
+            IF a >= 65 AND a <= 90 THEN
+                nc = nc + 1
+                lw = lw | CHR(a + 32)
+            ELSE
+                lw = lw | ch
+            END IF
+            i = i + 1
+        END WHILE
+        allc = 0
+        IF nc = n AND n >= 2 THEN allc = 1 END IF
+        --  lone letters:  a/i/o stand bare;  every other letter is a
+        --  wordsign when standing alone, so it takes the grade-1
+        --  symbol sign (Seg computes upg from the surrounding chars:
+        --  letters glued to operators/apos/digits aren't alone).
+        --  grade-1 comes BEFORE the cap sign (liblouis order).
+        IF n = 1 THEN
+            a = ASC(lw) - 97
+            IF a <> 0 AND a <> 8 AND a <> 14 AND upg = 1 THEN
+                CALL Put(48)
+            END IF
+            IF nc = 1 AND capmode = 0 THEN
+                CALL Put(32)
+            END IF
+            CALL Put(ulet[a])
+            RETURN
+        END IF
+        --  whole-word dictionary needs a single cap shape
+        dict = 0
+        IF nc = 0 ORELSE allc = 1 THEN dict = 1 END IF
+        IF nc = 1 AND ASC(MID(w, 1, 1)) >= 65 AND
+           ASC(MID(w, 1, 1)) <= 90 THEN
+            dict = 1
+        END IF
+        --  dictionary hit?  wordsigns do fire before apostrophes
+        --  (liblouis:  can't => c+'+t,  it's => x+'+s)
+        IF dict = 1 AND ug1 = 0 THEN
+            i = 0
+            WHILE i < uw_n
+                IF StrEq(uw_txt[i], lw) = 1 THEN
+                    IF uw_alone[i] = 0 ORELSE alone = 1 THEN
+                        IF capmode = 0 THEN
+                            IF allc = 1 THEN
+                                CALL Put(32)
+                                CALL Put(32)
+                            ELSEIF nc = 1 THEN
+                                CALL Put(32)
+                            END IF
+                        END IF
+                        CALL EmitPk(uw_pk[i])
+                        RETURN
+                    END IF
+                END IF
+                i = i + 1
+            END WHILE
+        END IF
+        --  dangerous spelling:  the word's letters ARE a shortform's
+        --  letter-code, so bare cells could read as the contraction —
+        --  grade-1 sign + literal letters (input "alt" != "altogether")
+        IF nc = 0 AND ug1 = 0 THEN
+            i = 0
+            WHILE i < ud_n
+                IF StrEq(ud_txt[i], lw) = 1 THEN
+                    CALL Put(48)
+                    j = 1
+                    WHILE j <= n
+                        CALL Put(ulet[ASC(MID(lw, j, 1)) - 97])
+                        j = j + 1
+                    END WHILE
+                    RETURN
+                END IF
+                i = i + 1
+            END WHILE
+        END IF
+        --  cap-split contraction runs
+        IF allc = 1 THEN
+            IF capmode = 0 THEN
+                CALL Put(32)
+                CALL Put(32)
+            END IF
+            CALL ContractRun(lw, 0, n, 1)
+            RETURN
+        END IF
+        i = 0
+        WHILE i < n
+            a = ASC(MID(w, i + 1, 1))
+            IF a >= 65 AND a <= 90 THEN
+                --  cap letter + following lowers = a run
+                IF capmode = 0 THEN
+                    CALL Put(32)
+                END IF
+                j = i + 1
+                WHILE j < n AND
+                      (ASC(MID(w, j + 1, 1)) < 65 ORELSE
+                       ASC(MID(w, j + 1, 1)) > 90)
+                    j = j + 1
+                END WHILE
+                IF i = 0 AND j = n THEN
+                    CALL ContractRun(lw, i, j, 1)
+                ELSE
+                    CALL ContractRun(lw, i, j, 0)
+                END IF
+                i = j
+            ELSE
+                --  lower run until next cap
+                j = i + 1
+                WHILE j < n AND
+                      (ASC(MID(w, j + 1, 1)) < 65 ORELSE
+                       ASC(MID(w, j + 1, 1)) > 90)
+                    j = j + 1
+                END WHILE
+                IF i = 0 AND j = n THEN
+                    CALL ContractRun(lw, 0, n, 1)
+                ELSE
+                    CALL ContractRun(lw, i, j, 0)
+                END IF
+                i = j
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  numbers:  digits take ulet cells after the numeric indicator.
+    --  ',' and '.' continue numeric mode;  ':', '-', '/' re-indicate.
+    --  a-j letters directly after digits take the grade-1 sign.
+    --  Returns the 1-based index of the first non-number char.
+    -- ---------------------------------------------------------------
+    FUNCTION NumRun(s AS STRING, i0 AS S64) AS S64
+        LET i AS S64 = 0
+        LET e AS S64 = 0
+        LET a AS S64 = 0
+        LET nx AS S64 = 0
+        LET done AS S64 = 0
+        LET nd AS S64 = 0
+        LET hv AS S64 = 0
+        --  extent:  digits plus separators that are followed by a digit
+        e = i0
+        WHILE e <= LEN(s) AND done = 0
+            a = ASC(MID(s, e, 1))
+            nx = 0
+            IF e < LEN(s) THEN
+                nx = ASC(MID(s, e + 1, 1))
+            END IF
+            IF a >= 48 AND a <= 57 THEN
+                e = e + 1
+            ELSEIF (a = 44 ORELSE a = 46 ORELSE a = 58 ORELSE a = 45
+                    ORELSE a = 47) AND nx >= 48 AND nx <= 57 THEN
+                e = e + 1
+            ELSE
+                done = 1
+            END IF
+        END WHILE
+        --  emit.  after a numeric space (cell 16) the indicator is
+        --  repeated only when it would otherwise be misread:  a
+        --  leading digit 6 (the letter f after dot5 = "father") or a
+        --  preceding number that stood as a single bare digit.
+        --  (liblouis-verified:  "0 0 6" => #0 _0 _#6;
+        --   "0 60 7" => #0 _#60 _7)
+        hv = 0
+        IF unsp = 0 THEN
+            CALL Put(60)
+            hv = 1
+        ELSEIF ASC(MID(s, i0, 1)) = 54 ORELSE unum_bare = 1 THEN
+            CALL Put(60)
+            hv = 1
+        END IF
+        unsp = 0
+        nd = 0
+        i = i0
+        WHILE i < e
+            a = ASC(MID(s, i, 1))
+            IF a >= 48 AND a <= 57 THEN
+                CALL Digit(a - 48)
+                nd = nd + 1
+            ELSEIF a = 44 THEN
+                CALL Put(2)             --  , numeric comma
+            ELSEIF a = 46 THEN
+                CALL Put(50)            --  . decimal point
+            ELSEIF a = 58 THEN
+                CALL Put(18)            --  : (time) re-indicate
+                CALL Put(60)
+            ELSEIF a = 45 THEN
+                CALL Put(36)            --  - (range) re-indicate
+                CALL Put(60)
+            ELSEIF a = 47 THEN
+                CALL Put(56)            --  / (date) re-indicate
+                CALL Put(12)
+                CALL Put(60)
+            END IF
+            i = i + 1
+        END WHILE
+        --  a-j letter right after digits:  grade-1 symbol sign (dots 56)
+        IF e <= LEN(s) THEN
+            a = ASC(MID(s, e, 1))
+            IF (a >= 97 AND a <= 106) ORELSE (a >= 65 AND a <= 74) THEN
+                CALL Put(48)
+            END IF
+        END IF
+        --  numeric-sequence state:  remember whether this number stood
+        --  as a single bare cell so the next item can decide on its
+        --  own indicator
+        unum = 1
+        unum_bare = 0
+        IF hv = 0 AND nd = 1 THEN
+            unum_bare = 1
+        END IF
+        RETURN e
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  punctuation (UEB section 7)
+    -- ---------------------------------------------------------------
+    PROCEDURE Punct(a AS S64)
+        unum = 0
+        unum_bare = 0
+        unsp = 0
+        IF a = 44 THEN CALL Put(2) END IF              --  ,
+        IF a = 59 THEN CALL Put(6) END IF              --  ;
+        IF a = 58 THEN CALL Put(18) END IF             --  :
+        IF a = 46 THEN CALL Put(50) END IF             --  .
+        IF a = 33 THEN CALL Put(22) END IF             --  ! = dots235
+        IF a = 63 THEN CALL Put(38) END IF             --  ? = dots236
+        IF a = 39 THEN CALL Put(4) END IF              --  '
+        IF a = 45 THEN CALL Put(36) END IF             --  -
+        IF a = 34 THEN                               --  "
+            --  direction by position:  before a letter/digit opens,
+            --  after text closes;  unattached = nonspecific (32,54)
+            IF (unx >= 65 AND unx <= 90) ORELSE
+               (unx >= 97 AND unx <= 122) ORELSE
+               (unx >= 48 AND unx <= 57) THEN
+                CALL Put(38)
+            ELSEIF upr <> 0 AND upr <> 32 THEN
+                CALL Put(52)
+            ELSE
+                CALL Put(32)
+                CALL Put(54)
+            END IF
+        END IF
+        IF a = 40 THEN                                 --  (
+            CALL Put(16)
+            CALL Put(35)
+        END IF
+        IF a = 41 THEN                                 --  )
+            CALL Put(16)
+            CALL Put(28)
+        END IF
+        IF a = 91 THEN                                 --  [
+            CALL Put(40)
+            CALL Put(35)
+        END IF
+        IF a = 93 THEN                                 --  ]
+            CALL Put(40)
+            CALL Put(28)
+        END IF
+        IF a = 123 THEN                                --  {
+            CALL Put(56)
+            CALL Put(35)
+        END IF
+        IF a = 125 THEN                                --  }
+            CALL Put(56)
+            CALL Put(28)
+        END IF
+        IF a = 60 THEN                                 --  <
+            CALL Put(8)
+            CALL Put(35)
+        END IF
+        IF a = 62 THEN                                 --  >
+            CALL Put(8)
+            CALL Put(28)
+        END IF
+        IF a = 47 THEN                                 --  /
+            CALL Put(56)
+            CALL Put(12)
+        END IF
+        IF a = 92 THEN                                 --  \
+            CALL Put(56)
+            CALL Put(33)
+        END IF
+        IF a = 42 THEN                                 --  *
+            CALL Put(16)
+            CALL Put(20)
+        END IF
+        IF a = 95 THEN                                 --  _
+            CALL Put(40)
+            CALL Put(36)
+        END IF
+        IF a = 64 THEN                                 --  @
+            CALL Put(8)
+            CALL Put(1)
+        END IF
+        IF a = 35 THEN                                 --  # = (56,57)
+            CALL Put(56)
+            CALL Put(57)
+        END IF
+        IF a = 37 THEN                                 --  % = (40,52)
+            CALL Put(40)
+            CALL Put(52)
+        END IF
+        IF a = 38 THEN                                 --  &
+            CALL Put(8)
+            CALL Put(47)
+        END IF
+        IF a = 43 THEN                                 --  + = (16,22)
+            CALL Put(16)
+            CALL Put(22)
+        END IF
+        IF a = 61 THEN                                 --  =
+            CALL Put(16)
+            CALL Put(54)
+        END IF
+        IF a = 126 THEN                                --  ~ = (8,20)
+            CALL Put(8)
+            CALL Put(20)
+        END IF
+        IF a = 94 THEN                                 --  ^ = (8,34)
+            CALL Put(8)
+            CALL Put(34)
+        END IF
+        IF a = 96 THEN                                 --  ` = (40,33)
+            CALL Put(40)
+            CALL Put(33)
+        END IF
+        IF a = 124 THEN                                --  | = (56,51)
+            CALL Put(56)
+            CALL Put(51)
+        END IF
+        IF a = 36 THEN                                 --  $
+            CALL Put(8)
+            CALL Put(14)
+        END IF
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  drivers
+    -- ---------------------------------------------------------------
+    FUNCTION IsLet(a AS S64) AS S64
+        IF a >= 65 AND a <= 90 THEN RETURN 1 END IF
+        IF a >= 97 AND a <= 122 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    --  s[a..b] is all uppercase letters
+    FUNCTION AllCapRange(s AS STRING, a AS S64, b AS S64) AS S64
+        LET i AS S64 = a
+        WHILE i <= b
+            LET c AS S64 = ASC(MID(s, i, 1))
+            IF c < 65 ORELSE c > 90 THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    --  count consecutive single-space-separated all-cap words
+    --  starting at s[i];  used for the three-or-more rule (8.4)
+    FUNCTION CapRun(s AS STRING, i AS S64) AS S64
+        LET n AS S64 = 0
+        LET p AS S64 = i
+        LET e AS S64 = 0
+        WHILE p <= LEN(s)
+            IF IsLet(ASC(MID(s, p, 1))) = 0 THEN RETURN n END IF
+            e = p
+            WHILE e < LEN(s) AND
+                  IsLet(ASC(MID(s, e + 1, 1))) = 1
+                e = e + 1
+            END WHILE
+            IF AllCapRange(s, p, e) = 0 THEN RETURN n END IF
+            n = n + 1
+            IF e + 1 < LEN(s) AND ASC(MID(s, e + 1, 1)) = 32 THEN
+                p = e + 2
+            ELSE
+                RETURN n
+            END IF
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Seg(s AS STRING)
+        LET i AS S64 = 0
+        LET j AS S64 = 0
+        LET a AS S64 = 0
+        LET p AS S64 = 0
+        LET e AS S64 = 0
+        LET keep AS S64 = 0
+        LET allcap AS S64 = 0
+        LET nx2 AS S64 = 0
+        LET pa AS S64 = 0
+        LET na AS S64 = 0
+        LET w AS STRING = ""
+        LET alone AS S64 = 0
+        LET wiso AS S64 = 0
+        i = 1
+        WHILE i <= LEN(s)
+            a = ASC(MID(s, i, 1))
+            IF IsLet(a) = 1 THEN
+                j = i
+                WHILE j < LEN(s) AND
+                      IsLet(ASC(MID(s, j + 1, 1))) = 1
+                    j = j + 1
+                END WHILE
+                w = MID(s, i, j - i + 1)
+                alone = 0
+                IF i = 1 ORELSE ASC(MID(s, i - 1, 1)) = 32 THEN
+                    IF j >= LEN(s) ORELSE
+                       ASC(MID(s, j + 1, 1)) = 32 THEN
+                        alone = 1
+                    END IF
+                END IF
+                --  freestanding = not glued by an apostrophe
+                wiso = 1
+                IF i > 1 AND ASC(MID(s, i - 1, 1)) = 39 THEN
+                    wiso = 0
+                END IF
+                IF j < LEN(s) AND ASC(MID(s, j + 1, 1)) = 39 THEN
+                    wiso = 0
+                END IF
+                --  grade-1 flag for a lone letter:  "standing alone"
+                --  is broken by adjacency to operators/apos/digits
+                --  (liblouis:  x=1 => bare x;  a-b => _b;  1b => #a _b;
+                --   b2 => b#b;  a.m. => a.m. bare m)
+                upg = 0
+                IF j = i THEN
+                    upg = 1
+                    IF i > 1 THEN
+                        pa = ASC(MID(s, i - 1, 1))
+                        IF pa = 39 ORELSE pa = 35 ORELSE pa = 37 ORELSE
+                           pa = 38 ORELSE pa = 42 ORELSE pa = 43 ORELSE
+                           pa = 46 ORELSE pa = 47 ORELSE pa = 60 ORELSE
+                           pa = 61 ORELSE pa = 62 ORELSE pa = 64 ORELSE
+                           pa = 92 ORELSE pa = 94 ORELSE pa = 95 ORELSE
+                           pa = 96 ORELSE pa = 124 ORELSE pa = 126 THEN
+                            upg = 0
+                        END IF
+                    END IF
+                    IF j < LEN(s) THEN
+                        na = ASC(MID(s, j + 1, 1))
+                        IF (na >= 48 AND na <= 57) ORELSE na = 39 ORELSE
+                           na = 35 ORELSE na = 37 ORELSE na = 38 ORELSE
+                           na = 42 ORELSE na = 43 ORELSE na = 47 ORELSE
+                           na = 60 ORELSE na = 61 ORELSE na = 62 ORELSE
+                           na = 64 ORELSE na = 92 ORELSE na = 94 ORELSE
+                           na = 95 ORELSE na = 96 ORELSE na = 124 ORELSE
+                           na = 126 THEN
+                            upg = 0
+                        END IF
+                        --  ".x" after a lone letter = abbreviation
+                        --  (p.m., a.m.) — suppress like glued symbols
+                        IF na = 46 AND j + 2 <= LEN(s) AND
+                           IsLet(ASC(MID(s, j + 2, 1))) = 1 THEN
+                            upg = 0
+                        END IF
+                    END IF
+                END IF
+                --  caps passage:  three or more all-cap words in a
+                --  row take one passage sign ,,, ... ,'
+                allcap = AllCapRange(s, i, j)
+                IF ucp = 0 AND allcap = 1 AND
+                   CapRun(s, i) >= 3 THEN
+                    CALL Put(32)
+                    CALL Put(32)
+                    CALL Put(32)
+                    ucp = 1
+                END IF
+                CALL Word(w, alone, wiso, ucp)
+                --  passage ends when the next word isn't all-cap
+                IF ucp = 1 THEN
+                    keep = 0
+                    IF j + 2 <= LEN(s) AND
+                       ASC(MID(s, j + 1, 1)) = 32 THEN
+                        p = j + 2
+                        IF IsLet(ASC(MID(s, p, 1))) = 1 THEN
+                            e = p
+                            WHILE e < LEN(s) AND
+                                  IsLet(ASC(MID(s, e + 1, 1))) = 1
+                                e = e + 1
+                            END WHILE
+                            IF AllCapRange(s, p, e) = 1 THEN
+                                keep = 1
+                            END IF
+                        END IF
+                    END IF
+                    IF keep = 0 THEN
+                        CALL Put(32)
+                        CALL Put(4)
+                        ucp = 0
+                    END IF
+                END IF
+                i = j + 1
+            ELSEIF a >= 48 AND a <= 57 THEN
+                i = NumRun(s, i)
+            ELSEIF a = 32 ORELSE a = 9 ORELSE a = 10 ORELSE a = 13 THEN
+                --  numeric space:  exactly one blank between two
+                --  numbers is cell 16 (dot 5), and the next number
+                --  re-indicates only when it could be misread
+                IF a = 32 AND unum = 1 AND i + 1 <= LEN(s) THEN
+                    nx2 = ASC(MID(s, i + 1, 1))
+                    IF nx2 >= 48 AND nx2 <= 57 THEN
+                        CALL Put(16)
+                        unsp = 1
+                    ELSE
+                        CALL Space()
+                    END IF
+                ELSE
+                    CALL Space()
+                END IF
+                i = i + 1
+            ELSE
+                --  context for directional quotes etc
+                upr = 0
+                unx = 0
+                IF i > 1 THEN
+                    upr = ASC(MID(s, i - 1, 1))
+                END IF
+                IF i < LEN(s) THEN
+                    unx = ASC(MID(s, i + 1, 1))
+                END IF
+                CALL Punct(a)
+                i = i + 1
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Transcribe(s AS STRING)
+CALL Reset()
+CALL Seg(s)
+    END PROCEDURE
+
+    PROCEDURE TranscribeG1(s AS STRING)
+CALL Reset()
+        ug1 = 1
+CALL Seg(s)
+        ug1 = 0
+    END PROCEDURE
+
+END MODULE

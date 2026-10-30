@@ -1,0 +1,106 @@
+-- 983 | 15 puzzle solver: IDA* with Manhattan heuristic on
+-- a fixed scramble; prints move count to solved state.
+DECLARE MODULE Pz
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pz
+    STRICT bd[16] AS S64
+    STRICT fnd[1] AS S64
+    STRICT mv[60] AS S64
+    STRICT mc[1] AS S64
+
+    FUNCTION Heu() AS S64
+        LET h AS S64 = 0
+        FOR i = 0 TO 15
+            LET v AS S64 = bd[i + 1]
+            IF v > 0 THEN
+                LET dr AS S64 = i / 4 - (v - 1) / 4
+                LET dc AS S64 = i MOD 4 - (v - 1) MOD 4
+                IF dr < 0 THEN dr = 0 - dr END IF
+                IF dc < 0 THEN dc = 0 - dc END IF
+                h = h + dr + dc
+            END IF
+        END FOR
+        RETURN h
+    END FUNCTION
+
+    FUNCTION Srch(blank AS S64, g AS S64, bound AS S64, last AS S64) AS S64
+        LET h AS S64 = Heu()
+        LET f AS S64 = g + h
+        IF f > bound THEN RETURN f END IF
+        IF h = 0 THEN
+            fnd[1] = 1
+            RETURN 0 - 1
+        END IF
+        LET best AS S64 = 9999
+        LET r AS S64 = blank / 4
+        LET c AS S64 = blank MOD 4
+        -- try moves: dir code 0=up 1=down 2=left 3=right (of blank)
+        FOR dir = 0 TO 3
+            LET nb AS S64 = 0 - 1
+            IF dir = 0 ANDALSO r > 0 THEN nb = blank - 4 END IF
+            IF dir = 1 ANDALSO r < 3 THEN nb = blank + 4 END IF
+            IF dir = 2 ANDALSO c > 0 THEN nb = blank - 1 END IF
+            IF dir = 3 ANDALSO c < 3 THEN nb = blank + 1 END IF
+            IF nb >= 0 ANDALSO nb <> last THEN
+                LET t AS S64 = bd[nb + 1]
+                bd[nb + 1] = 0
+                bd[blank + 1] = t
+                LET res AS S64 = Srch(nb, g + 1, bound, blank)
+                IF res < 0 THEN
+                    mc[1] = mc[1] + 1
+                    mv[mc[1]] = dir
+                    bd[blank + 1] = 0
+                    bd[nb + 1] = t
+                    RETURN 0 - 1
+                END IF
+                IF res < best THEN best = res END IF
+                bd[blank + 1] = 0
+                bd[nb + 1] = t
+            END IF
+        END FOR
+        RETURN best
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- board: 4 moves from solved (U,U,L,L on blank)
+        bd[1] = 1; bd[2] = 2; bd[3] = 3; bd[4] = 4
+        bd[5] = 5; bd[6] = 0; bd[7] = 6; bd[8] = 7
+        bd[9] = 9; bd[10] = 10; bd[11] = 11; bd[12] = 8
+        bd[13] = 13; bd[14] = 14; bd[15] = 15; bd[16] = 12
+        FOR i = 0 TO 15
+            PRINT$ bd[i + 1] | " "
+        END FOR
+        PRINT ""
+        fnd[1] = 0
+        mc[1] = 0
+        LET blank AS S64 = 0
+        FOR i = 0 TO 15
+            IF bd[i + 1] = 0 THEN blank = i END IF
+        END FOR
+        LET bound AS S64 = Heu()
+        LET iter AS S64 = 0
+        WHILE fnd[1] = 0 ANDALSO iter < 60
+            iter = iter + 1
+            bound = Srch(blank, 0, bound, 0 - 1)
+        END WHILE
+        IF fnd[1] = 1 THEN
+            PRINT "moves=" | mc[1]
+            LET s AS STRING = "path:"
+            LET i AS S64 = mc[1]
+            WHILE i >= 1
+                s = s | " " | mv[i]
+                i = i - 1
+            END WHILE
+            PRINT s
+        ELSE
+            PRINT "unsolved bound=" | bound
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Pz
+BEGIN
+    Pz.Run()
+END

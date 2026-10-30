@@ -1,0 +1,39 @@
+-- 413 | Kolakoski sequence: first 100 terms; the sequence is its own run-length code.
+DECLARE MODULE Kolakoski
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Kolakoski
+    STRICT s[128] AS S32
+
+    PROCEDURE Run()
+        LET k AS S32 = 2
+        LET n AS S32 = 3
+        LET cur AS S32 = 1
+        s[0] = 1
+        s[1] = 2
+        s[2] = 2
+        WHILE n < 100
+            FOR i = 1 TO s[k]
+                s[n] = cur
+                n = n + 1
+            END FOR
+            k = k + 1
+            IF cur = 1 THEN
+                cur = 2
+            ELSE
+                cur = 1
+            END IF
+        END WHILE
+        LET res AS STRING = ""
+        FOR i = 0 TO 99
+            res = res | s[i]
+        END FOR
+        PRINT res
+    END PROCEDURE
+END MODULE
+
+IMPORT Kolakoski
+BEGIN
+    Kolakoski.Run()
+END

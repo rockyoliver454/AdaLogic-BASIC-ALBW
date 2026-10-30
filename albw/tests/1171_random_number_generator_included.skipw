@@ -1,0 +1,1 @@
+xorshift64 seed ~8.8e16 exceeds 2^53; exact sequence needs BigInt-typed S64 storage

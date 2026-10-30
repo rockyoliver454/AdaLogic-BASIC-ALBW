@@ -1,0 +1,47 @@
+-- 1222 | --rt-trim (default ON): the emitted .ts keeps only the
+-- runtime helpers the program text references (seed scan + closure
+-- over helper-to-helper references).  This program reads its own
+-- T1222.ts and asserts presence/absence on both sides of the cut.
+-- Globals force FIREWALL; OPEN/READ force file helpers; INSTR itself
+-- exercises the builtin-dispatch path.  Needles are SPLIT so the
+-- literal helper name never appears in this file's emitted text �
+-- a whole-name literal would mark the helper used and defeat the
+-- absent-side assertions.
+LET g AS S32 = 7
+
+FUNCTION Has(hay AS STRING, needle AS STRING) AS S32
+    IF INSTR(hay, needle) > 0 THEN RETURN 1 END IF
+    RETURN 0
+END FUNCTION
+
+BEGIN
+    LET h = OPEN("T1222.ts", "r")
+    LET t AS STRING = READ(h, 0)
+    CLOSE h
+    g = g + 1
+    --  count lines, not bytes: the emitter writes \n on POSIX and
+    --  \r\n on Windows so a byte-length golden can't be shared.
+    LET lns AS S64 = 0
+    LET i AS S64 = 1
+    WHILE i <= LEN(t)
+        IF ASC(MID$(t, i, 1)) = 10 THEN lns = lns + 1 END IF
+        i = i + 1
+    END WHILE
+    PRINT "lns=" | lns
+    --  present: names the program text (or a kept helper) references
+    PRINT "fatal=" | Has(t, "function ALB_" | "FATAL")
+    PRINT "stdout=" | Has(t, "function alb" | "Stdout")
+    PRINT "shutdown=" | Has(t, "function ALB_" | "ProgramShutdown")
+    PRINT "fw=" | Has(t, "function ALB_" | "FIREWALL_READ")
+    PRINT "open=" | Has(t, "function ALB_" | "Open")
+    PRINT "instr=" | Has(t, "function ALB_" | "Instr")
+    --  absent: never referenced anywhere
+    PRINT "sniff=" | Has(t, "function ALB_" | "SNIFFER_DEFINE")
+    PRINT "music=" | Has(t, "function ALB_" | "PLAY_MUSIC")
+    PRINT "sprite=" | Has(t, "ALB_" | "STATIC_EMPTY_SPRITE")
+    PRINT "window=" | Has(t, "function ALB_" | "CREATE_" | "WINDOW")
+    PRINT "tick=" | Has(t, "let ALB_" | "ON_TICK")
+    PRINT "raf=" | Has(t, "function ALB_" | "RunFrame")
+    PRINT "wasm=" | Has(t, "ALB_" | "WASM_HOST_IMPORTS")
+    PRINT "arena=" | Has(t, "albArena" | "Cap")
+END

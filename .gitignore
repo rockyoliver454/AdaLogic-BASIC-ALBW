@@ -1,0 +1,47 @@
+# Build outputs and local scratch. Sources, project, docs and
+# legal files (NOTICE, LICENSE, licenses/, docs/, README/SECURITY)
+# are versioned.  Everything generated stays out.
+
+# GNAT/GPRbuild outputs
+obj/
+bin/
+*.o
+*.ali
+*.bexch
+b__*.ad?
+b~*.ad?
+
+# Test-suite work artifacts
+albw/work/
+
+# Logs and scratch
+*.log
+*.tmp
+*.bak
+*~
+
+# Toolchain state (pinned toolchains live outside git)
+/.alire/
+/deps/
+
+# Editors, OS noise
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# MCP server + SDK staging
+**/__pycache__/
+
+# Release staging (binary packages live in GitHub Releases)
+release/albw-release-*/
+release/*.zip
+release/*.tar.gz
+
+# generated transpile outputs
+braille/*.ts
+

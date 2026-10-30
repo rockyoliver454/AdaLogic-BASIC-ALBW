@@ -1,0 +1,75 @@
+-- 829 | Penney's game: for each opponent triple, the optimal
+-- response is complement-middle-then-first-two. Print the
+-- response and its exact win probability (Markov states).
+DECLARE MODULE Pn
+    FUNCTION Prob(opp AS S64, rsp AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pn
+    -- states 0..7 = last 3 flips (or fewer); absorbing 8,9
+    -- use Markov iteration: p(state wins rsp)
+    STRICT pv[8] AS F64
+    STRICT nv[8] AS F64
+
+    FUNCTION Prob(opp AS S64, rsp AS S64) AS F64
+        -- probability rsp appears before opp in fair coin flips.
+        -- iterate: v[mask3bits] = prob rsp wins from that suffix
+        FOR i = 0 TO 7
+            pv[i] = 0.5
+        END FOR
+        FOR it = 1 TO 200
+            FOR m = 0 TO 7
+                -- extend suffix m (up to 3 bits) by H/T
+                LET m0 AS S64 = ((m * 2) MOD 8)
+                LET m1 AS S64 = ((m * 2 + 1) MOD 8)
+                LET v0 AS F64 = pv[m0]
+                LET v1 AS F64 = pv[m1]
+                IF m0 = rsp THEN v0 = 1.0 END IF
+                IF m0 = opp THEN v0 = 0.0 END IF
+                IF m1 = rsp THEN v1 = 1.0 END IF
+                IF m1 = opp THEN v1 = 0.0 END IF
+                nv[m] = 0.5 * v0 + 0.5 * v1
+            END FOR
+            FOR m = 0 TO 7
+                pv[m] = nv[m]
+            END FOR
+        END FOR
+        -- start state = average over 3 initial flips
+        LET s AS F64 = 0.0
+        FOR m = 0 TO 7
+            LET v AS F64 = pv[m]
+            IF m = rsp THEN v = 1.0 END IF
+            IF m = opp THEN v = 0.0 END IF
+            s = s + v
+        END FOR
+        RETURN s / 8.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR o = 0 TO 7
+            -- response: NOT mid, then first two bits of opp
+            LET b1 AS S64 = o / 4
+            LET b2 AS S64 = (o / 2) MOD 2
+            LET b3 AS S64 = o MOD 2
+            LET r AS S64 = (1 - b2) * 4 + b1 * 2 + b2
+            LET s1 AS STRING = ""
+            IF b1 = 1 THEN s1 = s1 | "H" ELSE s1 = s1 | "T" END IF
+            IF b2 = 1 THEN s1 = s1 | "H" ELSE s1 = s1 | "T" END IF
+            IF b3 = 1 THEN s1 = s1 | "H" ELSE s1 = s1 | "T" END IF
+            LET s2 AS STRING = ""
+            LET c1 AS S64 = r / 4
+            LET c2 AS S64 = (r / 2) MOD 2
+            LET c3 AS S64 = r MOD 2
+            IF c1 = 1 THEN s2 = s2 | "H" ELSE s2 = s2 | "T" END IF
+            IF c2 = 1 THEN s2 = s2 | "H" ELSE s2 = s2 | "T" END IF
+            IF c3 = 1 THEN s2 = s2 | "H" ELSE s2 = s2 | "T" END IF
+            PRINT s1 | " -> " | s2 | " p=" | Prob(o, r)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pn
+BEGIN
+    Pn.Run()
+END

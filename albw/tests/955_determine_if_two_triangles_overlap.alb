@@ -1,0 +1,86 @@
+-- 955 | Determine if two triangles overlap: separating-axis
+-- test over the 6 edge normals of both triangles.
+DECLARE MODULE Tr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tr
+    STRICT xa[4] AS F64
+    STRICT ya[4] AS F64
+    STRICT xb[4] AS F64
+    STRICT yb[4] AS F64
+
+    FUNCTION Proj(nx AS F64, ny AS F64, w AS S64) AS S64
+        -- returns packed min*100000+max scaled; use module vars
+        RETURN 0
+    END FUNCTION
+
+    STRICT lo[2] AS F64
+    STRICT hi[2] AS F64
+
+    PROCEDURE Rng(nx AS F64, ny AS F64, w AS S64)
+        LET mn AS F64 = 1.0E30
+        LET mx AS F64 = 0.0 - 1.0E30
+        FOR i = 1 TO 3
+            LET px AS F64 = 0.0
+            LET py AS F64 = 0.0
+            IF w = 1 THEN
+                px = xa[i]; py = ya[i]
+            ELSE
+                px = xb[i]; py = yb[i]
+            END IF
+            LET d AS F64 = px * nx + py * ny
+            IF d < mn THEN mn = d END IF
+            IF d > mx THEN mx = d END IF
+        END FOR
+        lo[w] = mn
+        hi[w] = mx
+    END PROCEDURE
+
+    FUNCTION AxisSep(nx AS F64, ny AS F64) AS S64
+        Rng(nx, ny, 1)
+        Rng(nx, ny, 2)
+        IF hi[1] < lo[2] ORELSE hi[2] < lo[1] THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Over(lbl AS STRING)
+        LET sep AS S64 = 0
+        FOR i = 1 TO 3
+            LET j AS S64 = i MOD 3 + 1
+            IF AxisSep(ya[j] - ya[i], xa[i] - xa[j]) = 1 THEN sep = 1 END IF
+            IF AxisSep(yb[j] - yb[i], xb[i] - xb[j]) = 1 THEN sep = 1 END IF
+        END FOR
+        IF sep = 1 THEN
+            PRINT lbl | ": no overlap"
+        ELSE
+            PRINT lbl | ": overlap"
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- A=(0,0)(5,0)(0,5) B=(0,0)(6,1)(5,-1) share vertex/edge
+        xa[1] = 0.0; ya[1] = 0.0
+        xa[2] = 5.0; ya[2] = 0.0
+        xa[3] = 0.0; ya[3] = 5.0
+        xb[1] = 0.0; yb[1] = 0.0
+        xb[2] = 6.0; yb[2] = 1.0
+        xb[3] = 5.0; yb[3] = 0.0 - 1.0
+        Over("A vs B")
+        -- C=(7,7)(8,7)(7,8) disjoint
+        xb[1] = 7.0; yb[1] = 7.0
+        xb[2] = 8.0; yb[2] = 7.0
+        xb[3] = 7.0; yb[3] = 8.0
+        Over("A vs C")
+        -- D=(1,1)(4,1)(1,4) inside A
+        xb[1] = 1.0; yb[1] = 1.0
+        xb[2] = 4.0; yb[2] = 1.0
+        xb[3] = 1.0; yb[3] = 4.0
+        Over("A vs D")
+    END PROCEDURE
+END MODULE
+
+IMPORT Tr
+BEGIN
+    Tr.Run()
+END

@@ -1,0 +1,7 @@
+BEGIN
+    LET n = 1
+    WHILE ((n * n) MOD 1000000) <> 269696
+        n = n + 1
+    END WHILE
+    PRINT$ n
+END

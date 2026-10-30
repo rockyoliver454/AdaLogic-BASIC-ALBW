@@ -1,0 +1,37 @@
+-- 482 | Hofstadter-Conway $10,000 sequence: max a(n)/n in each
+-- block [2^k, 2^(k+1)-1] for k = 0..9 (mallows points).
+DECLARE MODULE HC
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE HC
+    STRICT a[16385] AS S64
+
+    PROCEDURE Run()
+        a[1] = 1
+        a[2] = 1
+        FOR n = 3 TO 16384
+            a[n] = a[a[n - 1]] + a[n - a[n - 1]]
+        END FOR
+        LET lo AS S64 = 1
+        LET hi AS S64 = 2
+        FOR k = 0 TO 9
+            LET best AS S64 = 0
+            LET bestN AS S64 = lo
+            FOR n = lo TO hi - 1
+                IF a[n] * 1000 > best * n THEN
+                    best = a[n]
+                    bestN = n
+                END IF
+            END FOR
+            PRINT "k=" | k | " max a(n)/n=" | best | "/" | bestN
+            lo = hi
+            hi = hi * 2
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT HC
+BEGIN
+    HC.Run()
+END

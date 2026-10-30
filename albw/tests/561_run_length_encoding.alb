@@ -1,0 +1,44 @@
+-- 561 | Run-length encoding: WWWWWWWWWWWWBWWWWWWWWWWWWBBB... ->
+-- 12W1B12W3B24W1B14W; then decode back.
+DECLARE MODULE RLE
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RLE
+    PROCEDURE Run()
+        LET src AS STRING = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW"
+        LET enc AS STRING = ""
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(src)
+        WHILE i <= n
+            LET c AS STRING = MID$(src, i, 1)
+            LET cnt AS S64 = 1
+            WHILE i + cnt <= n ANDALSO MID$(src, i + cnt, 1) = c
+                cnt = cnt + 1
+            END WHILE
+            enc = enc | cnt | c
+            i = i + cnt
+        END WHILE
+        PRINT enc
+        LET dec AS STRING = ""
+        LET num AS S64 = 0
+        FOR j = 1 TO LEN(enc)
+            LET ch AS S64 = ASC(MID$(enc, j, 1))
+            IF ch >= 48 ANDALSO ch <= 57 THEN
+                num = num * 10 + ch - 48
+            ELSE
+                FOR k = 1 TO num
+                    dec = dec | MID$(enc, j, 1)
+                END FOR
+                num = 0
+            END IF
+        END FOR
+        PRINT dec
+        PRINT "roundtrip: " | (LEN(dec) = n)
+    END PROCEDURE
+END MODULE
+
+IMPORT RLE
+BEGIN
+    RLE.Run()
+END

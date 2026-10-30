@@ -1,0 +1,60 @@
+-- 846 | Universal Turing machine: simulate a given TM on a
+-- tape. Machine: 3-state busy beaver (BB(3) = 21 ones in 14
+-- steps? classic BB3 runs 14 steps, writes 6 ones). Use the
+-- standard increment machine for clarity.
+DECLARE MODULE Ut
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ut
+    -- tape: STRICT array; head position; state table.
+    -- States A,B,C,H. Each entry: (read0: write,move,next; read1: ...)
+    -- encode tr[state][sym] -> w*100 + mv*10 + next ; mv: -1 L, +1 R
+    -- moves encoded +2 to keep positive: -1->1, +1->3
+    STRICT tr[9] AS S64
+    STRICT tp[300] AS S64
+
+    PROCEDURE Run()
+        -- Busy beaver 3-state:
+        -- A: 0->1RB 1->1RH ; B: 0->0LC 1->1RB ; C: 0->1LC 1->1LA
+        -- encode w*1000 + m*100 + next ; m:1=L 3=R ; next:0=A..3=H
+        -- tr[state*2 + sym + 1], state A=0,B=1,C=2
+        tr[1] = 1301  -- A,0 -> w1 R B
+        tr[2] = 1103  -- A,1 -> w1 R H
+        tr[3] = 1002  -- B,0 -> w0 L C
+        tr[4] = 1301  -- B,1 -> w1 R B
+        tr[5] = 1102  -- C,0 -> w1 L C
+        tr[6] = 1100  -- C,1 -> w1 L A
+        FOR i = 1 TO 300
+            tp[i] = 0
+        END FOR
+        LET head AS S64 = 150
+        LET st AS S64 = 0
+        LET steps AS S64 = 0
+        WHILE st <> 3 ANDALSO steps < 10000
+            LET sym AS S64 = tp[head]
+            LET e AS S64 = tr[st * 2 + sym + 1]
+            tp[head] = e / 1000
+            LET mv AS S64 = (e / 100) MOD 10
+            IF mv = 1 THEN head = head - 1 END IF
+            IF mv = 3 THEN head = head + 1 END IF
+            st = e MOD 100
+            steps = steps + 1
+        END WHILE
+        LET ones AS S64 = 0
+        FOR i = 1 TO 300
+            ones = ones + tp[i]
+        END FOR
+        PRINT "halted state=" | st | " steps=" | steps | " ones=" | ones
+        LET s AS STRING = ""
+        FOR i = 146 TO 156
+            s = s | tp[i]
+        END FOR
+        PRINT "tape[146..156]: " | s
+    END PROCEDURE
+END MODULE
+
+IMPORT Ut
+BEGIN
+    Ut.Run()
+END

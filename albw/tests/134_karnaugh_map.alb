@@ -1,0 +1,26 @@
+-- 134 | Karnaugh map: 4-var grid in Gray code order with minterms.
+BEGIN
+    STRICT mins[6] AS S32;
+    mins[0]=4; mins[1]=8; mins[2]=10; mins[3]=11; mins[4]=12; mins[5]=15;
+    STRICT gray[4] AS S32;
+    gray[0]=0; gray[1]=1; gray[2]=3; gray[3]=2;
+    STRICT cell[4,4] AS S32;
+    FOR i = 0 TO 5
+        LET m AS S32 = mins[i];
+        LET ab AS S32 = m / 4;
+        LET cd AS S32 = m MOD 4;
+        FOR r = 0 TO 3
+            FOR c = 0 TO 3
+                IF gray[r] = ab ANDALSO gray[c] = cd THEN
+                    cell[r,c] = 1;
+                END IF
+            END FOR
+        END FOR
+    END FOR
+    PRINT$ "ab\\cd 00 01 11 10";
+    STRICT hdr[4] AS STRING;
+    hdr[0]="00"; hdr[1]="01"; hdr[2]="11"; hdr[3]="10";
+    FOR r = 0 TO 3
+        PRINT$ hdr[r] | "    " | cell[r,0] | "  " | cell[r,1] | "  " | cell[r,2] | "  " | cell[r,3];
+    END FOR
+END

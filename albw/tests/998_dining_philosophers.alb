@@ -1,0 +1,58 @@
+-- 998 | Dining philosophers: 5 philosophers, 5 forks;
+-- SPAWN (synchronous in FASM) runs each meal; resource-
+-- hierarchy ordering (lowest fork first) prevents deadlock.
+DECLARE MODULE Dp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dp
+    STRICT frk[5] AS S64
+    STRICT ate[5] AS S64
+
+    PROCEDURE Dine(p AS S64)
+        -- philosopher p eats twice; picks lower-numbered
+        -- fork first (deadlock-free ordering)
+        LET l AS S64 = p
+        LET r AS S64 = p MOD 5 + 1
+        LET f1 AS S64 = l
+        LET f2 AS S64 = r
+        IF r < l THEN
+            f1 = r
+            f2 = l
+        END IF
+        FOR meal = 1 TO 2
+            ATOMIC
+            frk[f1] = 1
+            frk[f2] = 1
+            END ATOMIC
+            ate[p] = ate[p] + 1
+            PRINT "p" | p | " eats meal " | ate[p] | " (forks " | f1 | "," | f2 | ")"
+            ATOMIC
+            frk[f1] = 0
+            frk[f2] = 0
+            END ATOMIC
+            PRINT "p" | p | " thinks"
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 1 TO 5
+            frk[i] = 0
+            ate[i] = 0
+        END FOR
+        FOR p = 1 TO 5
+            SPAWN Dine(p)
+        END FOR
+        SYNC
+        LET tot AS S64 = 0
+        FOR p = 1 TO 5
+            tot = tot + ate[p]
+        END FOR
+        PRINT "total meals=" | tot
+    END PROCEDURE
+END MODULE
+
+IMPORT Dp
+BEGIN
+    Dp.Run()
+END

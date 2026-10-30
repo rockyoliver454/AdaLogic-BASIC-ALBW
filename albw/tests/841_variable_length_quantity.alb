@@ -1,0 +1,51 @@
+-- 841 | Variable-length quantity: MIDI VLQ encode/decode.
+DECLARE MODULE Vq
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vq
+    STRICT buf[10] AS S64
+
+    FUNCTION Enc(v AS S64) AS STRING
+        -- returns hex byte list
+        LET nb AS S64 = 0
+        LET x AS S64 = v
+        buf[5] = x MOD 128
+        LET i AS S64 = 5
+        x = x / 128
+        WHILE x > 0
+            i = i - 1
+            buf[i] = (x MOD 128) + 128
+            x = x / 128
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = i TO 5
+            LET b AS S64 = buf[k]
+            -- to 2-hex
+            LET h AS S64 = b / 16
+            LET l AS S64 = b MOD 16
+            IF h < 10 THEN s = s | h ELSE s = s | CHR(55 + h) END IF
+            IF l < 10 THEN s = s | l ELSE s = s | CHR(55 + l) END IF
+            s = s | " "
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "0 -> " | Enc(0)
+        PRINT "127 -> " | Enc(127)
+        PRINT "128 -> " | Enc(128)
+        PRINT "8192 -> " | Enc(8192)
+        PRINT "16384 -> " | Enc(16384)
+        PRINT "106903 -> " | Enc(106903)
+        -- decode: 86 C3 17 -> 106903
+        LET v AS S64 = (0 * 128 + 6) * 128 + 67
+        v = v * 128 + 23
+        PRINT "86 C3 17 -> " | v
+    END PROCEDURE
+END MODULE
+
+IMPORT Vq
+BEGIN
+    Vq.Run()
+END

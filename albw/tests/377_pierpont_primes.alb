@@ -1,0 +1,53 @@
+-- 377 | Pierpont primes: primes of the form 2^u * 3^v + 1; first 50.
+DECLARE MODULE Pierpont
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pierpont
+    STRICT hits[64] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S32 = 0
+        FOR u = 0 TO 20
+            FOR v = 0 TO 13
+                LET p AS S64 = (2 ^ u) * (3 ^ v) + 1
+                IF IsPrime(p) = 1 THEN
+                    hits[cnt] = p
+                    cnt = cnt + 1
+                END IF
+            END FOR
+        END FOR
+        FOR i = 0 TO cnt - 1
+            FOR j = i + 1 TO cnt - 1
+                IF hits[j] < hits[i] THEN
+                    LET t AS S64 = hits[i]
+                    hits[i] = hits[j]
+                    hits[j] = t
+                END IF
+            END FOR
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 0 TO 49
+            s = s | hits[i] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pierpont
+BEGIN
+    Pierpont.Run()
+END

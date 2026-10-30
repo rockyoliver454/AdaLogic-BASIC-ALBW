@@ -1,0 +1,63 @@
+-- 458 | Minimum positive multiple in base 10 using only 0 and 1:
+-- BFS over remainders for n = 1..20.
+DECLARE MODULE BinMul
+    FUNCTION Solve(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE BinMul
+    STRICT prev[64] AS S64
+    STRICT dig[64] AS S64
+    STRICT q[64] AS S64
+
+    FUNCTION Solve(n AS S64) AS S64
+        FOR i = 0 TO n
+            prev[i] = -1
+            dig[i] = 0
+            q[i] = 0
+        END FOR
+        LET head AS S64 = 1
+        LET tail AS S64 = 1
+        q[1] = 1 MOD n
+        prev[1 MOD n] = -2
+        dig[1 MOD n] = 1
+        LET found AS S32 = 0
+        WHILE head <= tail ANDALSO found = 0
+            LET r AS S64 = q[head]
+            head = head + 1
+            FOR d = 0 TO 1
+                LET nr AS S64 = (r * 10 + d) MOD n
+                IF prev[nr] = -1 THEN
+                    prev[nr] = r
+                    dig[nr] = d
+                    tail = tail + 1
+                    q[tail] = nr
+                    IF nr = 0 THEN found = 1 END IF
+                END IF
+            END FOR
+        END WHILE
+        LET s AS STRING = ""
+        LET cur AS S64 = 0
+        WHILE cur <> -2
+            s = dig[cur] | s
+            cur = prev[cur]
+        END WHILE
+        LET num AS S64 = 0
+        FOR i2 = 1 TO LEN(s)
+            LET cd AS S64 = ASC(MID$(s, i2, 1)) - 48
+            num = num * 10 + cd
+        END FOR
+        RETURN num
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 20
+            PRINT "n=" | n | " -> " | Solve(n)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT BinMul
+BEGIN
+    BinMul.Run()
+END

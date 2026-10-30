@@ -1,0 +1,20 @@
+-- NEGATIVE fixture (.errw): ALBW must REFUSE to compile.
+-- `dot` tokenizes as Tok_Dot_Prod (SIMD intrinsic). Using it as a LET
+-- binding must raise Err_Parse_Reserved_Keyword and abort the emit —
+-- previously the declaration, the WHILE, and the RETURN were all
+-- silently dropped and a gutted .ts shipped (see
+-- BUG_REPORT_albw_reserved_word_silent_drop.md).
+
+FUNCTION P() AS S64
+    LET i AS S64 = 0
+    LET dot AS S64 = 0
+    WHILE i < 5
+        dot = dot + i
+        i = i + 1
+    END WHILE
+    RETURN dot
+END FUNCTION
+
+BEGIN
+    PRINT P()
+END

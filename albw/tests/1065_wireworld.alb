@@ -1,0 +1,128 @@
+VERSION 1.0
+
+STRICT ww[256] AS S32
+STRICT w2[256] AS S32
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET ticks AS S64 = 0
+
+
+BEGIN
+    LET x AS S64 = 2
+    WHILE x < 14
+        ww[7 * 16 + x] = 3
+        ww[8 * 16 + x] = 3
+        x = x + 1
+    END WHILE
+    ww[7 * 16 + 3] = 1
+    ww[7 * 16 + 4] = 2
+    ww[8 * 16 + 6] = 0
+
+    ticks = 0
+    WHILE ticks < 12
+        LET i AS S64 = 0
+        WHILE i < 256
+            w2[i] = ww[i]
+            i = i + 1
+        END WHILE
+        LET y AS S64 = 1
+        WHILE y < 15
+            x = 1
+            WHILE x < 15
+                LET c AS S64 = y * 16 + x
+                IF ww[c] = 1 THEN w2[c] = 2 END IF
+                IF ww[c] = 2 THEN w2[c] = 3 END IF
+                IF ww[c] = 3 THEN
+                    LET nh AS S64 = 0
+                    IF ww[c - 17] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c - 16] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c - 15] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c - 1] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c + 1] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c + 15] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c + 16] = 1 THEN nh = nh + 1 END IF
+                    IF ww[c + 17] = 1 THEN nh = nh + 1 END IF
+                    IF nh = 1 ORELSE nh = 2 THEN w2[c] = 1 END IF
+                END IF
+                x = x + 1
+            END WHILE
+            y = y + 1
+        END WHILE
+        i = 0
+        WHILE i < 256
+            ww[i] = w2[i]
+            i = i + 1
+        END WHILE
+        ticks = ticks + 1
+    END WHILE
+
+    LET i2 AS S64 = 0
+    WHILE i2 < 256
+        LET v AS S64 = ww[i2]
+        LET c2 AS S64 = 0
+        IF v = 1 THEN c2 = 255 END IF
+        IF v = 2 THEN c2 = 16711680 END IF
+        IF v = 3 THEN c2 = 16776960 END IF
+        LET cx AS S64 = (i2 MOD 16) * 4
+        LET cy AS S64 = (i2 / 16) * 4
+        LET yy AS S64 = 0
+        WHILE yy < 4
+            LET xx AS S64 = 0
+            WHILE xx < 4
+                img[(cy + yy) * 64 + cx + xx] = c2
+                xx = xx + 1
+            END WHILE
+            yy = yy + 1
+        END WHILE
+        i2 = i2 + 1
+    END WHILE
+
+    CREATE_WINDOW "Wireworld", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    LET heads AS S64 = 0
+    LET i3 AS S64 = 0
+    WHILE i3 < 256
+        IF ww[i3] = 1 THEN heads = heads + 1 END IF
+        i3 = i3 + 1
+    END WHILE
+    PRINT "ticks=12"
+    PRINT "heads=" | heads
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

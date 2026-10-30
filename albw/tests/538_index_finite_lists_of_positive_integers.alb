@@ -1,0 +1,55 @@
+-- 538 | Index finite lists of positive integers: encode the k-list
+-- [1,2,3] as sum of C(v_i-1, i) etc. plus list index; rank/unrank
+-- via combinatorial number system on C(v-1, k) for increasing lists.
+DECLARE MODULE Idx
+    FUNCTION C(n AS S64, k AS S64) AS S64
+    FUNCTION Rank(v1 AS S64, v2 AS S64, v3 AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Idx
+    FUNCTION C(n AS S64, k AS S64) AS S64
+        IF k < 0 ORELSE k > n THEN RETURN 0 END IF
+        IF k > n - k THEN k = n - k END IF
+        LET r AS S64 = 1
+        FOR i = 1 TO k
+            r = r * (n - k + i) / i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    -- rank of strictly-increasing triple 1<=v1<v2<v3 in lex order by
+    -- combinatorial number system: index among 3-subsets of N+
+    FUNCTION Rank(v1 AS S64, v2 AS S64, v3 AS S64) AS S64
+        RETURN C(v1 - 1, 1) + C(v2 - 1, 2) + C(v3 - 1, 3)
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "rank(1,2,3) = " | Rank(1, 2, 3)
+        PRINT "rank(1,2,4) = " | Rank(1, 2, 4)
+        PRINT "rank(1,3,4) = " | Rank(1, 3, 4)
+        PRINT "rank(2,3,4) = " | Rank(2, 3, 4)
+        PRINT "rank(4,5,6) = " | Rank(4, 5, 6)
+        -- unrank 0..9 back to triples: greedy largest C(v3-1,3)<=r
+        FOR r = 0 TO 9
+            LET rem AS S64 = r
+            LET v3 AS S64 = 3
+            WHILE C(v3, 3) <= rem
+                v3 = v3 + 1
+            END WHILE
+            rem = rem - C(v3 - 1, 3)
+            LET v2 AS S64 = 2
+            WHILE C(v2, 2) <= rem
+                v2 = v2 + 1
+            END WHILE
+            rem = rem - C(v2 - 1, 2)
+            LET v1 AS S64 = rem + 1
+            PRINT "unrank(" | r | ") = [" | v1 | "," | v2 | "," | v3 | "]"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Idx
+BEGIN
+    Idx.Run()
+END

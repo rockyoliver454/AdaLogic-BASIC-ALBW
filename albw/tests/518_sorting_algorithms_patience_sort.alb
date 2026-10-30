@@ -1,0 +1,58 @@
+-- 518 | Sorting algorithms/Patience sort: cards go onto the
+-- leftmost pile whose top is >= the card; then repeatedly extract
+-- the smallest visible pile top.
+DECLARE MODULE Pat
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pat
+    STRICT a[8] AS S64
+    STRICT pileCard[64] AS S64
+    STRICT pileLen[8] AS S64
+
+    PROCEDURE Run()
+        a[1] = 6
+        a[2] = 3
+        a[3] = 8
+        a[4] = 1
+        a[5] = 7
+        a[6] = 2
+        a[7] = 5
+        a[8] = 4
+        LET np AS S64 = 0
+        FOR i = 1 TO 8
+            LET placed AS S32 = 0
+            FOR p = 1 TO np
+                IF placed = 0 ANDALSO pileLen[p] > 0 ANDALSO a[i] <= pileCard[(p - 1) * 8 + pileLen[p]] THEN
+                    pileLen[p] = pileLen[p] + 1
+                    pileCard[(p - 1) * 8 + pileLen[p]] = a[i]
+                    placed = 1
+                END IF
+            END FOR
+            IF placed = 0 THEN
+                np = np + 1
+                pileLen[np] = 1
+                pileCard[(np - 1) * 8 + 1] = a[i]
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 8
+            LET best AS S64 = 0
+            LET bv AS S64 = 9999
+            FOR p2 = 1 TO np
+                IF pileLen[p2] > 0 ANDALSO pileCard[(p2 - 1) * 8 + pileLen[p2]] < bv THEN
+                    bv = pileCard[(p2 - 1) * 8 + pileLen[p2]]
+                    best = p2
+                END IF
+            END FOR
+            s = s | bv | " "
+            pileLen[best] = pileLen[best] - 1
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pat
+BEGIN
+    Pat.Run()
+END

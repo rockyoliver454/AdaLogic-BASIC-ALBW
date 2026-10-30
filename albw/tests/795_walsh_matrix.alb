@@ -1,0 +1,41 @@
+-- 795 | Walsh matrix: Hadamard-ordered Walsh matrix W(8)
+-- via Sylvester recursion, printed as +/- grid.
+DECLARE MODULE Wm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wm
+    STRICT ww[64] AS S64
+
+    PROCEDURE Run()
+        -- W1 = [[1]]; W_{2n} = [[Wn, Wn],[Wn, -Wn]]
+        ww[1] = 1
+        LET sz AS S64 = 1
+        WHILE sz < 8
+            FOR i = 1 TO sz
+                FOR j = 1 TO sz
+                    ww[(i - 1 + sz) * 8 + j] = ww[(i - 1) * 8 + j]
+                    ww[(i - 1) * 8 + j + sz] = ww[(i - 1) * 8 + j]
+                    ww[(i - 1 + sz) * 8 + j + sz] = 0 - ww[(i - 1) * 8 + j]
+                END FOR
+            END FOR
+            sz = sz * 2
+        END WHILE
+        FOR i = 1 TO 8
+            LET row AS STRING = ""
+            FOR j = 1 TO 8
+                IF ww[(i - 1) * 8 + j] > 0 THEN
+                    row = row | "+"
+                ELSE
+                    row = row | "-"
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Wm
+BEGIN
+    Wm.Run()
+END

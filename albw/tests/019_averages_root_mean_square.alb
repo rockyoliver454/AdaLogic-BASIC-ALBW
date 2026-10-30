@@ -1,0 +1,9 @@
+BEGIN
+    LET sum = 0
+    LET i = 1
+    WHILE i <= 10
+        sum = sum + i * i
+        i = i + 1
+    END WHILE
+    PRINT$ sum * 100 / 10
+END

@@ -1,0 +1,62 @@
+-- 240 | Tree datastructures and traversal: index-based binary nodes.
+DECLARE MODULE BinaryTree
+    PROCEDURE Initialize()
+    PROCEDURE Preorder(node AS S32)
+    PROCEDURE Inorder(node AS S32)
+    PROCEDURE Postorder(node AS S32)
+END DECLARE MODULE
+
+MODULE BinaryTree
+    STRICT node_values[7] AS S32
+    STRICT left_child[7] AS S32
+    STRICT right_child[7] AS S32
+
+    PROCEDURE Initialize()
+        FOR i = 0 TO 6
+            node_values[i] = i + 1
+            left_child[i] = -1
+            right_child[i] = -1
+        END FOR
+        left_child[0] = 1
+        right_child[0] = 2
+        left_child[1] = 3
+        right_child[1] = 4
+        left_child[2] = 5
+        right_child[2] = 6
+    END PROCEDURE
+
+    PROCEDURE Preorder(node AS S32)
+        IF node >= 0 THEN
+            PRINT node_values[node]
+            Preorder(left_child[node])
+            Preorder(right_child[node])
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Inorder(node AS S32)
+        IF node >= 0 THEN
+            Inorder(left_child[node])
+            PRINT node_values[node]
+            Inorder(right_child[node])
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Postorder(node AS S32)
+        IF node >= 0 THEN
+            Postorder(left_child[node])
+            Postorder(right_child[node])
+            PRINT node_values[node]
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT BinaryTree
+BEGIN
+    BinaryTree.Initialize()
+    PRINT "preorder"
+    BinaryTree.Preorder(0)
+    PRINT "inorder"
+    BinaryTree.Inorder(0)
+    PRINT "postorder"
+    BinaryTree.Postorder(0)
+END

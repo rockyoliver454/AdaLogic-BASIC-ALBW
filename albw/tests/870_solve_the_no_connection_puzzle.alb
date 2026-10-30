@@ -1,0 +1,86 @@
+-- 870 | Solve the no-connection puzzle: place 1..8 on the
+-- 8-node graph (per Rosetta):
+--   A-B on top, C-D-E-F middle, G-H bottom; edges
+--   ac ad ae / bd be bf / cd de ef / cg dg eg / dh eh fh
+-- so connected nodes never differ by exactly 1.
+-- Expected: 16 solutions, first 3 4 7 1 8 2 5 6.
+DECLARE MODULE Nc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nc
+    STRICT ea[36] AS S64
+    STRICT eb[36] AS S64
+    STRICT ne[1] AS S64
+    STRICT perm[9] AS S64
+    STRICT sol[9] AS S64
+    STRICT cnt[1] AS S64
+
+    FUNCTION Con(u AS S64, v AS S64) AS S32
+        FOR i = 1 TO ne[1]
+            IF ea[i] = u ANDALSO eb[i] = v THEN RETURN 1 END IF
+            IF ea[i] = v ANDALSO eb[i] = u THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Good() AS S32
+        FOR i = 1 TO ne[1]
+            LET d AS S64 = perm[ea[i]] - perm[eb[i]]
+            IF d < 0 THEN d = 0 - d END IF
+            IF d = 1 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET ed AS STRING = "ac ad ae bd be bf cd de ef cg dg eg dh eh fh"
+        ne[1] = 15
+        FOR i = 1 TO 15
+            ea[i] = ASC(MID$(ed, i * 3 - 2, 1)) - 96
+            eb[i] = ASC(MID$(ed, i * 3 - 1, 1)) - 96
+        END FOR
+        cnt[1] = 0
+        FOR a = 1 TO 8
+        FOR b = 1 TO 8
+        FOR c = 1 TO 8
+        FOR d = 1 TO 8
+        FOR e = 1 TO 8
+        FOR f = 1 TO 8
+        FOR g = 1 TO 8
+        FOR h = 1 TO 8
+            IF (a-b)*(a-c)*(a-d)*(a-e)*(a-f)*(a-g)*(a-h)*(b-c)*(b-d)*(b-e)*(b-f)*(b-g)*(b-h)*(c-d)*(c-e)*(c-f)*(c-g)*(c-h)*(d-e)*(d-f)*(d-g)*(d-h)*(e-f)*(e-g)*(e-h)*(f-g)*(f-h)*(g-h) <> 0 THEN
+                perm[1] = a
+                perm[2] = b
+                perm[3] = c
+                perm[4] = d
+                perm[5] = e
+                perm[6] = f
+                perm[7] = g
+                perm[8] = h
+                IF Good() = 1 THEN
+                    cnt[1] = cnt[1] + 1
+                    IF cnt[1] = 1 THEN
+                        FOR i = 1 TO 8
+                            sol[i] = perm[i]
+                        END FOR
+                    END IF
+                END IF
+            END IF
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        PRINT "solutions=" | cnt[1]
+        PRINT "first: " | sol[1] | sol[2] | sol[3] | sol[4] | sol[5] | sol[6] | sol[7] | sol[8]
+    END PROCEDURE
+END MODULE
+
+IMPORT Nc
+BEGIN
+    Nc.Run()
+END

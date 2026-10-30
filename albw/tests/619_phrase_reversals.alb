@@ -1,0 +1,52 @@
+-- 619 | Phrase reversals: reverse chars, reverse word order,
+-- and reverse each word.
+DECLARE MODULE Phr
+    FUNCTION RevStr(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Phr
+    FUNCTION RevStr(s AS STRING) AS STRING
+        LET r AS STRING = ""
+        LET i AS S64 = LEN(s)
+        WHILE i >= 1
+            r = r | MID$(s, i, 1)
+            i = i - 1
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "rosetta code phrase reversal"
+        PRINT RevStr(s)
+        LET w AS STRING = ""
+        LET cur2 AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET ch AS STRING = MID$(s, i, 1)
+            IF ch = " " THEN
+                w = w | RevStr(cur2) | " "
+                cur2 = ""
+            ELSE
+                cur2 = cur2 | ch
+            END IF
+        END FOR
+        PRINT w | RevStr(cur2)
+        LET w2 AS STRING = ""
+        LET cur AS STRING = ""
+        FOR j = 1 TO LEN(s)
+            LET c2 AS STRING = MID$(s, j, 1)
+            IF c2 = " " THEN
+                w2 = cur | " " | w2
+                cur = ""
+            ELSE
+                cur = cur | c2
+            END IF
+        END FOR
+        PRINT cur | " " | w2
+    END PROCEDURE
+END MODULE
+
+IMPORT Phr
+BEGIN
+    Phr.Run()
+END

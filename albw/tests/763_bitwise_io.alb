@@ -1,0 +1,83 @@
+-- 763 | Bitwise IO: bit-level writer and reader round-trip.
+DECLARE MODULE Bio
+    PROCEDURE WBit(v AS S64)
+    PROCEDURE FlushBits()
+    FUNCTION RBit() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bio
+    STRICT wacc[1] AS S64
+    STRICT wcnt[1] AS S64
+    STRICT rbuf[8] AS S64
+    STRICT rbit[1] AS S64
+    STRICT rtot[1] AS S64
+    STRICT nbyt[1] AS S64
+
+    PROCEDURE WBit(v AS S64)
+        wacc[1] = wacc[1] * 2 + v
+        wcnt[1] = wcnt[1] + 1
+        IF wcnt[1] = 8 THEN
+            nbyt[1] = nbyt[1] + 1
+            rbuf[nbyt[1]] = wacc[1]
+            wacc[1] = 0
+            wcnt[1] = 0
+        END IF
+    END PROCEDURE
+
+    PROCEDURE FlushBits()
+        IF wcnt[1] > 0 THEN
+            WHILE wcnt[1] < 8
+                wacc[1] = wacc[1] * 2
+                wcnt[1] = wcnt[1] + 1
+            END WHILE
+            nbyt[1] = nbyt[1] + 1
+            rbuf[nbyt[1]] = wacc[1]
+            wacc[1] = 0
+            wcnt[1] = 0
+        END IF
+    END PROCEDURE
+
+    FUNCTION RBit() AS S64
+        IF rbit[1] >= rtot[1] THEN RETURN 0 - 1 END IF
+        LET idx AS S64 = rbit[1] / 8 + 1
+        LET sh AS S64 = 7 - rbit[1] MOD 8
+        LET v AS S64 = rbuf[idx] / 2 ^ sh
+        rbit[1] = rbit[1] + 1
+        RETURN v MOD 2
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- write bits of "A" (65 = 01000001) then 3 in 4 bits
+        LET a AS S64 = 65
+        LET i AS S64 = 7
+        WHILE i >= 0
+            WBit(a / 2 ^ i MOD 2)
+            i = i - 1
+        END WHILE
+        i = 3
+        WHILE i >= 0
+            WBit(3 / 2 ^ i MOD 2)
+            i = i - 1
+        END WHILE
+        FlushBits()
+        PRINT "bytes=" | nbyt[1] | " " | rbuf[1] | " " | rbuf[2]
+        rbit[1] = 0
+        rtot[1] = 12
+        LET v AS S64 = 0
+        FOR i = 1 TO 8
+            v = v * 2 + RBit()
+        END FOR
+        PRINT "read8=" | v
+        v = 0
+        FOR i = 1 TO 4
+            v = v * 2 + RBit()
+        END FOR
+        PRINT "read4=" | v
+    END PROCEDURE
+END MODULE
+
+IMPORT Bio
+BEGIN
+    Bio.Run()
+END

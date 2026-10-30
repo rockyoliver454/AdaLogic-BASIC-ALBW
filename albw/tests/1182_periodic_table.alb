@@ -1,0 +1,48 @@
+VERSION 1.0
+
+STRICT sym[10] AS STRING
+STRICT eam[10] AS S64
+STRICT wgt[10] AS F64
+STRICT ename[10] AS STRING
+
+
+BEGIN
+    sym[0] = "H"  eam[0] = 1  wgt[0] = 1.008   ename[0] = "Hydrogen"
+    sym[1] = "He" eam[1] = 2  wgt[1] = 4.0026  ename[1] = "Helium"
+    sym[2] = "Li" eam[2] = 3  wgt[2] = 6.94    ename[2] = "Lithium"
+    sym[3] = "C"  eam[3] = 6  wgt[3] = 12.011  ename[3] = "Carbon"
+    sym[4] = "N"  eam[4] = 7  wgt[4] = 14.007  ename[4] = "Nitrogen"
+    sym[5] = "O"  eam[5] = 8  wgt[5] = 15.999  ename[5] = "Oxygen"
+    sym[6] = "Na" eam[6] = 11 wgt[6] = 22.990  ename[6] = "Sodium"
+    sym[7] = "Cl" eam[7] = 17 wgt[7] = 35.45   ename[7] = "Chlorine"
+    sym[8] = "Fe" eam[8] = 26 wgt[8] = 55.845  ename[8] = "Iron"
+    sym[9] = "Au" eam[9] = 79 wgt[9] = 196.967 ename[9] = "Gold"
+
+    LET q AS STRING = "Fe"
+    LET i AS S64 = 0
+    WHILE i < 10
+        IF sym[i] = q THEN
+            PRINT "lookup " | q | ": Z=" | eam[i] | " name=" | ename[i] | " weight=" | wgt[i]
+        END IF
+        i = i + 1
+    END WHILE
+
+    LET qn AS S64 = 8
+    i = 0
+    WHILE i < 10
+        IF eam[i] = qn THEN
+            PRINT "Z=" | qn | " is " | ename[i] | " (" | sym[i] | ")"
+        END IF
+        i = i + 1
+    END WHILE
+
+    LET heavy AS S64 = 0
+    i = 0
+    WHILE i < 10
+        IF wgt[i] > 20.0 THEN
+            heavy = heavy + 1
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "elements heavier than 20u=" | heavy
+END

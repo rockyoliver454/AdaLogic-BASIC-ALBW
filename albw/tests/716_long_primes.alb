@@ -1,0 +1,46 @@
+-- 716 | Long primes (full reptend): primes p where 1/p has
+-- maximal period p-1. First 15 below 500.
+DECLARE MODULE Lp
+    FUNCTION Prime(n AS S64) AS S32
+    FUNCTION Period(p AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lp
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Period(p AS S64) AS S64
+        LET r AS S64 = 1
+        LET per AS S64 = 0
+        REPEAT
+            r = r * 10 MOD p
+            per = per + 1
+        UNTIL r = 1
+        RETURN per
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        FOR p = 7 TO 500
+            IF Prime(p) = 1 THEN
+                IF Period(p) = p - 1 THEN
+                    PRINT p
+                    cnt = cnt + 1
+                END IF
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lp
+BEGIN
+    Lp.Run()
+END

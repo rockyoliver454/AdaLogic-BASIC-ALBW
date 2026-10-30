@@ -1,0 +1,12 @@
+-- 014 | Associative array/Iteration: walk every key/value pair.
+BEGIN
+    STRICT keys[4] AS STRING;
+    STRICT vals[4] AS S32;
+    keys[0] = "north"; vals[0] = 1;
+    keys[1] = "east";  vals[1] = 2;
+    keys[2] = "south"; vals[2] = 3;
+    keys[3] = "west";  vals[3] = 4;
+    FOR i = 0 TO 3
+        PRINT$ keys[i] | " => " | vals[i];
+    END FOR
+END

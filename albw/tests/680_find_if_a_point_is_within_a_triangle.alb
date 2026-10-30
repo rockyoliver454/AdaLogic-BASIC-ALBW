@@ -1,0 +1,47 @@
+-- 680 | Find if a point is within a triangle: barycentric
+-- sign tests.
+DECLARE MODULE Pt
+    FUNCTION Sign(x1 AS F64, y1 AS F64, x2 AS F64, y2 AS F64) AS F64
+    FUNCTION Inside(x AS F64, y AS F64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pt
+    STRICT tx[4] AS F64
+    STRICT ty[4] AS F64
+
+    FUNCTION Sign(x1 AS F64, y1 AS F64, x2 AS F64, y2 AS F64) AS F64
+        RETURN (x1 - tx[3]) * (y2 - ty[3]) - (x2 - tx[3]) * (y1 - ty[3])
+    END FUNCTION
+
+    FUNCTION Inside(x AS F64, y AS F64) AS S32
+        LET d1 AS F64 = (x - tx[2]) * (ty[1] - ty[2]) - (tx[1] - tx[2]) * (y - ty[2])
+        LET d2 AS F64 = (x - tx[3]) * (ty[2] - ty[3]) - (tx[2] - tx[3]) * (y - ty[3])
+        LET d3 AS F64 = (x - tx[1]) * (ty[3] - ty[1]) - (tx[3] - tx[1]) * (y - ty[1])
+        LET neg AS S32 = 0
+        LET pos AS S32 = 0
+        IF d1 < 0.0 ORELSE d2 < 0.0 ORELSE d3 < 0.0 THEN neg = 1 END IF
+        IF d1 > 0.0 ORELSE d2 > 0.0 ORELSE d3 > 0.0 THEN pos = 1 END IF
+        IF neg = 1 ANDALSO pos = 1 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        tx[1] = 1.5
+        ty[1] = 2.4
+        tx[2] = 5.1
+        ty[2] = -3.1
+        tx[3] = -3.8
+        ty[3] = 1.2
+        PRINT Inside(1.0, 0.5)
+        PRINT Inside(-2.0, 2.3)
+        PRINT Inside(3.0, 1.0)
+        PRINT Inside(4.0, 1.0)
+        PRINT Inside(2.0, 2.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Pt
+BEGIN
+    Pt.Run()
+END

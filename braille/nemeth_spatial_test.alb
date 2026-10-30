@@ -1,0 +1,96 @@
+--  nemeth_spatial_test.alb - spatial engine smoke: matrices,
+--  cases, binomial, stacked arithmetic, long division
+INCLUDE "nemeth.albi"
+IMPORT Nemeth
+
+PROCEDURE Show(tag AS STRING)
+BEGIN
+    PRINT tag | " =>  [" | Nemeth.ToBrf() | "]  errs=" | Nemeth.ErrCount()
+    IF Nemeth.ErrCount() > 0 THEN
+        PRINT "  err0: " | Nemeth.ErrText(0)
+    END IF
+END PROCEDURE
+
+BEGIN
+    --  2x2 bracketed matrix, parser-driven
+    Nemeth.Transcribe("\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}")
+    Show("bmatrix 2x2")
+
+    --  matrix with wider entries: column alignment matters
+    Nemeth.Transcribe("\begin{pmatrix} x^2 & 10 \\ 3 & y \end{pmatrix}")
+    Show("pmatrix mixed")
+
+    --  plain matrix (no enclosure)
+    Nemeth.Transcribe("\begin{matrix} a & b \\ c & d \end{matrix}")
+    Show("matrix bare")
+
+    --  cases: open brace only
+    Nemeth.Transcribe("\begin{cases} x & x > 0 \\ -x & x < 0 \end{cases}")
+    Show("cases")
+
+    --  binomial
+    Nemeth.Transcribe("\binom{n}{k}")
+    Show("binom")
+
+    --  manual matrix API: 3x2 vmatrix (determinant bars)
+    Nemeth.Reset()
+    Nemeth.MatBegin(4)
+    Nemeth.MatEntry("a")
+    Nemeth.MatEntry("b")
+    Nemeth.MatRow()
+    Nemeth.MatEntry("c")
+    Nemeth.MatEntry("d")
+    Nemeth.MatRow()
+    Nemeth.MatEntry("e")
+    Nemeth.MatEntry("f")
+    Nemeth.MatEnd()
+    Show("vmatrix 3x2")
+
+    --  stacked addition:  123 + 45 = 168
+    Nemeth.Reset()
+    Nemeth.StackBegin()
+    Nemeth.StackRow("123", 0)
+    Nemeth.StackRow("45", 1)
+    Nemeth.StackLine()
+    Nemeth.StackRow("168", 0)
+    Nemeth.StackEnd()
+    Show("123+45")
+
+    --  stacked subtraction
+    Nemeth.Reset()
+    Nemeth.StackBegin()
+    Nemeth.StackRow("56", 0)
+    Nemeth.StackRow("9", 2)
+    Nemeth.StackLine()
+    Nemeth.StackRow("47", 0)
+    Nemeth.StackEnd()
+    Show("56-9")
+
+    --  stacked multiplication
+    Nemeth.Reset()
+    Nemeth.StackBegin()
+    Nemeth.StackRow("12", 0)
+    Nemeth.StackRow("3", 3)
+    Nemeth.StackLine()
+    Nemeth.StackRow("36", 0)
+    Nemeth.StackEnd()
+    Show("12x3")
+
+    --  long division:  144 / 12 = 12
+    Nemeth.Reset()
+    Nemeth.LDiv("144", "12", "12")
+    Show("144/12")
+
+    --  error cases
+    Nemeth.Transcribe("a & b")
+    Show("amp-outside")
+
+    Nemeth.Transcribe("\begin{foo} x \end{foo}")
+    Show("bad-env")
+
+    Nemeth.Transcribe("\begin{array} x \end{array}")
+    Show("array-env")
+
+    Nemeth.Transcribe("\begin{pmatrix} 1 & 2")
+    Show("unclosed-env")
+END

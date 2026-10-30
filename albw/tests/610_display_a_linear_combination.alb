@@ -1,0 +1,40 @@
+-- 610 | Display a linear combination: render coefficient/basis
+-- pairs as "1*a + 2*b + 3*c" style text.
+DECLARE MODULE Lin
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lin
+    STRICT cf[4] AS S64
+    STRICT bs[4] AS STRING
+
+    PROCEDURE Run()
+        cf[1] = 1
+        cf[2] = 2
+        cf[3] = 3
+        cf[4] = 4
+        bs[1] = "a"
+        bs[2] = "b"
+        bs[3] = "c"
+        bs[4] = "d"
+        LET s AS STRING = ""
+        FOR i = 1 TO 4
+            IF i > 1 THEN s = s | " + " END IF
+            s = s | cf[i] | "*" | bs[i]
+        END FOR
+        PRINT s
+        LET s2 AS STRING = ""
+        cf[1] = -1
+        cf[3] = 0
+        FOR j = 1 TO 4
+            IF j > 1 THEN s2 = s2 | " + " END IF
+            s2 = s2 | cf[j] | "*" | bs[j]
+        END FOR
+        PRINT s2
+    END PROCEDURE
+END MODULE
+
+IMPORT Lin
+BEGIN
+    Lin.Run()
+END

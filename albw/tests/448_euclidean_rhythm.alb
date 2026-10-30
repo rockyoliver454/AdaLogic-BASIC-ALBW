@@ -1,0 +1,34 @@
+-- 448 | Euclidean rhythm: E(5,13) and E(3,8) as 1/0 pattern strings.
+DECLARE MODULE EucR
+    FUNCTION Bresenham(i AS S64, pulses AS S64, steps AS S64) AS S64
+    PROCEDURE Show(p AS S64, n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE EucR
+    FUNCTION Bresenham(i AS S64, pulses AS S64, steps AS S64) AS S64
+        LET prev AS S64 = (i * pulses) / steps
+        LET next AS S64 = ((i + 1) * pulses) / steps
+        RETURN next - prev
+    END FUNCTION
+
+    PROCEDURE Show(p AS S64, n AS S64)
+        LET s AS STRING = "E(" | p | "," | n | ") = ["
+        FOR i = 0 TO n - 1
+            s = s | Bresenham(i, p, n)
+        END FOR
+        s = s | "]"
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(5, 13)
+        Show(3, 8)
+        Show(5, 8)
+    END PROCEDURE
+END MODULE
+
+IMPORT EucR
+BEGIN
+    EucR.Run()
+END

@@ -1,0 +1,44 @@
+-- 525 | Decorate-sort-undecorate idiom: sort strings by length by
+-- packing a key array, sorting pairs, then undecorating.
+DECLARE MODULE DSU
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DSU
+    STRICT a[6] AS STRING
+    STRICT ky[6] AS S64
+    STRICT idx[6] AS S64
+
+    PROCEDURE Run()
+        a[1] = "apple"
+        a[2] = "kiwi"
+        a[3] = "banana"
+        a[4] = "fig"
+        a[5] = "cherry"
+        a[6] = "plum"
+        FOR i = 1 TO 6
+            ky[i] = LEN(a[i])
+            idx[i] = i
+        END FOR
+        FOR i2 = 2 TO 6
+            LET k AS S64 = ky[i2]
+            LET ix AS S64 = idx[i2]
+            LET j AS S64 = i2 - 1
+            WHILE j >= 1 ANDALSO ky[j] > k
+                ky[j + 1] = ky[j]
+                idx[j + 1] = idx[j]
+                j = j - 1
+            END WHILE
+            ky[j + 1] = k
+            idx[j + 1] = ix
+        END FOR
+        FOR n = 1 TO 6
+            PRINT a[idx[n]]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT DSU
+BEGIN
+    DSU.Run()
+END

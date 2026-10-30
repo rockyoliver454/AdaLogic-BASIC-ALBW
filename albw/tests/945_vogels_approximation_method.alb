@@ -1,0 +1,130 @@
+-- 945 | Vogel's approximation method: initial basic feasible
+-- solution for a transportation problem (3 sources, 4 sinks).
+-- Classic RC example: supplies 50,60,50; demands
+-- 30,40,50,40; cost matrix per problem.
+DECLARE MODULE Vg
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vg
+    STRICT cst[13] AS S64
+    STRICT sup[4] AS S64
+    STRICT dem[5] AS S64
+    STRICT al[13] AS S64
+
+    PROCEDURE Run()
+        -- costs c[s][d]:
+        -- s1: 16 16 13 22 ; s2: 17 14 16 21 ; s3: 14 13 19 15
+        cst[1] = 16; cst[2] = 16; cst[3] = 13; cst[4] = 22
+        cst[5] = 17; cst[6] = 14; cst[7] = 16; cst[8] = 21
+        cst[9] = 14; cst[10] = 13; cst[11] = 19; cst[12] = 15
+        sup[1] = 50; sup[2] = 60; sup[3] = 50
+        dem[1] = 30; dem[2] = 40; dem[3] = 50; dem[4] = 40
+        FOR i = 1 TO 12
+            al[i] = 0
+        END FOR
+        -- VAM loop: find row/col with max penalty (diff of two
+        -- smallest remaining costs), allocate min(sup,dem).
+        LET done AS S32 = 0
+        WHILE done = 0
+            done = 1
+            -- row penalties
+            LET bpen AS S64 = 0 - 1
+            LET isrow AS S32 = 1
+            LET bi AS S64 = 0
+            FOR s = 1 TO 3
+                IF sup[s] > 0 THEN
+                    done = 0
+                    LET m1 AS S64 = 9999
+                    LET m2 AS S64 = 9999
+                    FOR d = 1 TO 4
+                        IF dem[d] > 0 THEN
+                            LET cv AS S64 = cst[s * 4 + d - 4]
+                            IF cv < m1 THEN
+                                m2 = m1
+                                m1 = cv
+                            ELSE
+                                IF cv < m2 THEN m2 = cv END IF
+                            END IF
+                        END IF
+                    END FOR
+                    LET pen AS S64 = m2 - m1
+                    IF m2 = 9999 THEN pen = m1 END IF
+                    IF pen > bpen THEN
+                        bpen = pen
+                        isrow = 1
+                        bi = s
+                    END IF
+                END IF
+            END FOR
+            FOR d = 1 TO 4
+                IF dem[d] > 0 THEN
+                    LET m1 AS S64 = 9999
+                    LET m2 AS S64 = 9999
+                    FOR s = 1 TO 3
+                        IF sup[s] > 0 THEN
+                            LET cv AS S64 = cst[s * 4 + d - 4]
+                            IF cv < m1 THEN
+                                m2 = m1
+                                m1 = cv
+                            ELSE
+                                IF cv < m2 THEN m2 = cv END IF
+                            END IF
+                        END IF
+                    END FOR
+                    LET pen AS S64 = m2 - m1
+                    IF m2 = 9999 THEN pen = m1 END IF
+                    IF pen > bpen THEN
+                        bpen = pen
+                        isrow = 0
+                        bi = d
+                    END IF
+                END IF
+            END FOR
+            IF done = 0 THEN
+                -- allocate to cheapest cell in chosen row/col
+                LET bc AS S64 = 9999
+                LET bs AS S64 = 0
+                LET bd AS S64 = 0
+                IF isrow = 1 THEN
+                    FOR d = 1 TO 4
+                        IF dem[d] > 0 ANDALSO cst[bi * 4 + d - 4] < bc THEN
+                            bc = cst[bi * 4 + d - 4]
+                            bs = bi
+                            bd = d
+                        END IF
+                    END FOR
+                ELSE
+                    FOR s = 1 TO 3
+                        IF sup[s] > 0 ANDALSO cst[s * 4 + bi - 4] < bc THEN
+                            bc = cst[s * 4 + bi - 4]
+                            bs = s
+                            bd = bi
+                        END IF
+                    END FOR
+                END IF
+                LET q AS S64 = sup[bs]
+                IF dem[bd] < q THEN q = dem[bd] END IF
+                al[bs * 4 + bd - 4] = q
+                sup[bs] = sup[bs] - q
+                dem[bd] = dem[bd] - q
+            END IF
+        END WHILE
+        LET tot AS S64 = 0
+        FOR s = 1 TO 3
+            LET ln2 AS STRING = ""
+            FOR d = 1 TO 4
+                LET v AS S64 = al[s * 4 + d - 4]
+                ln2 = ln2 | " " | v
+                tot = tot + v * cst[s * 4 + d - 4]
+            END FOR
+            PRINT ln2
+        END FOR
+        PRINT "total cost=" | tot
+    END PROCEDURE
+END MODULE
+
+IMPORT Vg
+BEGIN
+    Vg.Run()
+END

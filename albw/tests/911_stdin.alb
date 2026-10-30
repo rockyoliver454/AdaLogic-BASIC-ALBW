@@ -1,0 +1,12 @@
+-- 911 | stdin: INPUT with prompt, INPUT >> numeric, READLINE into string.
+BEGIN
+    LET name AS STRING = "";
+    LET age AS S32 = 0;
+    LET city AS STRING = "";
+    INPUT "name? ", name;
+    INPUT >> age;
+    READLINE city;
+    PRINT$ "hello " | name;
+    PRINT age * 2;
+    PRINT$ "from " | city;
+END

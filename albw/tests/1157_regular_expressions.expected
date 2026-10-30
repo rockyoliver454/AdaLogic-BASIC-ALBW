@@ -1,0 +1,8 @@
+abc ~ abc   = 1
+a.c ~ abc   = 1
+a.c ~ axy   = 0
+a.c ~ abd   = 0
+a*c ~ aac   = 1
+a*c ~ c     = 1
+ab* ~ a     = 1
+.* ~ hello  = 1

@@ -1,0 +1,86 @@
+-- 979 | Held-Karp TSP: DP over subsets, shortest tour on a
+-- 6-city distance matrix; prints min cost and the tour.
+DECLARE MODULE Hk
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hk
+    STRICT d[36] AS S64
+    STRICT bk[330] AS S64
+    STRICT dp[330] AS S64
+
+    PROCEDURE Run()
+        -- cities 0..5; d[i*6+j+1]
+        LET n AS S64 = 6
+        FOR i = 0 TO n - 1
+            FOR j = 0 TO n - 1
+                d[i * n + j + 1] = 999
+            END FOR
+        END FOR
+        -- symmetric small instance
+        d[1] = 0; d[2] = 10; d[3] = 15; d[4] = 20; d[5] = 25; d[6] = 30
+        d[7] = 10; d[8] = 0; d[9] = 35; d[10] = 25; d[11] = 17; d[12] = 22
+        d[13] = 15; d[14] = 35; d[15] = 0; d[16] = 30; d[17] = 20; d[18] = 12
+        d[19] = 20; d[20] = 25; d[21] = 30; d[22] = 0; d[23] = 15; d[24] = 18
+        d[25] = 25; d[26] = 17; d[27] = 20; d[28] = 15; d[29] = 0; d[30] = 10
+        d[31] = 30; d[32] = 22; d[33] = 12; d[34] = 18; d[35] = 10; d[36] = 0
+        LET ns AS S64 = 2 ^ (n - 1)
+        FOR s = 0 TO ns * n
+            dp[s] = 999
+        END FOR
+        -- dp[mask,j] mask over cities 1..n-1, j is last city
+        dp[0 * n + 1] = 0
+        FOR nx = 1 TO n - 1
+            LET m0 AS S64 = 2 ^ (nx - 1)
+            dp[m0 * n + nx + 1] = d[0 * n + nx + 1]
+            bk[m0 * n + nx + 1] = 0
+        END FOR
+        FOR mask = 0 TO ns - 1
+            FOR j = 1 TO n - 1
+                IF (mask / (2 ^ (j - 1))) MOD 2 = 1 THEN
+                    LET cur AS S64 = dp[mask * n + j + 1]
+                    IF cur < 999 THEN
+                        FOR nx = 1 TO n - 1
+                            IF (mask / (2 ^ (nx - 1))) MOD 2 = 0 THEN
+                                LET m2 AS S64 = mask + 2 ^ (nx - 1)
+                                LET cand AS S64 = cur + d[j * n + nx + 1]
+                                IF cand < dp[m2 * n + nx + 1] THEN
+                                    dp[m2 * n + nx + 1] = cand
+                                    bk[m2 * n + nx + 1] = j
+                                END IF
+                            END IF
+                        END FOR
+                    END IF
+                END IF
+            END FOR
+        END FOR
+        -- close tour at city 0
+        LET best AS S64 = 999
+        LET bj AS S64 = 0
+        LET full AS S64 = ns - 1
+        FOR j = 1 TO n - 1
+            LET cand AS S64 = dp[full * n + j + 1] + d[j * n + 1]
+            IF cand < best THEN
+                best = cand
+                bj = j
+            END IF
+        END FOR
+        PRINT "min tour=" | best
+        -- reconstruct
+        LET tour AS STRING = "0"
+        LET mask AS S64 = full
+        LET j AS S64 = bj
+        WHILE j > 0
+            tour = j | " " | tour
+            LET pj AS S64 = bk[mask * n + j + 1]
+            mask = mask - 2 ^ (j - 1)
+            j = pj
+        END WHILE
+        PRINT "tour: " | tour
+    END PROCEDURE
+END MODULE
+
+IMPORT Hk
+BEGIN
+    Hk.Run()
+END

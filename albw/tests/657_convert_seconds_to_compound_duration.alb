@@ -1,0 +1,36 @@
+-- 657 | Convert seconds to compound duration.
+DECLARE MODULE Dur
+    PROCEDURE Show(t AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dur
+    PROCEDURE Show(t AS S64)
+        LET wk AS S64 = t / 604800
+        LET r AS S64 = t - wk * 604800
+        LET dy AS S64 = r / 86400
+        r = r - dy * 86400
+        LET hr AS S64 = r / 3600
+        r = r - hr * 3600
+        LET mn AS S64 = r / 60
+        LET sc AS S64 = r - mn * 60
+        LET s AS STRING = t | "s ="
+        IF wk > 0 THEN s = s | " " | wk | "wk" END IF
+        IF dy > 0 THEN s = s | " " | dy | "d" END IF
+        IF hr > 0 THEN s = s | " " | hr | "hr" END IF
+        IF mn > 0 THEN s = s | " " | mn | "min" END IF
+        IF sc > 0 THEN s = s | " " | sc | "sec" END IF
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(7259)
+        Show(86400)
+        Show(6000000)
+    END PROCEDURE
+END MODULE
+
+IMPORT Dur
+BEGIN
+    Dur.Run()
+END

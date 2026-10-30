@@ -1,0 +1,17 @@
+-- 649 | Magic constant: M(n) = n(n^2+1)/2 for n = 1..10.
+DECLARE MODULE Mc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mc
+    PROCEDURE Run()
+        FOR n = 1 TO 10
+            PRINT n | ": " | (n * (n * n + 1) / 2)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Mc
+BEGIN
+    Mc.Run()
+END

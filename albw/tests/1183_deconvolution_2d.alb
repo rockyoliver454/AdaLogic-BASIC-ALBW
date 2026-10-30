@@ -1,0 +1,81 @@
+VERSION 1.0
+
+STRICT img[36] AS S64
+STRICT ker[9] AS S64
+STRICT cnv[64] AS S64
+STRICT rec[36] AS S64
+
+
+BEGIN
+    img[0] = 1 img[1] = 2 img[2] = 3 img[3] = 4 img[4] = 5 img[5] = 6
+    img[6] = 2 img[7] = 4 img[8] = 6 img[9] = 8 img[10] = 10 img[11] = 12
+    img[12] = 1 img[13] = 3 img[14] = 5 img[15] = 7 img[16] = 9 img[17] = 11
+    img[18] = 0 img[19] = 1 img[20] = 0 img[21] = 1 img[22] = 0 img[23] = 1
+    img[24] = 9 img[25] = 8 img[26] = 7 img[27] = 6 img[28] = 5 img[29] = 4
+    img[30] = 3 img[31] = 2 img[32] = 1 img[33] = 0 img[34] = 1 img[35] = 2
+
+    ker[0] = 1 ker[1] = 1 ker[2] = 0
+    ker[3] = 1 ker[4] = 1 ker[5] = 1
+    ker[6] = 0 ker[7] = 1 ker[8] = 2
+
+    LET y AS S64 = 0
+    WHILE y < 8
+        LET x AS S64 = 0
+        WHILE x < 8
+            LET acc AS S64 = 0
+            LET ky AS S64 = 0
+            WHILE ky < 3
+                LET kx AS S64 = 0
+                WHILE kx < 3
+                    LET iy AS S64 = y - ky
+                    LET ix AS S64 = x - kx
+                    IF iy >= 0 ANDALSO iy < 6 ANDALSO ix >= 0 ANDALSO ix < 6 THEN
+                        acc = acc + img[iy * 6 + ix] * ker[ky * 3 + kx]
+                    END IF
+                    kx = kx + 1
+                END WHILE
+                ky = ky + 1
+            END WHILE
+            cnv[y * 8 + x] = acc
+            x = x + 1
+        END WHILE
+        y = y + 1
+    END WHILE
+
+    y = 0
+    WHILE y < 6
+        LET x AS S64 = 0
+        WHILE x < 6
+            LET acc AS S64 = cnv[y * 8 + x]
+            LET ky AS S64 = 0
+            WHILE ky < 3
+                LET kx AS S64 = 0
+                WHILE kx < 3
+                    LET iy AS S64 = y - ky
+                    LET ix AS S64 = x - kx
+                    IF ky * 3 + kx > 0 ANDALSO iy >= 0 ANDALSO ix >= 0 THEN
+                        IF iy * 6 + ix < y * 6 + x ORELSE (iy * 6 + ix = y * 6 + x ANDALSO ky * 3 + kx = 0) THEN
+                            acc = acc - rec[iy * 6 + ix] * ker[ky * 3 + kx]
+                        END IF
+                    END IF
+                    kx = kx + 1
+                END WHILE
+                ky = ky + 1
+            END WHILE
+            rec[y * 6 + x] = acc
+            x = x + 1
+        END WHILE
+        y = y + 1
+    END WHILE
+
+    LET ok AS S64 = 1
+    LET i AS S64 = 0
+    WHILE i < 36
+        IF rec[i] <> img[i] THEN
+            ok = 0
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "convolved 6x6 -> 8x8, deconvolved back"
+    PRINT "exact reconstruction=" | ok
+END

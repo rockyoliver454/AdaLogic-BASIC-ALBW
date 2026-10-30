@@ -1,0 +1,9 @@
+-- 158 | Loops/Continue: skip iterations.
+BEGIN
+    FOR i = 1 TO 9
+        IF i MOD 2 = 0 THEN
+            CONTINUE
+        END IF
+        PRINT i;
+    END FOR
+END

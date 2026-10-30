@@ -1,0 +1,49 @@
+-- 833 | Set puzzle: given 9 Set cards (4 attributes, 3 values
+-- each), enumerate all valid Set triples (each attribute all
+-- same or all different).
+DECLARE MODULE St
+    FUNCTION Vld(a AS S64, b AS S64, c AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE St
+    STRICT cd[37] AS S64
+
+    FUNCTION Vld(a AS S64, b AS S64, c AS S64) AS S32
+        FOR k = 0 TO 3
+            LET x AS S64 = (a / (4 ^ k)) MOD 4
+            LET y AS S64 = (b / (4 ^ k)) MOD 4
+            LET z AS S64 = (c / (4 ^ k)) MOD 4
+            LET same AS S32 = 0
+            IF x = y ANDALSO y = z THEN same = 1 END IF
+            LET dif AS S32 = 0
+            IF x <> y ANDALSO y <> z ANDALSO x <> z THEN dif = 1 END IF
+            IF same = 0 ANDALSO dif = 0 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- 9 cards encoded base-4 (digit attrs: number,shape,shade,color)
+        cd[1] = 0; cd[2] = 1; cd[3] = 2
+        cd[4] = 16; cd[5] = 17; cd[6] = 18
+        cd[7] = 32; cd[8] = 33; cd[9] = 40
+        LET cnt AS S64 = 0
+        FOR i = 1 TO 7
+            FOR j = i + 1 TO 8
+                FOR k = j + 1 TO 9
+                    IF Vld(cd[i], cd[j], cd[k]) = 1 THEN
+                        cnt = cnt + 1
+                        PRINT "set: " | i | "," | j | "," | k
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+        PRINT "total=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT St
+BEGIN
+    St.Run()
+END

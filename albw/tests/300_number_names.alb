@@ -1,0 +1,85 @@
+-- 300 | Number names: convert integers into English words (0..999,999).
+DECLARE MODULE NumNames
+    FUNCTION NameOf(v AS S32) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NumNames
+    STRICT small[20] AS STRING
+    STRICT tens[10] AS STRING
+
+    PROCEDURE Init()
+        small[0] = "zero"
+        small[1] = "one"
+        small[2] = "two"
+        small[3] = "three"
+        small[4] = "four"
+        small[5] = "five"
+        small[6] = "six"
+        small[7] = "seven"
+        small[8] = "eight"
+        small[9] = "nine"
+        small[10] = "ten"
+        small[11] = "eleven"
+        small[12] = "twelve"
+        small[13] = "thirteen"
+        small[14] = "fourteen"
+        small[15] = "fifteen"
+        small[16] = "sixteen"
+        small[17] = "seventeen"
+        small[18] = "eighteen"
+        small[19] = "nineteen"
+        tens[2] = "twenty"
+        tens[3] = "thirty"
+        tens[4] = "forty"
+        tens[5] = "fifty"
+        tens[6] = "sixty"
+        tens[7] = "seventy"
+        tens[8] = "eighty"
+        tens[9] = "ninety"
+    END PROCEDURE
+
+    FUNCTION Under100(v AS S32) AS STRING
+        IF v < 20 THEN RETURN small[v] END IF
+        LET t AS S32 = v / 10
+        LET r AS S32 = v - t * 10
+        IF r = 0 THEN RETURN tens[t] END IF
+        RETURN tens[t] | "-" | small[r]
+    END FUNCTION
+
+    FUNCTION Under1000(v AS S32) AS STRING
+        IF v < 100 THEN RETURN Under100(v) END IF
+        LET h AS S32 = v / 100
+        LET r AS S32 = v - h * 100
+        IF r = 0 THEN RETURN small[h] | " hundred" END IF
+        RETURN small[h] | " hundred " | Under100(r)
+    END FUNCTION
+
+    FUNCTION NameOf(v AS S32) AS STRING
+        IF v < 0 THEN RETURN "minus " | Under1000(0 - v) END IF
+        IF v < 1000 THEN RETURN Under1000(v) END IF
+        LET th AS S32 = v / 1000
+        LET r AS S32 = v - th * 1000
+        IF r = 0 THEN RETURN Under1000(th) | " thousand" END IF
+        RETURN Under1000(th) | " thousand " | Under1000(r)
+    END FUNCTION
+
+    PROCEDURE Run()
+        Init()
+        PRINT NameOf(0)
+        PRINT NameOf(1)
+        PRINT NameOf(13)
+        PRINT NameOf(34)
+        PRINT NameOf(100)
+        PRINT NameOf(115)
+        PRINT NameOf(999)
+        PRINT NameOf(1024)
+        PRINT NameOf(123456)
+        PRINT NameOf(-77)
+    END PROCEDURE
+END MODULE
+
+IMPORT NumNames
+BEGIN
+    NumNames.Run()
+END

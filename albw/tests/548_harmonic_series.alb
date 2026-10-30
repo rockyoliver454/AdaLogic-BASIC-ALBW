@@ -1,0 +1,31 @@
+-- 548 | Harmonic series: first 20 harmonic numbers and the first n
+-- where H_n > k for k=1..4.
+DECLARE MODULE Harm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Harm
+    PROCEDURE Run()
+        LET h AS F64 = 0.0
+        LET s AS STRING = ""
+        FOR i = 1 TO 20
+            h = h + 1.0 / i
+            s = s | h | " "
+        END FOR
+        PRINT "H(1..20): " | s
+        LET n AS S64 = 1
+        h = 0.0
+        FOR k = 1 TO 4
+            WHILE h <= k
+                h = h + 1.0 / n
+                n = n + 1
+            END WHILE
+            PRINT "first n with H_n > " | k | " : " | (n - 1)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Harm
+BEGIN
+    Harm.Run()
+END

@@ -1,0 +1,33 @@
+-- 031 | Binary search on a sorted array
+DECLARE MODULE BS
+    FUNCTION Search(x AS S32) AS S32
+END DECLARE MODULE
+
+STRICT hay[8] AS S32;
+
+MODULE BS
+    FUNCTION Search(x AS S32) AS S32
+        LET lo AS S32 = 0;
+        LET hi AS S32 = 7;
+        WHILE lo <= hi
+            LET mid AS S32 = lo + (hi - lo) / 2;
+            IF hay[mid] = x THEN
+                RETURN mid;
+            ELSE
+                IF hay[mid] < x THEN
+                    lo = mid + 1;
+                ELSE
+                    hi = mid - 1;
+                END IF
+            END IF
+        END WHILE
+        RETURN 0 - 1;
+    END FUNCTION
+END MODULE
+
+BEGIN
+    hay[0] = 2; hay[1] = 5; hay[2] = 8; hay[3] = 12;
+    hay[4] = 16; hay[5] = 23; hay[6] = 38; hay[7] = 56;
+    PRINT$ "found 23 at " | BS.Search(23);
+    PRINT$ "found 7 at " | BS.Search(7);
+END

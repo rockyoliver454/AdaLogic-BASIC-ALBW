@@ -1,0 +1,57 @@
+-- 733 | Search in paragraph's text: inverted index - list
+-- paragraphs that contain all words of a query.
+DECLARE MODULE Sp
+    FUNCTION InPara(w AS STRING, p AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sp
+    STRICT wd[12] AS STRING
+    STRICT pp[12] AS S64
+
+    FUNCTION InPara(w AS STRING, p AS S64) AS S32
+        FOR i = 1 TO 12
+            IF pp[i] = p ANDALSO wd[i] = w THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- word -> paragraph postings
+        wd[1] = "cat"
+        pp[1] = 1
+        wd[2] = "sat"
+        pp[2] = 1
+        wd[3] = "dog"
+        pp[3] = 1
+        wd[4] = "cat"
+        pp[4] = 2
+        wd[5] = "bird"
+        pp[5] = 2
+        wd[6] = "dog"
+        pp[6] = 3
+        wd[7] = "sat"
+        pp[7] = 3
+        wd[8] = "cat"
+        pp[8] = 3
+        wd[9] = "fish"
+        pp[9] = 3
+        wd[10] = "dog"
+        pp[10] = 4
+        wd[11] = "sat"
+        pp[11] = 4
+        wd[12] = "cat"
+        pp[12] = 4
+        -- query: paragraphs containing both "cat" and "dog"
+        FOR p = 1 TO 4
+            IF InPara("cat", p) = 1 ANDALSO InPara("dog", p) = 1 THEN
+                PRINT "para " | p
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sp
+BEGIN
+    Sp.Run()
+END

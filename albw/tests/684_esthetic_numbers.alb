@@ -1,0 +1,41 @@
+-- 684 | Esthetic numbers: consecutive digits differ by 1
+-- (base 10). First 40 and some samples.
+DECLARE MODULE Est
+    FUNCTION Esth(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Est
+    FUNCTION Esth(n AS S64) AS S32
+        LET v AS S64 = n
+        IF v < 10 THEN RETURN 1 END IF
+        LET prev AS S64 = v MOD 10
+        v = v / 10
+        WHILE v > 0
+            LET d AS S64 = v MOD 10
+            LET df AS S64 = d - prev
+            IF df < 0 THEN df = 0 - df END IF
+            IF df <> 1 THEN RETURN 0 END IF
+            prev = d
+            v = v / 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < 40
+            IF Esth(n) = 1 THEN
+                PRINT n
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Est
+BEGIN
+    Est.Run()
+END

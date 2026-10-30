@@ -1,0 +1,71 @@
+-- 821 | Sudoku: backtracking solver on a fixed 9x9 puzzle
+-- (the classic test grid whose solution is
+-- 483921657/967345821/251876493/548132976/729564138/
+-- 136798245/372689514/814253769/695417382).
+DECLARE MODULE Su
+    FUNCTION Solve() AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Su
+    STRICT gd[82] AS S64
+    STRICT rcnt[1] AS S64
+
+    FUNCTION Ok(pos AS S64, v AS S64) AS S32
+        LET r AS S64 = (pos - 1) / 9
+        LET c AS S64 = (pos - 1) MOD 9
+        FOR i = 0 TO 8
+            IF gd[r * 9 + i + 1] = v THEN RETURN 0 END IF
+            IF gd[i * 9 + c + 1] = v THEN RETURN 0 END IF
+        END FOR
+        LET br AS S64 = (r / 3) * 3
+        LET bc AS S64 = (c / 3) * 3
+        FOR i = 0 TO 2
+            FOR j = 0 TO 2
+                IF gd[(br + i) * 9 + bc + j + 1] = v THEN RETURN 0 END IF
+            END FOR
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Solve() AS S32
+        rcnt[1] = rcnt[1] + 1
+        LET pos AS S64 = 0
+        FOR i = 1 TO 81
+            IF gd[i] = 0 ANDALSO pos = 0 THEN pos = i END IF
+        END FOR
+        IF pos = 0 THEN RETURN 1 END IF
+        FOR v = 1 TO 9
+            IF Ok(pos, v) = 1 THEN
+                gd[pos] = v
+                IF Solve() = 1 THEN RETURN 1 END IF
+                gd[pos] = 0
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET pz AS STRING = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"
+        FOR i = 1 TO 81
+            gd[i] = ASC(MID$(pz, i, 1)) - 48
+        END FOR
+        IF Solve() = 1 THEN
+            FOR r = 0 TO 8
+                LET s AS STRING = ""
+                FOR c = 0 TO 8
+                    s = s | gd[r * 9 + c + 1]
+                END FOR
+                PRINT s
+            END FOR
+        ELSE
+            PRINT "no solution"
+        END IF
+        PRINT "calls=" | rcnt[1]
+    END PROCEDURE
+END MODULE
+
+IMPORT Su
+BEGIN
+    Su.Run()
+END

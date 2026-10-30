@@ -1,0 +1,69 @@
+-- 439 | Home primes: home prime of each n in 2..20.
+DECLARE MODULE HomeP
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION ConcatFactors(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE HomeP
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION ConcatFactors(n AS S64) AS S64
+        LET m AS S64 = n
+        LET result AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                LET f AS S64 = d
+                LET digits AS S64 = 1
+                WHILE digits <= f
+                    digits = digits * 10
+                END WHILE
+                result = result * digits + f
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN
+            LET digits2 AS S64 = 1
+            WHILE digits2 <= m
+                digits2 = digits2 * 10
+            END WHILE
+            result = result * digits2 + m
+        END IF
+        RETURN result
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 2 TO 20
+            LET v AS S64 = n
+            LET iter AS S64 = 0
+            WHILE IsPrime(v) = 0 ANDALSO v <= 90000000000 ANDALSO iter < 50
+                v = ConcatFactors(v)
+                iter = iter + 1
+            END WHILE
+            IF IsPrime(v) = 1 THEN
+                PRINT "HP(" | n | ")=" | v
+            ELSE
+                PRINT "HP(" | n | ")=huge"
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT HomeP
+BEGIN
+    HomeP.Run()
+END

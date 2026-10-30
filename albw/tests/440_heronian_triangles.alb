@@ -1,0 +1,25 @@
+-- 440 | Heronian triangles: all integer triangles with area 210.
+DECLARE MODULE Hero
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hero
+    PROCEDURE Run()
+        FOR a = 1 TO 200
+            FOR b = a TO 200
+                FOR c = b TO a + b - 1
+                    LET perim AS S64 = a + b + c
+                    LET s2 AS S64 = perim * (perim - 2 * a) * (perim - 2 * b) * (perim - 2 * c)
+                    IF s2 = 16 * 210 * 210 THEN
+                        PRINT a | " " | b | " " | c | " area=210"
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Hero
+BEGIN
+    Hero.Run()
+END

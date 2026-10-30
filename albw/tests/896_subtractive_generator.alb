@@ -1,0 +1,60 @@
+-- 896 | Pseudo-random numbers/Subtractive generator
+-- (Bentley/Knuth "RAND"): lagged Fibonacci with r=55, s=24,
+-- mod 1e9. First outputs from seed path are the published
+-- test vector 361435592, 280550241, 447568477, ...
+DECLARE MODULE Sb
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sb
+    STRICT st[56] AS S64
+    STRICT n1[1] AS S64
+    STRICT n2[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        LET x AS S64 = st[n1[1]] - st[n2[1]]
+        IF x < 0 THEN x = x + 1000000000 END IF
+        st[n1[1]] = x
+        n1[1] = n1[1] MOD 55 + 1
+        n2[1] = n2[1] MOD 55 + 1
+        RETURN x
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- Knuth init: seed=2929525 (classic); MJ52 init sequence
+        LET seed AS S64 = 2929525
+        st[55] = seed
+        LET sj AS S64 = seed
+        LET sk AS S64 = 1
+        FOR i = 1 TO 54
+            LET ii AS S64 = (21 * i) MOD 55
+            st[ii] = sk
+            LET t AS S64 = sj - sk
+            IF t < 0 THEN t = t + 1000000000 END IF
+            sj = sk
+            sk = t
+        END FOR
+        -- burn 4 rounds through all 55 cells
+        FOR p = 1 TO 4
+            FOR i = 1 TO 55
+                LET j AS S64 = i + 31
+                IF j > 55 THEN j = j - 55 END IF
+                st[i] = st[i] - st[j]
+                IF st[i] < 0 THEN st[i] = st[i] + 1000000000 END IF
+            END FOR
+        END FOR
+        -- lag pointers: write pos n1=1 (holds x_{i-55}),
+        -- n2 holds x_{i-24} -> n1-24 mod 55 = 32
+        n1[1] = 1
+        n2[1] = 32
+        FOR i = 1 TO 10
+            PRINT Nxt()
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sb
+BEGIN
+    Sb.Run()
+END

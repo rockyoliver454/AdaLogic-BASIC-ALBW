@@ -1,0 +1,76 @@
+-- 783 | Faulhaber's triangle: Bernoulli-number triangle rows
+-- as exact fractions via the Faulhaber formula coefficients.
+DECLARE MODULE Ft
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ft
+    STRICT nm[12] AS S64
+    STRICT dn[12] AS S64
+
+    PROCEDURE Run()
+        -- row n: coefficients of sum_{k=1..m} k^n expressed as
+        -- a polynomial in m (degree n+1), reduced fractions.
+        -- Use Bernoulli formula:
+        -- S_n(m) = 1/(n+1) * sum_{j=0..n} (-1)^j C(n+1,j) B_j m^{n+1-j}
+        -- Bernoulli numbers B0..B10 as num/den pairs
+        STRICT bn[12] AS S64
+        STRICT bd[12] AS S64
+        bn[0] = 1
+        bd[0] = 1
+        bn[1] = 0 - 1
+        bd[1] = 2
+        bn[2] = 1
+        bd[2] = 6
+        bn[3] = 0
+        bd[3] = 1
+        bn[4] = 0 - 1
+        bd[4] = 30
+        bn[5] = 0
+        bd[5] = 1
+        bn[6] = 1
+        bd[6] = 42
+        bn[7] = 0
+        bd[7] = 1
+        bn[8] = 0 - 1
+        bd[8] = 30
+        bn[9] = 0
+        bd[9] = 1
+        bn[10] = 5
+        bd[10] = 66
+        FOR n = 1 TO 5
+            -- coeff of m^(n+1-j): (-1)^j C(n+1,j) B_j / (n+1)
+            PRINT "n=" | n | ":"
+            FOR j = 0 TO n
+                -- binomial C(n+1,j)
+                LET c AS S64 = 1
+                FOR k = 1 TO j
+                    c = c * (n + 2 - k) / k
+                END FOR
+                LET an AS S64 = c * bn[j]
+                LET ad AS S64 = bd[j] * (n + 1)
+                IF j MOD 2 = 1 THEN an = 0 - an END IF
+                -- reduce
+                LET g AS S64 = an
+                LET h AS S64 = ad
+                IF g < 0 THEN g = 0 - g END IF
+                WHILE h > 0
+                    LET r AS S64 = g MOD h
+                    g = h
+                    h = r
+                END WHILE
+                IF g = 0 THEN g = 1 END IF
+                an = an / g
+                ad = ad / g
+                IF an <> 0 THEN
+                    PRINT "  m^" | (n + 1 - j) | " : " | an | "/" | ad
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ft
+BEGIN
+    Ft.Run()
+END

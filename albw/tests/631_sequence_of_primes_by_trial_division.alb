@@ -1,0 +1,36 @@
+-- 631 | Sequence of primes by trial division: first 12 primes.
+DECLARE MODULE Ptd
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ptd
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 2
+        LET cnt AS S64 = 0
+        WHILE cnt < 12
+            IF IsPrime(n) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Ptd
+BEGIN
+    Ptd.Run()
+END

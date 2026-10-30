@@ -1,0 +1,49 @@
+VERSION 1.0
+
+STRICT bd[16] AS S64
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 16
+        bd[i] = (i + 1) MOD 16
+        i = i + 1
+    END WHILE
+
+    LET hole AS S64 = 15
+    LET t AS S64 = bd[14]
+    bd[14] = 0
+    bd[15] = t
+    hole = 14
+    LET t2 AS S64 = bd[10]
+    bd[10] = 0
+    bd[14] = t2
+    hole = 10
+
+    PRINT "scrambled:"
+    LET r AS S64 = 0
+    WHILE r < 4
+        PRINT bd[r * 4] | " " | bd[r * 4 + 1] | " " | bd[r * 4 + 2] | " " | bd[r * 4 + 3]
+        r = r + 1
+    END WHILE
+
+    LET t3 AS S64 = bd[hole + 4]
+    bd[hole + 4] = 0
+    bd[hole] = t3
+    hole = hole + 4
+    LET t4 AS S64 = bd[hole + 1]
+    bd[hole + 1] = 0
+    bd[hole] = t4
+    hole = hole + 1
+
+    LET solved AS S64 = 1
+    i = 0
+    WHILE i < 15
+        IF bd[i] <> i + 1 THEN
+            solved = 0
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "moves=DR"
+    PRINT "solved=" | solved
+END

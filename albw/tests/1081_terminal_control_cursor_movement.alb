@@ -1,0 +1,9 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT "move up 3: " | CHR(27) | "[3A"
+    PRINT "move down 2: " | CHR(27) | "[2B"
+    PRINT "move right 5: " | CHR(27) | "[5C"
+    PRINT "move left 4: " | CHR(27) | "[4D"
+END

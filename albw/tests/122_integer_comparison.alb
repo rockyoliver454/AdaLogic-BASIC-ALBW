@@ -1,0 +1,14 @@
+-- 122 | Integer comparison: report the relation between two ints.
+BEGIN
+    LET a AS S32 = 5;
+    LET b AS S32 = 9;
+    IF a < b THEN
+        PRINT$ "a < b";
+    END IF
+    IF a = b THEN
+        PRINT$ "a = b";
+    END IF
+    IF a > b THEN
+        PRINT$ "a > b";
+    END IF
+END

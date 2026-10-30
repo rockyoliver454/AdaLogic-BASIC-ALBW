@@ -1,0 +1,69 @@
+-- 252 | Floyd-Warshall algorithm: all-pairs shortest paths on a 4-vertex graph.
+DECLARE MODULE FloydWarshall
+    PROCEDURE Solve()
+    PROCEDURE ShowResults()
+END DECLARE MODULE
+
+MODULE FloydWarshall
+    LET n AS S32 = 4
+    STRICT dist[16] AS S32
+    LET infinity AS S32 = 9999999
+
+    FUNCTION Idx(i AS S32, j AS S32) AS S32
+        RETURN i * n + j
+    END FUNCTION
+
+    PROCEDURE Init()
+        FOR i = 0 TO n - 1
+            FOR j = 0 TO n - 1
+                IF i = j THEN
+                    dist[Idx(i, j)] = 0
+                ELSE
+                    dist[Idx(i, j)] = infinity
+                END IF
+            END FOR
+        END FOR
+
+        dist[Idx(0, 2)] = -2
+        dist[Idx(1, 0)] = 4
+        dist[Idx(1, 2)] = 3
+        dist[Idx(2, 3)] = 2
+        dist[Idx(3, 1)] = -1
+    END PROCEDURE
+
+    PROCEDURE Solve()
+        Init()
+        FOR k = 0 TO n - 1
+            FOR i = 0 TO n - 1
+                FOR j = 0 TO n - 1
+                    LET ik AS S32 = dist[Idx(i, k)]
+                    LET kj AS S32 = dist[Idx(k, j)]
+                    IF ik <> infinity ANDALSO kj <> infinity THEN
+                        LET candidate AS S32 = ik + kj
+                        IF candidate < dist[Idx(i, j)] THEN
+                            dist[Idx(i, j)] = candidate
+                        END IF
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE ShowResults()
+        FOR i = 0 TO n - 1
+            FOR j = 0 TO n - 1
+                IF i <> j THEN
+                    LET d AS S32 = dist[Idx(i, j)]
+                    LET out_line AS STRING = (i + 1) | " -> " | (j + 1) | "  " | d
+                    PRINT out_line
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT FloydWarshall
+BEGIN
+    FloydWarshall.Solve()
+    FloydWarshall.ShowResults()
+END

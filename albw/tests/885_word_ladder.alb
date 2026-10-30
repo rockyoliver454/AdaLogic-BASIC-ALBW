@@ -1,0 +1,76 @@
+-- 885 | Word ladder: shortest path between two words over a
+-- small dictionary, one letter changed per step. BFS.
+DECLARE MODULE Wl
+    FUNCTION Diff1(a AS STRING, b AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wl
+    STRICT wd[24] AS STRING
+    STRICT prev[24] AS S64
+    STRICT vis[24] AS S64
+    STRICT q[24] AS S64
+
+    FUNCTION Diff1(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        LET d AS S64 = 0
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN d = d + 1 END IF
+        END FOR
+        IF d = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        wd[1] = "cat"
+        wd[2] = "cot"
+        wd[3] = "cog"
+        wd[4] = "dog"
+        wd[5] = "dot"
+        wd[6] = "bat"
+        wd[7] = "bot"
+        wd[8] = "bag"
+        wd[9] = "fog"
+        wd[10] = "log"
+        wd[11] = "big"
+        wd[12] = "bug"
+        LET nw AS S64 = 12
+        FOR i = 1 TO nw
+            vis[i] = 0
+            prev[i] = 0
+        END FOR
+        LET h AS S64 = 1
+        LET t AS S64 = 2
+        q[1] = 1
+        vis[1] = 1
+        WHILE h < t
+            LET u AS S64 = q[h]
+            h = h + 1
+            FOR v = 1 TO nw
+                IF vis[v] = 0 ANDALSO Diff1(wd[u], wd[v]) = 1 THEN
+                    vis[v] = 1
+                    prev[v] = u
+                    q[t] = v
+                    t = t + 1
+                END IF
+            END FOR
+        END WHILE
+        -- path cat(1) -> dog(4)
+        IF vis[4] = 1 THEN
+            LET s AS STRING = ""
+            LET v AS S64 = 4
+            WHILE v <> 0
+                s = " " | wd[v] | s
+                v = prev[v]
+            END WHILE
+            PRINT "ladder:" | s
+        ELSE
+            PRINT "no ladder"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Wl
+BEGIN
+    Wl.Run()
+END

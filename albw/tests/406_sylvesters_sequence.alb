@@ -1,0 +1,21 @@
+-- 406 | Sylvester's sequence: a(n+1) = a(n)*(a(n)-1)+1, starting 2; first 7.
+DECLARE MODULE Sylvester
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sylvester
+    PROCEDURE Run()
+        LET a AS S64 = 2
+        LET s AS STRING = ""
+        FOR i = 0 TO 6
+            s = s | a | " "
+            a = a * (a - 1) + 1
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Sylvester
+BEGIN
+    Sylvester.Run()
+END

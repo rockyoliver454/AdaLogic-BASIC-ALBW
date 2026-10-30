@@ -1,0 +1,67 @@
+-- 995 | Barnsley fern: IFS with the classic 4 transforms,
+-- 20000 points plotted on a 60x30 ASCII grid.
+DECLARE MODULE Bf
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bf
+    STRICT g[1801] AS S64
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536 MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 42
+        LET x AS F64 = 0.0
+        LET y AS F64 = 0.0
+        FOR i = 1 TO 1800
+            g[i] = 0
+        END FOR
+        FOR i = 1 TO 20000
+            LET r AS S64 = Nxt() MOD 100
+            LET nx AS F64 = 0.0
+            LET ny AS F64 = 0.0
+            IF r < 1 THEN
+                nx = 0.0
+                ny = 0.16 * y
+            ELSE IF r < 86 THEN
+                nx = 0.85 * x + 0.04 * y
+                ny = 0.0 - 0.04 * x + 0.85 * y + 1.6
+            ELSE IF r < 93 THEN
+                nx = 0.2 * x - 0.26 * y
+                ny = 0.23 * x + 0.22 * y + 1.6
+            ELSE
+                nx = 0.0 - 0.15 * x + 0.28 * y
+                ny = 0.26 * x + 0.24 * y + 0.44
+            END IF
+            END IF
+            END IF
+            x = nx
+            y = ny
+            LET gx AS S64 = (x + 3.0) * 10.0
+            LET gy AS S64 = (10.2 - y) * 2.9
+            IF gx >= 0 ANDALSO gx < 60 ANDALSO gy >= 0 ANDALSO gy < 30 THEN
+                g[gy * 60 + gx + 1] = 1
+            END IF
+        END FOR
+        FOR y2 = 0 TO 29
+            LET row AS STRING = ""
+            FOR x2 = 0 TO 59
+                IF g[y2 * 60 + x2 + 1] = 1 THEN
+                    row = row | "#"
+                ELSE
+                    row = row | " "
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Bf
+BEGIN
+    Bf.Run()
+END

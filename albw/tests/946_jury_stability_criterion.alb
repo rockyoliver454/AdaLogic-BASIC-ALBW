@@ -1,0 +1,88 @@
+-- 946 | Jury stability criterion: test whether roots of a
+-- polynomial lie inside the unit circle (discrete-time
+-- stability). Necessary conditions: P(1)>0, P(-1) sign,
+-- |a0| < an, plus the jury array first-column checks.
+-- We implement the full jury array on s(z)=z^2+... examples.
+DECLARE MODULE Jy
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Jy
+    STRICT cf[6] AS F64
+    STRICT tb[36] AS F64
+
+    PROCEDURE Check(n AS S64, lbl AS STRING)
+        -- cf[1..n+1] coeffs, descending powers (leading first).
+        LET ok AS S32 = 1
+        -- P(1) > 0
+        LET p1 AS F64 = 0.0
+        FOR i = 1 TO n + 1
+            p1 = p1 + cf[i]
+        END FOR
+        -- P(-1): sign depends on n parity -> (-1)^n P(-1) > 0
+        LET pm AS F64 = 0.0
+        FOR i = 1 TO n + 1
+            LET sgn AS F64 = 1.0
+            IF (n + 1 - i) MOD 2 = 1 THEN sgn = 0.0 - 1.0 END IF
+            pm = pm + cf[i] * sgn
+        END FOR
+        IF n MOD 2 = 1 THEN pm = 0.0 - pm END IF
+        -- |a0| < an where an = leading coeff = cf[1], a0 = cf[n+1]
+        LET a0 AS F64 = cf[n + 1]
+        IF a0 < 0.0 THEN a0 = 0.0 - a0 END IF
+        LET msg AS STRING = lbl | ": "
+        IF p1 <= 0.0 ORELSE pm <= 0.0 ORELSE a0 >= cf[1] THEN
+            ok = 0
+        END IF
+        -- jury array: rows reduce; check |last col| > |first|
+        -- build rows iteratively
+        LET m AS S64 = n + 1
+        FOR i = 1 TO m
+            tb[i] = cf[i]
+        END FOR
+        LET rows AS S64 = 0
+        WHILE m > 2 ANDALSO ok = 1
+            -- next row: b_k = a_0*a_k - a_n*a_{n-k} (k=0..m-2)
+            LET base AS S64 = (rows + 1) * 6
+            LET cur AS S64 = rows * 6
+            FOR k = 0 TO m - 2
+                tb[base + k + 1] = tb[cur + 1] * tb[cur + k + 1] - tb[cur + m] * tb[cur + m - k]
+            END FOR
+            -- check |b_last... | jury condition: |first| > |last|?
+            -- jury: |a0| < an (done above); for each new row the
+            -- first coeff magnitude must exceed the last
+            LET f AS F64 = tb[base + 1]
+            LET l AS F64 = tb[base + m - 1]
+            IF f < 0.0 THEN f = 0.0 - f END IF
+            IF l < 0.0 THEN l = 0.0 - l END IF
+            IF f <= l THEN ok = 0 END IF
+            rows = rows + 1
+            m = m - 1
+        END WHILE
+        IF ok = 1 THEN PRINT msg | "stable" END IF
+        IF ok = 0 THEN PRINT msg | "unstable" END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- z^2 - 0.5z + 0.06 (stable: roots 0.3,0.2)
+        cf[1] = 1.0
+        cf[2] = 0.0 - 0.5
+        cf[3] = 0.06
+        Check(2, "z2-0.5z+0.06")
+        -- z^2 - 3z + 2 (roots 1 and 2 -> unstable)
+        cf[1] = 1.0
+        cf[2] = 0.0 - 3.0
+        cf[3] = 2.0
+        Check(2, "z2-3z+2")
+        -- z^2 + 0.5z + 0.06
+        cf[1] = 1.0
+        cf[2] = 0.5
+        cf[3] = 0.06
+        Check(2, "z2+0.5z+0.06")
+    END PROCEDURE
+END MODULE
+
+IMPORT Jy
+BEGIN
+    Jy.Run()
+END

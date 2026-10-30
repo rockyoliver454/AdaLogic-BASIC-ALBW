@@ -1,0 +1,57 @@
+-- 866 | Execute Brainf*ck: interpret the classic
+-- "Hello World!" program on a tape of cells.
+DECLARE MODULE Bfx
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bfx
+    STRICT tp[1024] AS S64
+
+    PROCEDURE Run()
+        LET prog AS STRING = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
+        FOR i = 1 TO 1024
+            tp[i] = 0
+        END FOR
+        LET dp AS S64 = 1
+        LET pc AS S64 = 1
+        LET n AS S64 = LEN(prog)
+        LET rs AS STRING = ""
+        WHILE pc <= n
+            LET op AS S64 = ASC(MID$(prog, pc, 1))
+            IF op = 62 THEN dp = dp + 1 END IF
+            IF op = 60 THEN dp = dp - 1 END IF
+            IF op = 43 THEN tp[dp] = tp[dp] + 1 END IF
+            IF op = 45 THEN tp[dp] = tp[dp] - 1 END IF
+            IF op = 46 THEN rs = rs | CHR(tp[dp]) END IF
+            IF op = 91 THEN
+                IF tp[dp] = 0 THEN
+                    LET dd AS S64 = 1
+                    WHILE dd > 0
+                        pc = pc + 1
+                        LET c2 AS S64 = ASC(MID$(prog, pc, 1))
+                        IF c2 = 91 THEN dd = dd + 1 END IF
+                        IF c2 = 93 THEN dd = dd - 1 END IF
+                    END WHILE
+                END IF
+            END IF
+            IF op = 93 THEN
+                IF tp[dp] <> 0 THEN
+                    LET dd AS S64 = 1
+                    WHILE dd > 0
+                        pc = pc - 1
+                        LET c2 AS S64 = ASC(MID$(prog, pc, 1))
+                        IF c2 = 93 THEN dd = dd + 1 END IF
+                        IF c2 = 91 THEN dd = dd - 1 END IF
+                    END WHILE
+                END IF
+            END IF
+            pc = pc + 1
+        END WHILE
+        PRINT rs
+    END PROCEDURE
+END MODULE
+
+IMPORT Bfx
+BEGIN
+    Bfx.Run()
+END

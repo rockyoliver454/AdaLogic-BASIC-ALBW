@@ -1,0 +1,51 @@
+-- 513 | Sorting algorithms/Pancake sort.
+DECLARE MODULE Pan
+    PROCEDURE Flip(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pan
+    STRICT a[10] AS S64
+
+    PROCEDURE Flip(k AS S64)
+        FOR i = 1 TO k / 2
+            LET t AS S64 = a[i]
+            a[i] = a[k - i + 1]
+            a[k - i + 1] = t
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        a[1] = 23
+        a[2] = 10
+        a[3] = 20
+        a[4] = 11
+        a[5] = 12
+        a[6] = 6
+        a[7] = 7
+        a[8] = 14
+        a[9] = 9
+        a[10] = 5
+        FOR sz = 2 TO 10
+            LET cur AS S64 = 12 - sz
+            LET mx AS S64 = 1
+            FOR i = 1 TO cur
+                IF a[i] > a[mx] THEN mx = i END IF
+            END FOR
+            IF mx < cur THEN
+                Flip(mx)
+                Flip(cur)
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 10
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pan
+BEGIN
+    Pan.Run()
+END

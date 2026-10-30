@@ -1,0 +1,62 @@
+-- 872 | Wordle comparison: score guesses against a target
+-- using proper two-pass marking (green first, then yellow
+-- counting remaining letter frequencies).
+DECLARE MODULE Wc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wc
+    STRICT mk[6] AS S64
+    STRICT ct[26] AS S64
+
+    PROCEDURE Run()
+        LET tg AS STRING = "crane"
+        LET g1 AS STRING = "siren"
+        LET g2 AS STRING = "trace"
+        LET g3 AS STRING = "crane"
+        -- score g1
+        FOR gi = 1 TO 3
+            LET g AS STRING = g1
+            IF gi = 2 THEN g = g2 END IF
+            IF gi = 3 THEN g = g3 END IF
+            FOR i = 1 TO 26
+                ct[i] = 0
+            END FOR
+            FOR i = 1 TO 5
+                mk[i] = 0
+            END FOR
+            FOR i = 1 TO 5
+                ct[ASC(MID$(tg, i, 1)) - 96] = ct[ASC(MID$(tg, i, 1)) - 96] + 1
+            END FOR
+            -- green pass
+            FOR i = 1 TO 5
+                IF ASC(MID$(g, i, 1)) = ASC(MID$(tg, i, 1)) THEN
+                    mk[i] = 2
+                    ct[ASC(MID$(g, i, 1)) - 96] = ct[ASC(MID$(g, i, 1)) - 96] - 1
+                END IF
+            END FOR
+            -- yellow pass
+            FOR i = 1 TO 5
+                IF mk[i] = 0 THEN
+                    LET c AS S64 = ASC(MID$(g, i, 1)) - 96
+                    IF ct[c] > 0 THEN
+                        mk[i] = 1
+                        ct[c] = ct[c] - 1
+                    END IF
+                END IF
+            END FOR
+            LET s AS STRING = ""
+            FOR i = 1 TO 5
+                IF mk[i] = 2 THEN s = s | "G" END IF
+                IF mk[i] = 1 THEN s = s | "Y" END IF
+                IF mk[i] = 0 THEN s = s | "." END IF
+            END FOR
+            PRINT g | " vs " | tg | " -> " | s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Wc
+BEGIN
+    Wc.Run()
+END

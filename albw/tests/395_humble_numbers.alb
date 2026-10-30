@@ -1,0 +1,41 @@
+-- 395 | Humble numbers: {2,3,5,7}-smooth numbers; first 50.
+DECLARE MODULE Humble
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Humble
+    STRICT h[64] AS S64
+
+    PROCEDURE Run()
+        h[0] = 1
+        LET i2 AS S32 = 0
+        LET i3 AS S32 = 0
+        LET i5 AS S32 = 0
+        LET i7 AS S32 = 0
+        FOR n = 1 TO 50
+            LET n2 AS S64 = h[i2] * 2
+            LET n3 AS S64 = h[i3] * 3
+            LET n5 AS S64 = h[i5] * 5
+            LET n7 AS S64 = h[i7] * 7
+            LET m AS S64 = n2
+            IF n3 < m THEN m = n3 END IF
+            IF n5 < m THEN m = n5 END IF
+            IF n7 < m THEN m = n7 END IF
+            h[n] = m
+            IF m = n2 THEN i2 = i2 + 1 END IF
+            IF m = n3 THEN i3 = i3 + 1 END IF
+            IF m = n5 THEN i5 = i5 + 1 END IF
+            IF m = n7 THEN i7 = i7 + 1 END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 0 TO 49
+            s = s | h[n] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Humble
+BEGIN
+    Humble.Run()
+END

@@ -1,0 +1,57 @@
+-- 990 | Langton's ant: RL rules on 40x24 grid, 300 steps
+-- from center; print final grid with ant position.
+DECLARE MODULE La
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE La
+    STRICT g[961] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 960
+            g[i] = 0
+        END FOR
+        LET x AS S64 = 20
+        LET y AS S64 = 12
+        LET d AS S64 = 0
+        FOR st = 1 TO 300
+            LET i AS S64 = y * 40 + x + 1
+            IF g[i] = 0 THEN
+                d = (d + 1) MOD 4
+                g[i] = 1
+            ELSE
+                d = (d + 3) MOD 4
+                g[i] = 0
+            END IF
+            IF d = 0 THEN y = y - 1 END IF
+            IF d = 1 THEN x = x + 1 END IF
+            IF d = 2 THEN y = y + 1 END IF
+            IF d = 3 THEN x = x - 1 END IF
+            IF x < 0 ORELSE x > 39 ORELSE y < 0 ORELSE y > 23 THEN
+                PRINT "ant left grid at step " | st
+                RETURN
+            END IF
+        END FOR
+        FOR y2 = 0 TO 23
+            LET row AS STRING = ""
+            FOR x2 = 0 TO 39
+                IF x2 = x ANDALSO y2 = y THEN
+                    row = row | "A"
+                ELSE
+                    IF g[y2 * 40 + x2 + 1] = 1 THEN
+                        row = row | "#"
+                    ELSE
+                        row = row | "."
+                    END IF
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+        PRINT "ant at " | x | "," | y | " dir " | d
+    END PROCEDURE
+END MODULE
+
+IMPORT La
+BEGIN
+    La.Run()
+END

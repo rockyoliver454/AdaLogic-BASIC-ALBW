@@ -1,0 +1,20 @@
+-- 580 | Euler's identity: e^(i*pi) + 1 = 0, verified numerically
+-- via cos(pi) + i*sin(pi).
+DECLARE MODULE Eid
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Eid
+    PROCEDURE Run()
+        LET pi AS F64 = 3.141592653589793
+        LET re AS F64 = COS(pi) + 1.0
+        LET im AS F64 = SIN(pi)
+        PRINT "e^(i*pi) + 1 = " | re | " + " | im | "i"
+        PRINT "abs = " | SQRT(re * re + im * im)
+    END PROCEDURE
+END MODULE
+
+IMPORT Eid
+BEGIN
+    Eid.Run()
+END

@@ -1,0 +1,21 @@
+-- 135 | Knapsack 0-1: max value under weight cap, DP table.
+BEGIN
+    STRICT wt[4] AS S32;
+    STRICT vl[4] AS S32;
+    wt[0]=2; vl[0]=3;  wt[1]=3; vl[1]=4;
+    wt[2]=4; vl[2]=5;  wt[3]=5; vl[3]=6;
+    LET cap AS S32 = 5;
+    STRICT dp[5,6] AS S32;
+    FOR i = 1 TO 4
+        FOR w = 0 TO cap
+            dp[i,w] = dp[i - 1,w];
+            IF wt[i - 1] <= w THEN
+                LET cand AS S32 = dp[i - 1,w - wt[i - 1]] + vl[i - 1];
+                IF cand > dp[i,w] THEN
+                    dp[i,w] = cand;
+                END IF
+            END IF
+        END FOR
+    END FOR
+    PRINT dp[4,cap];
+END

@@ -1,0 +1,78 @@
+-- 179 | Maze generation: DFS backtracker on a cell grid, walls as ints.
+--  Grid 11x7 cells -> chars; 0 = wall, 1 = path.
+DECLARE MODULE MZ
+    PROCEDURE Gen()
+END DECLARE MODULE
+
+MODULE MZ
+    STRICT cell[7,11] AS S32;
+    STRICT vis[7,11] AS S32;
+    STRICT sx[77] AS S32;
+    STRICT sy[77] AS S32;
+    LET sp AS S32 = 0;
+    LET seed AS S64 = 42;
+    FUNCTION Nxt(n AS S32) AS S32
+        seed = (seed * 1103515245 + 12345) MOD 2147483648;
+        LET m AS S64 = n;
+        LET r AS S32 = seed MOD m;
+        RETURN r
+    END FUNCTION
+    PROCEDURE Gen()
+        FOR r = 0 TO 6 THEN
+            FOR c = 0 TO 10 THEN
+                vis[r,c] = 0;
+            END FOR
+        END FOR
+        sx[0] = 0; sy[0] = 0;
+        vis[0,0] = 1;
+        cell[0,0] = 1;
+        sp = 1;
+        STRICT dx[4] AS S32;
+        STRICT dy[4] AS S32;
+        dx[0]=2; dy[0]=0; dx[1]=-2; dy[1]=0;
+        dx[2]=0; dy[2]=1; dx[3]=0; dy[3]=-1;
+        WHILE sp > 0
+            LET x AS S32 = sx[sp - 1];
+            LET y AS S32 = sy[sp - 1];
+            STRICT ok[4] AS S32;
+            LET nok AS S32 = 0;
+            FOR d = 0 TO 3 THEN
+                LET nx AS S32 = x + dx[d];
+                LET ny AS S32 = y + dy[d];
+                IF nx >= 0 ANDALSO nx < 11 ANDALSO ny >= 0 ANDALSO ny < 7 ANDALSO vis[ny,nx] = 0 THEN
+                    ok[nok] = d;
+                    nok = nok + 1;
+                END IF
+            END FOR
+            IF nok = 0 THEN
+                sp = sp - 1;
+            ELSE
+                LET d AS S32 = ok[Nxt(nok)];
+                LET nx AS S32 = x + dx[d];
+                LET ny AS S32 = y + dy[d];
+                vis[ny,nx] = 1;
+                cell[ny,nx] = 1;
+                cell[y + dy[d] / 2, x + dx[d] / 2] = 1;
+                sx[sp] = nx;
+                sy[sp] = ny;
+                sp = sp + 1;
+            END IF
+        END WHILE
+        FOR r = 0 TO 6 THEN
+            LET row AS STRING = "";
+            FOR c = 0 TO 10 THEN
+                IF cell[r,c] = 1 THEN
+                    row = row | " ";
+                ELSE
+                    row = row | "#";
+                END IF
+            END FOR
+            PRINT$ row;
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT MZ
+BEGIN
+    MZ.Gen()
+END

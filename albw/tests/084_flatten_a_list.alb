@@ -1,0 +1,20 @@
+-- 084 | Flatten a list: jagged rows -> one flat list.
+BEGIN
+    STRICT rows[3,4] AS S32;
+    STRICT lens[3] AS S32;
+    rows[0,0]=1; rows[0,1]=2; rows[0,2]=3;        lens[0]=3;
+    rows[1,0]=4;                                  lens[1]=1;
+    rows[2,0]=5; rows[2,1]=6; rows[2,2]=7; rows[2,3]=8; lens[2]=4;
+    STRICT flat[8] AS S32;
+    LET n AS S32 = 0;
+    FOR r = 0 TO 2
+        FOR c = 0 TO lens[r] - 1
+            flat[n] = rows[r,c];
+            n = n + 1;
+        END FOR
+    END FOR
+    FOR i = 0 TO n - 1
+        PRINT$ flat[i] | "";
+    END FOR
+    PRINT$ "";
+END

@@ -1,0 +1,57 @@
+-- 658 | Doomsday rule: weekday of given dates via doomsday
+-- algorithm. 0=Sunday..6=Saturday.
+DECLARE MODULE Doom
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Doom
+    STRICT md[13] AS S64
+    STRICT wd[7] AS STRING
+
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+        LET c AS S64 = y / 100
+        LET yy AS S64 = y MOD 100
+        LET anchor AS S64 = (5 * (c MOD 4) + 2) MOD 7
+        LET dd AS S64 = (yy + yy / 4) MOD 7
+        LET refv AS S64 = md[m]
+        IF m = 1 ANDALSO (y MOD 4 = 0 ANDALSO (y MOD 100 <> 0 ORELSE y MOD 400 = 0)) THEN refv = 4 END IF
+        IF m = 2 ANDALSO (y MOD 4 = 0 ANDALSO (y MOD 100 <> 0 ORELSE y MOD 400 = 0)) THEN refv = 29 END IF
+        LET total AS S64 = (anchor + dd + d - refv) MOD 7
+        IF total < 0 THEN total = total + 7 END IF
+        RETURN total
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- doomsday dates per month (leap: jan 4, feb 29)
+        md[1] = 3
+        md[2] = 28
+        md[3] = 14
+        md[4] = 4
+        md[5] = 9
+        md[6] = 6
+        md[7] = 11
+        md[8] = 8
+        md[9] = 5
+        md[10] = 10
+        md[11] = 7
+        md[12] = 12
+        
+        wd[0] = "Sunday"
+        wd[1] = "Monday"
+        wd[2] = "Tuesday"
+        wd[3] = "Wednesday"
+        wd[4] = "Thursday"
+        wd[5] = "Friday"
+        wd[6] = "Saturday"
+        PRINT "2024-12-25: " | wd[Wd(2024, 12, 25)]
+        PRINT "2025-01-01: " | wd[Wd(2025, 1, 1)]
+        PRINT "2000-02-29: " | wd[Wd(2000, 2, 29)]
+        PRINT "1900-01-01: " | wd[Wd(1900, 1, 1)]
+    END PROCEDURE
+END MODULE
+
+IMPORT Doom
+BEGIN
+    Doom.Run()
+END

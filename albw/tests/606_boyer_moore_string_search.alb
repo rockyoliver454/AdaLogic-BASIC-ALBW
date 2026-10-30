@@ -1,0 +1,42 @@
+-- 606 | Boyer-Moore string search (bad-character rule).
+DECLARE MODULE Bm
+    FUNCTION BoyerMoore(s AS STRING, pat AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bm
+    STRICT skip[256] AS S64
+
+    FUNCTION BoyerMoore(s AS STRING, pat AS STRING) AS S64
+        FOR i = 0 TO 255
+            skip[i] = LEN(pat)
+        END FOR
+        FOR j = 1 TO LEN(pat) - 1
+            skip[ASC(MID$(pat, j, 1))] = LEN(pat) - j
+        END FOR
+        LET i2 AS S64 = LEN(pat)
+        WHILE i2 <= LEN(s)
+            LET k AS S64 = i2
+            LET j2 AS S64 = LEN(pat)
+            WHILE j2 >= 1 ANDALSO MID$(s, k, 1) = MID$(pat, j2, 1)
+                k = k - 1
+                j2 = j2 - 1
+            END WHILE
+            IF j2 = 0 THEN RETURN k + 1 END IF
+            i2 = i2 + skip[ASC(MID$(s, i2, 1))]
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "here is a simple example"
+        PRINT BoyerMoore(s, "example")
+        PRINT BoyerMoore(s, "simple")
+        PRINT BoyerMoore(s, "absent")
+    END PROCEDURE
+END MODULE
+
+IMPORT Bm
+BEGIN
+    Bm.Run()
+END

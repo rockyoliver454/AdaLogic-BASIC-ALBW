@@ -1,0 +1,19 @@
+-- 363 | Pronic numbers: n(n+1); first 25.
+DECLARE MODULE Pronic
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pronic
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 0 TO 24
+            s = s | (n * (n + 1)) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pronic
+BEGIN
+    Pronic.Run()
+END

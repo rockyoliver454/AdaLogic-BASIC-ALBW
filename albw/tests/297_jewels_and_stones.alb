@@ -1,0 +1,22 @@
+-- 297 | Jewels and stones: count how many stones are jewels.
+BEGIN
+    STRICT jewels[2] AS STRING
+    STRICT stones[2] AS STRING
+    jewels[0] = "aAAbbbb"
+    stones[0] = "aAAbbbb"
+    jewels[1] = "z"
+    stones[1] = "ZZ"
+
+    FOR p = 0 TO 1
+        LET count AS S32 = 0
+        FOR i = 1 TO LEN(stones[p])
+            LET c AS S32 = ASC(MID$(stones[p], i, 1))
+            LET matched AS S32 = 0
+            FOR j = 1 TO LEN(jewels[p])
+                IF c = ASC(MID$(jewels[p], j, 1)) THEN matched = 1 END IF
+            END FOR
+            count = count + matched
+        END FOR
+        PRINT count
+    END FOR
+END

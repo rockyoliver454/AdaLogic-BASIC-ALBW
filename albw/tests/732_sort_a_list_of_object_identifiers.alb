@@ -1,0 +1,80 @@
+-- 732 | Sort a list of object identifiers: OIDs sorted by
+-- each numeric component.
+DECLARE MODULE Oi
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Oi
+    STRICT oid[7] AS STRING
+
+    PROCEDURE Run()
+        oid[1] = "1.2.840"
+        oid[2] = "1.2.41"
+        oid[3] = "1.10.5"
+        oid[4] = "0.3.44"
+        oid[5] = "1.2.4"
+        FOR i = 2 TO 5
+            LET kv AS STRING = oid[i]
+            LET j AS S64 = i - 1
+            LET cont AS S32 = 1
+            WHILE j >= 1 ANDALSO cont = 1
+                -- componentwise compare oid[j] vs kv
+                LET p1 AS S64 = 1
+                LET p2 AS S64 = 1
+                LET diff AS S64 = 0
+                LET done AS S32 = 0
+                WHILE done = 0
+                    LET a AS S64 = 0
+                    LET b AS S64 = 0
+                    LET ha AS S32 = 0
+                    LET hb AS S32 = 0
+                    IF p1 <= LEN(oid[j]) THEN
+                        ha = 1
+                        LET q AS S64 = p1
+                        WHILE q <= LEN(oid[j]) ANDALSO MID$(oid[j], q, 1) <> "."
+                            a = a * 10 + ASC(MID$(oid[j], q, 1)) - 48
+                            q = q + 1
+                        END WHILE
+                        p1 = q + 1
+                    END IF
+                    IF p2 <= LEN(kv) THEN
+                        hb = 1
+                        LET q2 AS S64 = p2
+                        WHILE q2 <= LEN(kv) ANDALSO MID$(kv, q2, 1) <> "."
+                            b = b * 10 + ASC(MID$(kv, q2, 1)) - 48
+                            q2 = q2 + 1
+                        END WHILE
+                        p2 = q2 + 1
+                    END IF
+                    IF ha = 0 ANDALSO hb = 0 THEN done = 1 END IF
+                    IF ha = 0 ANDALSO hb = 1 THEN
+                        diff = -1
+                        done = 1
+                    END IF
+                    IF ha = 1 ANDALSO hb = 0 THEN
+                        diff = 1
+                        done = 1
+                    END IF
+                    IF ha = 1 ANDALSO hb = 1 ANDALSO a <> b THEN
+                        diff = a - b
+                        done = 1
+                    END IF
+                END WHILE
+                IF diff <= 0 THEN cont = 0 END IF
+                IF diff > 0 THEN
+                    oid[j + 1] = oid[j]
+                    j = j - 1
+                END IF
+            END WHILE
+            oid[j + 1] = kv
+        END FOR
+        FOR i = 1 TO 5
+            PRINT oid[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Oi
+BEGIN
+    Oi.Run()
+END

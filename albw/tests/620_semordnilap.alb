@@ -1,0 +1,50 @@
+-- 620 | Semordnilap: count and list semordnilap pairs in a
+-- fixed word list.
+DECLARE MODULE Sem
+    FUNCTION Rev(s AS STRING) AS STRING
+    FUNCTION Has(t AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sem
+    STRICT w[8] AS STRING
+
+    FUNCTION Rev(s AS STRING) AS STRING
+        LET r AS STRING = ""
+        LET i AS S64 = LEN(s)
+        WHILE i >= 1
+            r = r | MID$(s, i, 1)
+            i = i - 1
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Has(t AS STRING) AS S32
+        FOR i = 1 TO 8
+            IF w[i] = t THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "lager"
+        w[2] = "regal"
+        w[3] = "lived"
+        w[4] = "devil"
+        w[5] = "stressed"
+        w[6] = "desserts"
+        w[7] = "hello"
+        w[8] = "raw"
+        LET cnt AS S64 = 0
+        FOR i = 1 TO 8
+            LET r AS STRING = Rev(w[i])
+            IF Has(r) = 1 ANDALSO w[i] <> r THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "semordnilap words: " | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Sem
+BEGIN
+    Sem.Run()
+END

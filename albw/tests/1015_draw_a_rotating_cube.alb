@@ -1,0 +1,91 @@
+VERSION 1.0
+STRICT vx[8] AS S64
+STRICT vy[8] AS S64
+STRICT vz[8] AS S64
+STRICT px[8] AS S64
+STRICT py[8] AS S64
+STRICT ex[12] AS S64
+STRICT ey[12] AS S64
+
+LET frames AS S64 = 0
+LET ang AS S64 = 0
+LET ipx AS S64 = 0
+
+FUNCTION Sn(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN SIN(df * 0.017453292519943295)
+END FUNCTION
+
+FUNCTION Cs(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN COS(df * 0.017453292519943295)
+END FUNCTION
+
+PROCEDURE Spin()
+    LET i AS S64 = 0
+    LET cy AS F64 = Sn(ang)
+    LET sy AS F64 = Cs(ang)
+    LET cp AS F64 = Sn(25)
+    LET sp AS F64 = Cs(25)
+    LET xr AS F64 = 0
+    LET zr AS F64 = 0
+    LET yr AS F64 = 0
+    LET xf AS F64 = vx[0] * 1.0
+    WHILE i < 8
+        xf = vx[i] * 1.0
+        xr = xf * sy + (vz[i] * 1.0) * cy
+        zr = (vz[i] * 1.0) * sy - xf * cy
+        yr = (vy[i] * 1.0) * sp - zr * cp
+        px[i] = ROUND(48.0 + xr)
+        py[i] = ROUND(32.0 - yr)
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 8
+        IF i AND 1 THEN vx[i] = 18 ELSE vx[i] = 0 - 18 END IF
+        IF i AND 2 THEN vy[i] = 18 ELSE vy[i] = 0 - 18 END IF
+        IF i AND 4 THEN vz[i] = 18 ELSE vz[i] = 0 - 18 END IF
+        i = i + 1
+    END WHILE
+
+    ex[0] = 0 ey[0] = 1 ex[1] = 1 ey[1] = 3 ex[2] = 3 ey[2] = 2 ex[3] = 2 ey[3] = 0
+    ex[4] = 4 ey[4] = 5 ex[5] = 5 ey[5] = 7 ex[6] = 7 ey[6] = 6 ex[7] = 6 ey[7] = 4
+    ex[8] = 0 ey[8] = 4 ex[9] = 1 ey[9] = 5 ex[10] = 2 ey[10] = 6 ex[11] = 3 ey[11] = 7
+
+    CREATE_WINDOW "Draw a rotating cube", 96, 64
+
+    ON TICK
+        TICK 16
+        ang = ang + 15
+        frames = frames + 1
+        IF frames >= 6 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET i AS S64 = 0
+        CLEAR $000000
+        COLOR $00FFFF
+        CALL Spin()
+        i = 0
+        WHILE i < 12
+            DRAW LINE px[ex[i]], py[ex[i]], px[ey[i]], py[ey[i]]
+            i = i + 1
+        END WHILE
+        ipx = READ_PIXEL(px[0], py[0])
+    END
+
+    LISTEN
+
+    PRINT "angle=" | ang
+    i = 0
+    WHILE i < 8
+        PRINT "v" | i | "=(" | px[i] | "," | py[i] | ")"
+        i = i + 1
+    END WHILE
+    PRINT "rotations=" | frames | " ink=" | ipx
+END

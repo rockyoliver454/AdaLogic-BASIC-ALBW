@@ -1,0 +1,12 @@
+VERSION 1.0
+
+BEGIN
+    LET rc AS S64 = SHELL("echo alb-sys-cmd > syscmd.txt")
+    PRINT "shell rc=" | rc
+    LET r AS S64 = OPEN("syscmd.txt", "r")
+    LET s AS STRING = READ(r, FILELEN("syscmd.txt"))
+    CLOSE r
+    PRINT "wrote=" | LEFT$(s, 12)
+    LET k AS S64 = KILL("syscmd.txt")
+    PRINT "cleanup=" | k
+END

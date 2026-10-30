@@ -1,0 +1,39 @@
+-- 398 | Mertens function: M(n) = sum of mu(1..n); table for n = 1..30.
+DECLARE MODULE Mertens
+    FUNCTION Mu(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mertens
+    FUNCTION Mu(n AS S64) AS S64
+        LET m AS S64 = n
+        LET cnt AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            IF m MOD d = 0 THEN
+                m = m / d
+                IF m MOD d = 0 THEN RETURN 0 END IF
+                cnt = cnt + 1
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN cnt = cnt + 1 END IF
+        IF cnt MOD 2 = 0 THEN RETURN 1 END IF
+        RETURN 0 - 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET acc AS S64 = 0
+        LET s AS STRING = ""
+        FOR n = 1 TO 30
+            acc = acc + Mu(n)
+            s = s | acc | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Mertens
+BEGIN
+    Mertens.Run()
+END

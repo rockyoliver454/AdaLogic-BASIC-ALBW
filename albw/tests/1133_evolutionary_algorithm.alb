@@ -1,0 +1,42 @@
+VERSION 1.0
+
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 12345
+    LET px AS F64 = 5.0
+    LET py AS F64 = 0.0 - 5.0
+    LET stp AS F64 = 1.0
+    LET dxa AS F64 = px - 3.0
+    LET dya AS F64 = py + 2.0
+    LET best AS F64 = dxa * dxa + dya * dya
+    LET it AS S64 = 0
+    WHILE it < 2000
+        LET m1 AS F64 = ((Nxt() MOD 2000) - 1000) * 0.001
+        LET m2 AS F64 = ((Nxt() MOD 2000) - 1000) * 0.001
+        LET nx AS F64 = px + m1 * stp
+        LET ny AS F64 = py + m2 * stp
+        LET dx2 AS F64 = nx - 3.0
+        LET dy2 AS F64 = ny + 2.0
+        LET fs AS F64 = dx2 * dx2 + dy2 * dy2
+        IF fs < best THEN
+            best = fs
+            px = nx
+            py = ny
+        END IF
+        IF it MOD 200 = 199 THEN
+            stp = stp * 0.5
+        END IF
+        it = it + 1
+    END WHILE
+    PRINT "minimize (x-3)^2+(y+2)^2"
+    PRINT "x=" | px
+    PRINT "y=" | py
+    PRINT "f=" | best
+END

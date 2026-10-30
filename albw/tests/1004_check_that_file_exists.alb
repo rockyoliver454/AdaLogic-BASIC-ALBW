@@ -1,0 +1,12 @@
+-- 1004 | Check that file exists: OPEN for read returns a
+-- nonzero handle when present, zero when absent.
+BEGIN
+LET w = OPEN("rosetta_probe.dat", "w")
+WRITE w, "here"
+CLOSE w
+LET r1 = OPEN("rosetta_probe.dat", "r")
+IF r1 <> 0 THEN PRINT "rosetta_probe.dat: exists" ELSE PRINT "rosetta_probe.dat: missing" END IF
+CLOSE r1
+LET r2 = OPEN("definitely_not_here_zz.dat", "r")
+IF r2 <> 0 THEN PRINT "definitely_not_here_zz.dat: exists" ELSE PRINT "definitely_not_here_zz.dat: missing" END IF
+END

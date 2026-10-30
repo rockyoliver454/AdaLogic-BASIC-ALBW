@@ -1,0 +1,20 @@
+DECLARE MODULE M
+    FUNCTION Ack(m AS S32, n AS S32) AS S32
+END DECLARE MODULE
+
+MODULE M
+    FUNCTION Ack(m AS S32, n AS S32) AS S32
+        IF m = 0 THEN
+            RETURN n + 1
+        END IF
+        IF n = 0 THEN
+            RETURN Ack(m - 1, 1)
+        END IF
+        RETURN Ack(m - 1, Ack(m, n - 1))
+    END FUNCTION
+END MODULE
+
+IMPORT M
+BEGIN
+    PRINT$ M.Ack(2, 3)
+END

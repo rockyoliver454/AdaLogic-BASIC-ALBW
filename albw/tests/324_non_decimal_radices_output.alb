@@ -1,0 +1,36 @@
+-- 324 | Non-decimal radices/Output: print integers in bases 2, 8, 16, 36.
+DECLARE MODULE RadixOut
+    FUNCTION ToBase(v AS S32, base AS S32) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RadixOut
+    FUNCTION ToBase(v AS S32, base AS S32) AS STRING
+        IF v = 0 THEN RETURN "0" END IF
+        LET s AS STRING = ""
+        LET n AS S32 = v
+        WHILE n > 0
+            LET d AS S32 = n - (n / base) * base
+            IF d < 10 THEN
+                s = d | s
+            ELSE
+                s = CHR(55 + d) | s
+            END IF
+            n = n / base
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT ToBase(255, 16)
+        PRINT ToBase(255, 2)
+        PRINT ToBase(255, 8)
+        PRINT ToBase(1296, 36)
+        PRINT ToBase(0, 16)
+    END PROCEDURE
+END MODULE
+
+IMPORT RadixOut
+BEGIN
+    RadixOut.Run()
+END

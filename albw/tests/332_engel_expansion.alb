@@ -1,0 +1,29 @@
+-- 332 | Engel expansion: unit-fraction product series of a rational.
+DECLARE MODULE Engel
+    PROCEDURE Expand(n AS S64, d AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Engel
+    PROCEDURE Expand(n0 AS S64, d AS S64)
+        LET n AS S64 = n0
+        LET s AS STRING = n0 | "/" | d | " ->"
+        WHILE n > 0
+            LET a AS S64 = (d + n - 1) / n
+            s = s | " " | a
+            n = n * a - d
+        END WHILE
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Expand(17, 20)
+        Expand(5, 7)
+        Expand(3, 8)
+    END PROCEDURE
+END MODULE
+
+IMPORT Engel
+BEGIN
+    Engel.Run()
+END

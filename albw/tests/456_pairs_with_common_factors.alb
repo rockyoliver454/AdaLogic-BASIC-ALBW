@@ -1,0 +1,39 @@
+-- 456 | Pairs with common factors: count and first 25 unordered
+-- pairs (a,b), 1 <= a < b <= 20, with gcd(a,b) > 1.
+DECLARE MODULE PairCF
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PairCF
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        WHILE b <> 0
+            LET t AS S64 = b
+            b = a MOD b
+            a = t
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET shown AS S64 = 0
+        FOR a = 1 TO 19
+            FOR b = a + 1 TO 20
+                IF Gcd(a, b) > 1 THEN
+                    cnt = cnt + 1
+                    IF shown < 25 THEN
+                        PRINT "(" | a | "," | b | ")"
+                        shown = shown + 1
+                    END IF
+                END IF
+            END FOR
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT PairCF
+BEGIN
+    PairCF.Run()
+END

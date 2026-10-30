@@ -1,0 +1,42 @@
+-- 640 | Sequence of primorial primes: first primorials where
+-- p#+1 or p#-1 is prime.
+DECLARE MODULE Pp
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pp
+    STRICT pr[12] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        pr[1] = 2
+        pr[2] = 3
+        pr[3] = 5
+        pr[4] = 7
+        pr[5] = 11
+        pr[6] = 13
+        LET pp AS S64 = 1
+        FOR i = 1 TO 6
+            pp = pp * pr[i]
+            LET ok1 AS S32 = IsPrime(pp + 1)
+            LET ok2 AS S32 = IsPrime(pp - 1)
+            IF ok1 = 1 THEN PRINT pp | "+1 = " | (pp + 1) | " prime" END IF
+            IF ok2 = 1 THEN PRINT pp | "-1 = " | (pp - 1) | " prime" END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pp
+BEGIN
+    Pp.Run()
+END

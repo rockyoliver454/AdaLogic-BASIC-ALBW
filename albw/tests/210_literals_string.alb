@@ -1,0 +1,8 @@
+-- 210 | String literals: ordinary text, an empty string, and concatenation.
+BEGIN
+    LET greeting AS STRING = "Hello"
+    LET empty_value AS STRING = ""
+    PRINT greeting
+    PRINT "length=" | LEN(empty_value)
+    PRINT "AdaLogic" | " " | "BASIC"
+END

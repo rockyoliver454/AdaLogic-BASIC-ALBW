@@ -1,0 +1,24 @@
+-- 1215 | BRAILLE/NEMETH raw blocks: standalone verbatim text blocks.
+-- The block transcribes through the auto-woven ueb/nemeth engine at
+-- the point it appears — no assignment, no implicit print; outputs are
+-- read back through Ueb.* / Nemeth.* (IMPORT auto-injected by ALBW).
+BEGIN
+    BRAILLE
+The quick brown fox
+END BRAILLE
+    PRINT "uni=" | Ueb.ToUni()
+    PRINT "brf=" | Ueb.ToBrf()
+    PRINT "cells=" | Ueb.Count() | "," | Ueb.Cell(0)
+
+    NEMETH
+x^2
+END NEMETH
+    PRINT "nuni=" | Nemeth.ToUni()
+    PRINT "nbrf=" | Nemeth.ToBrf()
+    PRINT "ncells=" | Nemeth.Count()
+
+    -- identifier compat: not at line-start+EOL, so still plain names
+    LET braille = 7
+    LET nemeth = 9
+    PRINT "idents=" | braille + nemeth
+END

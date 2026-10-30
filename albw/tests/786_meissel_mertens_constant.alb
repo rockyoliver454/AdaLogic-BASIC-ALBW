@@ -1,0 +1,55 @@
+-- 786 | Meissel-Mertens constant M ~ 0.2614972128476.
+-- Use the convergent form M = gamma + SUM_p (1/p + ln(1-1/p)),
+-- gamma computed as H_n - ln(n) for large n.
+DECLARE MODULE Mm
+    FUNCTION IsP(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mm
+    STRICT sv[200001] AS S32
+
+    FUNCTION IsP(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        RETURN sv[n]
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 200000
+            sv[i] = 1
+        END FOR
+        sv[1] = 0
+        FOR p = 2 TO 447
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p + p
+                WHILE m <= 200000
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+        END FOR
+        -- Euler-Mascheroni via harmonic series
+        LET h AS F64 = 0.0
+        FOR k = 1 TO 1000000
+            h = h + 1.0 / k
+        END FOR
+        LET gam AS F64 = h - LN(1000000.0)
+        PRINT "gamma~=" | gam
+        -- convergent prime sum
+        LET s AS F64 = 0.0
+        FOR p = 2 TO 200000
+            IF sv[p] = 1 THEN
+                LET pf AS F64 = p
+                s = s + 1.0 / pf + LN(1.0 - 1.0 / pf)
+            END IF
+        END FOR
+        LET mm AS F64 = gam + s
+        PRINT "sum=" | s
+        PRINT "M=" | mm
+    END PROCEDURE
+END MODULE
+
+IMPORT Mm
+BEGIN
+    Mm.Run()
+END

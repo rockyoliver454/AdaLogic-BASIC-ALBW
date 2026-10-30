@@ -1,0 +1,9 @@
+-- Negative: LAMBDA is only legal on the RHS of LET / assignment,
+-- not as a call argument or inside arbitrary expressions.
+TYPE Cmp IS ROUTINE(a AS S64, b AS S64) AS S32;
+FUNCTION Apply3(c AS Cmp, x AS S64) AS S32
+    RETURN c(x, x + 1)
+END FUNCTION
+BEGIN
+    PRINT Apply3(LAMBDA(a AS S64, b AS S64) AS S32 => a - b, 10)
+END

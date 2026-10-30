@@ -1,0 +1,15 @@
+-- 316 | Test integerness: whether floating-point values are integral.
+BEGIN
+    STRICT vals[5] AS F64
+    vals[0] = 3.0
+    vals[1] = 3.5
+    vals[2] = -4.0
+    vals[3] = -2.5
+    vals[4] = 1000000.0
+
+    FOR i = 0 TO 4
+        LET integral AS S32 = 0
+        IF vals[i] = FLOOR(vals[i]) THEN integral = 1 END IF
+        PRINT vals[i] | " -> " | integral
+    END FOR
+END

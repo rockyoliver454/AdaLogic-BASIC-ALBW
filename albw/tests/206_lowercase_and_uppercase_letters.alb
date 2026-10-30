@@ -1,0 +1,13 @@
+-- 206 | Idiomatically determine all lowercase and uppercase ASCII letters.
+BEGIN
+    LET lower AS STRING = ""
+    LET upper AS STRING = ""
+    FOR cd = 97 TO 122
+        lower = lower | CHR(cd)
+    END FOR
+    FOR cd = 65 TO 90
+        upper = upper | CHR(cd)
+    END FOR
+    PRINT lower
+    PRINT upper
+END

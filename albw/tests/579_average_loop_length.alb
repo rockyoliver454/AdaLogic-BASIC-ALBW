@@ -1,0 +1,27 @@
+-- 579 | Average loop length: expected length of the trajectory's
+-- cycle for a random mapping on n symbols uses the analytic
+-- formula a(n) = sum_{k=1..n} prod_{i=0..k-1}(1 - i/n) / (k+1).
+DECLARE MODULE AvgLoop
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AvgLoop
+    PROCEDURE Run()
+        FOR n = 1 TO 10
+            LET e AS F64 = 0.0
+            FOR k = 1 TO n
+                LET prod AS F64 = 1.0
+                FOR i = 0 TO k - 1
+                    prod = prod * (1.0 - i / n)
+                END FOR
+                e = e + prod / (k + 1.0)
+            END FOR
+            PRINT "n=" | n | " " | e
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT AvgLoop
+BEGIN
+    AvgLoop.Run()
+END

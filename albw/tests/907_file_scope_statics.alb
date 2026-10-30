@@ -1,0 +1,37 @@
+-- File-scope statics: top-level LET hoists to `static mut` items so
+-- module routines and the main body share state. Covers scalar + struct
+-- statics, reads and writes from both scopes.
+
+DEFINE STRUCT Point
+    x AS S32
+    y AS S32
+    tag AS STR
+END STRUCT
+
+LET counter AS S32 = 0
+LET origin AS Point
+LET ratio AS F64 = 0.5
+
+PROCEDURE bump()
+    counter = counter + 1
+    origin.x = origin.x + 10
+    origin.y = origin.y + 5
+END PROCEDURE
+
+FUNCTION getsum() AS S32
+    RETURN counter + origin.x + origin.y
+END FUNCTION
+
+BEGIN
+    PRINT "counter=" | counter
+    bump()
+    bump()
+    PRINT "counter=" | counter
+    PRINT "x=" | origin.x | " y=" | origin.y
+    PRINT "sum=" | getsum()
+    origin.tag = "pt"
+    PRINT origin.tag
+    PRINT "ratio=" | ratio
+    ratio = 2.5
+    PRINT "ratio=" | ratio
+END

@@ -1,0 +1,26 @@
+DECLARE MODULE M
+    FUNCTION IsEven(n AS S32) AS S32
+    FUNCTION IsOdd(n AS S32) AS S32
+END DECLARE MODULE
+
+MODULE M
+    FUNCTION IsEven(n AS S32) AS S32
+        IF n = 0 THEN
+            RETURN 1
+        END IF
+        RETURN IsOdd(n - 1)
+    END FUNCTION
+
+    FUNCTION IsOdd(n AS S32) AS S32
+        IF n = 0 THEN
+            RETURN 0
+        END IF
+        RETURN IsEven(n - 1)
+    END FUNCTION
+END MODULE
+
+IMPORT M
+BEGIN
+    PRINT$ M.IsEven(4)
+    PRINT$ M.IsOdd(7)
+END

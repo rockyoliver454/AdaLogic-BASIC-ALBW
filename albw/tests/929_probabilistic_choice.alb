@@ -1,0 +1,52 @@
+-- 929 | Probabilistic choice: sample from a weighted
+-- distribution (aleph 1/5, beth 1/6, gimel 1/7,
+-- daleth 1/8, he 1/9, waw 1/10, zayin 1/11, heth 1759/27720)
+-- seeded; print observed fractions.
+DECLARE MODULE Pb
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pb
+    STRICT sd[1] AS S64
+    STRICT w[9] AS S64
+    STRICT nm[9] AS STRING
+    STRICT ct[9] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- weights scaled to /27720
+        nm[1] = "aleph";  w[1] = 5544
+        nm[2] = "beth";   w[2] = 4620
+        nm[3] = "gimel";  w[3] = 3960
+        nm[4] = "daleth"; w[4] = 3465
+        nm[5] = "he";     w[5] = 3080
+        nm[6] = "waw";    w[6] = 2772
+        nm[7] = "zayin";  w[7] = 2520
+        nm[8] = "heth";   w[8] = 1759
+        sd[1] = 11235
+        LET n AS S64 = 100000
+        FOR i = 1 TO n
+            LET r AS S64 = Nxt() * 27720 / 32768
+            LET acc AS S64 = 0
+            LET k AS S64 = 0
+            FOR j = 1 TO 8
+                acc = acc + w[j]
+                IF r < acc ANDALSO k = 0 THEN k = j END IF
+            END FOR
+            ct[k] = ct[k] + 1
+        END FOR
+        FOR j = 1 TO 8
+            PRINT nm[j] | ": " | ct[j]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pb
+BEGIN
+    Pb.Run()
+END

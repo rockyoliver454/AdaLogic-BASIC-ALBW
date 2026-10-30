@@ -1,0 +1,38 @@
+-- 644 | Prime triangle: consecutive primes arranged in rows of
+-- increasing length.
+DECLARE MODULE Ptri
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ptri
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET n AS S64 = 2
+        FOR r = 1 TO 5
+            LET s AS STRING = ""
+            FOR c = 1 TO r
+                WHILE IsPrime(n) = 0
+                    n = n + 1
+                END WHILE
+                s = s | n | " "
+                n = n + 1
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ptri
+BEGIN
+    Ptri.Run()
+END

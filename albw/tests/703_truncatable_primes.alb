@@ -1,0 +1,76 @@
+-- 703 | Truncatable primes: largest left- and right-truncatable
+-- primes below 200000.
+DECLARE MODULE Tp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tp
+    STRICT sv[200000] AS S32
+
+    PROCEDURE Run()
+        FOR i = 0 TO 199999
+            sv[i] = 1
+        END FOR
+        sv[0] = 0
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= 199999
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m <= 199999
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        -- largest right-truncatable: all prefixes prime
+        LET n AS S64 = 199999
+        WHILE n >= 1
+            LET v AS S64 = n
+            LET ok AS S32 = 1
+            WHILE v > 0
+                IF sv[v] = 0 THEN ok = 0 END IF
+                v = v / 10
+            END WHILE
+            IF ok = 1 THEN
+                PRINT "right: " | n
+                n = 0
+            END IF
+            n = n - 1
+        END WHILE
+        -- largest left-truncatable: all suffixes prime
+        LET n2 AS S64 = 199999
+        WHILE n2 >= 1
+            LET ok2 AS S32 = 1
+            LET v2 AS S64 = n2
+            LET scale AS S64 = 1
+            WHILE v2 >= 10
+                scale = scale * 10
+                v2 = v2 / 10
+            END WHILE
+            -- RC convention: a left-truncatable prime has no 0 digit
+            LET v3 AS S64 = n2
+            WHILE v3 > 0
+                IF v3 MOD 10 = 0 THEN ok2 = 0 END IF
+                v3 = v3 / 10
+            END WHILE
+            LET w AS S64 = n2
+            WHILE scale > 0
+                IF sv[w] = 0 THEN ok2 = 0 END IF
+                w = w MOD scale
+                scale = scale / 10
+            END WHILE
+            IF ok2 = 1 ANDALSO sv[n2] = 1 THEN
+                PRINT "left: " | n2
+                n2 = 0
+            END IF
+            n2 = n2 - 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Tp
+BEGIN
+    Tp.Run()
+END

@@ -1,0 +1,48 @@
+-- 544 | Gaussian elimination: solve the 3x3 system
+--  x + y + z = 6
+--  2y + 5z = -4
+--  2x + 5y - z = 27
+-- (x=9, y=-1, z=-2)
+DECLARE MODULE Gauss
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gauss
+    STRICT a[12] AS F64
+
+    PROCEDURE Run()
+        a[1] = 1
+        a[2] = 1
+        a[3] = 1
+        a[4] = 6
+        a[5] = 0
+        a[6] = 2
+        a[7] = 5
+        a[8] = -4
+        a[9] = 2
+        a[10] = 5
+        a[11] = -1
+        a[12] = 27
+        -- forward elimination, row-major [r*4+c-4]
+        FOR c = 1 TO 3
+            FOR r = c + 1 TO 3
+                LET f AS F64 = a[r * 4 + c - 4] / a[c * 4 + c - 4]
+                FOR k = c TO 4
+                    a[r * 4 + k - 4] = a[r * 4 + k - 4] - f * a[c * 4 + k - 4]
+                END FOR
+            END FOR
+        END FOR
+        -- back substitution
+        LET x3 AS F64 = a[12] / a[11]
+        LET x2 AS F64 = (a[8] - a[7] * x3) / a[6]
+        LET x1 AS F64 = (a[4] - a[2] * x2 - a[3] * x3) / a[1]
+        PRINT "x = " | x1
+        PRINT "y = " | x2
+        PRINT "z = " | x3
+    END PROCEDURE
+END MODULE
+
+IMPORT Gauss
+BEGIN
+    Gauss.Run()
+END

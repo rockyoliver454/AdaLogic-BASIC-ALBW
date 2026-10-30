@@ -1,0 +1,50 @@
+-- 342 | Emirp primes: non-palindromic primes whose digit reversal is prime.
+DECLARE MODULE Emirp
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION ReverseDigits(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Emirp
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION ReverseDigits(n AS S64) AS S64
+        LET r AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            r = r * 10 + m MOD 10
+            m = m / 10
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 2
+        WHILE found < 20
+            LET r AS S64 = ReverseDigits(n)
+            IF r <> n ANDALSO IsPrime(n) = 1 ANDALSO IsPrime(r) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Emirp
+BEGIN
+    Emirp.Run()
+END

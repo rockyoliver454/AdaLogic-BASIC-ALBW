@@ -1,0 +1,43 @@
+-- 745 | Gaussian primes: Gaussian integers a+bi, a,b >= 0,
+-- that are prime over Z[i]. Lists them for norm <= 50.
+DECLARE MODULE Gp
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gp
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR a = 0 TO 7
+            FOR b = 0 TO 7
+                IF a <> 0 ORELSE b <> 0 THEN
+                    LET n2 AS S64 = a * a + b * b
+                    LET gp AS S32 = 0
+                    IF a = 0 ORELSE b = 0 THEN
+                        -- prime only if the nonzero part is a
+                        -- rational prime congruent to 3 mod 4
+                        LET m AS S64 = a + b
+                        IF Prime(m) = 1 ANDALSO m MOD 4 = 3 THEN gp = 1 END IF
+                    ELSE
+                        IF Prime(n2) = 1 THEN gp = 1 END IF
+                    END IF
+                    IF gp = 1 THEN PRINT a | "+" | b | "i" END IF
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Gp
+BEGIN
+    Gp.Run()
+END

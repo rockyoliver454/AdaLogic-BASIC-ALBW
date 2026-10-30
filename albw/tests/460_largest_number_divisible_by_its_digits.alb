@@ -1,0 +1,37 @@
+-- 460 | Largest number divisible by its digits: scan downward from
+-- 9,999,999 for n divisible by every nonzero digit it contains.
+DECLARE MODULE Largest
+    FUNCTION Ok(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Largest
+    FUNCTION Ok(n AS S64) AS S32
+        LET t AS S64 = n
+        WHILE t > 0
+            LET d AS S64 = t MOD 10
+            IF d = 0 THEN RETURN 0 END IF
+            IF n MOD d <> 0 THEN RETURN 0 END IF
+            t = t / 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET n AS S64 = 9999999
+        LET found AS S32 = 0
+        WHILE found = 0
+            IF Ok(n) = 1 THEN
+                found = 1
+            ELSE
+                n = n - 1
+            END IF
+        END WHILE
+        PRINT n
+    END PROCEDURE
+END MODULE
+
+IMPORT Largest
+BEGIN
+    Largest.Run()
+END

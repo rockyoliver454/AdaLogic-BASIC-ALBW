@@ -1,0 +1,18 @@
+-- BITFIELD members: reference backends don't pack or mask — a bitfield
+-- is a plain unsigned slot right-sized from its declared width.
+
+STRUCT Reg
+    en AS S32
+    BITFIELD flags : 3
+    BITFIELD chan : 10
+END STRUCT
+
+BEGIN
+    LET r AS Reg
+    r.en = 1
+    r.flags = 5
+    r.chan = 700
+    PRINT "en=" | r.en | " flags=" | r.flags | " chan=" | r.chan
+    r.flags = r.flags OR 2
+    PRINT "flags2=" | r.flags
+END

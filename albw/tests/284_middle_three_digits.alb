@@ -1,0 +1,39 @@
+-- 284 | Middle three digits: middle 3 digits of integers, or an error report.
+BEGIN
+    STRICT nums[17] AS S32
+    nums[0] = 123
+    nums[1] = 12345
+    nums[2] = 1234567
+    nums[3] = 987654321
+    nums[4] = 10001
+    nums[5] = -10001
+    nums[6] = -123
+    nums[7] = -100
+    nums[8] = 100
+    nums[9] = -12345
+    nums[10] = 1
+    nums[11] = 2
+    nums[12] = -1
+    nums[13] = -10
+    nums[14] = 2002
+    nums[15] = -2002
+    nums[16] = 0
+
+    FOR k = 0 TO 16
+        LET v AS S32 = nums[k]
+        LET av AS S32 = v
+        IF av < 0 THEN av = -av END IF
+        LET ds AS STRING = STR$(av)
+        LET dl AS S32 = LEN(ds)
+        LET out_line AS STRING = ""
+        IF dl < 3 THEN
+            out_line = v | ": too short"
+        ELSEIF dl MOD 2 = 0 THEN
+            out_line = v | ": even digit count"
+        ELSE
+            LET start AS S32 = (dl - 3) / 2 + 1
+            out_line = v | ": " | MID$(ds, start, 3)
+        END IF
+        PRINT out_line
+    END FOR
+END

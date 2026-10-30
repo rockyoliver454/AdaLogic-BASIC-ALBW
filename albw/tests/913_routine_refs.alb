@@ -1,0 +1,62 @@
+-- Routine references: `TYPE X IS ROUTINE(...)` alias, `REF r` takes a
+-- routine address as a static fn pointer, calls use ordinary syntax.
+-- Exact-signature match is enforced by rustc's type check; struct
+-- fields of routine type default to a fault-26 trap stub.
+TYPE Cmp IS ROUTINE(a AS S64, b AS S64) AS S32;
+
+FUNCTION AscCmp(a AS S64, b AS S64) AS S32
+    IF a < b THEN
+        RETURN -1
+    END IF
+    IF a > b THEN
+        RETURN 1
+    END IF
+    RETURN 0
+END FUNCTION
+
+MODULE Ops
+    FUNCTION DescCmp(a AS S64, b AS S64) AS S32
+        IF a > b THEN
+            RETURN -1
+        END IF
+        IF a < b THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+-- A routine ref passed as an argument (higher-order).
+FUNCTION Apply3(c AS Cmp, x AS S64) AS S32
+    RETURN c(x, x + 1)
+END FUNCTION
+
+DEFINE STRUCT Handler
+    check AS Cmp
+    code  AS S32
+END STRUCT
+
+BEGIN
+    LET f AS Cmp = REF AscCmp
+    PRINT f(3, 7)
+    PRINT f(7, 3)
+
+    -- Qualified module routine ref.
+    LET g AS Cmp = REF Ops.DescCmp
+    PRINT g(3, 7)
+
+    -- Reassign to a different routine of the same signature.
+    f = g
+    PRINT f(3, 7)
+
+    -- Routine ref as a parameter.
+    PRINT Apply3(REF AscCmp, 10)
+    PRINT Apply3(REF Ops.DescCmp, 10)
+
+    -- Routine-typed struct field: jump-table / handler dispatch.
+    LET h AS Handler
+    h.check = REF AscCmp
+    h.code = 5
+    PRINT h.check(2, 9)
+    PRINT h.code
+END

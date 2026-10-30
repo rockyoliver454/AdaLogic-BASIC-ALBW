@@ -1,0 +1,149 @@
+-- 269 | Order disjoint list items: fill first occurrences of N-items in M with N order.
+DECLARE MODULE OrderDisjoint
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE OrderDisjoint
+    STRICT m[9] AS STRING
+    STRICT orig[9] AS STRING
+    STRICT n[4] AS STRING
+    LET mcount AS S32 = 0
+    LET ncount AS S32 = 0
+
+    FUNCTION StrEq(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Process()
+        FOR i = 0 TO mcount - 1
+            orig[i] = m[i]
+        END FOR
+        LET out_idx AS S32 = 0
+        FOR i = 0 TO mcount - 1
+            LET need AS S32 = 0
+            FOR k = 0 TO ncount - 1
+                IF StrEq(orig[i], n[k]) = 1 THEN need = need + 1 END IF
+            END FOR
+            LET prior AS S32 = 0
+            IF i > 0 THEN
+                FOR j = 0 TO i - 1
+                    IF StrEq(orig[j], orig[i]) = 1 THEN prior = prior + 1 END IF
+                END FOR
+            END IF
+            IF prior < need THEN
+                m[i] = n[out_idx]
+                out_idx = out_idx + 1
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE PrintM()
+        LET out_line AS STRING = ""
+        FOR i = 0 TO mcount - 1
+            IF i > 0 THEN out_line = out_line | " " END IF
+            out_line = out_line | m[i]
+        END FOR
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        mcount = 6
+        m[0] = "the"
+        m[1] = "cat"
+        m[2] = "sat"
+        m[3] = "on"
+        m[4] = "the"
+        m[5] = "mat"
+        ncount = 2
+        n[0] = "mat"
+        n[1] = "cat"
+        Process()
+        PrintM()
+
+        mcount = 6
+        m[0] = "the"
+        m[1] = "cat"
+        m[2] = "sat"
+        m[3] = "on"
+        m[4] = "the"
+        m[5] = "mat"
+        ncount = 2
+        n[0] = "cat"
+        n[1] = "mat"
+        Process()
+        PrintM()
+
+        mcount = 9
+        m[0] = "A"
+        m[1] = "B"
+        m[2] = "C"
+        m[3] = "A"
+        m[4] = "B"
+        m[5] = "C"
+        m[6] = "A"
+        m[7] = "B"
+        m[8] = "C"
+        ncount = 4
+        n[0] = "C"
+        n[1] = "A"
+        n[2] = "C"
+        n[3] = "A"
+        Process()
+        PrintM()
+
+        mcount = 9
+        m[0] = "A"
+        m[1] = "B"
+        m[2] = "C"
+        m[3] = "A"
+        m[4] = "B"
+        m[5] = "D"
+        m[6] = "A"
+        m[7] = "B"
+        m[8] = "E"
+        ncount = 4
+        n[0] = "E"
+        n[1] = "A"
+        n[2] = "D"
+        n[3] = "A"
+        Process()
+        PrintM()
+
+        mcount = 2
+        m[0] = "A"
+        m[1] = "B"
+        ncount = 1
+        n[0] = "B"
+        Process()
+        PrintM()
+
+        mcount = 2
+        m[0] = "A"
+        m[1] = "B"
+        ncount = 2
+        n[0] = "B"
+        n[1] = "A"
+        Process()
+        PrintM()
+
+        mcount = 4
+        m[0] = "A"
+        m[1] = "B"
+        m[2] = "B"
+        m[3] = "A"
+        ncount = 2
+        n[0] = "B"
+        n[1] = "A"
+        Process()
+        PrintM()
+    END PROCEDURE
+END MODULE
+
+IMPORT OrderDisjoint
+BEGIN
+    OrderDisjoint.Run()
+END

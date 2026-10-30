@@ -1,0 +1,39 @@
+-- 418 | Jacobi symbol: Jacobi(a/n) for n=15, a = 0..14.
+DECLARE MODULE Jac
+    FUNCTION Jacobi(a AS S64, n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Jac
+    FUNCTION Jacobi(a AS S64, n AS S64) AS S64
+        a = a MOD n
+        LET t AS S64 = 1
+        WHILE a <> 0
+            WHILE a MOD 2 = 0
+                a = a / 2
+                LET r AS S64 = n MOD 8
+                IF r = 3 ORELSE r = 5 THEN t = 0 - t END IF
+            END WHILE
+            LET tmp AS S64 = a
+            a = n
+            n = tmp
+            IF a MOD 4 = 3 ANDALSO n MOD 4 = 3 THEN t = 0 - t END IF
+            a = a MOD n
+        END WHILE
+        IF n = 1 THEN RETURN t END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR a = 0 TO 14
+            s = s | Jacobi(a, 15) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Jac
+BEGIN
+    Jac.Run()
+END

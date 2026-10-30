@@ -1,0 +1,31 @@
+-- 576 | Circles of given radius through two points: centers of
+-- radius-2 circles through (0.1234,0.9876) and (0.8765,0.2345)
+-- (RC example).
+DECLARE MODULE Circ2
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Circ2
+    PROCEDURE Run()
+        LET x1 AS F64 = 0.1234
+        LET y1 AS F64 = 0.9876
+        LET x2 AS F64 = 0.8765
+        LET y2 AS F64 = 0.2345
+        LET r AS F64 = 2.0
+        LET dx AS F64 = x2 - x1
+        LET dy AS F64 = y2 - y1
+        LET q AS F64 = SQRT(dx * dx + dy * dy)
+        LET mx AS F64 = (x1 + x2) / 2.0
+        LET my AS F64 = (y1 + y2) / 2.0
+        LET h AS F64 = SQRT(r * r - q * q / 4.0)
+        LET ox AS F64 = h * dy / q
+        LET oy AS F64 = h * dx / q
+        PRINT "c1 = " | (mx + ox) | " " | (my - oy)
+        PRINT "c2 = " | (mx - ox) | " " | (my + oy)
+    END PROCEDURE
+END MODULE
+
+IMPORT Circ2
+BEGIN
+    Circ2.Run()
+END

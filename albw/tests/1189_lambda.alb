@@ -1,0 +1,47 @@
+-- LAMBDA expressions: anonymous routines bound to ROUTINE-typed vars.
+-- Block form (END LAMBDA), short form (=>), void lambdas (no AS ret),
+-- re-bind, struct-field bind, global capture (locals are NOT captured).
+TYPE Cmp  IS ROUTINE(a AS S64, b AS S64) AS S32;
+TYPE Sink IS ROUTINE(x AS S64);
+
+LET g_total AS S64 = 0
+
+FUNCTION Apply3(c AS Cmp, x AS S64) AS S32
+    RETURN c(x, x + 1)
+END FUNCTION
+
+DEFINE STRUCT Handler
+    check AS Cmp
+    code  AS S32
+END STRUCT
+
+BEGIN
+    LET f AS Cmp = LAMBDA(a AS S64, b AS S64) AS S32 => a - b
+    PRINT f(10, 3)
+
+    LET g AS Cmp = LAMBDA(a AS S64, b AS S64) AS S32
+        g_total = g_total + 1
+        IF a > b THEN
+            RETURN a - b
+        END IF
+        RETURN b - a
+    END LAMBDA
+    PRINT g(3, 10)
+    PRINT g_total
+
+    LET s AS Sink = LAMBDA(x AS S64)
+        g_total = g_total + x
+    END LAMBDA
+    s(5)
+    PRINT g_total
+
+    f = g
+    PRINT f(2, 9)
+
+    LET h AS Handler
+    h.check = LAMBDA(a AS S64, b AS S64) AS S32 => a * b
+    h.code = 7
+    PRINT h.check(4, 5)
+
+    PRINT Apply3(f, 10)
+END

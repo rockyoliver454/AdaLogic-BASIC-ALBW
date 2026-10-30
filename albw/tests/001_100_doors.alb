@@ -1,0 +1,18 @@
+-- 001 | 100 doors: toggling passes leave perfect squares open.
+BEGIN
+    STRICT doors[101] AS S32;
+    FOR pass = 1 TO 100
+        FOR d = pass TO 100 STEP pass
+            IF doors[d] = 0 THEN
+                doors[d] = 1;
+            ELSE
+                doors[d] = 0;
+            END IF
+        END FOR
+    END FOR
+    FOR d = 1 TO 100
+        IF doors[d] = 1 THEN
+            PRINT d;
+        END IF
+    END FOR
+END

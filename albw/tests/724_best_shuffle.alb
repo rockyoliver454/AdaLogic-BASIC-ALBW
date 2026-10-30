@@ -1,0 +1,45 @@
+-- 724 | Best shuffle: rearrange letters minimizing positions
+-- unchanged versus the original word.
+DECLARE MODULE Bs
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bs
+    STRICT od[20] AS S64
+
+    PROCEDURE Run()
+        LET s AS STRING = "abracadabra"
+        LET n AS S64 = LEN(s)
+        -- cyclic shift by 3 then fix collisions greedily
+        STRICT resl[20] AS STRING
+        FOR i = 1 TO n
+            resl[i] = MID$(s, (i + 2) MOD n + 1, 1)
+        END FOR
+        -- repair positions where resl[i] = s[i]
+        FOR i = 1 TO n
+            IF resl[i] = MID$(s, i, 1) THEN
+                FOR j = i + 1 TO n
+                    IF resl[j] <> MID$(s, i, 1) ANDALSO resl[i] <> MID$(s, j, 1) THEN
+                        LET t AS STRING = resl[i]
+                        resl[i] = resl[j]
+                        resl[j] = t
+                        j = n
+                    END IF
+                END FOR
+            END IF
+        END FOR
+        LET same AS S64 = 0
+        LET r AS STRING = ""
+        FOR i = 1 TO n
+            r = r | resl[i]
+            IF resl[i] = MID$(s, i, 1) THEN same = same + 1 END IF
+        END FOR
+        PRINT s
+        PRINT r | "  score=" | same
+    END PROCEDURE
+END MODULE
+
+IMPORT Bs
+BEGIN
+    Bs.Run()
+END

@@ -1,0 +1,44 @@
+-- 962 | Compiler/AST interpreter: hand-built AST for
+-- (10 - 4) * (5 + 3) - 2, evaluate by recursive walk.
+-- Node kinds: 0=lit 1=add 2=sub 3=mul 4=div.
+DECLARE MODULE Ai
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ai
+    STRICT nd[20] AS S64
+    STRICT nl[20] AS S64
+    STRICT nr[20] AS S64
+    STRICT nv[20] AS S64
+
+    FUNCTION Eval(i AS S64) AS S64
+        IF nd[i] = 0 THEN RETURN nv[i] END IF
+        LET l AS S64 = Eval(nl[i])
+        LET r AS S64 = Eval(nr[i])
+        IF nd[i] = 1 THEN RETURN l + r END IF
+        IF nd[i] = 2 THEN RETURN l - r END IF
+        IF nd[i] = 3 THEN RETURN l * r END IF
+        RETURN l / r
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- leaf nodes 1..4: 10,4,5,3 ; node5: 1-2 ; node6: 3+4
+        -- node7: 5*6 ; node8: lit 2 ; node9: 7-8
+        FOR i = 1 TO 4
+            nd[i] = 0
+        END FOR
+        nv[1] = 10; nv[2] = 4; nv[3] = 5; nv[4] = 3
+        nd[5] = 2; nl[5] = 1; nr[5] = 2
+        nd[6] = 1; nl[6] = 3; nr[6] = 4
+        nd[7] = 3; nl[7] = 5; nr[7] = 6
+        nd[8] = 0; nv[8] = 2
+        nd[9] = 2; nl[9] = 7; nr[9] = 8
+        PRINT "ast value=" | Eval(9)
+        PRINT "expect   =46"
+    END PROCEDURE
+END MODULE
+
+IMPORT Ai
+BEGIN
+    Ai.Run()
+END

@@ -1,0 +1,40 @@
+-- 567 | Knuth shuffle: Fisher-Yates over 1..10 with a fixed LCG
+-- seed (1103515245/12345/2^31) so output is deterministic.
+DECLARE MODULE KS
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE KS
+    STRICT a[10] AS S64
+    STRICT st[1] AS S64
+
+    FUNCTION NextRand(m AS S64) AS S64
+        st[1] = (st[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN st[1] MOD m
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 10
+            a[i] = i
+        END FOR
+        st[1] = 42
+        LET i AS S64 = 10
+        WHILE i > 1
+            LET j AS S64 = NextRand(i) + 1
+            LET t AS S64 = a[i]
+            a[i] = a[j]
+            a[j] = t
+            i = i - 1
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO 10
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT KS
+BEGIN
+    KS.Run()
+END

@@ -1,0 +1,33 @@
+-- 029 | Balanced brackets -- scan string, depth must never go negative, end at 0
+DECLARE MODULE Chk
+    FUNCTION Balanced(s AS STRING) AS S32
+END MODULE
+
+MODULE Chk
+    FUNCTION Balanced(s AS STRING) AS S32
+        LET depth AS S32 = 0
+        LET i AS S32 = 0
+        FOR i = 0 TO LEN(s) - 1
+            LET c AS S32 = ASC(MID$(s, i + 1, 1))
+            IF c = 91 THEN
+                depth = depth + 1
+            END IF
+            IF c = 93 THEN
+                depth = depth - 1
+            END IF
+            IF depth < 0 THEN
+                RETURN 0
+            END IF
+        END FOR
+        IF depth = 0 THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT Chk.Balanced("[][[]]")
+    PRINT Chk.Balanced("[[")
+    PRINT Chk.Balanced("][][")
+END

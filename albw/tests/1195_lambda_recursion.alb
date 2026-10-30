@@ -1,0 +1,11 @@
+-- Negative: a LAMBDA may never reference the variable it binds to —
+-- recursion is banned language-wide (runaway-code guard).
+TYPE Cmp IS ROUTINE(a AS S64) AS S32;
+LET f AS Cmp
+BEGIN
+    f = LAMBDA(a AS S64) AS S32
+        IF a <= 1 THEN RETURN 1 END IF
+        RETURN a + f(a - 1)
+    END LAMBDA
+    PRINT f(3)
+END

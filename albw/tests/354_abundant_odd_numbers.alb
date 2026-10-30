@@ -1,0 +1,40 @@
+-- 354 | Abundant odd numbers: first 25 odd n where proper-divisor sum exceeds n.
+DECLARE MODULE AbOdd
+    FUNCTION PropSum(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AbOdd
+    FUNCTION PropSum(n AS S64) AS S64
+        LET s AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 25
+            IF n MOD 2 = 1 ANDALSO PropSum(n) > n THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 2
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT AbOdd
+BEGIN
+    AbOdd.Run()
+END

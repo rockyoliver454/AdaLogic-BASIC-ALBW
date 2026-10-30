@@ -1,0 +1,35 @@
+-- 623 | Specific characters: first/last index and count of a
+-- target character set within a string.
+DECLARE MODULE Spec
+    FUNCTION InSet(ch AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Spec
+    FUNCTION InSet(ch AS STRING) AS S32
+        IF ch = "a" ORELSE ch = "b" ORELSE ch = "c" THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "xbyczabcxay"
+        LET first AS S64 = 0
+        LET last AS S64 = 0
+        LET cnt AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            IF InSet(MID$(s, i, 1)) = 1 THEN
+                IF first = 0 THEN first = i END IF
+                last = i
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT "first: " | first
+        PRINT "last: " | last
+        PRINT "count: " | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Spec
+BEGIN
+    Spec.Run()
+END

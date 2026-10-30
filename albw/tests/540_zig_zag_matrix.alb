@@ -1,0 +1,34 @@
+-- 540 | Zig-zag matrix: fill n x n along anti-diagonals.
+DECLARE MODULE Zig
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Zig
+    STRICT m[25] AS S64
+
+    PROCEDURE Run()
+        LET n AS S64 = 5
+        LET v AS S64 = 0
+        FOR d = 0 TO 2 * n - 2
+            FOR i = 0 TO n - 1
+                LET j AS S64 = d - i
+                IF j >= 0 ANDALSO j < n THEN
+                    IF d MOD 2 = 0 THEN
+                        m[j * n + i + 1] = v
+                    ELSE
+                        m[i * n + j + 1] = v
+                    END IF
+                    v = v + 1
+                END IF
+            END FOR
+        END FOR
+        FOR rr = 0 TO n - 1
+            PRINT m[rr * n + 1] | " " | m[rr * n + 2] | " " | m[rr * n + 3] | " " | m[rr * n + 4] | " " | m[rr * n + 5]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Zig
+BEGIN
+    Zig.Run()
+END

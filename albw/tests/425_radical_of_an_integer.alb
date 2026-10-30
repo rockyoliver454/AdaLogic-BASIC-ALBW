@@ -1,0 +1,40 @@
+-- 425 | Radical of an integer: radicals of 1..50 and of three large values.
+DECLARE MODULE Rad
+    FUNCTION Radical(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rad
+    FUNCTION Radical(n AS S64) AS S64
+        LET m AS S64 = n
+        LET rad AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            IF m MOD d = 0 THEN
+                rad = rad * d
+                WHILE m MOD d = 0
+                    m = m / d
+                END WHILE
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN rad = rad * m END IF
+        RETURN rad
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 50
+            s = s | Radical(n) | " "
+        END FOR
+        PRINT s
+        PRINT "rad(999999)=" | Radical(999999)
+        PRINT "rad(5040)=" | Radical(5040)
+        PRINT "rad(999983)=" | Radical(999983)
+    END PROCEDURE
+END MODULE
+
+IMPORT Rad
+BEGIN
+    Rad.Run()
+END

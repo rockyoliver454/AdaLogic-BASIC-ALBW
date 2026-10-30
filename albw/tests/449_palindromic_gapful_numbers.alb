@@ -1,0 +1,54 @@
+-- 449 | Palindromic gapful numbers: last 20 of the first 100.
+DECLARE MODULE PalGap
+    FUNCTION IsPal(n AS S64) AS S32
+    FUNCTION IsGapful(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PalGap
+    STRICT list[101] AS S64
+
+    FUNCTION IsPal(n AS S64) AS S32
+        LET rev AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            rev = rev * 10 + t MOD 10
+            t = t / 10
+        END WHILE
+        IF rev = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION IsGapful(n AS S64) AS S32
+        IF n < 100 THEN RETURN 0 END IF
+        LET last AS S64 = n MOD 10
+        LET t AS S64 = n
+        WHILE t >= 10
+            t = t / 10
+        END WHILE
+        IF n MOD (t * 10 + last) = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET n AS S64 = 100
+        LET got AS S64 = 0
+        WHILE got < 100
+            IF IsPal(n) = 1 ANDALSO IsGapful(n) = 1 THEN
+                got = got + 1
+                list[got] = n
+            END IF
+            n = n + 1
+        END WHILE
+        LET s AS STRING = ""
+        FOR i = 81 TO 100
+            s = s | list[i] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT PalGap
+BEGIN
+    PalGap.Run()
+END

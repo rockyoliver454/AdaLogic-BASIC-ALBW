@@ -1,0 +1,70 @@
+-- 886 | Wordiff: chain words where each new word differs from
+-- the previous by exactly one edit (insert, delete, or
+-- substitute one letter). Score a scripted game.
+DECLARE MODULE Wd
+    FUNCTION DiffOk(a AS STRING, b AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wd
+    FUNCTION DiffOk(a AS STRING, b AS STRING) AS S32
+        -- Levenshtein distance exactly 1
+        LET la AS S64 = LEN(a)
+        LET lb AS S64 = LEN(b)
+        IF la = lb THEN
+            LET d AS S64 = 0
+            FOR i = 1 TO la
+                IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN d = d + 1 END IF
+            END FOR
+            IF d = 1 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF la - lb = 1 ORELSE lb - la = 1 THEN
+            -- one insertion: check a equals b with one char skipped
+            LET i AS S64 = 1
+            LET j AS S64 = 1
+            LET d AS S64 = 0
+            WHILE i <= la ANDALSO j <= lb
+                IF ASC(MID$(a, i, 1)) = ASC(MID$(b, j, 1)) THEN
+                    i = i + 1
+                    j = j + 1
+                ELSE
+                    d = d + 1
+                    IF la > lb THEN i = i + 1 END IF
+                    IF lb > la THEN j = j + 1 END IF
+                    IF d > 1 THEN RETURN 0 END IF
+                END IF
+            END WHILE
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    STRICT wd[8] AS STRING
+
+    PROCEDURE Run()
+        wd[1] = "cat"
+        wd[2] = "bat"
+        wd[3] = "beat"
+        wd[4] = "boat"
+        wd[5] = "boast"
+        wd[6] = "blast"
+        wd[7] = "bleat"
+        wd[8] = "beat"
+        LET sc AS S64 = 0
+        FOR i = 2 TO 8
+            IF DiffOk(wd[i - 1], wd[i]) = 1 THEN
+                PRINT wd[i - 1] | " -> " | wd[i] | " ok"
+                sc = sc + 1
+            ELSE
+                PRINT wd[i - 1] | " -> " | wd[i] | " INVALID"
+            END IF
+        END FOR
+        PRINT "score=" | sc
+    END PROCEDURE
+END MODULE
+
+IMPORT Wd
+BEGIN
+    Wd.Run()
+END

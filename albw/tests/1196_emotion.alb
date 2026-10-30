@@ -1,0 +1,31 @@
+-- EMOTION engine: fixed U8 axes, saturating ops, dominant argmax,
+-- blend/deccay spillover — mirrors the FASM backend semantics.
+EMOTION mood AXES calm focus END_EMOTION
+
+LET r AS S64 = 0
+LET neg AS S64 = 0 - 5
+SET_AXIS mood calm 10
+GET_AXIS mood calm INTO r
+PRINT r
+ADD_AXIS mood calm 5
+GET_AXIS mood calm INTO r
+PRINT r
+SET_AXIS mood calm 999
+GET_AXIS mood calm INTO r
+PRINT r
+ADD_AXIS mood calm neg
+GET_AXIS mood calm INTO r
+PRINT r
+SET_AXIS mood focus 200
+BLEND_EMOTION mood TO calm BY 30
+GET_AXIS mood calm INTO r
+PRINT r
+GET_AXIS mood focus INTO r
+PRINT r
+DOMINANT_EMOTION mood INTO r
+PRINT r
+DECAY_EMOTION mood BY 500
+GET_AXIS mood calm INTO r
+PRINT r
+GET_AXIS mood focus INTO r
+PRINT r

@@ -1,0 +1,41 @@
+-- 009 | Arithmetic/Rational: normalized num/den arithmetic.
+DEFINE STRUCT Rat
+    n AS S64
+    d AS S64
+END STRUCT
+
+DECLARE MODULE R
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+END DECLARE MODULE
+
+MODULE R
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        IF a < 0 THEN
+            a = 0 - a;
+        END IF
+        WHILE b <> 0
+            LET t AS S64 = b;
+            b = a MOD b;
+            a = t;
+        END WHILE
+        RETURN a
+    END FUNCTION
+END MODULE
+
+IMPORT R
+BEGIN
+    LET x AS Rat
+    x.n = 1; x.d = 2;
+    LET y AS Rat
+    y.n = 1; y.d = 3;
+    LET s AS Rat
+    s.n = x.n * y.d + y.n * x.d;
+    s.d = x.d * y.d;
+    LET g AS S64 = R.Gcd(s.n, s.d);
+    PRINT$ "sum:  " | s.n / g | "/" | s.d / g;
+    LET p AS Rat
+    p.n = x.n * y.n;
+    p.d = x.d * y.d;
+    g = R.Gcd(p.n, p.d);
+    PRINT$ "prod: " | p.n / g | "/" | p.d / g;
+END

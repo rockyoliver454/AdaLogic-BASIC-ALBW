@@ -1,0 +1,10 @@
+-- 264 | Last list item: retrieve the final element of an ordered list.
+BEGIN
+    STRICT items[5] AS S32
+    items[0] = 11
+    items[1] = 22
+    items[2] = 33
+    items[3] = 44
+    items[4] = 55
+    PRINT items[4]
+END

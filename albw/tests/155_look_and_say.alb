@@ -1,0 +1,29 @@
+-- 155 | Look-and-say sequence: run-length reading of digits.
+DECLARE MODULE LS
+    FUNCTION Next(s AS STRING) AS STRING
+END DECLARE MODULE
+
+MODULE LS
+    FUNCTION Next(s AS STRING) AS STRING
+        LET res AS STRING = "";
+        LET i AS S32 = 1;
+        WHILE i <= LEN(s)
+            LET run AS S32 = 1;
+            WHILE i + run <= LEN(s) ANDALSO MID$(s, i + run, 1) = MID$(s, i, 1)
+                run = run + 1;
+            END WHILE
+            res = res | run | MID$(s, i, 1);
+            i = i + run;
+        END WHILE
+        RETURN res
+    END FUNCTION
+END MODULE
+
+IMPORT LS
+BEGIN
+    LET s AS STRING = "1";
+    FOR i = 1 TO 5
+        s = LS.Next(s);
+        PRINT$ s;
+    END FOR
+END

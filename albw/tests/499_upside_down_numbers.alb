@@ -1,0 +1,47 @@
+-- 499 | Upside-down numbers: numbers that rotate 180 degrees into a
+-- DIFFERENT valid number (digits 0,1,6,8,9 rotate). First 40.
+DECLARE MODULE UpDown
+    FUNCTION Rotate(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE UpDown
+    -- returns rotated value, or -1 if n has a non-rotatable digit
+    FUNCTION Rotate(n AS S64) AS S64
+        LET v AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            LET d AS S64 = t MOD 10
+            LET rd AS S64 = 0 - 1
+            IF d = 0 THEN rd = 0 END IF
+            IF d = 1 THEN rd = 1 END IF
+            IF d = 6 THEN rd = 9 END IF
+            IF d = 8 THEN rd = 8 END IF
+            IF d = 9 THEN rd = 6 END IF
+            IF rd < 0 THEN RETURN -1 END IF
+            v = v * 10 + rd
+            t = t / 10
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 40
+            LET r AS S64 = Rotate(n)
+            IF r >= 0 ANDALSO r <> n THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT UpDown
+BEGIN
+    UpDown.Run()
+END

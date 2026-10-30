@@ -1,0 +1,17 @@
+-- 280 | Determine if a string has all the same characters.
+BEGIN
+    STRICT words[3] AS STRING
+    words[0] = "aaa"
+    words[1] = "aba"
+    words[2] = ""
+
+    FOR w = 0 TO 2
+        LET s AS STRING = words[w]
+        LET same AS S32 = 1
+        IF LEN(s) = 0 THEN same = 0 END IF
+        FOR i = 2 TO LEN(s)
+            IF ASC(MID$(s, i, 1)) <> ASC(MID$(s, 1, 1)) THEN same = 0 END IF
+        END FOR
+        PRINT same
+    END FOR
+END

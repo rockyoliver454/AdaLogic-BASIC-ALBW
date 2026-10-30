@@ -1,0 +1,39 @@
+-- 721 | Abbreviations, simple: look up abbreviations in a
+-- command table and expand them.
+DECLARE MODULE Ab
+    FUNCTION Expand(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ab
+    STRICT ab[6] AS STRING
+    STRICT wd[6] AS STRING
+
+    FUNCTION Expand(s AS STRING) AS STRING
+        FOR i = 1 TO 5
+            IF ab[i] = s THEN RETURN wd[i] END IF
+        END FOR
+        RETURN "?"
+    END FUNCTION
+
+    PROCEDURE Run()
+        ab[1] = "cp"
+        wd[1] = "copy"
+        ab[2] = "mv"
+        wd[2] = "move"
+        ab[3] = "rm"
+        wd[3] = "remove"
+        ab[4] = "ls"
+        wd[4] = "list"
+        ab[5] = "mkdir"
+        wd[5] = "makedir"
+        PRINT "cp -> " | Expand("cp")
+        PRINT "mv -> " | Expand("mv")
+        PRINT "zz -> " | Expand("zz")
+    END PROCEDURE
+END MODULE
+
+IMPORT Ab
+BEGIN
+    Ab.Run()
+END

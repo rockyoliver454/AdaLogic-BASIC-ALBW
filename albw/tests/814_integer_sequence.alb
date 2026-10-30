@@ -1,0 +1,7 @@
+BEGIN
+    LET i = 1
+    WHILE i <= 10
+        PRINT$ i
+        i = i + 1
+    END WHILE
+END

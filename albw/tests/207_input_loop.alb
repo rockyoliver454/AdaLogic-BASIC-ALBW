@@ -1,0 +1,11 @@
+-- 207 | Input loop: read and echo lines until a sentinel is entered.
+BEGIN
+    LET inp AS STRING = ""
+    WHILE 1
+        READLINE inp
+        IF inp = "quit" THEN
+            BREAK
+        END IF
+        PRINT "read: " | inp
+    END WHILE
+END

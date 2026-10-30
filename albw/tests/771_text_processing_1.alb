@@ -1,0 +1,74 @@
+-- 771 | Text processing/1: validate "YYYY-MM-DD hh:mm:ss"
+-- timestamp records; report malformed fields.
+DECLARE MODULE Tp
+    FUNCTION IsDig(c AS STRING) AS S32
+    FUNCTION Num(s AS STRING, p AS S64, n AS S64) AS S64
+    PROCEDURE Check(s AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tp
+    FUNCTION IsDig(c AS STRING) AS S32
+        IF c = "" THEN RETURN 0 END IF
+        LET a AS S64 = ASC(c)
+        IF a >= 48 ANDALSO a <= 57 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Num(s AS STRING, p AS S64, n AS S64) AS S64
+        LET v AS S64 = 0
+        FOR i = p TO p + n - 1
+            v = v * 10 + ASC(MID$(s, i, 1)) - 48
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Check(s AS STRING)
+        LET bad AS STRING = ""
+        IF LEN(s) < 19 THEN
+            bad = "short"
+        ELSE
+            IF MID$(s, 5, 1) <> "-" THEN bad = bad | "sep4 " END IF
+            IF MID$(s, 8, 1) <> "-" THEN bad = bad | "sep7 " END IF
+            IF MID$(s, 11, 1) <> " " THEN bad = bad | "sep10 " END IF
+            IF MID$(s, 14, 1) <> ":" THEN bad = bad | "sep13 " END IF
+            IF MID$(s, 17, 1) <> ":" THEN bad = bad | "sep16 " END IF
+            LET dg AS S32 = 1
+            FOR i = 1 TO 19
+                IF i <> 5 ANDALSO i <> 8 ANDALSO i <> 11 ANDALSO i <> 14 ANDALSO i <> 17 THEN
+                    IF IsDig(MID$(s, i, 1)) = 0 THEN dg = 0 END IF
+                END IF
+            END FOR
+            IF dg = 0 THEN bad = bad | "nondigit " END IF
+            IF dg = 1 THEN
+                LET mo AS S64 = Num(s, 6, 2)
+                LET dy AS S64 = Num(s, 9, 2)
+                LET hh AS S64 = Num(s, 12, 2)
+                LET mi AS S64 = Num(s, 15, 2)
+                LET ss AS S64 = Num(s, 18, 2)
+                IF mo < 1 ORELSE mo > 12 THEN bad = bad | "month " END IF
+                IF dy < 1 ORELSE dy > 31 THEN bad = bad | "day " END IF
+                IF hh > 23 THEN bad = bad | "hour " END IF
+                IF mi > 59 THEN bad = bad | "min " END IF
+                IF ss > 59 THEN bad = bad | "sec " END IF
+            END IF
+        END IF
+        IF bad = "" THEN
+            PRINT s | " OK"
+        ELSE
+            PRINT s | " BAD(" | bad | ")"
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Check("2024-02-29 12:30:45")
+        Check("2023-13-01 00:00:00")
+        Check("2021-06-31 25:00:00")
+        Check("1990-01-01 08:15:30")
+    END PROCEDURE
+END MODULE
+
+IMPORT Tp
+BEGIN
+    Tp.Run()
+END

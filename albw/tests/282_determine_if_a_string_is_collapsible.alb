@@ -1,0 +1,39 @@
+-- 282 | Determine if a string is collapsible, then collapse repeated characters.
+DECLARE MODULE StrCollapse
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE StrCollapse
+    LET src AS STRING = ""
+    LET res AS STRING = ""
+
+    PROCEDURE RunOne(s AS STRING)
+        src = s
+        res = ""
+        LET prev AS S32 = -1
+        FOR i = 1 TO LEN(src)
+            LET c AS S32 = ASC(MID$(src, i, 1))
+            IF c <> prev THEN
+                res = res | CHR(c)
+            END IF
+            prev = c
+        END FOR
+        LET out_line AS STRING = "  <<<" | src | ">>>" | " (" | LEN(src) | ")"
+        PRINT out_line
+        out_line = "  <<<" | res | ">>>" | " (" | LEN(res) | ")"
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        RunOne("")
+        RunOne(CHR(34) | "If I were two-faced, would I be wearing this one?" | CHR(34) | " --- Abraham Lincoln")
+        RunOne("..1111111111111111111111111111111111111111111111111111111111111117777888")
+        RunOne("I never give 'em hell, I just tell the truth, and they think it's hell.")
+        RunOne("                                                    --- Harry S Truman  ")
+    END PROCEDURE
+END MODULE
+
+IMPORT StrCollapse
+BEGIN
+    StrCollapse.Run()
+END

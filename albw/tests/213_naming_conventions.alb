@@ -1,0 +1,17 @@
+-- 213 | Naming conventions: descriptive modules/functions and snake-style locals.
+DECLARE MODULE NumberTools
+    FUNCTION Cube(number_value AS S32) AS S32
+END DECLARE MODULE
+
+MODULE NumberTools
+    FUNCTION Cube(number_value AS S32) AS S32
+        RETURN number_value * number_value * number_value
+    END FUNCTION
+END MODULE
+
+IMPORT NumberTools
+BEGIN
+    LET input_number AS S32 = 4
+    LET cubed_number AS S32 = NumberTools.Cube(input_number)
+    PRINT cubed_number
+END

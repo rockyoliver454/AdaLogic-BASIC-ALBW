@@ -1,0 +1,59 @@
+-- 966 | Execute Computer/Zero: the classic 32-byte machine:
+-- 8-bit cells, 5-bit pc; opcodes NOP LDA STA ADD SUB BRZ
+-- JMP STP. Run a countdown loop and trace.
+DECLARE MODULE Cz
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cz
+    STRICT mem[32] AS S64
+
+    PROCEDURE Run()
+        -- opcodes: 0 NOP 1 LDA 2 STA 3 ADD 4 SUB 5 BRZ 6 JMP 7 STP
+        -- program: acc=5; loop: print? -> sub 1, brz end, jmp loop
+        -- mem[8]=1 (const ONE)
+        mem[0] = 1 * 256 + 8   -- LDA 8
+        mem[1] = 4 * 256 + 8   -- SUB 8  (acc=0)
+        mem[2] = 1 * 256 + 9   -- LDA 9  (acc=5)
+        mem[3] = 4 * 256 + 8   -- SUB 8  (acc=4)
+        mem[4] = 5 * 256 + 7   -- BRZ 7
+        mem[5] = 6 * 256 + 3   -- JMP 3
+        mem[6] = 7 * 256 + 0   -- STP (dead)
+        mem[7] = 7 * 256 + 0   -- STP
+        mem[8] = 1
+        mem[9] = 5
+        LET pc AS S64 = 0
+        LET acc AS S64 = 0
+        LET steps AS S64 = 0
+        WHILE steps < 100
+            steps = steps + 1
+            LET instr AS S64 = mem[pc]
+            LET op AS S64 = instr / 256
+            LET arg AS S64 = instr MOD 256
+            pc = pc + 1
+            IF op = 1 THEN acc = mem[arg]
+            ELSE IF op = 2 THEN mem[arg] = acc AND 255
+            ELSE IF op = 3 THEN acc = (acc + mem[arg]) AND 255
+            ELSE IF op = 4 THEN acc = (acc - mem[arg]) AND 255
+            ELSE IF op = 5 THEN
+                IF acc = 0 THEN pc = arg END IF
+            ELSE IF op = 6 THEN pc = arg
+            ELSE IF op = 7 THEN
+                PRINT "halt pc=" | pc | " acc=" | acc | " steps=" | steps
+                RETURN
+            END IF
+            END IF
+            END IF
+            END IF
+            END IF
+            END IF
+            END IF
+        END WHILE
+        PRINT "timeout acc=" | acc
+    END PROCEDURE
+END MODULE
+
+IMPORT Cz
+BEGIN
+    Cz.Run()
+END

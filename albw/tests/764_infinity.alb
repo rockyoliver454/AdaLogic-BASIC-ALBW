@@ -1,0 +1,22 @@
+-- 764 | Infinity: produce and test infinite float values.
+DECLARE MODULE Inf
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Inf
+    PROCEDURE Run()
+        LET inf AS F64 = 1.0 / 0.0
+        LET ninf AS F64 = 0.0 - 1.0 / 0.0
+        PRINT "inf=" | inf
+        PRINT "-inf=" | ninf
+        PRINT "inf>1e308=" | (inf > 1.0E308)
+        PRINT "inf+1=inf=" | (inf + 1.0 = inf)
+        LET dd AS F64 = inf - inf
+        PRINT "inf-inf nan=" | (dd <> dd)
+    END PROCEDURE
+END MODULE
+
+IMPORT Inf
+BEGIN
+    Inf.Run()
+END

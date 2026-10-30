@@ -1,0 +1,35 @@
+-- 424 | Square-free integers: square-free numbers below 145 and count
+-- below 1000.
+DECLARE MODULE SqFree
+    FUNCTION IsSqFree(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SqFree
+    FUNCTION IsSqFree(n AS S64) AS S32
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD (d * d) = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 144
+            IF IsSqFree(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+        LET cnt AS S64 = 0
+        FOR m = 1 TO 999
+            IF IsSqFree(m) = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT SqFree
+BEGIN
+    SqFree.Run()
+END

@@ -1,0 +1,64 @@
+-- 884 | Word search: find words in a 10x10 letter grid in all
+-- 8 directions; print each hit with start position.
+DECLARE MODULE Ws
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ws
+    STRICT dx[8] AS S64
+    STRICT dy[8] AS S64
+    STRICT wd[6] AS STRING
+
+    FUNCTION Gat(r AS S64, c AS S64, gr AS STRING) AS S64
+        IF r < 0 ORELSE r > 9 ORELSE c < 0 ORELSE c > 9 THEN RETURN 0 END IF
+        RETURN ASC(MID$(gr, r * 10 + c + 1, 1))
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET gr AS STRING = "abcdxxxsxxxxmnopxqxxxxxxxxxuxxxxxxxxxaxhqrstxxxrxgxxxxxxxexfxxxxxxxxxexxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        dx[1] = 0; dy[1] = 1
+        dx[2] = 0; dy[2] = 0 - 1
+        dx[3] = 1; dy[3] = 0
+        dx[4] = 0 - 1; dy[4] = 0
+        dx[5] = 1; dy[5] = 1
+        dx[6] = 1; dy[6] = 0 - 1
+        dx[7] = 0 - 1; dy[7] = 1
+        dx[8] = 0 - 1; dy[8] = 0 - 1
+        wd[1] = "abcd"
+        wd[2] = "square"
+        wd[3] = "mnop"
+        wd[4] = "xyzzy"
+        wd[5] = "qrst"
+        wd[6] = "efgh"
+        LET nw AS S64 = 6
+        FOR w = 1 TO nw
+            LET wrd AS STRING = wd[w]
+            LET wl AS S64 = LEN(wrd)
+            LET fnd AS S32 = 0
+            FOR r = 0 TO 9
+                FOR c = 0 TO 9
+                    FOR d = 1 TO 8
+                        IF fnd = 0 THEN
+                            LET ok AS S32 = 1
+                            FOR k = 0 TO wl - 1
+                                LET rr AS S64 = r + dx[d] * k
+                                LET cc AS S64 = c + dy[d] * k
+                                IF Gat(rr, cc, gr) <> ASC(MID$(wrd, k + 1, 1)) THEN ok = 0 END IF
+                            END FOR
+                            IF ok = 1 THEN
+                                PRINT wrd | " at " | r | "," | c | " dir " | d
+                                fnd = 1
+                            END IF
+                        END IF
+                    END FOR
+                END FOR
+            END FOR
+            IF fnd = 0 THEN PRINT wrd | " not found" END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ws
+BEGIN
+    Ws.Run()
+END

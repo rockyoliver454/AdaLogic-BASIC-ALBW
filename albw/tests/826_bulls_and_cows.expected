@@ -1,0 +1,6 @@
+secret=1234 guess=1234 bulls=4 cows=0
+secret=1234 guess=1243 bulls=2 cows=2
+secret=1234 guess=4321 bulls=0 cows=4
+secret=1234 guess=5678 bulls=0 cows=0
+secret=1122 guess=2211 bulls=0 cows=4
+secret=9305 guess=5309 bulls=2 cows=2

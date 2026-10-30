@@ -1,0 +1,41 @@
+-- 931 | Modified random distribution: define a "modified"
+-- distribution on {a,b,c} where a,b get equal share and c is
+-- fixed at 25%; sample and show observed fractions.
+DECLARE MODULE Md
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Md
+    STRICT sd[1] AS S64
+    STRICT ct[4] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 909
+        -- p(c)=0.25 fixed; a,b split 0.75 equally
+        FOR i = 1 TO 40000
+            LET r AS S64 = Nxt() MOD 4
+            IF r < 3 THEN
+                -- 75%: pick a or b uniformly
+                IF Nxt() MOD 2 = 0 THEN
+                    ct[1] = ct[1] + 1
+                ELSE
+                    ct[2] = ct[2] + 1
+                END IF
+            ELSE
+                ct[3] = ct[3] + 1
+            END IF
+        END FOR
+        PRINT "a=" | ct[1] | " b=" | ct[2] | " c=" | ct[3]
+    END PROCEDURE
+END MODULE
+
+IMPORT Md
+BEGIN
+    Md.Run()
+END

@@ -1,0 +1,40 @@
+-- 597 | Gosper's hack: next integer with the same number of set
+-- bits. Print 8 consecutive combinations starting from 7
+-- (3 bits): 7,11,13,14,19,21,22,25.
+DECLARE MODULE Gosp
+    FUNCTION Next(v AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gosp
+    FUNCTION Next(v AS S64) AS S64
+        -- c = v & -v via MOD powers of two
+        LET c AS S64 = v
+        LET tz AS S64 = 1
+        WHILE c MOD 2 = 0
+            c = c / 2
+            tz = tz * 2
+        END WHILE
+        -- tz = lowest set bit
+        LET r AS S64 = v + tz
+        -- ripple: ones = v XOR r, then >>2/tz, OR r
+        LET ones AS S64 = v XOR r
+        ones = ones / 4 / tz
+        RETURN r + ones
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET v AS S64 = 7
+        LET s AS STRING = ""
+        FOR i = 1 TO 8
+            s = s | v | " "
+            v = Next(v)
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Gosp
+BEGIN
+    Gosp.Run()
+END

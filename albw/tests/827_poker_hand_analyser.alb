@@ -1,0 +1,102 @@
+-- 827 | Poker hand analyser: classify fixed 5-card hands.
+DECLARE MODULE Pk
+    FUNCTION Rank() AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pk
+    STRICT rk[14] AS S64
+    STRICT su[5] AS S64
+    STRICT vv[6] AS S64
+    STRICT hd[6] AS S64
+
+    FUNCTION Rank() AS STRING
+        -- count ranks, detect flush/straight
+        FOR i = 1 TO 13
+            rk[i] = 0
+        END FOR
+        FOR i = 1 TO 5
+            rk[vv[i]] = rk[vv[i]] + 1
+        END FOR
+        LET fl AS S32 = 1
+        FOR i = 2 TO 5
+            IF su[i] <> su[1] THEN fl = 0 END IF
+        END FOR
+        -- sort values ascending (bubble on 5 elems)
+        FOR i = 1 TO 4
+            FOR j = 1 TO 5 - i
+                IF vv[j] > vv[j + 1] THEN
+                    LET t AS S64 = vv[j]
+                    vv[j] = vv[j + 1]
+                    vv[j + 1] = t
+                END IF
+            END FOR
+        END FOR
+        LET st AS S32 = 1
+        FOR i = 2 TO 5
+            IF vv[i] <> vv[i - 1] + 1 THEN st = 0 END IF
+        END FOR
+        -- wheel A2345
+        IF vv[5] = 14 ANDALSO vv[1] = 2 ANDALSO vv[2] = 3 ANDALSO vv[3] = 4 ANDALSO vv[4] = 5 THEN st = 1 END IF
+        LET mx AS S64 = 0
+        LET sc AS S64 = 0
+        FOR i = 1 TO 13
+            IF rk[i] > mx THEN mx = rk[i] END IF
+            IF rk[i] = 2 THEN sc = sc + 1 END IF
+        END FOR
+        IF fl = 1 ANDALSO st = 1 ANDALSO vv[5] = 14 ANDALSO vv[1] = 10 THEN RETURN "royal flush" END IF
+        IF fl = 1 ANDALSO st = 1 THEN RETURN "straight flush" END IF
+        IF mx = 4 THEN RETURN "four of a kind" END IF
+        IF mx = 3 ANDALSO sc = 1 THEN RETURN "full house" END IF
+        IF fl = 1 THEN RETURN "flush" END IF
+        IF st = 1 THEN RETURN "straight" END IF
+        IF mx = 3 THEN RETURN "three of a kind" END IF
+        IF sc = 2 THEN RETURN "two pair" END IF
+        IF sc = 1 THEN RETURN "one pair" END IF
+        RETURN "high card"
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- encode hands directly (rank 2..14, suit 0..3)
+        -- hand 1: royal flush (10 J Q K A spades)
+        vv[1] = 10; vv[2] = 11; vv[3] = 12; vv[4] = 13; vv[5] = 14
+        su[1] = 0; su[2] = 0; su[3] = 0; su[4] = 0; su[5] = 0
+        PRINT "10s Js Qs Ks As: " | Rank()
+        -- straight flush 5-9 hearts
+        vv[1] = 5; vv[2] = 6; vv[3] = 7; vv[4] = 8; vv[5] = 9
+        PRINT "5h 6h 7h 8h 9h: " | Rank()
+        -- four of a kind
+        vv[1] = 7; vv[2] = 7; vv[3] = 7; vv[4] = 7; vv[5] = 13
+        su[1] = 0; su[2] = 1; su[3] = 2; su[4] = 3; su[5] = 0
+        PRINT "7s 7h 7d 7c Ks: " | Rank()
+        -- full house
+        vv[1] = 9; vv[2] = 9; vv[3] = 9; vv[4] = 4; vv[5] = 4
+        PRINT "9s 9h 9d 4s 4h: " | Rank()
+        -- flush
+        vv[1] = 2; vv[2] = 5; vv[3] = 8; vv[4] = 10; vv[5] = 13
+        su[1] = 2; su[2] = 2; su[3] = 2; su[4] = 2; su[5] = 2
+        PRINT "2d 5d 8d 10d Kd: " | Rank()
+        -- straight (wheel)
+        vv[1] = 14; vv[2] = 2; vv[3] = 3; vv[4] = 4; vv[5] = 5
+        su[1] = 0; su[2] = 1; su[3] = 2; su[4] = 3; su[5] = 0
+        PRINT "As 2h 3d 4c 5s: " | Rank()
+        -- three of a kind
+        vv[1] = 8; vv[2] = 8; vv[3] = 8; vv[4] = 2; vv[5] = 13
+        PRINT "8s 8h 8d 2c Ks: " | Rank()
+        -- two pair
+        vv[1] = 5; vv[2] = 5; vv[3] = 11; vv[4] = 11; vv[5] = 2
+        PRINT "5s 5h Js Jd 2c: " | Rank()
+        -- one pair
+        vv[1] = 10; vv[2] = 10; vv[3] = 3; vv[4] = 6; vv[5] = 12
+        PRINT "10s 10h 3d 6c Qs: " | Rank()
+        -- high card
+        vv[1] = 2; vv[2] = 5; vv[3] = 9; vv[4] = 11; vv[5] = 14
+        su[1] = 0; su[2] = 1; su[3] = 2; su[4] = 0; su[5] = 3
+        PRINT "2s 5h 9d Js Ac: " | Rank()
+    END PROCEDURE
+END MODULE
+
+IMPORT Pk
+BEGIN
+    Pk.Run()
+END

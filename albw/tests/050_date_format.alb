@@ -1,0 +1,23 @@
+-- 050 | Date format: render one date three ways.
+DECLARE MODULE D
+    FUNCTION Pad(n AS S32) AS STRING
+END DECLARE MODULE
+
+MODULE D
+    FUNCTION Pad(n AS S32) AS STRING
+        IF n < 10 THEN
+            RETURN "0" | n
+        END IF
+        RETURN "" | n
+    END FUNCTION
+END MODULE
+
+IMPORT D
+BEGIN
+    LET y AS S32 = 2024;
+    LET m AS S32 = 3;
+    LET d AS S32 = 15;
+    PRINT$ y | "-" | D.Pad(m) | "-" | D.Pad(d);
+    PRINT$ D.Pad(m) | "/" | D.Pad(d) | "/" | y;
+    PRINT$ D.Pad(d) | "." | D.Pad(m) | "." | y;
+END

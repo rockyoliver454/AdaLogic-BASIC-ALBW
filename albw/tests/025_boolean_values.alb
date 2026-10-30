@@ -1,0 +1,10 @@
+BEGIN
+    LET t = 1
+    LET f = 0
+    IF t = 1 THEN
+        PRINT$ "true"
+    END IF
+    IF NOT (f = 1) THEN
+        PRINT$ "not false"
+    END IF
+END

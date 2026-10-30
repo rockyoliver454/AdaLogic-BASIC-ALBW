@@ -1,0 +1,56 @@
+-- 450 | Perfect totient numbers: first 20 (n = sum of iterated
+-- totients of n).
+DECLARE MODULE PerTot
+    FUNCTION Phi(n AS S64) AS S64
+    FUNCTION IsPerfect(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PerTot
+    FUNCTION Phi(n AS S64) AS S64
+        LET result AS S64 = n
+        LET m AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            IF m MOD d = 0 THEN
+                result = result / d * (d - 1)
+                WHILE m MOD d = 0
+                    m = m / d
+                END WHILE
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN result = result / m * (m - 1) END IF
+        RETURN result
+    END FUNCTION
+
+    FUNCTION IsPerfect(n AS S64) AS S32
+        LET total AS S64 = 0
+        LET v AS S64 = n
+        WHILE v > 1
+            v = Phi(v)
+            total = total + v
+        END WHILE
+        IF total = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 2
+        LET got AS S64 = 0
+        WHILE got < 20
+            IF IsPerfect(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT PerTot
+BEGIN
+    PerTot.Run()
+END

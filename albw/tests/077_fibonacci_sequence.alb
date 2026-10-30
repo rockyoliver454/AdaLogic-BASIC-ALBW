@@ -1,0 +1,12 @@
+BEGIN
+    LET a = 0
+    LET b = 1
+    LET i = 0
+    WHILE i < 10
+        PRINT$ a
+        LET c = a + b
+        a = b
+        b = c
+        i = i + 1
+    END WHILE
+END

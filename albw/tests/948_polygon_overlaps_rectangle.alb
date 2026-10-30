@@ -1,0 +1,88 @@
+-- 948 | Check if a polygon overlaps with a rectangle: true if
+-- any polygon vertex is inside the rect, any rect corner is
+-- inside the polygon, or any edges intersect.
+DECLARE MODULE Po
+    FUNCTION InPoly(px AS F64, py AS F64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Po
+    STRICT px[8] AS F64
+    STRICT py[8] AS F64
+    STRICT np[1] AS S64
+    STRICT rx[3] AS F64
+    STRICT ry[3] AS F64
+
+    FUNCTION InPoly(x AS F64, y AS F64) AS S32
+        -- ray casting
+        LET ins AS S32 = 0
+        LET n AS S64 = np[1]
+        FOR i = 1 TO n
+            LET j AS S64 = i - 1
+            IF j = 0 THEN j = n END IF
+            LET yi AS F64 = py[i]
+            LET yj AS F64 = py[j]
+            IF (yi > y ANDALSO yj <= y) ORELSE (yj > y ANDALSO yi <= y) THEN
+                LET xi AS F64 = px[i]
+                LET xj AS F64 = px[j]
+                LET xin AS F64 = xi + (y - yi) / (yj - yi) * (xj - xi)
+                IF xin > x THEN ins = 1 - ins END IF
+            END IF
+        END FOR
+        RETURN ins
+    END FUNCTION
+
+    PROCEDURE Run()
+        np[1] = 4
+        -- polygon: square (0,0)-(4,0)-(4,4)-(0,4)
+        px[1] = 0.0; py[1] = 0.0
+        px[2] = 4.0; py[2] = 0.0
+        px[3] = 4.0; py[3] = 4.0
+        px[4] = 0.0; py[4] = 4.0
+        -- rect1: (2,2)-(6,6) overlaps
+        rx[1] = 2.0; ry[1] = 2.0
+        rx[2] = 6.0; ry[2] = 6.0
+        -- test: any poly vertex in rect?
+        LET hit AS S32 = 0
+        FOR i = 1 TO np[1]
+            IF px[i] >= rx[1] ANDALSO px[i] <= rx[2] ANDALSO py[i] >= ry[1] ANDALSO py[i] <= ry[2] THEN hit = 1 END IF
+        END FOR
+        -- any rect corner in poly?
+        IF hit = 0 THEN
+            LET c1 AS S32 = InPoly(rx[1], ry[1])
+            LET c2 AS S32 = InPoly(rx[2], ry[1])
+            LET c3 AS S32 = InPoly(rx[2], ry[2])
+            LET c4 AS S32 = InPoly(rx[1], ry[2])
+            IF c1 = 1 ORELSE c2 = 1 ORELSE c3 = 1 ORELSE c4 = 1 THEN hit = 1 END IF
+        END IF
+        IF hit = 1 THEN PRINT "rect (2,2)-(6,6): overlaps" END IF
+        -- rect2: (5,5)-(7,7) disjoint
+        rx[1] = 5.0; ry[1] = 5.0
+        rx[2] = 7.0; ry[2] = 7.0
+        hit = 0
+        FOR i = 1 TO np[1]
+            IF px[i] >= rx[1] ANDALSO px[i] <= rx[2] ANDALSO py[i] >= ry[1] ANDALSO py[i] <= ry[2] THEN hit = 1 END IF
+        END FOR
+        IF hit = 0 THEN
+            LET c1 AS S32 = InPoly(rx[1], ry[1])
+            LET c2 AS S32 = InPoly(rx[2], ry[1])
+            LET c3 AS S32 = InPoly(rx[2], ry[2])
+            LET c4 AS S32 = InPoly(rx[1], ry[2])
+            IF c1 = 1 ORELSE c2 = 1 ORELSE c3 = 1 ORELSE c4 = 1 THEN hit = 1 END IF
+        END IF
+        IF hit = 0 THEN PRINT "rect (5,5)-(7,7): no overlap" END IF
+        -- rect3: (1,1)-(3,3) fully inside poly -> corners inside
+        rx[1] = 1.0; ry[1] = 1.0
+        rx[2] = 3.0; ry[2] = 3.0
+        hit = 0
+        LET c1 AS S32 = InPoly(rx[1], ry[1])
+        LET c2 AS S32 = InPoly(rx[1], ry[2])
+        IF c1 = 1 ANDALSO c2 = 1 THEN hit = 1 END IF
+        IF hit = 1 THEN PRINT "rect (1,1)-(3,3): overlaps" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Po
+BEGIN
+    Po.Run()
+END

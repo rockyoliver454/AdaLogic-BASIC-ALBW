@@ -1,0 +1,23 @@
+-- 1217 | BRAILLE G1 / AS capture / inline builtins.
+-- AS name snapshots uni+brf+ncells+cells+errs so later blocks can't
+-- clobber them; BRAILLE G1 selects uncontracted grade; BRF/UNI/BRFG1/
+-- NBRF/NUNI are one-shot expression builtins.
+BEGIN
+    BRAILLE AS fox
+The quick brown fox
+END BRAILLE
+    BRAILLE G1 AS g1x
+The
+END BRAILLE
+    PRINT "fox=" | fox.brf | "|" | fox.ncells | "|" | fox.cell(0)
+    PRINT "g1=" | g1x.brf | "|" | g1x.errs
+    NEMETH AS mx
+x^2
+END NEMETH
+    PRINT "mx=" | mx.brf | "|" | mx.ncells
+    PRINT "a=" | BRF("hello")
+    PRINT "b=" | BRFG1("the")
+    PRINT "c=" | NBRF("3+4")
+    PRINT "d=" | UNI("Ab")
+    PRINT "e=" | NUNI("x")
+END

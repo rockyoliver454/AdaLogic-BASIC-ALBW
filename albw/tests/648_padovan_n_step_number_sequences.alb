@@ -1,0 +1,39 @@
+-- 648 | Padovan n-step number sequences: tribonacci-style
+-- n-step Fibonacci sequences for n = 2..5.
+DECLARE MODULE Pad
+    PROCEDURE Show(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pad
+    STRICT a[16] AS S64
+
+    PROCEDURE Show(k AS S64)
+        FOR i = 1 TO k
+            a[i] = 1
+        END FOR
+        FOR i = k + 1 TO 12
+            LET s AS S64 = 0
+            FOR j = i - k TO i - 1
+                s = s + a[j]
+            END FOR
+            a[i] = s
+        END FOR
+        LET t AS STRING = "n=" | k | ":"
+        FOR m = 1 TO 12
+            t = t | " " | a[m]
+        END FOR
+        PRINT t
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR k = 2 TO 5
+            Show(k)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pad
+BEGIN
+    Pad.Run()
+END

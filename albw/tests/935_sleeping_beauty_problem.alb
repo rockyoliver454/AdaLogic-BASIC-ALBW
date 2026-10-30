@@ -1,0 +1,46 @@
+-- 935 | Sleeping Beauty problem: simulate N experiments —
+-- coin flip: heads -> woken Monday once; tails -> woken
+-- Monday and Tuesday (forgetting Monday). Report the
+-- fraction of wakings where the coin was heads, from the
+-- subject's perspective (should be ~1/3) plus the
+-- frequentist (experimenter) fraction ~1/2.
+DECLARE MODULE Sb2
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sb2
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 8675
+        LET ex AS S64 = 300000
+        LET hExp AS S64 = 0
+        LET wak AS S64 = 0
+        LET hwak AS S64 = 0
+        FOR i = 1 TO ex
+            LET heads AS S32 = 0
+            IF Nxt() MOD 2 = 0 THEN heads = 1 END IF
+            IF heads = 1 THEN
+                hExp = hExp + 1
+                wak = wak + 1
+                hwak = hwak + 1
+            ELSE
+                wak = wak + 2
+            END IF
+        END FOR
+        PRINT "experiments=" | ex
+        PRINT "experimenter heads frac=" | (hExp * 1000 / ex) | "/1000"
+        PRINT "subject heads frac=" | (hwak * 1000 / wak) | "/1000"
+    END PROCEDURE
+END MODULE
+
+IMPORT Sb2
+BEGIN
+    Sb2.Run()
+END

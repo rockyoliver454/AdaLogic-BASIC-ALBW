@@ -1,0 +1,37 @@
+-- 785 | Almkvist-Giullera formula for pi:
+-- 1/pi^2 = 32 * sum_n (6n)!/(3 (n!)^6) * (532 n^2+126 n+9)
+--           * 10^(-6n-3). Sum terms via ratios, then invert.
+DECLARE MODULE Ag
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ag
+    PROCEDURE Run()
+        -- t_0 = 9/3 * 1e-3 = 3e-3
+        LET t AS F64 = 0.003
+        LET s AS F64 = t
+        LET n AS S64 = 0
+        WHILE n < 8
+            -- t_{n+1}/t_n = prod(6n+k,k=1..6)/(n+1)^6 *
+            --              lin(n+1)/lin(n) * 1e-6
+            LET fn AS F64 = n
+            LET num AS F64 = (6.0 * fn + 1.0) * (6.0 * fn + 2.0) * (6.0 * fn + 3.0)
+            num = num * (6.0 * fn + 4.0) * (6.0 * fn + 5.0) * (6.0 * fn + 6.0)
+            LET den AS F64 = (fn + 1.0) * (fn + 1.0) * (fn + 1.0)
+            den = den * den
+            LET l0 AS F64 = 532.0 * fn * fn + 126.0 * fn + 9.0
+            LET f1 AS F64 = fn + 1.0
+            LET l1 AS F64 = 532.0 * f1 * f1 + 126.0 * f1 + 9.0
+            t = t * num / den * (l1 / l0) * 1.0E-6
+            s = s + t
+            n = n + 1
+        END WHILE
+        LET pi AS F64 = (1.0 / (32.0 * s)) ^ 0.5
+        PRINT "pi approx=" | pi
+    END PROCEDURE
+END MODULE
+
+IMPORT Ag
+BEGIN
+    Ag.Run()
+END

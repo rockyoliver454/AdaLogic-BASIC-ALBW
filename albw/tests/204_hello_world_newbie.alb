@@ -1,0 +1,4 @@
+-- 204 | Hello world/Newbie: the smallest conventional first ALB program.
+BEGIN
+    PRINT "Hello, world!"
+END

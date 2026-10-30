@@ -1,0 +1,6 @@
+INCLUDE "func_def.albi"
+IMPORT M
+
+BEGIN
+    M.SayHello()
+END

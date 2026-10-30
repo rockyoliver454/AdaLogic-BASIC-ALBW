@@ -1,0 +1,43 @@
+-- 259 | Symmetric difference of two sets: elements in either, but not both.
+BEGIN
+    STRICT set_a[4] AS S32
+    STRICT set_b[4] AS S32
+    STRICT diff[8] AS S32
+    LET count AS S32 = 0
+
+    set_a[0] = 1
+    set_a[1] = 2
+    set_a[2] = 3
+    set_a[3] = 4
+
+    set_b[0] = 3
+    set_b[1] = 4
+    set_b[2] = 5
+    set_b[3] = 6
+
+    FOR i = 0 TO 3
+        LET found AS S32 = 0
+        FOR j = 0 TO 3
+            IF set_a[i] = set_b[j] THEN found = 1 END IF
+        END FOR
+        IF found = 0 THEN
+            diff[count] = set_a[i]
+            count = count + 1
+        END IF
+    END FOR
+
+    FOR i = 0 TO 3
+        LET found AS S32 = 0
+        FOR j = 0 TO 3
+            IF set_b[i] = set_a[j] THEN found = 1 END IF
+        END FOR
+        IF found = 0 THEN
+            diff[count] = set_b[i]
+            count = count + 1
+        END IF
+    END FOR
+
+    FOR i = 0 TO count - 1
+        PRINT diff[i]
+    END FOR
+END

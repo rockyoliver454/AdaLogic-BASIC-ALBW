@@ -1,0 +1,138 @@
+-- 842 | JSON: mini recursive-descent parser over a fixed
+-- document; prints each key and value found.
+DECLARE MODULE Js
+    FUNCTION Pval(dp AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Js
+    STRICT pos[1] AS S64
+    STRICT doc[1] AS STRING
+    STRICT rsv[1] AS STRING
+
+    FUNCTION Cur() AS S64
+        RETURN ASC(MID$(doc[1], pos[1], 1))
+    END FUNCTION
+
+    PROCEDURE Ws()
+        WHILE pos[1] <= LEN(doc[1]) ANDALSO (Cur() = 32 ORELSE Cur() = 9)
+            pos[1] = pos[1] + 1
+        END WHILE
+    END PROCEDURE
+
+    FUNCTION Pstr() AS STRING
+        pos[1] = pos[1] + 1
+        LET s AS STRING = ""
+        WHILE pos[1] <= LEN(doc[1]) ANDALSO Cur() <> 34
+            s = s | MID$(doc[1], pos[1], 1)
+            pos[1] = pos[1] + 1
+        END WHILE
+        pos[1] = pos[1] + 1
+        RETURN s
+    END FUNCTION
+
+    FUNCTION Pnum() AS STRING
+        LET s AS STRING = ""
+        LET go AS S32 = 1
+        WHILE pos[1] <= LEN(doc[1]) ANDALSO go = 1
+            LET c AS S64 = Cur()
+            IF (c >= 48 ANDALSO c <= 57) ORELSE c = 46 ORELSE c = 45 THEN
+                s = s | MID$(doc[1], pos[1], 1)
+                pos[1] = pos[1] + 1
+            ELSE
+                go = 0
+            END IF
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION Pobj(dp AS S64) AS S32
+        pos[1] = pos[1] + 1
+        WHILE pos[1] <= LEN(doc[1])
+            Ws()
+            IF Cur() = 125 THEN
+                pos[1] = pos[1] + 1
+                RETURN 1
+            END IF
+            IF Cur() = 34 THEN
+                LET k AS STRING = Pstr()
+                Ws()
+                pos[1] = pos[1] + 1
+                Ws()
+                rsv[1] = rsv[1] | "key=" | k | " val="
+                LET zz AS S32 = Pval(dp + 1)
+                Ws()
+                IF Cur() = 44 THEN pos[1] = pos[1] + 1 END IF
+            ELSE
+                RETURN 0
+            END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Parr(dp AS S64) AS S32
+        pos[1] = pos[1] + 1
+        rsv[1] = rsv[1] | "["
+        WHILE pos[1] <= LEN(doc[1])
+            Ws()
+            IF Cur() = 93 THEN
+                pos[1] = pos[1] + 1
+                rsv[1] = rsv[1] | "] "
+                RETURN 1
+            END IF
+            LET zz AS S32 = Pval(dp + 1)
+            Ws()
+            IF Cur() = 44 THEN
+                pos[1] = pos[1] + 1
+                rsv[1] = rsv[1] | ","
+            END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Pval(dp AS S64) AS S32
+        Ws()
+        LET c AS S64 = Cur()
+        IF c = 123 THEN
+            RETURN Pobj(dp + 1)
+        END IF
+        IF c = 91 THEN
+            RETURN Parr(dp + 1)
+        END IF
+        IF c = 34 THEN
+            LET s AS STRING = Pstr()
+            rsv[1] = rsv[1] | CHR(34) | s | CHR(34) | " "
+            RETURN 1
+        END IF
+        LET s AS STRING = Pnum()
+        IF LEN(s) = 0 THEN
+            -- keyword literal: consume a-z letters
+            LET go AS S32 = 1
+            WHILE pos[1] <= LEN(doc[1]) ANDALSO go = 1
+                LET cc AS S64 = Cur()
+                IF cc >= 97 ANDALSO cc <= 122 THEN
+                    s = s | MID$(doc[1], pos[1], 1)
+                    pos[1] = pos[1] + 1
+                ELSE
+                    go = 0
+                END IF
+            END WHILE
+        END IF
+        rsv[1] = rsv[1] | s | " "
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET q AS STRING = CHR(34)
+        doc[1] = "{" | q | "name" | q | ":" | q | "alf" | q | "," | q | "nums" | q | ":[1,2,3]," | q | "flag" | q | ":true," | q | "pi" | q | ":3.5}"
+        pos[1] = 1
+        rsv[1] = ""
+        LET zz AS S32 = Pval(0)
+        PRINT rsv[1]
+    END PROCEDURE
+END MODULE
+
+IMPORT Js
+BEGIN
+    Js.Run()
+END

@@ -1,0 +1,27 @@
+-- 549 | Sum of a series: sum 1/k^2 for k=1..1000 (approaches
+-- pi^2/6 ~ 1.644934) and sum 1/2^k for k=0..20 (approaches 2).
+DECLARE MODULE Series
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Series
+    PROCEDURE Run()
+        LET s AS F64 = 0.0
+        FOR k = 1 TO 1000
+            s = s + 1.0 / (k * k)
+        END FOR
+        PRINT "sum 1/k^2 (k=1..1000) = " | s
+        LET g AS F64 = 0.0
+        LET t AS F64 = 1.0
+        FOR k2 = 0 TO 20
+            g = g + t
+            t = t / 2.0
+        END FOR
+        PRINT "sum 1/2^k (k=0..20) = " | g
+    END PROCEDURE
+END MODULE
+
+IMPORT Series
+BEGIN
+    Series.Run()
+END

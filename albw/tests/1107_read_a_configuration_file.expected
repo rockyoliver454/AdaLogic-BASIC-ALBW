@@ -1,0 +1,4 @@
+entries=3
+host -> example.com
+port -> 8080
+debug -> true

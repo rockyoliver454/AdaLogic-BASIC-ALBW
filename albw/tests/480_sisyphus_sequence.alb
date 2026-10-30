@@ -1,0 +1,47 @@
+-- 480 | Sisyphus sequence: first 100 terms. a(1)=1, then
+-- a(n) = a(n-1)/2 if even else a(n-1) + smallest unused prime.
+DECLARE MODULE Sisy
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sisy
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET a AS S64 = 1
+        LET s AS STRING = "1 "
+        LET prime AS S64 = 2
+        FOR n = 2 TO 100
+            IF a MOD 2 = 0 THEN
+                a = a / 2
+            ELSE
+                a = a + prime
+                LET np AS S64 = prime + 1
+                WHILE IsPrime(np) = 0
+                    np = np + 1
+                END WHILE
+                prime = np
+            END IF
+            s = s | a | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Sisy
+BEGIN
+    Sisy.Run()
+END

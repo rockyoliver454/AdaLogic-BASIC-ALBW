@@ -1,0 +1,42 @@
+-- 397 | Mobius function: mu(n) for n = 1..40.
+DECLARE MODULE Mobius
+    FUNCTION Mu(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mobius
+    FUNCTION Mu(n AS S64) AS S64
+        LET m AS S64 = n
+        LET cnt AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            IF m MOD d = 0 THEN
+                m = m / d
+                IF m MOD d = 0 THEN RETURN 0 END IF
+                cnt = cnt + 1
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN cnt = cnt + 1 END IF
+        IF cnt MOD 2 = 0 THEN RETURN 1 END IF
+        RETURN 0 - 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 40
+            LET v AS S64 = Mu(n)
+            IF v < 0 THEN
+                s = s | "-1 "
+            ELSE
+                s = s | " " | v | " "
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Mobius
+BEGIN
+    Mobius.Run()
+END

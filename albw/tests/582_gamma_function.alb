@@ -1,0 +1,46 @@
+-- 582 | Gamma function: Lanczos approximation; verify
+-- G(0.5)=sqrt(pi), G(1)=1, G(5)=24, G(6)=120, G(2.5)=1.329.
+DECLARE MODULE Gam
+    FUNCTION Gamma(z AS F64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gam
+    STRICT cf[9] AS F64
+
+    FUNCTION Gamma(z AS F64) AS F64
+        IF z < 0.5 THEN
+            LET r AS F64 = 3.141592653589793 / (SIN(3.141592653589793 * z) * Gamma(1.0 - z))
+            RETURN r
+        END IF
+        z = z - 1.0
+        LET x AS F64 = cf[1]
+        FOR i = 1 TO 8
+            x = x + cf[i + 1] / (z + i)
+        END FOR
+        LET t AS F64 = z + 7.5
+        RETURN SQRT(2.0 * 3.141592653589793) * (t ^ (z + 0.5)) * EXP(0.0 - t) * x
+    END FUNCTION
+
+    PROCEDURE Run()
+        cf[1] = 0.99999999999980993
+        cf[2] = 676.5203681218851
+        cf[3] = -1259.1392167224028
+        cf[4] = 771.32342877765313
+        cf[5] = -176.61502916214059
+        cf[6] = 12.507343278686905
+        cf[7] = -0.13857109526572012
+        cf[8] = 0.0000099843695780195716
+        cf[9] = 0.00000015056327351493116
+        PRINT "G(0.5) = " | Gamma(0.5)
+        PRINT "G(1.0) = " | Gamma(1.0)
+        PRINT "G(5.0) = " | Gamma(5.0)
+        PRINT "G(6.0) = " | Gamma(6.0)
+        PRINT "G(2.5) = " | Gamma(2.5)
+    END PROCEDURE
+END MODULE
+
+IMPORT Gam
+BEGIN
+    Gam.Run()
+END

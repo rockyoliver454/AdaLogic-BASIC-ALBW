@@ -1,0 +1,44 @@
+-- 180 | Maze solving: BFS shortest path through a fixed maze.
+BEGIN
+    --  0 = wall, 1 = open.  S at (0,1), E at (4,7).
+    STRICT mz[5,8] AS S32;
+    mz[0,0]=0; mz[0,1]=1; mz[0,2]=0; mz[0,3]=0; mz[0,4]=0; mz[0,5]=0; mz[0,6]=0; mz[0,7]=0;
+    mz[1,0]=0; mz[1,1]=1; mz[1,2]=1; mz[1,3]=1; mz[1,4]=0; mz[1,5]=1; mz[1,6]=1; mz[1,7]=0;
+    mz[2,0]=0; mz[2,1]=0; mz[2,2]=0; mz[2,3]=1; mz[2,4]=0; mz[2,5]=1; mz[2,6]=0; mz[2,7]=0;
+    mz[3,0]=0; mz[3,1]=1; mz[3,2]=1; mz[3,3]=1; mz[3,4]=1; mz[3,5]=1; mz[3,6]=0; mz[3,7]=0;
+    mz[4,0]=0; mz[4,1]=0; mz[4,2]=0; mz[4,3]=0; mz[4,4]=0; mz[4,5]=0; mz[4,6]=0; mz[4,7]=1;
+    STRICT dist[5,8] AS S32;
+    FOR r = 0 TO 4
+        FOR c = 0 TO 7
+            dist[r,c] = -1;
+        END FOR
+    END FOR
+    STRICT qx[40] AS S32;
+    STRICT qy[40] AS S32;
+    LET head AS S32 = 0;
+    LET tail AS S32 = 0;
+    qx[0] = 1; qy[0] = 0;
+    dist[0,1] = 0;
+    tail = 1;
+    STRICT dx[4] AS S32;
+    STRICT dy[4] AS S32;
+    dx[0]=1; dy[0]=0; dx[1]=-1; dy[1]=0; dx[2]=0; dy[2]=1; dx[3]=0; dy[3]=-1;
+    WHILE head < tail
+        LET x AS S32 = qx[head];
+        LET y AS S32 = qy[head];
+        head = head + 1;
+        FOR d = 0 TO 3
+            LET nx AS S32 = x + dx[d];
+            LET ny AS S32 = y + dy[d];
+            IF nx >= 0 ANDALSO nx < 8 ANDALSO ny >= 0 ANDALSO ny < 5 THEN
+                IF mz[ny,nx] = 1 ANDALSO dist[ny,nx] < 0 THEN
+                    dist[ny,nx] = dist[y,x] + 1;
+                    qx[tail] = nx;
+                    qy[tail] = ny;
+                    tail = tail + 1;
+                END IF
+            END IF
+        END FOR
+    END WHILE
+    PRINT$ "dist to exit: " | dist[4,7];
+END

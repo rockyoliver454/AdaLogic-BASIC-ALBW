@@ -1,0 +1,31 @@
+-- 1000 | JortSort: the joke sort that just claims the
+-- list is sorted — print input, verdict, and "sorted" list.
+DECLARE MODULE Js
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Js
+    PROCEDURE Run()
+        STRICT a[6] AS S64
+        a[1] = 1
+        a[2] = 1
+        a[3] = 2
+        a[4] = 3
+        a[5] = 4
+        a[6] = 5
+        LET ok AS S64 = 1
+        FOR i = 1 TO 5
+            IF a[i] > a[i + 1] THEN ok = 0 END IF
+        END FOR
+        PRINT "jortsort: list is sorted = " | ok
+        FOR i = 1 TO 6
+            PRINT$ a[i] | " "
+        END FOR
+        PRINT ""
+    END PROCEDURE
+END MODULE
+
+IMPORT Js
+BEGIN
+    Js.Run()
+END

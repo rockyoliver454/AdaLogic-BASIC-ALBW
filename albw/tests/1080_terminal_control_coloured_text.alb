@@ -1,0 +1,8 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT CHR(27) | "[31m" | "RED TEXT" | CHR(27) | "[0m"
+    PRINT CHR(27) | "[32m" | "GREEN TEXT" | CHR(27) | "[0m"
+    PRINT CHR(27) | "[34m" | "BLUE TEXT" | CHR(27) | "[0m"
+END

@@ -1,0 +1,33 @@
+-- 496 | Bernoulli's triangle: T(n,k) = sum_{j=0..k} C(n,j) for
+-- n = 0..10.
+DECLARE MODULE BT
+    FUNCTION Binom(n AS S64, k AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE BT
+    FUNCTION Binom(n AS S64, k AS S64) AS S64
+        LET r AS S64 = 1
+        FOR i = 1 TO k
+            r = r * (n - i + 1) / i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 0 TO 10
+            LET s AS STRING = ""
+            LET run AS S64 = 0
+            FOR k = 0 TO n
+                run = run + Binom(n, k)
+                s = s | run | " "
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT BT
+BEGIN
+    BT.Run()
+END

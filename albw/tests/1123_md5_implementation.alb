@@ -1,0 +1,252 @@
+VERSION 1.0
+
+STRICT MDW[64] AS S64
+STRICT MK[64] AS S64
+STRICT MS[64] AS S64
+STRICT P2[33] AS S64
+
+LET HA AS S64 = 0
+LET HB AS S64 = 0
+LET HC AS S64 = 0
+LET HD AS S64 = 0
+
+PROCEDURE InitP2()
+    LET i AS S64 = 0
+    P2[0] = 1
+    WHILE i < 32
+        P2[i + 1] = P2[i] * 2
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+FUNCTION RotL(x AS S64, r AS S64) AS S64
+    LET e AS S64 = 32 - r
+    LET v AS S64 = x SHL r
+    v = v AND $FFFFFFFF
+    LET w AS S64 = x SHR e
+    RETURN v + w
+END FUNCTION
+
+FUNCTION HexWle(w AS S64) AS STRING
+    LET s AS STRING = ""
+    LET i AS S64 = 0
+    WHILE i < 4
+        LET b AS S64 = (w / P2[i * 8]) MOD 256
+        LET n AS S64 = b / 16
+        IF n < 10 THEN s = s | CHR(48 + n) ELSE s = s | CHR(87 + n) END IF
+        n = b MOD 16
+        IF n < 10 THEN s = s | CHR(48 + n) ELSE s = s | CHR(87 + n) END IF
+        i = i + 1
+    END WHILE
+    RETURN s
+END FUNCTION
+
+PROCEDURE MdBlock()
+    LET a AS S64 = HA
+    LET b AS S64 = HB
+    LET c AS S64 = HC
+    LET d AS S64 = HD
+    LET i AS S64 = 0
+    WHILE i < 64
+        LET f AS S64 = 0
+        LET g AS S64 = 0
+        IF i < 16 THEN
+            f = (b AND c) + ((NOT b) AND d)
+            g = i
+        ELSE
+            IF i < 32 THEN
+                f = (d AND b) + ((NOT d) AND c)
+                g = (i * 5 + 1) MOD 16
+            ELSE
+                IF i < 48 THEN
+                    f = b XOR c XOR d
+                    g = (i * 3 + 5) MOD 16
+                ELSE
+                    f = (c XOR (b OR (NOT d))) AND $FFFFFFFF
+                    g = (i * 7) MOD 16
+                END IF
+            END IF
+        END IF
+        LET tmp AS S64 = d
+        d = c
+        c = b
+        LET sum AS S64 = (a + f + MK[i] + MDW[g]) MOD 4294967296
+        b = (b + RotL(sum, MS[i])) MOD 4294967296
+        a = tmp
+        i = i + 1
+    END WHILE
+    HA = (HA + a) MOD 4294967296
+    HB = (HB + b) MOD 4294967296
+    HC = (HC + c) MOD 4294967296
+    HD = (HD + d) MOD 4294967296
+END PROCEDURE
+
+
+BEGIN
+    InitP2()
+    MK[0] = 3614090360
+    MK[1] = 3905402710
+    MK[2] = 606105819
+    MK[3] = 3250441966
+    MK[4] = 4118548399
+    MK[5] = 1200080426
+    MK[6] = 2821735955
+    MK[7] = 4249261313
+    MK[8] = 1770035416
+    MK[9] = 2336552879
+    MK[10] = 4294925233
+    MK[11] = 2304563134
+    MK[12] = 1804603682
+    MK[13] = 4254626195
+    MK[14] = 2792965006
+    MK[15] = 1236535329
+    MK[16] = 4129170786
+    MK[17] = 3225465664
+    MK[18] = 643717713
+    MK[19] = 3921069994
+    MK[20] = 3593408605
+    MK[21] = 38016083
+    MK[22] = 3634488961
+    MK[23] = 3889429448
+    MK[24] = 568446438
+    MK[25] = 3275163606
+    MK[26] = 4107603335
+    MK[27] = 1163531501
+    MK[28] = 2850285829
+    MK[29] = 4243563512
+    MK[30] = 1735328473
+    MK[31] = 2368359562
+    MK[32] = 4294588738
+    MK[33] = 2272392833
+    MK[34] = 1839030562
+    MK[35] = 4259657740
+    MK[36] = 2763975236
+    MK[37] = 1272893353
+    MK[38] = 4139469664
+    MK[39] = 3200236656
+    MK[40] = 681279174
+    MK[41] = 3936430074
+    MK[42] = 3572445317
+    MK[43] = 76029189
+    MK[44] = 3654602809
+    MK[45] = 3873151461
+    MK[46] = 530742520
+    MK[47] = 3299628645
+    MK[48] = 4096336452
+    MK[49] = 1126891415
+    MK[50] = 2878612391
+    MK[51] = 4237533241
+    MK[52] = 1700485571
+    MK[53] = 2399980690
+    MK[54] = 4293915773
+    MK[55] = 2240044497
+    MK[56] = 1873313359
+    MK[57] = 4264355552
+    MK[58] = 2734768916
+    MK[59] = 1309151649
+    MK[60] = 4149444226
+    MK[61] = 3174756917
+    MK[62] = 718787259
+    MK[63] = 3951481745
+    MS[0] = 7
+    MS[1] = 12
+    MS[2] = 17
+    MS[3] = 22
+    MS[4] = 7
+    MS[5] = 12
+    MS[6] = 17
+    MS[7] = 22
+    MS[8] = 7
+    MS[9] = 12
+    MS[10] = 17
+    MS[11] = 22
+    MS[12] = 7
+    MS[13] = 12
+    MS[14] = 17
+    MS[15] = 22
+    MS[16] = 5
+    MS[17] = 9
+    MS[18] = 14
+    MS[19] = 20
+    MS[20] = 5
+    MS[21] = 9
+    MS[22] = 14
+    MS[23] = 20
+    MS[24] = 5
+    MS[25] = 9
+    MS[26] = 14
+    MS[27] = 20
+    MS[28] = 5
+    MS[29] = 9
+    MS[30] = 14
+    MS[31] = 20
+    MS[32] = 4
+    MS[33] = 11
+    MS[34] = 16
+    MS[35] = 23
+    MS[36] = 4
+    MS[37] = 11
+    MS[38] = 16
+    MS[39] = 23
+    MS[40] = 4
+    MS[41] = 11
+    MS[42] = 16
+    MS[43] = 23
+    MS[44] = 4
+    MS[45] = 11
+    MS[46] = 16
+    MS[47] = 23
+    MS[48] = 6
+    MS[49] = 10
+    MS[50] = 15
+    MS[51] = 21
+    MS[52] = 6
+    MS[53] = 10
+    MS[54] = 15
+    MS[55] = 21
+    MS[56] = 6
+    MS[57] = 10
+    MS[58] = 15
+    MS[59] = 21
+    MS[60] = 6
+    MS[61] = 10
+    MS[62] = 15
+    MS[63] = 21
+
+    LET msg AS STRING = "The quick brown fox jumps over the lazy dog"
+    LET ml AS S64 = LEN(msg)
+    LET i AS S64 = 0
+    WHILE i < 64
+        MDW[i] = 0
+        i = i + 1
+    END WHILE
+    LET nb AS S64 = ml + 1
+    WHILE nb MOD 64 <> 56
+        nb = nb + 1
+    END WHILE
+    LET total AS S64 = nb + 8
+
+    i = 0
+    WHILE i < ml
+        LET bi AS S64 = i MOD 4
+        MDW[i / 4] = MDW[i / 4] + ASC(MID$(msg, i + 1, 1)) * P2[bi * 8]
+        i = i + 1
+    END WHILE
+    i = ml
+    MDW[i / 4] = MDW[i / 4] + 128 * P2[(i MOD 4) * 8]
+    MDW[total / 4 - 2] = ml * 8
+    MDW[total / 4 - 1] = 0
+
+    HA = $67452301
+    HB = $EFCDAB89
+    HC = $98BADCFE
+    HD = $10325476
+
+    LET blk AS S64 = 0
+    WHILE blk < total / 64
+        MdBlock()
+        blk = blk + 1
+    END WHILE
+
+    PRINT "md5=" | HexWle(HA) | HexWle(HB) | HexWle(HC) | HexWle(HD)
+END

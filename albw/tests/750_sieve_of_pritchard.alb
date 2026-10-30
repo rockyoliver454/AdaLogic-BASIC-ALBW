@@ -1,0 +1,40 @@
+-- 750 | The sieve of Pritchard: wheel-based prime sieve;
+-- primes below 200.
+DECLARE MODULE Pr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pr
+    STRICT sv[201] AS S32
+
+    PROCEDURE Run()
+        -- Pritchard: keep the set of candidate wheel members;
+        -- for each new prime p remove p*members.
+        LET n AS S64 = 200
+        FOR i = 0 TO n
+            sv[i] = 1
+        END FOR
+        sv[0] = 0
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= n
+            IF sv[p] = 1 THEN
+                -- remove p times each surviving member (wheel step)
+                LET m AS S64 = p
+                WHILE m * p <= n
+                    sv[m * p] = 0
+                    m = m + 1
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        FOR i = 2 TO n
+            IF sv[i] = 1 THEN PRINT i END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pr
+BEGIN
+    Pr.Run()
+END

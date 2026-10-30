@@ -1,0 +1,42 @@
+-- 792 | Quaternion: quaternion arithmetic - norm, negative,
+-- conjugate, add, multiply (Hamilton product).
+DECLARE MODULE Qt
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Qt
+    PROCEDURE Run()
+        -- q1 = 1+2i+3j+4k, q2 = 5+6i+7j+8k
+        LET a1 AS S64 = 1
+        LET b1 AS S64 = 2
+        LET c1 AS S64 = 3
+        LET d1 AS S64 = 4
+        LET a2 AS S64 = 5
+        LET b2 AS S64 = 6
+        LET c2 AS S64 = 7
+        LET d2 AS S64 = 8
+        -- norm
+        LET n AS S64 = a1 * a1 + b1 * b1 + c1 * c1 + d1 * d1
+        PRINT "norm(q1)=" | n ^ 0.5
+        PRINT "-q1=(" | (0 - a1) | "," | (0 - b1) | "," | (0 - c1) | "," | (0 - d1) | ")"
+        PRINT "conj(q1)=(" | a1 | "," | (0 - b1) | "," | (0 - c1) | "," | (0 - d1) | ")"
+        PRINT "q1+q2=(" | (a1 + a2) | "," | (b1 + b2) | "," | (c1 + c2) | "," | (d1 + d2) | ")"
+        -- hamilton product
+        LET ra AS S64 = a1 * a2 - b1 * b2 - c1 * c2 - d1 * d2
+        LET rb AS S64 = a1 * b2 + b1 * a2 + c1 * d2 - d1 * c2
+        LET rc AS S64 = a1 * c2 - b1 * d2 + c1 * a2 + d1 * b2
+        LET rd AS S64 = a1 * d2 + b1 * c2 - c1 * b2 + d1 * a2
+        PRINT "q1*q2=(" | ra | "," | rb | "," | rc | "," | rd | ")"
+        -- q1*q2 != q2*q1
+        LET sa AS S64 = a2 * a1 - b2 * b1 - c2 * c1 - d2 * d1
+        LET sb AS S64 = a2 * b1 + b2 * a1 + c2 * d1 - d2 * c1
+        LET sc AS S64 = a2 * c1 - b2 * d1 + c2 * a1 + d2 * b1
+        LET sd AS S64 = a2 * d1 + b2 * c1 - c2 * b1 + d2 * a1
+        PRINT "q2*q1=(" | sa | "," | sb | "," | sc | "," | sd | ")"
+    END PROCEDURE
+END MODULE
+
+IMPORT Qt
+BEGIN
+    Qt.Run()
+END

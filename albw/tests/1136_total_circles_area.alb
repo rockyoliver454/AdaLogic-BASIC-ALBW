@@ -1,0 +1,26 @@
+VERSION 1.0
+
+BEGIN
+    LET cnt AS S64 = 0
+    LET gy AS S64 = 0
+    WHILE gy < 64
+        LET gx AS S64 = 0
+        WHILE gx < 64
+            LET xf AS F64 = (gx - 32) * 0.1
+            LET yf AS F64 = (gy - 32) * 0.1
+            LET inside AS S64 = 0
+            LET d1 AS F64 = (xf + 1.0) * (xf + 1.0) + yf * yf
+            LET d2 AS F64 = (xf - 1.0) * (xf - 1.0) + yf * yf
+            LET d3 AS F64 = xf * xf + (yf - 1.0) * (yf - 1.0)
+            IF d1 <= 4.0 ORELSE d2 <= 4.0 ORELSE d3 <= 1.0 THEN
+                inside = 1
+            END IF
+            cnt = cnt + inside
+            gx = gx + 1
+        END WHILE
+        gy = gy + 1
+    END WHILE
+    PRINT "union cells=" | cnt
+    PRINT "area~=" | (cnt * 0.01)
+    PRINT "single circle cells~=" | 1257
+END

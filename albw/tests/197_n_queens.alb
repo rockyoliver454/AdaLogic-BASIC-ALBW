@@ -1,0 +1,61 @@
+-- 197 | N-queens: count solutions for n=8, print first board.
+DECLARE MODULE Q
+    PROCEDURE Solve()
+END DECLARE MODULE
+
+MODULE Q
+    STRICT board[8] AS S32;
+    STRICT colused[8] AS S32;
+    STRICT d1[15] AS S32;
+    STRICT d2[15] AS S32;
+    LET total AS S32 = 0;
+    LET first AS S32 = 1;
+    PROCEDURE Place(r AS S32)
+        IF r = 8 THEN
+            total = total + 1;
+            IF first = 1 THEN
+                first = 0;
+                FOR rw = 0 TO 7 THEN
+                    LET rs AS STRING = "";
+                    FOR c = 0 TO 7 THEN
+                        IF board[rw] = c THEN
+                            rs = rs | "Q";
+                        ELSE
+                            rs = rs | ".";
+                        END IF
+                    END FOR
+                    PRINT$ rs;
+                END FOR
+            END IF
+        ELSE
+            FOR c = 0 TO 7 THEN
+                IF colused[c] = 0 ANDALSO d1[r + c] = 0 ANDALSO d2[r - c + 7] = 0 THEN
+                    colused[c] = 1;
+                    d1[r + c] = 1;
+                    d2[r - c + 7] = 1;
+                    board[r] = c;
+                    Place(r + 1);
+                    colused[c] = 0;
+                    d1[r + c] = 0;
+                    d2[r - c + 7] = 0;
+                END IF
+            END FOR
+        END IF
+    END PROCEDURE
+    PROCEDURE Solve()
+        FOR c = 0 TO 7 THEN
+            colused[c] = 0;
+        END FOR
+        FOR d = 0 TO 14 THEN
+            d1[d] = 0;
+            d2[d] = 0;
+        END FOR
+        Place(0);
+        PRINT$ "solutions: " | total;
+    END PROCEDURE
+END MODULE
+
+IMPORT Q
+BEGIN
+    Q.Solve()
+END

@@ -1,0 +1,111 @@
+-- 972 | MD4 hash — full RFC 1320 implementation over
+-- 32-bit words kept in masked S64. Prints MD4("abc").
+DECLARE MODULE M4
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE M4
+    STRICT m[16] AS S64
+    STRICT msg[64] AS S64
+
+    FUNCTION Rlx(v AS S64, n AS S64) AS S64
+        v = v AND 4294967295
+        RETURN ((v * (2 ^ n) AND 4294967295) OR (v / (2 ^ (32 - n)))) AND 4294967295
+    END FUNCTION
+
+    FUNCTION Ff(x AS S64, y AS S64, z AS S64) AS S64
+        RETURN ((x AND y) OR ((4294967295 - x) AND z)) AND 4294967295
+    END FUNCTION
+    FUNCTION Gg(x AS S64, y AS S64, z AS S64) AS S64
+        RETURN ((x AND y) OR (x AND z) OR (y AND z)) AND 4294967295
+    END FUNCTION
+    FUNCTION Hh(x AS S64, y AS S64, z AS S64) AS S64
+        RETURN (x XOR y XOR z) AND 4294967295
+    END FUNCTION
+
+    FUNCTION Hx(v AS S64) AS STRING
+        LET h AS STRING = "0123456789abcdef"
+        LET s AS STRING = ""
+        FOR b = 0 TO 3
+            LET bt AS S64 = (v / (2 ^ (b * 8))) MOD 256
+            s = s | MID$(h, bt / 16 + 1, 1) | MID$(h, bt MOD 16 + 1, 1)
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Hash(s AS STRING)
+        FOR i = 1 TO 64
+            msg[i] = 0
+        END FOR
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            msg[i] = ASC(MID$(s, i, 1))
+        END FOR
+        msg[n + 1] = 128
+        LET bits AS S64 = n * 8
+        msg[57] = bits MOD 256
+        msg[58] = (bits / 256) MOD 256
+        msg[59] = (bits / 65536) MOD 256
+        msg[60] = (bits / 16777216) MOD 256
+        FOR i = 0 TO 15
+            m[i] = msg[i * 4 + 1] + msg[i * 4 + 2] * 256 + msg[i * 4 + 3] * 65536 + msg[i * 4 + 4] * 16777216
+        END FOR
+        LET a AS S64 = 1732584193
+        LET b AS S64 = 4023233417
+        LET c AS S64 = 2562383102
+        LET d AS S64 = 271733878
+        LET s1 AS S64 = 0
+        -- round 1
+        FOR k = 0 TO 15
+            LET sel AS S64 = k MOD 4
+            LET r AS S64 = 3 + 4 * sel
+            IF sel = 3 THEN r = 19 END IF
+            IF sel = 0 THEN a = Rlx((a + Ff(b, c, d) + m[k]) AND 4294967295, r) END IF
+            IF sel = 1 THEN d = Rlx((d + Ff(a, b, c) + m[k]) AND 4294967295, r) END IF
+            IF sel = 2 THEN c = Rlx((c + Ff(d, a, b) + m[k]) AND 4294967295, r) END IF
+            IF sel = 3 THEN b = Rlx((b + Ff(c, d, a) + m[k]) AND 4294967295, r) END IF
+        END FOR
+        -- round 2: perm 0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15
+        FOR k = 0 TO 15
+            LET sel AS S64 = k MOD 4
+            LET r AS S64 = 3 + 2 * sel
+            IF sel = 2 THEN r = 9 END IF
+            IF sel = 3 THEN r = 13 END IF
+            LET kp AS S64 = (k MOD 4) * 4 + k / 4
+            LET t2 AS S64 = 1518500249
+            IF sel = 0 THEN a = Rlx((a + Gg(b, c, d) + m[kp] + t2) AND 4294967295, r) END IF
+            IF sel = 1 THEN d = Rlx((d + Gg(a, b, c) + m[kp] + t2) AND 4294967295, r) END IF
+            IF sel = 2 THEN c = Rlx((c + Gg(d, a, b) + m[kp] + t2) AND 4294967295, r) END IF
+            IF sel = 3 THEN b = Rlx((b + Gg(c, d, a) + m[kp] + t2) AND 4294967295, r) END IF
+        END FOR
+        -- round 3: perm 0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15
+        FOR k = 0 TO 15
+            LET sel AS S64 = k MOD 4
+            LET r AS S64 = 3 + 6 * sel
+            IF sel = 2 THEN r = 11 END IF
+            IF sel = 3 THEN r = 15 END IF
+            LET kp AS S64 = (k AND 1) * 8 + ((k AND 2) / 2) * 4 + ((k AND 4) / 4) * 2 + (k AND 8) / 8
+            LET t3 AS S64 = 1859775393
+            IF sel = 0 THEN a = Rlx((a + Hh(b, c, d) + m[kp] + t3) AND 4294967295, r) END IF
+            IF sel = 1 THEN d = Rlx((d + Hh(a, b, c) + m[kp] + t3) AND 4294967295, r) END IF
+            IF sel = 2 THEN c = Rlx((c + Hh(d, a, b) + m[kp] + t3) AND 4294967295, r) END IF
+            IF sel = 3 THEN b = Rlx((b + Hh(c, d, a) + m[kp] + t3) AND 4294967295, r) END IF
+        END FOR
+        a = (a + 1732584193) AND 4294967295
+        b = (b + 4023233417) AND 4294967295
+        c = (c + 2562383102) AND 4294967295
+        d = (d + 271733878) AND 4294967295
+        PRINT "md4(" | s | ")=" | Hx(a) | Hx(b) | Hx(c) | Hx(d)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Hash("")
+        Hash("abc")
+        Hash("message digest")
+    END PROCEDURE
+END MODULE
+
+IMPORT M4
+BEGIN
+    M4.Run()
+END

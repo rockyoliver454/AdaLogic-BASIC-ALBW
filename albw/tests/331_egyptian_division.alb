@@ -1,0 +1,43 @@
+-- 331 | Egyptian division: quotient and remainder by doubling the divisor.
+DECLARE MODULE Egypt
+    PROCEDURE Divide(dvd AS S64, dvs AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Egypt
+    STRICT pows[64] AS S64
+    STRICT muls[64] AS S64
+
+    PROCEDURE Divide(dvd AS S64, dvs AS S64)
+        LET cnt AS S32 = 0
+        LET p AS S64 = 1
+        LET m AS S64 = dvs
+        WHILE m <= dvd
+            pows[cnt] = p
+            muls[cnt] = m
+            cnt = cnt + 1
+            p = p * 2
+            m = m * 2
+        END WHILE
+        LET q AS S64 = 0
+        LET r AS S64 = dvd
+        FOR i = cnt - 1 TO 0 STEP -1
+            IF muls[i] <= r THEN
+                r = r - muls[i]
+                q = q + pows[i]
+            END IF
+        END FOR
+        PRINT dvd | "/" | dvs | " = " | q | " rem " | r
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Divide(580, 34)
+        Divide(100, 7)
+        Divide(252, 15)
+    END PROCEDURE
+END MODULE
+
+IMPORT Egypt
+BEGIN
+    Egypt.Run()
+END

@@ -1,0 +1,15 @@
+VERSION 1.0
+
+BEGIN
+    LET lat AS F64 = 51.5
+    LET lr AS F64 = lat * 0.017453292519943295
+    LET sl AS F64 = SIN(lr)
+    PRINT "latitude=" | lat
+    LET h AS S64 = 0 - 6
+    WHILE h <= 6
+        LET ha AS F64 = h * 15.0 * 0.017453292519943295
+        LET an AS F64 = ATAN(sl * TAN(ha)) * 57.29577951308232
+        PRINT "hour " | (h + 12) | " angle=" | an
+        h = h + 1
+    END WHILE
+END

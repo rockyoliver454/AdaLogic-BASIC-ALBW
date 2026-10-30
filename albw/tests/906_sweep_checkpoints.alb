@@ -1,0 +1,14 @@
+-- Named arena checkpoints: CLAIM marks the watermark, SWEEP rewinds to
+-- it.  Strings allocated before the mark survive; ones after are
+-- reclaimed.  The loop below allocates ~320 KB total — it would fault
+-- (arena exhausted, exit 101) without the per-iteration SWEEP.
+BEGIN
+    LET keep AS STRING = "permanent" | " string"
+    CLAIM m
+    FOR i = 1 TO 5000 THEN
+        LET tmp AS STRING = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        SWEEP m
+    END FOR
+    PRINT keep
+    PRINT "reclaimed-ok"
+END

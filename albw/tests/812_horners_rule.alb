@@ -1,0 +1,9 @@
+BEGIN
+    LET x = 3
+    LET result = 0
+    result = result * x + 2
+    result = result * x + 1
+    result = result * x + 4
+    result = result * x + 3
+    PRINT$ result
+END

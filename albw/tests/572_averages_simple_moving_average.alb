@@ -1,0 +1,34 @@
+-- 572 | Averages/Simple moving average: SMA(3) and SMA(5) over
+-- 1..10.
+DECLARE MODULE SMA
+    PROCEDURE Show(p AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SMA
+    STRICT a[10] AS F64
+
+    PROCEDURE Show(p AS S64)
+        LET s AS STRING = "SMA(" | p | "):"
+        LET win AS F64 = 0.0
+        FOR i = 1 TO 10
+            win = win + a[i]
+            IF i > p THEN win = win - a[i - p] END IF
+            IF i >= p THEN s = s | " " | (win / p) END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 1 TO 10
+            a[i] = i
+        END FOR
+        Show(3)
+        Show(5)
+    END PROCEDURE
+END MODULE
+
+IMPORT SMA
+BEGIN
+    SMA.Run()
+END

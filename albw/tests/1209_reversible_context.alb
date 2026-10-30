@@ -1,0 +1,2 @@
+LET a AS S64 = 5
+REVADD a, 3

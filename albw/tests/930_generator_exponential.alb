@@ -1,0 +1,42 @@
+-- 930 | Generator/Exponential: exponential-distribution
+-- samples via inverse CDF -ln(1-u)/lambda. Seeded; print a
+-- few samples and the sample mean (should approach 1/lambda).
+DECLARE MODULE Ge
+    FUNCTION Nxt() AS S64
+    FUNCTION U01() AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ge
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    FUNCTION U01() AS F64
+        RETURN (Nxt() + 0.5) / 32768.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 202607
+        LET lam AS F64 = 0.5
+        LET s AS F64 = 0.0
+        FOR i = 1 TO 5
+            LET u AS F64 = U01()
+            LET x AS F64 = (0.0 - LN(1.0 - u)) / lam
+            s = s + x
+            PRINT "sample " | i | ": " | x
+        END FOR
+        FOR i = 1 TO 9995
+            s = s + (0.0 - LN(1.0 - U01())) / lam
+        END FOR
+        PRINT "mean=" | s / 10000.0
+    END PROCEDURE
+END MODULE
+
+IMPORT Ge
+BEGIN
+    Ge.Run()
+END

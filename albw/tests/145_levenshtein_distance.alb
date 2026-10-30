@@ -1,0 +1,52 @@
+-- Rosetta: Levenshtein distance
+-- Classic edit distance via 1-D DP rolling rows; exercises MID$ + STRICT arrays.
+DECLARE MODULE ST
+    FUNCTION Lev(a AS STRING, b AS STRING) AS S32
+END MODULE
+
+MODULE ST
+    FUNCTION Lev(a AS STRING, b AS STRING) AS S32
+        LET la = LEN(a)
+        LET lb = LEN(b)
+        STRICT prev[64] AS S32
+        STRICT cur[64] AS S32
+        LET j = 0
+        WHILE j <= lb
+            prev[j] = j
+            j = j + 1
+        END WHILE
+        LET i = 1
+        WHILE i <= la
+            cur[0] = i
+            j = 1
+            WHILE j <= lb
+                LET cost = 0
+                IF MID$(a, i, 1) <> MID$(b, j, 1) THEN
+                    cost = 1
+                END IF
+                LET best = prev[j] + 1
+                IF cur[j - 1] + 1 < best THEN
+                    best = cur[j - 1] + 1
+                END IF
+                IF prev[j - 1] + cost < best THEN
+                    best = prev[j - 1] + cost
+                END IF
+                cur[j] = best
+                j = j + 1
+            END WHILE
+            j = 0
+            WHILE j <= lb
+                prev[j] = cur[j]
+                j = j + 1
+            END WHILE
+            i = i + 1
+        END WHILE
+        RETURN prev[lb]
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT ST.Lev("kitten", "sitting")
+    PRINT ST.Lev("saturday", "sunday")
+    PRINT ST.Lev("abc", "abc")
+END

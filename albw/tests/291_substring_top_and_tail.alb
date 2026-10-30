@@ -1,0 +1,10 @@
+-- 291 | Substring/Top and tail: drop first char, last char, and both.
+BEGIN
+    LET s AS STRING = "upkickers"
+    LET top AS STRING = MID$(s, 2, LEN(s) - 1)
+    LET tail AS STRING = MID$(s, 1, LEN(s) - 1)
+    LET both AS STRING = MID$(s, 2, LEN(s) - 2)
+    PRINT top
+    PRINT tail
+    PRINT both
+END

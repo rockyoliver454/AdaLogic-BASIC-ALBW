@@ -1,0 +1,63 @@
+-- ANDALSO/ORELSE: Ada-style short-circuit logical ops.
+-- Plain AND/OR stay non-short-circuit bitwise; ANDALSO/ORELSE skip the
+-- RHS when the LHS decides the result — the bounds-guard form.
+
+STRICT a[4] AS S32
+a[0] = 10
+a[1] = 20
+a[2] = 30
+a[3] = 40
+
+LET j AS S32 = -1
+
+-- Without the short-circuit, a[-1] would fault; ANDALSO skips it.
+IF j >= 0 ANDALSO a[j] > 0 THEN
+    PRINT "bad"
+ELSE
+    PRINT "guard-skip"
+END IF
+
+-- LHS true: RHS evaluated.
+LET k AS S32 = 2
+IF k >= 0 ANDALSO a[k] = 30 THEN
+    PRINT "hit 30"
+ELSE
+    PRINT "miss"
+END IF
+
+-- ORELSE: LHS true skips the (faulting) RHS.
+LET n AS S32 = 5
+IF n > 3 ORELSE a[99] > 0 THEN
+    PRINT "orelse-skip"
+ELSE
+    PRINT "bad"
+END IF
+
+-- ORELSE falls through to RHS when LHS is false.
+IF n > 9 ORELSE a[0] = 10 THEN
+    PRINT "orelse-rhs"
+END IF
+
+-- Chained ANDALSO: count RHS evaluations through a global.
+STRICT cnt[1] AS S32
+cnt[0] = 0
+FUNCTION Bump() AS S32
+    cnt[0] = cnt[0] + 1
+    RETURN 1
+END FUNCTION
+
+IF Bump() > 0 ANDALSO Bump() > 0 THEN
+    PRINT "two bumps"
+END IF
+PRINT cnt[0]
+
+-- LHS false: RHS never runs — Bump not called.
+IF 0 > 1 ANDALSO Bump() > 0 THEN
+    PRINT "bad"
+END IF
+PRINT cnt[0]
+
+-- ANDALSO with integer operands (truthiness, not bitwise).
+IF 4 ANDALSO 2 THEN
+    PRINT "truthy"
+END IF

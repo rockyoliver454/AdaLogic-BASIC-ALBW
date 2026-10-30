@@ -1,0 +1,95 @@
+VERSION 1.0
+STRICT x1[64] AS S64
+STRICT y1[64] AS S64
+STRICT x2[64] AS S64
+STRICT y2[64] AS S64
+
+LET frames AS S64 = 0
+LET nseg AS S64 = 0
+LET tx AS S64 = 5
+LET ty AS S64 = 58
+LET th AS S64 = 0
+LET fpx AS S64 = 0
+
+PROCEDURE Fwd()
+    LET nx AS S64 = tx
+    LET ny AS S64 = ty
+    IF th = 0 THEN nx = tx + 6 END IF
+    IF th = 1 THEN ny = ty + 6 END IF
+    IF th = 2 THEN nx = tx - 6 END IF
+    IF th = 3 THEN ny = ty - 6 END IF
+    x1[nseg] = tx y1[nseg] = ty x2[nseg] = nx y2[nseg] = ny
+    tx = nx
+    ty = ny
+    nseg = nseg + 1
+END PROCEDURE
+
+PROCEDURE Turn(d AS S64)
+    th = (th + d + 4) MOD 4
+END PROCEDURE
+
+PROCEDURE HB(level AS S64, d AS S64)
+    IF level > 0 THEN
+        CALL Turn(0 - d)
+        CALL HA(level - 1, 0 - d)
+        CALL Fwd()
+        CALL Turn(d)
+        CALL HB(level - 1, d)
+        CALL Fwd()
+        CALL HB(level - 1, d)
+        CALL Turn(d)
+        CALL Fwd()
+        CALL HA(level - 1, 0 - d)
+        CALL Turn(0 - d)
+    END IF
+END PROCEDURE
+
+PROCEDURE HA(level AS S64, d AS S64)
+    IF level > 0 THEN
+        CALL Turn(d)
+        CALL HB(level - 1, 0 - d)
+        CALL Fwd()
+        CALL Turn(0 - d)
+        CALL HA(level - 1, d)
+        CALL Fwd()
+        CALL HA(level - 1, d)
+        CALL Turn(0 - d)
+        CALL Fwd()
+        CALL HB(level - 1, 0 - d)
+        CALL Turn(d)
+    END IF
+END PROCEDURE
+
+BEGIN
+    CALL HA(3, 1)
+
+    CREATE_WINDOW "Hilbert curve", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET i AS S64 = 0
+        CLEAR $000000
+        COLOR $FFFFFF
+        i = 0
+        WHILE i < nseg
+            DRAW LINE x1[i], y1[i], x2[i], y2[i]
+            i = i + 1
+        END WHILE
+        fpx = READ_PIXEL(x1[0], y1[0])
+    END
+
+    LISTEN
+
+    PRINT "order=3"
+    PRINT "segments=" | nseg
+    PRINT "start=(5,58)"
+    PRINT "end=(" | tx | "," | ty | ")"
+    PRINT "start_px=" | fpx
+END

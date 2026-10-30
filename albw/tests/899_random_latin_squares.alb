@@ -1,0 +1,84 @@
+-- 899 | Random Latin squares: generate a random n x n Latin
+-- square (n=5) by shuffling symbols/rows/columns of the
+-- cyclic square, then verify the Latin property.
+DECLARE MODULE Ls
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ls
+    STRICT sd[1] AS S64
+    STRICT sq[26] AS S64
+    STRICT rp[6] AS S64
+    STRICT cp[6] AS S64
+    STRICT sp[6] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 4242
+        -- permutations of rows, cols, symbols (identity first)
+        FOR i = 1 TO 5
+            rp[i] = i
+            cp[i] = i
+            sp[i] = i
+        END FOR
+        -- shuffle each (Fisher-Yates forward)
+        FOR k = 2 TO 5
+            LET j AS S64 = Nxt() MOD k + 1
+            LET t AS S64 = rp[k]
+            rp[k] = rp[j]
+            rp[j] = t
+            j = Nxt() MOD k + 1
+            t = cp[k]
+            cp[k] = cp[j]
+            cp[j] = t
+            j = Nxt() MOD k + 1
+            t = sp[k]
+            sp[k] = sp[j]
+            sp[j] = t
+        END FOR
+        -- sq[r][c] = sp[(rp[r]+cp[c]) mod 5 + 1]
+        FOR r = 1 TO 5
+            FOR c = 1 TO 5
+                sq[r * 5 + c - 5] = sp[(rp[r] + cp[c] - 2) MOD 5 + 1]
+            END FOR
+        END FOR
+        FOR r = 1 TO 5
+            LET s AS STRING = ""
+            FOR c = 1 TO 5
+                s = s | sq[r * 5 + c - 5] | " "
+            END FOR
+            PRINT s
+        END FOR
+        -- verify Latin: every row and column has each symbol
+        LET ok AS S32 = 1
+        FOR r = 1 TO 5
+            FOR v = 1 TO 5
+                LET cnt AS S64 = 0
+                FOR c = 1 TO 5
+                    IF sq[r * 5 + c - 5] = v THEN cnt = cnt + 1 END IF
+                END FOR
+                IF cnt <> 1 THEN ok = 0 END IF
+            END FOR
+        END FOR
+        FOR c = 1 TO 5
+            FOR v = 1 TO 5
+                LET cnt AS S64 = 0
+                FOR r = 1 TO 5
+                    IF sq[r * 5 + c - 5] = v THEN cnt = cnt + 1 END IF
+                END FOR
+                IF cnt <> 1 THEN ok = 0 END IF
+            END FOR
+        END FOR
+        IF ok = 1 THEN PRINT "latin property verified" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Ls
+BEGIN
+    Ls.Run()
+END

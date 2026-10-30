@@ -1,0 +1,50 @@
+-- 780 | Penholodigital squares: squares using each digit
+-- 1..n exactly once per base representation. Check the
+-- canonical base-10 set near 9-10 digits and report.
+DECLARE MODULE Ph
+    FUNCTION Penh(v AS S64, nd AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ph
+    STRICT dd[10] AS S64
+
+    FUNCTION Penh(v AS S64, nd AS S64) AS S32
+        -- digits 1..nd each exactly once, no zero
+        FOR i = 1 TO 9
+            dd[i] = 0
+        END FOR
+        LET t AS S64 = v
+        LET cnt AS S64 = 0
+        WHILE t > 0
+            LET d AS S64 = t MOD 10
+            IF d = 0 THEN RETURN 0 END IF
+            IF d > nd THEN RETURN 0 END IF
+            dd[d] = dd[d] + 1
+            IF dd[d] > 1 THEN RETURN 0 END IF
+            cnt = cnt + 1
+            t = t / 10
+        END WHILE
+        IF cnt = nd THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- penholodigital 1..9: smallest root is 11826
+        LET found AS S64 = 0
+        LET i AS S64 = 11000
+        WHILE i <= 31427
+            IF Penh(i * i, 9) = 1 THEN
+                PRINT i | "^2=" | i * i
+                found = found + 1
+            END IF
+            i = i + 1
+        END WHILE
+        PRINT "shown=" | found
+    END PROCEDURE
+END MODULE
+
+IMPORT Ph
+BEGIN
+    Ph.Run()
+END

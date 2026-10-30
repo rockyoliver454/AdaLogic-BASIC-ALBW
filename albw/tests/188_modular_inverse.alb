@@ -1,0 +1,36 @@
+-- 188 | Modular inverse: extended Euclid, a^-1 mod m.
+DECLARE MODULE E
+    FUNCTION Inv(a AS S32, m AS S32) AS S32
+END DECLARE MODULE
+
+MODULE E
+    FUNCTION Inv(a AS S32, m AS S32) AS S32
+        LET t AS S32 = 0;
+        LET nt AS S32 = 1;
+        LET r AS S32 = m;
+        LET nr AS S32 = a MOD m;
+        WHILE nr <> 0
+            LET q AS S32 = r / nr;
+            LET tt AS S32 = t - q * nt;
+            t = nt;
+            nt = tt;
+            LET rr AS S32 = r - q * nr;
+            r = nr;
+            nr = rr;
+        END WHILE
+        IF r > 1 THEN
+            RETURN 0
+        END IF
+        IF t < 0 THEN
+            t = t + m;
+        END IF
+        RETURN t
+    END FUNCTION
+END MODULE
+
+IMPORT E
+BEGIN
+    PRINT E.Inv(3, 11);
+    PRINT E.Inv(42, 2017);
+    PRINT E.Inv(6, 9);
+END

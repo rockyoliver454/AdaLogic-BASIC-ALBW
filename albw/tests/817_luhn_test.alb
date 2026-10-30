@@ -1,0 +1,46 @@
+-- Rosetta: Luhn test of credit card numbers
+-- Digit validation via VAL on single-char MID$ slices.
+BEGIN
+    LET card AS STRING = "49927398716"
+    LET sum AS S32 = 0
+    LET alt AS S32 = 0
+    LET i AS S32 = LEN(card)
+    WHILE i >= 1
+        LET d AS S32 = VAL(MID$(card, i, 1))
+        IF alt = 1 THEN
+            d = d * 2
+            IF d > 9 THEN
+                d = d - 9
+            END IF
+        END IF
+        sum = sum + d
+        alt = 1 - alt
+        i = i - 1
+    END WHILE
+    IF sum MOD 10 = 0 THEN
+        PRINT "valid"
+    ELSE
+        PRINT "invalid"
+    END IF
+    card = "49927398717"
+    sum = 0
+    alt = 0
+    i = LEN(card)
+    WHILE i >= 1
+        LET d AS S32 = VAL(MID$(card, i, 1))
+        IF alt = 1 THEN
+            d = d * 2
+            IF d > 9 THEN
+                d = d - 9
+            END IF
+        END IF
+        sum = sum + d
+        alt = 1 - alt
+        i = i - 1
+    END WHILE
+    IF sum MOD 10 = 0 THEN
+        PRINT "valid"
+    ELSE
+        PRINT "invalid"
+    END IF
+END

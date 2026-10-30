@@ -1,0 +1,74 @@
+-- 766 | Erdos-Selfridge categorization of primes:
+-- cat(p) = 1 + max cat over prime factors of p+1, cat(2)=1.
+DECLARE MODULE Es
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Es
+    STRICT sv[201] AS S32
+    STRICT cat[201] AS S64
+    STRICT cc[9] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 200
+            sv[i] = 1
+        END FOR
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= 200
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m <= 200
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        cat[2] = 1
+        cat[3] = 1
+        FOR q = 5 TO 200
+            IF sv[q] = 1 THEN
+                LET v AS S64 = q + 1
+                LET mc AS S64 = 1
+                LET d AS S64 = 2
+                WHILE d * d <= v
+                    WHILE v MOD d = 0
+                        v = v / d
+                        IF cat[d] > mc THEN mc = cat[d] END IF
+                    END WHILE
+                    d = d + 1
+                END WHILE
+                IF v > 1 THEN
+                    IF cat[v] > mc THEN mc = cat[v] END IF
+                END IF
+                cat[q] = mc
+            END IF
+        END FOR
+        FOR i = 1 TO 8
+            cc[i] = 0
+        END FOR
+        FOR q = 2 TO 200
+            IF sv[q] = 1 THEN
+                cc[cat[q]] = cc[cat[q]] + 1
+            END IF
+        END FOR
+        FOR c = 1 TO 8
+            IF cc[c] > 0 THEN
+                PRINT "category " | c | ": " | cc[c] | " primes"
+            END IF
+        END FOR
+        PRINT "first cat-5 prime="
+        FOR q = 2 TO 200
+            IF sv[q] = 1 ANDALSO cat[q] = 5 THEN
+                PRINT q
+                q = 199
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Es
+BEGIN
+    Es.Run()
+END

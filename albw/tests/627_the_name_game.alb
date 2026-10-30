@@ -1,0 +1,25 @@
+-- 627 | The Name Game: generate the verse for a name.
+DECLARE MODULE Ng
+    PROCEDURE Verse(nm AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ng
+    PROCEDURE Verse(nm AS STRING)
+        LET t AS STRING = MID$(nm, 2, LEN(nm) - 1)
+        PRINT nm | ", " | nm | ", bo-b" | t
+        PRINT "Banana-fana fo-f" | t
+        PRINT "Fee-fi-fo-m" | t
+        PRINT nm | "!"
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Verse("Gary")
+        Verse("Earl")
+    END PROCEDURE
+END MODULE
+
+IMPORT Ng
+BEGIN
+    Ng.Run()
+END

@@ -1,0 +1,68 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET nwr AS S64 = 0
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 4096
+        LET x AS S64 = i MOD 64
+        LET y AS S64 = i / 64
+        img[i] = ((x * 4) MOD 256) * 65536 + ((y * 4) MOD 256) * 256 + (((x + y) * 2) MOD 256)
+        i = i + 1
+    END WHILE
+
+    LET h AS S64 = OPEN("1048.ppm", "w")
+    WRITE h, "P3 64 64 255"
+    i = 0
+    WHILE i < 4096
+        LET r AS S64 = img[i] / 65536
+        LET g AS S64 = (img[i] / 256) MOD 256
+        LET b AS S64 = img[i] MOD 256
+        WRITE h, r | " " | g | " " | b
+        i = i + 1
+    END WHILE
+    CLOSE h
+    nwr = FILELEN("1048.ppm")
+
+    CREATE_WINDOW "Write PPM", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(16, 16)
+    END
+
+    LISTEN
+
+    PRINT "format=P3 64x64"
+    PRINT "bytes=" | nwr
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "px(16,16)=" | fpx
+END

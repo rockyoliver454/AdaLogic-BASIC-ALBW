@@ -1,0 +1,39 @@
+-- 993 | Cantor set: 6 iterations, 81-char lines; each
+-- iteration blanks the middle third of every segment.
+DECLARE MODULE Cs
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cs
+    STRICT g[82] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 81
+            g[i] = 1
+        END FOR
+        FOR it = 0 TO 5
+            LET row AS STRING = ""
+            FOR i = 1 TO 81
+                IF g[i] = 1 THEN
+                    row = row | "#"
+                ELSE
+                    row = row | " "
+                END IF
+            END FOR
+            PRINT row
+            LET seg AS S64 = 81 / (3 ^ it)
+            LET s0 AS S64 = 1
+            WHILE s0 <= 81 ANDALSO seg > 0
+                FOR j = s0 + seg / 3 TO s0 + 2 * seg / 3 - 1
+                    g[j] = 0
+                END FOR
+                s0 = s0 + seg
+            END WHILE
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cs
+BEGIN
+    Cs.Run()
+END

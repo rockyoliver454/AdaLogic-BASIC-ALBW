@@ -1,0 +1,87 @@
+--  ueb_test.alb - UEB grade 2 smoke: contractions, caps, numbers,
+--  punctuation, lower-wordsign standalone rule, grade 1
+INCLUDE "ueb.albi"
+IMPORT Ueb
+
+PROCEDURE Show(tag AS STRING)
+BEGIN
+    PRINT tag | " =>  [" | Ueb.ToBrf() | "]  errs=" | Ueb.ErrCount()
+    IF Ueb.ErrCount() > 0 THEN
+        PRINT "  err0: " | Ueb.ErrText(0)
+    END IF
+END PROCEDURE
+
+BEGIN
+    --  classic example: "the children would rather go out together"
+    Ueb.Transcribe("the children would rather go out together")
+    Show("sentence")
+
+    --  contractions in action
+    Ueb.Transcribe("hello world")
+    Show("hello world")
+
+    Ueb.Transcribe("knowledge is power")
+    Show("knowledge")
+
+    Ueb.Transcribe("I can do it and you can too")
+    Show("letter words")
+
+    --  groupsigns inside words
+    Ueb.Transcribe("the quick brown fox jumps over the lazy dog")
+    Show("fox")
+
+    Ueb.Transcribe("information")
+    Show("information")
+
+    Ueb.Transcribe("understanding")
+    Show("understanding")
+
+    Ueb.Transcribe("something")
+    Show("something")
+
+    --  initial-letter contractions
+    Ueb.Transcribe("one day there was a character")
+    Show("initial")
+
+    --  final-letter groupsigns
+    Ueb.Transcribe("the sound of silence and darkness")
+    Show("final")
+
+    Ueb.Transcribe("around the corner")
+    Show("around")
+
+    --  lower wordsigns: standalone vs touching
+    Ueb.Transcribe("be happy")
+    Show("be-word")
+    Ueb.Transcribe("be, happy")
+    Show("be-touch")
+
+    --  capitalisation
+    Ueb.Transcribe("The Quick Brown Fox")
+    Show("titlecase")
+
+    Ueb.Transcribe("NASA and FBI")
+    Show("allcaps")
+
+    Ueb.Transcribe("McDonald went home")
+    Show("midcap")
+
+    --  numbers
+    Ueb.Transcribe("room 101 at 8:30")
+    Show("numbers")
+
+    Ueb.Transcribe("pages 5-7 cost $3.99")
+    Show("ranges")
+
+    --  punctuation
+    Ueb.Transcribe("isn't it? yes! (really)")
+    Show("punct")
+
+    --  grade 1 comparison
+    Ueb.TranscribeG1("the children would rather go out together")
+    Show("g1-sentence")
+
+    --  error path
+    Ueb.Transcribe("hello")
+    Show("clean")
+END

@@ -1,0 +1,10 @@
+upper hull vertices=7
+hull vertex (10,5)
+hull vertex (8,9)
+hull vertex (5,10)
+hull vertex (2,9)
+hull vertex (0,5)
+hull vertex (2,1)
+hull vertex (5,0)
+hull vertex (8,1)
+convex hull vertices=8

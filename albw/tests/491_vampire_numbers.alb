@@ -1,0 +1,74 @@
+-- 491 | Vampire numbers: first 25 (n = a*b where a,b have half the
+-- digits and together use exactly n's digits).
+DECLARE MODULE Vamp
+    FUNCTION IsVampire(n AS S64, nd AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vamp
+    STRICT dig[10] AS S64
+
+    FUNCTION IsVampire(n AS S64, nd AS S64) AS S32
+        IF nd MOD 2 = 1 THEN RETURN 0 END IF
+        LET lo AS S64 = 1
+        FOR i = 2 TO nd / 2
+            lo = lo * 10
+        END FOR
+        FOR a = lo TO n / lo
+            IF n MOD a = 0 THEN
+                LET b AS S64 = n / a
+                IF b >= a THEN
+                    IF a MOD 10 <> 0 ORELSE b MOD 10 <> 0 THEN
+                        FOR i2 = 0 TO 9
+                            dig[i2] = 0
+                        END FOR
+                        LET t AS S64 = n
+                        WHILE t > 0
+                            dig[t MOD 10] = dig[t MOD 10] + 1
+                            t = t / 10
+                        END WHILE
+                        t = a
+                        WHILE t > 0
+                            dig[t MOD 10] = dig[t MOD 10] - 1
+                            t = t / 10
+                        END WHILE
+                        t = b
+                        WHILE t > 0
+                            dig[t MOD 10] = dig[t MOD 10] - 1
+                            t = t / 10
+                        END WHILE
+                        LET ok AS S32 = 1
+                        FOR i3 = 0 TO 9
+                            IF dig[i3] <> 0 THEN ok = 0 END IF
+                        END FOR
+                        IF ok = 1 THEN RETURN 1 END IF
+                    END IF
+                END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 100
+        LET got AS S64 = 0
+        WHILE got < 25
+            LET nd AS S64 = 3
+            IF n >= 1000 THEN nd = 4 END IF
+            IF n >= 100000 THEN nd = 6 END IF
+            IF n >= 10000000 THEN nd = 8 END IF
+            IF IsVampire(n, nd) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Vamp
+BEGIN
+    Vamp.Run()
+END

@@ -1,0 +1,1 @@
+LAMBDA cannot capture routine-local 'x' (globals + own params only)

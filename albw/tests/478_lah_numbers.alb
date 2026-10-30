@@ -1,0 +1,40 @@
+-- 478 | Lah numbers: unsigned L(n,k) for n = 1..10 via
+-- L(n,k) = C(n-1,k-1) * n! / k!.
+DECLARE MODULE Lah
+    FUNCTION Fact(n AS S64) AS S64
+    FUNCTION Binom(n AS S64, k AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lah
+    FUNCTION Fact(n AS S64) AS S64
+        LET r AS S64 = 1
+        FOR i = 2 TO n
+            r = r * i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Binom(n AS S64, k AS S64) AS S64
+        LET r AS S64 = 1
+        FOR i = 1 TO k
+            r = r * (n - i + 1) / i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 10
+            LET s AS STRING = ""
+            FOR k = 1 TO n
+                s = s | Binom(n - 1, k - 1) * Fact(n) / Fact(k) | " "
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lah
+BEGIN
+    Lah.Run()
+END

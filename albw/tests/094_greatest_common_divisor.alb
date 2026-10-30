@@ -1,0 +1,10 @@
+BEGIN
+    LET a = 48
+    LET b = 18
+    WHILE b <> 0
+        LET tmp = b
+        b = a MOD b
+        a = tmp
+    END WHILE
+    PRINT$ a
+END

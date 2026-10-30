@@ -1,0 +1,7 @@
+-- 205 | Characters used for symbols: letters, digits after the first, and underscore.
+BEGIN
+    LET alphabet AS S32 = 1
+    LET value2 AS S32 = 2
+    LET under_score AS S32 = 4
+    PRINT alphabet + value2 + under_score
+END

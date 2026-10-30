@@ -1,0 +1,40 @@
+-- 308 | String comparison: byte-wise ordering of string pairs.
+DECLARE MODULE StrCmp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE StrCmp
+    FUNCTION Compare(a AS STRING, b AS STRING) AS S32
+        LET n AS S32 = LEN(a)
+        IF LEN(b) < n THEN n = LEN(b) END IF
+        FOR i = 1 TO n
+            LET ca AS S32 = ASC(MID$(a, i, 1))
+            LET cb AS S32 = ASC(MID$(b, i, 1))
+            IF ca < cb THEN RETURN -1 END IF
+            IF ca > cb THEN RETURN 1 END IF
+        END FOR
+        IF LEN(a) < LEN(b) THEN RETURN -1 END IF
+        IF LEN(a) > LEN(b) THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(a AS STRING, b AS STRING)
+        LET r AS S32 = Compare(a, b)
+        LET word AS STRING = "equal"
+        IF r < 0 THEN word = "less" END IF
+        IF r > 0 THEN word = "greater" END IF
+        PRINT a | " vs " | b | ": " | word
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show("apple", "apple")
+        Show("apple", "Apple")
+        Show("apple", "apples")
+        Show("apples", "apple")
+    END PROCEDURE
+END MODULE
+
+IMPORT StrCmp
+BEGIN
+    StrCmp.Run()
+END

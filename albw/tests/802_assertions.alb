@@ -1,0 +1,6 @@
+BEGIN
+    LET x = 10
+    ASSERT(x = 10)
+    ASSERT(x <> 99)
+    PRINT$ "assert ok"
+END

@@ -1,0 +1,24 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("trunc.dat", "w")
+    LET i AS S64 = 0
+    WHILE i < 10
+        WRITE h, "0123456789"
+        i = i + 1
+    END WHILE
+    CLOSE h
+    PRINT "before=" | FILELEN("trunc.dat")
+
+    LET r AS S64 = OPEN("trunc.dat", "r")
+    LET keep AS STRING = READ(r, 30)
+    CLOSE r
+
+    LET w AS S64 = OPEN("trunc.dat", "w")
+    WRITE w, keep
+    CLOSE w
+    PRINT "after=" | FILELEN("trunc.dat")
+    LET r2 AS S64 = OPEN("trunc.dat", "r")
+    PRINT "tail=" | READ(r2, FILELEN("trunc.dat"))
+    CLOSE r2
+END

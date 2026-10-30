@@ -1,0 +1,11 @@
+VERSION 1.0
+
+BEGIN
+    LET rc AS S64 = SHELL("mkdir emptydir 2>nul & dir /b emptydir > elist.txt")
+    LET n AS S64 = FILELEN("elist.txt")
+    PRINT "empty=" | (n = 0)
+    PRINT "listing bytes=" | n
+    LET rc2 AS S64 = SHELL("echo f > emptydir\f.txt & dir /b emptydir > elist.txt")
+    PRINT "after add empty=" | (FILELEN("elist.txt") = 0)
+    LET k AS S64 = SHELL("rmdir /s /q emptydir & del elist.txt")
+END

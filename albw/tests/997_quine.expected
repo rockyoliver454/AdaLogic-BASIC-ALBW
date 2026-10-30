@@ -1,0 +1,34 @@
+-- 997 | Quine: a program that prints its own source.
+DECLARE MODULE Qn
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Qn
+    PROCEDURE Run()
+        LET s AS STRING = "-- 997 | Quine: a program that prints its own source.~DECLARE MODULE Qn~    PROCEDURE Run()~END DECLARE MODULE~~MODULE Qn~    PROCEDURE Run()~        LET s AS STRING = @~        LET i AS S64 = 1~        LET n AS S64 = LEN(s)~        WHILE i <= n~            LET j AS S64 = i~            WHILE j <= n ANDALSO ASC(MID$(s, j, 1)) <> 126~                j = j + 1~            END WHILE~            LET ln AS STRING = MID$(s, i, j - i)~            LET q AS S64 = 0~            FOR k = 1 TO LEN(ln)~                IF ASC(MID$(ln, k, 1)) = 64 THEN q = k END IF~            END FOR~            IF q > 0 THEN~                PRINT MID$(ln, 1, q - 1) | CHR(34) | s | CHR(34)~            ELSE~                PRINT ln~            END IF~            i = j + 1~        END WHILE~    END PROCEDURE~END MODULE~~IMPORT Qn~BEGIN~    Qn.Run()~END"
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(s)
+        WHILE i <= n
+            LET j AS S64 = i
+            WHILE j <= n ANDALSO ASC(MID$(s, j, 1)) <> 126
+                j = j + 1
+            END WHILE
+            LET ln AS STRING = MID$(s, i, j - i)
+            LET q AS S64 = 0
+            FOR k = 1 TO LEN(ln)
+                IF ASC(MID$(ln, k, 1)) = 64 THEN q = k END IF
+            END FOR
+            IF q > 0 THEN
+                PRINT MID$(ln, 1, q - 1) | CHR(34) | s | CHR(34)
+            ELSE
+                PRINT ln
+            END IF
+            i = j + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Qn
+BEGIN
+    Qn.Run()
+END

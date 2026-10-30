@@ -1,0 +1,10 @@
+-- ALB_LIB search path: INCLUDE "mathkit" (no extension) resolves to
+-- lib/mathkit.albi under the runner's ALB_LIB.  Tests .albi interface
+-- files as the stdlib delivery mechanism.
+INCLUDE "mathkit"
+
+BEGIN
+    PRINT LibTriple(7)
+    PRINT LibSquare(9)
+    PRINT LibTriple(LibSquare(2))
+END

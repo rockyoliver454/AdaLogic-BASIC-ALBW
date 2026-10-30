@@ -1,0 +1,35 @@
+-- 880 | Guess the number/With feedback (player): the human
+-- holds a secret and answers "low/high" to the computer's
+-- binary-search guesses.
+DECLARE MODULE Gp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gp
+    PROCEDURE Run()
+        LET sec AS S64 = 73
+        LET lo AS S64 = 1
+        LET hi AS S64 = 100
+        LET tries AS S64 = 0
+        WHILE lo <= hi
+            LET g AS S64 = (lo + hi) / 2
+            tries = tries + 1
+            IF g = sec THEN
+                PRINT "computer guessed " | g | " in " | tries | " tries"
+                RETURN
+            END IF
+            IF g < sec THEN
+                PRINT "guess " | g | " -> too low"
+                lo = g + 1
+            ELSE
+                PRINT "guess " | g | " -> too high"
+                hi = g - 1
+            END IF
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Gp
+BEGIN
+    Gp.Run()
+END

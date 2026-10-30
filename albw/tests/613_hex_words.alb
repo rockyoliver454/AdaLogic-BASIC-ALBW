@@ -1,0 +1,50 @@
+-- 613 | Hex words: words made only of letters a-f, and their
+-- decimal value.
+DECLARE MODULE Hxw
+    FUNCTION IsHex(w AS STRING) AS S32
+    FUNCTION HexVal(w AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hxw
+    STRICT w[10] AS STRING
+
+    FUNCTION IsHex(w AS STRING) AS S32
+        FOR i = 1 TO LEN(w)
+            LET c AS S64 = ASC(MID$(w, i, 1))
+            IF c < 97 ORELSE c > 102 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION HexVal(w AS STRING) AS S64
+        LET v AS S64 = 0
+        FOR i = 1 TO LEN(w)
+            v = v * 16 + ASC(MID$(w, i, 1)) - 87
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "deaf"
+        w[2] = "zebra"
+        w[3] = "feed"
+        w[4] = "cab"
+        w[5] = "house"
+        w[6] = "face"
+        w[7] = "bed"
+        w[8] = "decade"
+        w[9] = "facade"
+        w[10] = "cat"
+        FOR i = 1 TO 10
+            IF IsHex(w[i]) = 1 THEN
+                PRINT w[i] | " = " | HexVal(w[i])
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Hxw
+BEGIN
+    Hxw.Run()
+END

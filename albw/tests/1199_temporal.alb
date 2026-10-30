@@ -1,0 +1,12 @@
+-- TEMPORAL state: history ring, @now/@past selectors, ADVANCE records
+-- current then steps head (FASM ordering).
+TEMPORAL LET X AS S64 HISTORY 4 = 0
+X = 10
+ADVANCE
+X = 20
+ADVANCE
+X = 30
+PRINT X@now
+PRINT X@past
+ADVANCE 2
+PRINT X@past

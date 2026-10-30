@@ -1,0 +1,19 @@
+VERSION 1.0
+
+
+BEGIN
+    LET t0 AS F64 = TIMER()
+    LET iters AS S64 = 0
+    LET el AS F64 = 0.0
+    WHILE el < 0.2
+        iters = iters + 1
+        LET t1 AS F64 = TIMER()
+        el = t1 - t0
+    END WHILE
+    PRINT "iterations in 0.2s=" | (iters > 0)
+    LET rate AS S64 = 0
+    IF el > 0.0 THEN
+        rate = 1
+    END IF
+    PRINT "rate measured=" | rate
+END

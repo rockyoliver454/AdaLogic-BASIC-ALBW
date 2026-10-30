@@ -1,0 +1,62 @@
+-- 578 | Ray-casting algorithm: point-in-polygon test on the RC
+-- square-with-hole example simplified to an L-shaped polygon;
+-- tests inside/outside/border points.
+DECLARE MODULE Ray
+    FUNCTION Inside(x AS F64, y AS F64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ray
+    STRICT vx[8] AS F64
+    STRICT vy[8] AS F64
+
+    FUNCTION Inside(x AS F64, y AS F64) AS S32
+        LET c AS S32 = 0
+        FOR i = 1 TO 8
+            LET j AS S64 = i MOD 8 + 1
+            LET xi AS F64 = vx[i]
+            LET yi AS F64 = vy[i]
+            LET xj AS F64 = vx[j]
+            LET yj AS F64 = vy[j]
+            IF (yi > y) <> (yj > y) THEN
+                LET xt AS F64 = (xj - xi) * (y - yi) / (yj - yi) + xi
+                IF x < xt THEN
+                    IF c = 0 THEN c = 1 ELSE c = 0 END IF
+                END IF
+            END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- concave 8-vertex polygon
+        vx[1] = 0
+        vy[1] = 0
+        vx[2] = 10
+        vy[2] = 0
+        vx[3] = 10
+        vy[3] = 10
+        vx[4] = 6
+        vy[4] = 10
+        vx[5] = 6
+        vy[5] = 4
+        vx[6] = 3
+        vy[6] = 4
+        vx[7] = 3
+        vy[7] = 10
+        vx[8] = 0
+        vy[8] = 10
+        PRINT "in(5,5) = " | Inside(5.0, 5.0)
+        PRINT "in(5,8) = " | Inside(5.0, 8.0)
+        PRINT "in(-10,5) = " | Inside(-10.0, 5.0)
+        PRINT "in(0,5) = " | Inside(0.0, 5.0)
+        PRINT "in(10,5) = " | Inside(10.0, 5.0)
+        PRINT "in(8,10) = " | Inside(8.0, 10.0)
+        PRINT "in(8.5,5.8) = " | Inside(8.5, 5.8)
+    END PROCEDURE
+END MODULE
+
+IMPORT Ray
+BEGIN
+    Ray.Run()
+END

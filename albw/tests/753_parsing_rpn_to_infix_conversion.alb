@@ -1,0 +1,50 @@
+-- 753 | Parsing/RPN to infix conversion: postfix to fully
+-- parenthesized infix.
+DECLARE MODULE Ri
+    FUNCTION ToInfix(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ri
+    STRICT stk[20] AS STRING
+
+    FUNCTION ToInfix(s AS STRING) AS STRING
+        LET sp AS S64 = 0
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(s)
+        WHILE i <= n
+            LET c AS STRING = MID$(s, i, 1)
+            IF ASC(c) >= 48 ANDALSO ASC(c) <= 57 THEN
+                LET v AS STRING = ""
+                WHILE i <= n ANDALSO ASC(MID$(s, i, 1)) >= 48 ANDALSO ASC(MID$(s, i, 1)) <= 57
+                    v = v | MID$(s, i, 1)
+                    i = i + 1
+                END WHILE
+                sp = sp + 1
+                stk[sp] = v
+            ELSE
+            IF c = "+" ORELSE c = "-" ORELSE c = "*" ORELSE c = "/" THEN
+                LET b AS STRING = stk[sp]
+                sp = sp - 1
+                LET a AS STRING = stk[sp]
+                sp = sp - 1
+                sp = sp + 1
+                stk[sp] = "(" | a | " " | c | " " | b | ")"
+            END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN stk[sp]
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT ToInfix("3 4 2 * +")
+        PRINT ToInfix("1 2 + 3 *")
+        PRINT ToInfix("5 6 7 * + 8 -")
+    END PROCEDURE
+END MODULE
+
+IMPORT Ri
+BEGIN
+    Ri.Run()
+END

@@ -1,0 +1,35 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("pool.txt", "w")
+    WRITE h, "apple" | CHR(10) | "banana" | CHR(10) | "cherry" | CHR(10) | "date" | CHR(10)
+    CLOSE h
+
+    LET r AS S64 = OPEN("pool.txt", "r")
+    LET whole AS STRING = READ(r, FILELEN("pool.txt"))
+    CLOSE r
+    whole = whole | CHR(10)
+
+    LET n AS S64 = 0
+    LET i AS S64 = 1
+    WHILE i <= LEN(whole)
+        IF ASC(MID$(whole, i, 1)) = 10 THEN n = n + 1 END IF
+        i = i + 1
+    END WHILE
+    PRINT "lines=" | n
+
+    LET pick AS S64 = 2
+    LET ln_no AS S64 = 1
+    LET start AS S64 = 1
+    i = 1
+    WHILE i <= LEN(whole)
+        IF ASC(MID$(whole, i, 1)) = 10 THEN
+            IF ln_no = pick THEN
+                PRINT "pick=" | MID$(whole, start, i - start)
+            END IF
+            ln_no = ln_no + 1
+            start = i + 1
+        END IF
+        i = i + 1
+    END WHILE
+END

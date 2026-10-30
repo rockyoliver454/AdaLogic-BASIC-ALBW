@@ -1,0 +1,58 @@
+-- 797 | Cyclotomic polynomial: coefficients of Phi_n(x) for
+-- n = 1..10 via x^n-1 divided by product of Phi_d, d|n, d<n.
+DECLARE MODULE Cy
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cy
+    STRICT pc[12] AS S64
+    STRICT ph[110] AS S64
+    STRICT dg[11] AS S64
+
+    PROCEDURE Run()
+        -- ph[d][..] = coefficients of Phi_d, ascending,
+        -- stored at ph[(d-1)*10 + i], i=0..9 (deg <= 9 for n<=10)
+        FOR i = 1 TO 110
+            ph[i] = 0
+        END FOR
+        FOR n = 1 TO 10
+            -- start with x^n - 1
+            FOR i = 1 TO 11
+                pc[i] = 0
+            END FOR
+            pc[n + 1] = 1
+            pc[1] = 0 - 1
+            LET pdeg AS S64 = n
+            -- divide by Phi_d for each proper divisor d of n
+            FOR d = 1 TO n - 1
+                IF n MOD d = 0 THEN
+                    LET dd AS S64 = dg[d]
+                    -- polynomial long division: pc / ph[d]
+                    WHILE pdeg >= dd
+                        LET f AS S64 = pc[pdeg + 1]
+                        LET sh AS S64 = pdeg - dd
+                        FOR k = 0 TO dd
+                            pc[sh + k + 1] = pc[sh + k + 1] - f * ph[(d - 1) * 10 + k + 1]
+                        END FOR
+                        pdeg = pdeg - 1
+                    END WHILE
+                END IF
+            END FOR
+            -- result = Phi_n
+            LET s AS STRING = ""
+            FOR i = 0 TO pdeg
+                s = s | pc[i + 1] | " "
+            END FOR
+            PRINT "Phi(" | n | ") coeffs: " | s
+            dg[n] = pdeg
+            FOR i = 0 TO pdeg
+                ph[(n - 1) * 10 + i + 1] = pc[i + 1]
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cy
+BEGIN
+    Cy.Run()
+END

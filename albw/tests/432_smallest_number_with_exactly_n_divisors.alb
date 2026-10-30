@@ -1,0 +1,37 @@
+-- 432 | Sequence: smallest number with exactly n divisors, n = 1..15.
+DECLARE MODULE SmDiv
+    FUNCTION Tau(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SmDiv
+    FUNCTION Tau(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                cnt = cnt + 1
+                IF d * d <> n THEN cnt = cnt + 1 END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 15
+            LET m AS S64 = 1
+            WHILE Tau(m) <> n
+                m = m + 1
+            END WHILE
+            s = s | m | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT SmDiv
+BEGIN
+    SmDiv.Run()
+END

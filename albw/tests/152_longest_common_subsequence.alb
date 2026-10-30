@@ -1,0 +1,19 @@
+-- 152 | Longest common subsequence via 2-D DP.
+BEGIN
+    LET a AS STRING = "ABCBDAB";
+    LET b AS STRING = "BDCAB";
+    STRICT dp[8,6] AS S32;
+    FOR i = 1 TO LEN(a)
+        FOR j = 1 TO LEN(b)
+            IF MID$(a, i, 1) = MID$(b, j, 1) THEN
+                dp[i,j] = dp[i - 1,j - 1] + 1;
+            ELSE
+                dp[i,j] = dp[i - 1,j];
+                IF dp[i,j - 1] > dp[i,j] THEN
+                    dp[i,j] = dp[i,j - 1];
+                END IF
+            END IF
+        END FOR
+    END FOR
+    PRINT dp[LEN(a),LEN(b)];
+END

@@ -1,0 +1,1 @@
+requires exact u64 xorshift*multiply beyond 2^53 (f64 mantissa limit)

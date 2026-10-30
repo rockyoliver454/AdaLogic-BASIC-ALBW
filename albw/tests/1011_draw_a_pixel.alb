@@ -1,0 +1,34 @@
+VERSION 1.0
+LET frames AS S64 = 0
+LET bg AS S64 = 0
+LET px AS S64 = 0
+
+BEGIN
+    CREATE_WINDOW "Draw a pixel", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        CLEAR $000000
+        COLOR $FF0000
+        PLOT 40, 40
+        bg = READ_PIXEL(0, 0)
+        px = READ_PIXEL(40, 40)
+    END
+
+    LISTEN
+
+    PRINT "bg=" | bg
+    PRINT "px=" | px
+    IF px = 4294901760 ANDALSO bg = 4278190080 THEN
+        PRINT "pixel drawn and verified"
+    ELSE
+        PRINT "FAIL"
+    END IF
+END

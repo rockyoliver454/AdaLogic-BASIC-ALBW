@@ -1,0 +1,228 @@
+-- 251 | Maximum triangle path sum: Euler #18, bottom-up dynamic programming.
+DECLARE MODULE TriPath
+    FUNCTION MaxPathSum() AS S32
+END DECLARE MODULE
+
+MODULE TriPath
+    STRICT tri[171] AS S32
+    LET rows AS S32 = 18
+
+    FUNCTION Index(r AS S32, c AS S32) AS S32
+        RETURN (r * (r + 1)) / 2 + c
+    END FUNCTION
+
+    FUNCTION Max2(a AS S32, b AS S32) AS S32
+        IF a > b THEN RETURN a END IF
+        RETURN b
+    END FUNCTION
+
+    PROCEDURE Init()
+        tri[Index(0, 0)] = 55
+
+        tri[Index(1, 0)] = 94
+        tri[Index(1, 1)] = 48
+
+        tri[Index(2, 0)] = 95
+        tri[Index(2, 1)] = 30
+        tri[Index(2, 2)] = 96
+
+        tri[Index(3, 0)] = 77
+        tri[Index(3, 1)] = 71
+        tri[Index(3, 2)] = 26
+        tri[Index(3, 3)] = 67
+
+        tri[Index(4, 0)] = 97
+        tri[Index(4, 1)] = 13
+        tri[Index(4, 2)] = 76
+        tri[Index(4, 3)] = 38
+        tri[Index(4, 4)] = 45
+
+        tri[Index(5, 0)] = 7
+        tri[Index(5, 1)] = 36
+        tri[Index(5, 2)] = 79
+        tri[Index(5, 3)] = 16
+        tri[Index(5, 4)] = 37
+        tri[Index(5, 5)] = 68
+
+        tri[Index(6, 0)] = 48
+        tri[Index(6, 1)] = 7
+        tri[Index(6, 2)] = 9
+        tri[Index(6, 3)] = 18
+        tri[Index(6, 4)] = 70
+        tri[Index(6, 5)] = 26
+        tri[Index(6, 6)] = 6
+
+        tri[Index(7, 0)] = 18
+        tri[Index(7, 1)] = 72
+        tri[Index(7, 2)] = 79
+        tri[Index(7, 3)] = 46
+        tri[Index(7, 4)] = 59
+        tri[Index(7, 5)] = 79
+        tri[Index(7, 6)] = 29
+        tri[Index(7, 7)] = 90
+
+        tri[Index(8, 0)] = 20
+        tri[Index(8, 1)] = 76
+        tri[Index(8, 2)] = 87
+        tri[Index(8, 3)] = 11
+        tri[Index(8, 4)] = 32
+        tri[Index(8, 5)] = 7
+        tri[Index(8, 6)] = 7
+        tri[Index(8, 7)] = 49
+        tri[Index(8, 8)] = 18
+
+        tri[Index(9, 0)] = 27
+        tri[Index(9, 1)] = 83
+        tri[Index(9, 2)] = 58
+        tri[Index(9, 3)] = 35
+        tri[Index(9, 4)] = 71
+        tri[Index(9, 5)] = 11
+        tri[Index(9, 6)] = 25
+        tri[Index(9, 7)] = 57
+        tri[Index(9, 8)] = 29
+        tri[Index(9, 9)] = 85
+
+        tri[Index(10, 0)] = 14
+        tri[Index(10, 1)] = 64
+        tri[Index(10, 2)] = 36
+        tri[Index(10, 3)] = 96
+        tri[Index(10, 4)] = 27
+        tri[Index(10, 5)] = 11
+        tri[Index(10, 6)] = 58
+        tri[Index(10, 7)] = 56
+        tri[Index(10, 8)] = 92
+        tri[Index(10, 9)] = 18
+        tri[Index(10, 10)] = 55
+
+        tri[Index(11, 0)] = 2
+        tri[Index(11, 1)] = 90
+        tri[Index(11, 2)] = 3
+        tri[Index(11, 3)] = 60
+        tri[Index(11, 4)] = 48
+        tri[Index(11, 5)] = 49
+        tri[Index(11, 6)] = 41
+        tri[Index(11, 7)] = 46
+        tri[Index(11, 8)] = 33
+        tri[Index(11, 9)] = 36
+        tri[Index(11, 10)] = 47
+        tri[Index(11, 11)] = 23
+
+        tri[Index(12, 0)] = 92
+        tri[Index(12, 1)] = 50
+        tri[Index(12, 2)] = 48
+        tri[Index(12, 3)] = 2
+        tri[Index(12, 4)] = 36
+        tri[Index(12, 5)] = 59
+        tri[Index(12, 6)] = 42
+        tri[Index(12, 7)] = 79
+        tri[Index(12, 8)] = 72
+        tri[Index(12, 9)] = 20
+        tri[Index(12, 10)] = 82
+        tri[Index(12, 11)] = 77
+        tri[Index(12, 12)] = 42
+
+        tri[Index(13, 0)] = 56
+        tri[Index(13, 1)] = 78
+        tri[Index(13, 2)] = 38
+        tri[Index(13, 3)] = 80
+        tri[Index(13, 4)] = 39
+        tri[Index(13, 5)] = 75
+        tri[Index(13, 6)] = 2
+        tri[Index(13, 7)] = 71
+        tri[Index(13, 8)] = 66
+        tri[Index(13, 9)] = 66
+        tri[Index(13, 10)] = 1
+        tri[Index(13, 11)] = 3
+        tri[Index(13, 12)] = 55
+        tri[Index(13, 13)] = 72
+
+        tri[Index(14, 0)] = 44
+        tri[Index(14, 1)] = 25
+        tri[Index(14, 2)] = 67
+        tri[Index(14, 3)] = 84
+        tri[Index(14, 4)] = 71
+        tri[Index(14, 5)] = 67
+        tri[Index(14, 6)] = 11
+        tri[Index(14, 7)] = 61
+        tri[Index(14, 8)] = 40
+        tri[Index(14, 9)] = 57
+        tri[Index(14, 10)] = 58
+        tri[Index(14, 11)] = 89
+        tri[Index(14, 12)] = 40
+        tri[Index(14, 13)] = 56
+        tri[Index(14, 14)] = 36
+
+        tri[Index(15, 0)] = 85
+        tri[Index(15, 1)] = 32
+        tri[Index(15, 2)] = 25
+        tri[Index(15, 3)] = 85
+        tri[Index(15, 4)] = 57
+        tri[Index(15, 5)] = 48
+        tri[Index(15, 6)] = 84
+        tri[Index(15, 7)] = 35
+        tri[Index(15, 8)] = 47
+        tri[Index(15, 9)] = 62
+        tri[Index(15, 10)] = 17
+        tri[Index(15, 11)] = 1
+        tri[Index(15, 12)] = 1
+        tri[Index(15, 13)] = 99
+        tri[Index(15, 14)] = 89
+        tri[Index(15, 15)] = 52
+
+        tri[Index(16, 0)] = 6
+        tri[Index(16, 1)] = 71
+        tri[Index(16, 2)] = 28
+        tri[Index(16, 3)] = 75
+        tri[Index(16, 4)] = 94
+        tri[Index(16, 5)] = 48
+        tri[Index(16, 6)] = 37
+        tri[Index(16, 7)] = 10
+        tri[Index(16, 8)] = 23
+        tri[Index(16, 9)] = 51
+        tri[Index(16, 10)] = 6
+        tri[Index(16, 11)] = 48
+        tri[Index(16, 12)] = 53
+        tri[Index(16, 13)] = 18
+        tri[Index(16, 14)] = 74
+        tri[Index(16, 15)] = 98
+        tri[Index(16, 16)] = 15
+
+        tri[Index(17, 0)] = 27
+        tri[Index(17, 1)] = 2
+        tri[Index(17, 2)] = 92
+        tri[Index(17, 3)] = 23
+        tri[Index(17, 4)] = 8
+        tri[Index(17, 5)] = 71
+        tri[Index(17, 6)] = 76
+        tri[Index(17, 7)] = 84
+        tri[Index(17, 8)] = 15
+        tri[Index(17, 9)] = 52
+        tri[Index(17, 10)] = 92
+        tri[Index(17, 11)] = 63
+        tri[Index(17, 12)] = 81
+        tri[Index(17, 13)] = 10
+        tri[Index(17, 14)] = 44
+        tri[Index(17, 15)] = 10
+        tri[Index(17, 16)] = 69
+        tri[Index(17, 17)] = 93
+    END PROCEDURE
+
+    FUNCTION MaxPathSum() AS S32
+        LET r AS S32 = rows - 2
+        WHILE r >= 0
+            FOR c = 0 TO r
+                LET down_left AS S32 = tri[Index(r + 1, c)]
+                LET down_right AS S32 = tri[Index(r + 1, c + 1)]
+                tri[Index(r, c)] = tri[Index(r, c)] + Max2(down_left, down_right)
+            END FOR
+            r = r - 1
+        END WHILE
+        RETURN tri[Index(0, 0)]
+    END FUNCTION
+END MODULE
+
+IMPORT TriPath
+BEGIN
+    TriPath.Init()
+    PRINT TriPath.MaxPathSum()
+END

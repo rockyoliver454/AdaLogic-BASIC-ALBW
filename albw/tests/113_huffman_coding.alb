@@ -1,0 +1,55 @@
+-- 113 | Huffman coding: build optimal prefix codes for a freq table.
+BEGIN
+    STRICT ch[6] AS STRING;
+    STRICT fq[6] AS S32;
+    ch[0]="A"; fq[0]=5;  ch[1]="B"; fq[1]=9;  ch[2]="C"; fq[2]=12;
+    ch[3]="D"; fq[3]=13; ch[4]="E"; fq[4]=16; ch[5]="F"; fq[5]=45;
+    --  node pool: 6 leaves + 5 internal; fields: w,l,r,parent,sym
+    STRICT w[11] AS S32;
+    STRICT l[11] AS S32;
+    STRICT r[11] AS S32;
+    STRICT par[11] AS S32;
+    STRICT sym[11] AS S32;
+    STRICT alive[11] AS S32;
+    FOR i = 0 TO 5 THEN
+        w[i] = fq[i]; l[i] = -1; r[i] = -1; par[i] = -1;
+        sym[i] = i; alive[i] = 1;
+    END FOR
+    LET nodes AS S32 = 6;
+    FOR st = 0 TO 4
+        LET m1 AS S32 = -1;
+        LET m2 AS S32 = -1;
+        FOR i = 0 TO nodes - 1
+            IF alive[i] = 1 ANDALSO par[i] = -1 THEN
+                IF m1 = -1 ORELSE w[i] < w[m1] THEN
+                    m2 = m1;
+                    m1 = i;
+                ELSEIF m2 = -1 ORELSE w[i] < w[m2] THEN
+                    m2 = i;
+                END IF
+            END IF
+        END FOR
+        w[nodes] = w[m1] + w[m2];
+        l[nodes] = m1;
+        r[nodes] = m2;
+        par[nodes] = -1;
+        par[m1] = nodes;
+        par[m2] = nodes;
+        sym[nodes] = -1;
+        alive[nodes] = 1;
+        nodes = nodes + 1;
+    END FOR
+    FOR i = 0 TO 5 THEN
+        LET cd AS STRING = "";
+        LET cur AS S32 = i;
+        WHILE par[cur] >= 0
+            IF l[par[cur]] = cur THEN
+                cd = "0" | cd;
+            ELSE
+                cd = "1" | cd;
+            END IF
+            cur = par[cur];
+        END WHILE
+        PRINT$ ch[i] | " " | cd;
+    END FOR
+END

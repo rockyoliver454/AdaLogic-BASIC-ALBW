@@ -1,0 +1,75 @@
+-- 793 | Reduced row echelon form: Gauss-Jordan with pivoting
+-- on a 3x4 augmented matrix.
+DECLARE MODULE Rr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rr
+    STRICT mm[12] AS F64
+
+    PROCEDURE Run()
+        -- [[1,2,-1,-4],[2,3,-1,-11],[-2,0,-3,22]]
+        mm[1] = 1.0
+        mm[2] = 2.0
+        mm[3] = 0.0 - 1.0
+        mm[4] = 0.0 - 4.0
+        mm[5] = 2.0
+        mm[6] = 3.0
+        mm[7] = 0.0 - 1.0
+        mm[8] = 0.0 - 11.0
+        mm[9] = 0.0 - 2.0
+        mm[10] = 0.0
+        mm[11] = 0.0 - 3.0
+        mm[12] = 22.0
+        LET ncol AS S64 = 4
+        LET r AS S64 = 1
+        FOR c = 1 TO 3
+            -- find pivot = row with max |value| in column
+            LET pv AS S64 = r
+            LET bv AS F64 = mm[(r - 1) * ncol + c]
+            IF bv < 0.0 THEN bv = 0.0 - bv END IF
+            FOR i = r + 1 TO 3
+                LET v AS F64 = mm[(i - 1) * ncol + c]
+                IF v < 0.0 THEN v = 0.0 - v END IF
+                IF v > bv THEN
+                    bv = v
+                    pv = i
+                END IF
+            END FOR
+            IF mm[(pv - 1) * ncol + c] <> 0.0 THEN
+                -- swap rows r, pv
+                IF pv <> r THEN
+                    FOR k = 1 TO ncol
+                        LET t AS F64 = mm[(r - 1) * ncol + k]
+                        mm[(r - 1) * ncol + k] = mm[(pv - 1) * ncol + k]
+                        mm[(pv - 1) * ncol + k] = t
+                    END FOR
+                END IF
+                -- normalize
+                LET d AS F64 = mm[(r - 1) * ncol + c]
+                FOR k = 1 TO ncol
+                    mm[(r - 1) * ncol + k] = mm[(r - 1) * ncol + k] / d
+                END FOR
+                -- eliminate
+                FOR i = 1 TO 3
+                    IF i <> r THEN
+                        LET f AS F64 = mm[(i - 1) * ncol + c]
+                        FOR k = 1 TO ncol
+                            mm[(i - 1) * ncol + k] = mm[(i - 1) * ncol + k] - f * mm[(r - 1) * ncol + k]
+                        END FOR
+                    END IF
+                END FOR
+                r = r + 1
+            END IF
+        END FOR
+        PRINT "rref:"
+        FOR i = 1 TO 3
+            PRINT mm[(i - 1) * ncol + 1] | " " | mm[(i - 1) * ncol + 2] | " " | mm[(i - 1) * ncol + 3] | " | " | mm[(i - 1) * ncol + 4]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rr
+BEGIN
+    Rr.Run()
+END

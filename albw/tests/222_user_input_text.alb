@@ -1,0 +1,7 @@
+-- 222 | User input/Text: read a complete text line and use it.
+BEGIN
+    LET user_text AS STRING = ""
+    PRINT "Enter your name:"
+    READLINE user_text
+    PRINT "Hello, " | user_text | "!"
+END

@@ -1,0 +1,62 @@
+-- 536 | Next highest int from digits: smallest number > n using the
+-- same digits (next permutation of the digit string).
+DECLARE MODULE NextInt
+    FUNCTION NextHigh(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NextInt
+    STRICT digs[12] AS S64
+
+    FUNCTION NextHigh(n AS S64) AS S64
+        LET dl AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            dl = dl + 1
+            digs[dl] = m MOD 10
+            m = m / 10
+        END WHILE
+        -- digs[1] is least significant; array is reversed-digit order.
+        -- find first ascent scanning from position 2
+        LET i AS S64 = 2
+        WHILE i <= dl ANDALSO digs[i] >= digs[i - 1]
+            i = i + 1
+        END WHILE
+        IF i > dl THEN RETURN 0 END IF
+        LET j AS S64 = 1
+        WHILE j < i ANDALSO digs[j] <= digs[i]
+            j = j + 1
+        END WHILE
+        LET t AS S64 = digs[i]
+        digs[i] = digs[j]
+        digs[j] = t
+        -- reverse digits[1..i-1]
+        FOR k = 1 TO (i - 1) / 2
+            LET t2 AS S64 = digs[k]
+            digs[k] = digs[i - k]
+            digs[i - k] = t2
+        END FOR
+        LET res2 AS S64 = 0
+        LET k2 AS S64 = dl
+        WHILE k2 >= 1
+            res2 = res2 * 10 + digs[k2]
+            k2 = k2 - 1
+        END WHILE
+        RETURN res2
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT NextHigh(0)
+        PRINT NextHigh(9)
+        PRINT NextHigh(12)
+        PRINT NextHigh(21)
+        PRINT NextHigh(38276)
+        PRINT NextHigh(1234)
+        PRINT NextHigh(1244332221)
+    END PROCEDURE
+END MODULE
+
+IMPORT NextInt
+BEGIN
+    NextInt.Run()
+END

@@ -1,0 +1,29 @@
+-- 408 | Pascal's triangle: first 10 rows.
+DECLARE MODULE Pascal
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pascal
+    STRICT row[12] AS S64
+
+    PROCEDURE Run()
+        FOR n = 0 TO 9
+            row[n] = 1
+            LET k AS S32 = n - 1
+            WHILE k >= 1
+                row[k] = row[k] + row[k - 1]
+                k = k - 1
+            END WHILE
+            LET s AS STRING = ""
+            FOR k = 0 TO n
+                s = s | row[k] | " "
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pascal
+BEGIN
+    Pascal.Run()
+END

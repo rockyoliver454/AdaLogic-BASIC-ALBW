@@ -1,0 +1,41 @@
+-- 422 | Self numbers: first 50 numbers with no generator
+-- (n = m + digit-sum(m) has no solution m).
+DECLARE MODULE SelfN
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SelfN
+    STRICT gen[10000] AS S32
+
+    PROCEDURE Run()
+        FOR i = 1 TO 9999
+            gen[i] = 0
+        END FOR
+        FOR m = 1 TO 9999
+            LET ds AS S64 = 0
+            LET t AS S64 = m
+            WHILE t > 0
+                ds = ds + t MOD 10
+                t = t / 10
+            END WHILE
+            LET g AS S64 = m + ds
+            IF g <= 9999 THEN gen[g] = 1 END IF
+        END FOR
+        LET s AS STRING = ""
+        LET got AS S64 = 0
+        LET n AS S64 = 1
+        WHILE got < 50
+            IF gen[n] = 0 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT SelfN
+BEGIN
+    SelfN.Run()
+END

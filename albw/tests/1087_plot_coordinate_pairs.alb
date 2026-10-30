@@ -1,0 +1,89 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT xs[20] AS S64
+STRICT ys[20] AS S64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET np AS S64 = 0
+
+
+BEGIN
+    xs[0] = 5 ys[0] = 8
+    xs[1] = 12 ys[1] = 20
+    xs[2] = 18 ys[2] = 14
+    xs[3] = 25 ys[3] = 30
+    xs[4] = 32 ys[4] = 25
+    xs[5] = 40 ys[5] = 38
+    xs[6] = 48 ys[6] = 33
+    xs[7] = 55 ys[7] = 46
+    xs[8] = 59 ys[8] = 52
+    np = 9
+    LET i AS S64 = 0
+    WHILE i < np
+        LET x AS S64 = xs[i]
+        LET y AS S64 = ys[i]
+        img[y * 64 + x] = 16711680
+        img[y * 64 + x - 1] = 16711680
+        img[y * 64 + x + 1] = 16711680
+        img[(y - 1) * 64 + x] = 16711680
+        img[(y + 1) * 64 + x] = 16711680
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < np - 1
+        LET ax AS S64 = xs[i]
+        LET ay AS S64 = ys[i]
+        LET bx AS S64 = xs[i + 1]
+        LET byy AS S64 = ys[i + 1]
+        LET s AS S64 = 0
+        WHILE s < 20
+            LET px AS S64 = ax + (bx - ax) * s / 20
+            LET py AS S64 = ay + (byy - ay) * s / 20
+            img[py * 64 + px] = 32768
+            s = s + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+
+    CREATE_WINDOW "Plot coordinate pairs", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "points=" | np
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

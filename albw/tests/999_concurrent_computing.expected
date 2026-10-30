@@ -1,0 +1,5 @@
+worker 1 sum 1..25 = 5525
+worker 2 sum 26..50 = 37400
+worker 3 sum 51..75 = 100525
+worker 4 sum 76..100 = 194900
+total=338350 expect=338350

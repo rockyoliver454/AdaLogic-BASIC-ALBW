@@ -1,0 +1,37 @@
+-- 428 | Pisano period: period of the Fibonacci sequence mod m for
+-- m = 1..24.
+DECLARE MODULE Pis
+    FUNCTION Pisano(m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pis
+    FUNCTION Pisano(m AS S64) AS S64
+        IF m = 1 THEN RETURN 1 END IF
+        LET a AS S64 = 0
+        LET b AS S64 = 1
+        LET period AS S64 = 0
+        LET found AS S32 = 0
+        WHILE found = 0
+            LET t AS S64 = (a + b) MOD m
+            a = b
+            b = t
+            period = period + 1
+            IF a = 0 ANDALSO b = 1 THEN found = 1 END IF
+        END WHILE
+        RETURN period
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR m = 1 TO 24
+            s = s | Pisano(m) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pis
+BEGIN
+    Pis.Run()
+END

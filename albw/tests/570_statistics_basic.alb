@@ -1,0 +1,39 @@
+-- 570 | Statistics/Basic: mean, population stdev, sample stdev,
+-- min, max, median over a fixed dataset.
+DECLARE MODULE Stats
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Stats
+    STRICT a[8] AS F64
+
+    PROCEDURE Run()
+        a[1] = 2.0
+        a[2] = 4.0
+        a[3] = 4.0
+        a[4] = 4.0
+        a[5] = 5.0
+        a[6] = 5.0
+        a[7] = 7.0
+        a[8] = 9.0
+        LET mean AS F64 = 0.0
+        FOR i = 1 TO 8
+            mean = mean + a[i]
+        END FOR
+        mean = mean / 8.0
+        LET v AS F64 = 0.0
+        FOR j = 1 TO 8
+            v = v + (a[j] - mean) * (a[j] - mean)
+        END FOR
+        PRINT "mean: " | mean
+        PRINT "pop stdev: " | SQRT(v / 8.0)
+        PRINT "sample stdev: " | SQRT(v / 7.0)
+        PRINT "median: " | ((a[4] + a[5]) / 2.0)
+        PRINT "min: " | a[1] | " max: " | a[8]
+    END PROCEDURE
+END MODULE
+
+IMPORT Stats
+BEGIN
+    Stats.Run()
+END

@@ -1,0 +1,55 @@
+VERSION 1.0
+
+STRICT w1[20] AS STRING
+STRICT w10[8] AS STRING
+
+
+BEGIN
+    w1[0] = "zero" w1[1] = "one" w1[2] = "two" w1[3] = "three" w1[4] = "four"
+    w1[5] = "five" w1[6] = "six" w1[7] = "seven" w1[8] = "eight" w1[9] = "nine"
+    w1[10] = "ten" w1[11] = "eleven" w1[12] = "twelve" w1[13] = "thirteen" w1[14] = "fourteen"
+    w1[15] = "fifteen" w1[16] = "sixteen" w1[17] = "seventeen" w1[18] = "eighteen" w1[19] = "nineteen"
+    w10[0] = "twenty" w10[1] = "thirty" w10[2] = "forty" w10[3] = "fifty"
+    w10[4] = "sixty" w10[5] = "seventy" w10[6] = "eighty" w10[7] = "ninety"
+
+    LET cnt AS S64 = 0
+    LET k AS S64 = 1
+    WHILE k < 100
+        LET nk AS S64 = k + 1
+        LET wa AS STRING = ""
+        LET wb AS STRING = ""
+        LET ti AS S64 = k / 10
+        LET rm AS S64 = k - ti * 10
+        LET tj AS S64 = nk / 10
+        LET rm2 AS S64 = nk - tj * 10
+        IF k < 20 THEN
+            wa = w1[k]
+        ELSE
+            wa = w10[ti - 2]
+            IF rm > 0 THEN
+                wa = wa | w1[rm]
+            END IF
+        END IF
+        IF nk < 20 THEN
+            wb = w1[nk]
+        ELSE
+            IF nk < 100 THEN
+                wb = w10[tj - 2]
+                IF rm2 > 0 THEN
+                    wb = wb | w1[rm2]
+                END IF
+            ELSE
+                wb = w10[8 - 1]
+                wb = "hundred"
+            END IF
+        END IF
+        LET la AS S64 = ASC(MID$(wa, LEN(wa), 1))
+        LET fb AS S64 = ASC(MID$(wb, 1, 1))
+        IF la = fb THEN
+            cnt = cnt + 1
+            PRINT k | ": " | wa | " -> " | wb
+        END IF
+        k = k + 1
+    END WHILE
+    PRINT "count=" | cnt
+END

@@ -1,0 +1,30 @@
+-- 555 | UPC check digit: 03600024145 -> 7 (RC reference).
+DECLARE MODULE UPC
+    FUNCTION Chk(prefix AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE UPC
+    FUNCTION Chk(prefix AS STRING) AS S64
+        LET sum AS S64 = 0
+        FOR i = 1 TO LEN(prefix)
+            LET d AS S64 = ASC(MID$(prefix, i, 1)) - 48
+            IF i MOD 2 = 1 THEN
+                sum = sum + d * 3
+            ELSE
+                sum = sum + d
+            END IF
+        END FOR
+        RETURN (10 - sum MOD 10) MOD 10
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "03600024145 -> " | Chk("03600024145")
+        PRINT "12345678910 -> " | Chk("12345678910")
+    END PROCEDURE
+END MODULE
+
+IMPORT UPC
+BEGIN
+    UPC.Run()
+END

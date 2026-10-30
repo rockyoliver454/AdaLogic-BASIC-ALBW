@@ -1,0 +1,53 @@
+-- 897 | Unbias a random generator: von Neumann debiasing on a
+-- biased bit source (p(1)=0.3); count output distribution.
+DECLARE MODULE Ub
+    FUNCTION Biased() AS S64
+    FUNCTION Fair() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ub
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536
+    END FUNCTION
+
+    FUNCTION Biased() AS S64
+        -- 1 with probability 0.3
+        IF Nxt() MOD 10 < 3 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Fair() AS S64
+        -- von Neumann: read pairs until they differ
+        WHILE 1 = 1
+            LET a AS S64 = Biased()
+            LET b AS S64 = Biased()
+            IF a <> b THEN RETURN a END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 777
+        LET ones AS S64 = 0
+        LET n AS S64 = 2000
+        FOR i = 1 TO n
+            ones = ones + Fair()
+        END FOR
+        PRINT "fair ones=" | ones | " of " | n
+        -- now show raw biased for contrast
+        LET raw AS S64 = 0
+        FOR i = 1 TO n
+            raw = raw + Biased()
+        END FOR
+        PRINT "raw ones=" | raw | " of " | n
+    END PROCEDURE
+END MODULE
+
+IMPORT Ub
+BEGIN
+    Ub.Run()
+END

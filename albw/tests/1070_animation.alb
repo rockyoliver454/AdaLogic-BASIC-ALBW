@@ -1,0 +1,77 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET nfr AS S64 = 0
+LET bx AS S64 = 0
+LET byy AS S64 = 0
+
+
+BEGIN
+    nfr = 0
+    LET vx AS S64 = 3
+    LET vy AS S64 = 2
+    bx = 10
+    byy = 10
+    WHILE nfr < 12
+        bx = bx + vx
+        byy = byy + vy
+        IF bx > 58 THEN bx = 58 vx = 0 - vx END IF
+        IF bx < 4 THEN bx = 4 vx = 0 - vx END IF
+        IF byy > 58 THEN byy = 58 vy = 0 - vy END IF
+        IF byy < 4 THEN byy = 4 vy = 0 - vy END IF
+        nfr = nfr + 1
+    END WHILE
+    LET yy AS S64 = 0
+    WHILE yy < 4
+        LET xx AS S64 = 0
+        WHILE xx < 4
+            img[(byy + yy) * 64 + bx + xx] = 65535
+            xx = xx + 1
+        END WHILE
+        yy = yy + 1
+    END WHILE
+
+    CREATE_WINDOW "Animation", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "frames=12"
+    PRINT "ball=(" | bx | "," | byy | ")"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

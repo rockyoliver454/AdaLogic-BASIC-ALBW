@@ -1,0 +1,54 @@
+-- 660 | Five weekends: months in 1900-2100 having five Fridays,
+-- Saturdays AND Sundays (requires 31 days starting Friday).
+DECLARE MODULE Fw
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fw
+    STRICT dim[13] AS S64
+
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+        LET a AS S64 = (14 - m) / 12
+        LET y2 AS S64 = y - a
+        LET m2 AS S64 = m + 12 * a - 3
+        LET j AS S64 = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400
+        RETURN (j + 1) MOD 7
+    END FUNCTION
+
+    PROCEDURE Run()
+        dim[1] = 31
+        dim[2] = 28
+        dim[3] = 31
+        dim[4] = 30
+        dim[5] = 31
+        dim[6] = 30
+        dim[7] = 31
+        dim[8] = 31
+        dim[9] = 30
+        dim[10] = 31
+        dim[11] = 30
+        dim[12] = 31
+        LET cnt AS S64 = 0
+        LET no5 AS S64 = 0
+        FOR y = 1900 TO 2100
+            LET has5 AS S32 = 0
+            FOR m = 1 TO 12
+                LET dm AS S64 = dim[m]
+                IF m = 2 ANDALSO (y MOD 4 = 0 ANDALSO (y MOD 100 <> 0 ORELSE y MOD 400 = 0)) THEN dm = 29 END IF
+                IF dm = 31 ANDALSO Wd(y, m, 1) = 4 THEN
+                    cnt = cnt + 1
+                    has5 = 1
+                END IF
+            END FOR
+            IF has5 = 0 THEN no5 = no5 + 1 END IF
+        END FOR
+        PRINT "months with 5 weekends: " | cnt
+        PRINT "years with none: " | no5
+    END PROCEDURE
+END MODULE
+
+IMPORT Fw
+BEGIN
+    Fw.Run()
+END

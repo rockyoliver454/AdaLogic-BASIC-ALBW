@@ -1,0 +1,26 @@
+-- 169 | Magic squares of odd order -- Siamese method, n=5
+BEGIN
+    STRICT sq[25] AS S32;
+    LET n AS S32 = 5
+    LET r AS S32 = 0
+    LET c AS S32 = 2
+    LET v AS S32 = 1
+    FOR v = 1 TO 25
+        sq[r * n + c] = v
+        LET nr AS S32 = (r + n - 1) MOD n
+        LET nc AS S32 = (c + 1) MOD n
+        IF sq[nr * n + nc] <> 0 THEN
+            r = (r + 1) MOD n
+        ELSE
+            r = nr
+            c = nc
+        END IF
+    END FOR
+    LET i AS S32 = 0
+    FOR i = 0 TO 24
+        PRINT$ sq[i]
+        IF (i + 1) MOD 5 = 0 THEN
+            PRINT$ " "
+        END IF
+    END FOR
+END

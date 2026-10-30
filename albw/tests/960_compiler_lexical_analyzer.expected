@@ -1,0 +1,11 @@
+kw   sum
+op   =
+id   alpha
+op   +
+num  42
+op   *
+lpar (
+id   beta
+op   -
+num  7
+rpar )

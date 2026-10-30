@@ -1,0 +1,33 @@
+-- 133 | Kaprekar numbers: n^2 splits into parts summing to n.
+DECLARE MODULE K
+    FUNCTION IsKaprekar(n AS S64) AS S32
+END DECLARE MODULE
+
+MODULE K
+    FUNCTION IsKaprekar(n AS S64) AS S32
+        LET sq AS S64 = n * n;
+        LET d AS S64 = 1;
+        WHILE d <= n
+            d = d * 10;
+        END WHILE
+        LET right AS S64 = sq MOD d;
+        LET left AS S64 = sq / d;
+        IF left + right = n ANDALSO right > 0 THEN
+            RETURN -1
+        END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+IMPORT K
+BEGIN
+    STRICT t[6] AS S64;
+    t[0]=9; t[1]=45; t[2]=55; t[3]=99; t[4]=297; t[5]=703;
+    FOR i = 0 TO 5
+        IF K.IsKaprekar(t[i]) <> 0 THEN
+            PRINT$ t[i] | " kaprekar";
+        ELSE
+            PRINT$ t[i] | " no";
+        END IF
+    END FOR
+END

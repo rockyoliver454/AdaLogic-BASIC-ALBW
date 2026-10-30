@@ -1,0 +1,41 @@
+-- 705 | Wieferich primes: primes p where p^2 divides
+-- 2^(p-1) - 1. The only two below 4000.
+DECLARE MODULE Wf
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wf
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN
+                r = r * bb MOD m
+            END IF
+            bb = bb * bb MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 3 TO 4000
+            LET isp AS S32 = 1
+            LET d AS S64 = 2
+            WHILE d * d <= n
+                IF n MOD d = 0 THEN isp = 0 END IF
+                d = d + 1
+            END WHILE
+            IF isp = 1 THEN
+                IF Powm(2, n - 1, n * n) = 1 THEN PRINT n END IF
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Wf
+BEGIN
+    Wf.Run()
+END

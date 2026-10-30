@@ -1,0 +1,233 @@
+-- ============================================================================
+--  braille.alb - braille transcription driver + MCP server
+--  for nwstudio (stitchforge suite / Threadit.co)
+--
+--  One JSON-RPC surface over both engines:
+--    * Ueb     - literary text: UEB grade 2 (contracted) / grade 1
+--    * Nemeth  - mathematics: linear + spatial Nemeth code
+--
+--  Every tool returns one JSON object:
+--    {"sys":"ueb","ok":true,"brf":"...","uni":"...","ncells":12,
+--     "cells":[...],"errors":0,"err":[...]}
+--
+--  "ok" is errors=0 AND ncells>0.  The error ledger is never silent:
+--  transcription problems land in "err" (capped at 8) and "ok" flips
+--  false.  "cells" is the raw 6-bit dot-mask stream (-1 = newline),
+--  capped at 256 entries - enough for refreshable-display tools.
+--
+--  Built for the blind-user + agent workflow: an AI can ask for text
+--  or math in BRF (embosser/copy-paste), Unicode (screen preview), or
+--  raw cells (per-dot device control) in one call.
+-- ============================================================================
+INCLUDE "nemeth.albi"
+INCLUDE "ueb.albi"
+IMPORT Nemeth
+IMPORT Ueb
+
+-- ---------------------------------------------------------------
+--  JSON helpers (same convention as stitchforge.alb)
+-- ---------------------------------------------------------------
+FUNCTION JEsc(s AS STRING) AS STRING
+    LET i AS S64 = 1
+    LET c AS STRING = ""
+    LET o AS STRING = ""
+    WHILE i <= LEN(s)
+        c = MID(s, i, 1)
+        IF c = "\" THEN
+            o = o | "\\"
+        ELSIF c = CHR(34) THEN
+            o = o | "\" | CHR(34)
+        ELSIF c = CHR(10) THEN
+            o = o | "\n"
+        ELSIF c = CHR(13) THEN
+            o = o | "\r"
+        ELSIF c = CHR(9) THEN
+            o = o | "\t"
+        ELSE
+            o = o | c
+        END IF
+        i = i + 1
+    END WHILE
+    RETURN o
+END FUNCTION
+
+FUNCTION JQ(s AS STRING) AS STRING
+    RETURN CHR(34) | JEsc(s) | CHR(34)
+END FUNCTION
+
+-- ---------------------------------------------------------------
+--  error ledger + cell stream for whichever engine ran last
+--  sys: "ueb" -> Ueb module,  "nemeth" -> Nemeth module
+-- ---------------------------------------------------------------
+FUNCTION BrErrJson(sys AS STRING) AS STRING
+    LET n AS S64 = 0
+    LET i AS S64 = 0
+    LET o AS STRING = ""
+    LET t AS STRING = ""
+    IF sys = "nemeth" THEN
+        n = Nemeth.ErrCount()
+    ELSE
+        n = Ueb.ErrCount()
+    END IF
+    i = 0
+    WHILE i < n AND i < 8
+        IF sys = "nemeth" THEN
+            t = Nemeth.ErrText(i)
+        ELSE
+            t = Ueb.ErrText(i)
+        END IF
+        o = o | "," | JQ(t)
+        i = i + 1
+    END WHILE
+    IF n = 0 THEN
+        RETURN "[]"
+    END IF
+    RETURN "[" | MID(o, 2, 9999) | "]"
+END FUNCTION
+
+FUNCTION BrCellJson(sys AS STRING) AS STRING
+    LET n AS S64 = 0
+    LET i AS S64 = 0
+    LET c AS S64 = 0
+    LET o AS STRING = ""
+    IF sys = "nemeth" THEN
+        n = Nemeth.Count()
+    ELSE
+        n = Ueb.Count()
+    END IF
+    i = 0
+    WHILE i < n AND i < 256
+        IF sys = "nemeth" THEN
+            c = Nemeth.Cell(i)
+        ELSE
+            c = Ueb.Cell(i)
+        END IF
+        o = o | "," | c
+        i = i + 1
+    END WHILE
+    IF n = 0 THEN
+        RETURN "[]"
+    END IF
+    RETURN "[" | MID(o, 2, 9999) | "]"
+END FUNCTION
+
+-- ---------------------------------------------------------------
+--  shared response envelope
+-- ---------------------------------------------------------------
+FUNCTION BrResult(sys AS STRING) AS STRING
+    LET brf AS STRING = ""
+    LET uni AS STRING = ""
+    LET nc AS S64 = 0
+    LET ne AS S64 = 0
+    LET ok AS STRING = "false"
+    IF sys = "nemeth" THEN
+        brf = Nemeth.ToBrf()
+        uni = Nemeth.ToUni()
+        nc = Nemeth.Count()
+        ne = Nemeth.ErrCount()
+    ELSE
+        brf = Ueb.ToBrf()
+        uni = Ueb.ToUni()
+        nc = Ueb.Count()
+        ne = Ueb.ErrCount()
+    END IF
+    IF ne = 0 AND nc > 0 THEN
+        ok = "true"
+    END IF
+    RETURN `{{"sys":{JQ(sys)},"ok":{ok},"brf":{JQ(brf)},"uni":{JQ(uni)},"ncells":{nc},"cells":{BrCellJson(sys)},"errors":{ne},"err":{BrErrJson(sys)}}`
+END FUNCTION
+
+-- ---------------------------------------------------------------
+--  MCP tool wrappers
+-- ---------------------------------------------------------------
+FUNCTION BrUeb(txt AS STRING) AS STRING
+    Ueb.Transcribe(txt)
+    RETURN BrResult("ueb")
+END FUNCTION
+
+FUNCTION BrUebG1(txt AS STRING) AS STRING
+    Ueb.TranscribeG1(txt)
+    RETURN BrResult("ueb")
+END FUNCTION
+
+FUNCTION BrNemeth(txt AS STRING) AS STRING
+    Nemeth.Transcribe(txt)
+    RETURN BrResult("nemeth")
+END FUNCTION
+
+--  envelope for decode/render calls:  the payload is one string
+--  under a named JSON key, plus the Nemeth error ledger.
+FUNCTION BrTextResult(k AS STRING, v AS STRING) AS STRING
+    LET ne AS S64 = Nemeth.ErrCount()
+    LET ok AS STRING = "false"
+    IF ne = 0 THEN
+        ok = "true"
+    END IF
+    RETURN `{{"ok":{ok},{JQ(k)}:{JQ(v)},"errors":{ne},"err":{BrErrJson("nemeth")}}`
+END FUNCTION
+
+--  B2 export:  math source -> canonical LaTeX / presentation MathML.
+--  Reset() clears the ledger + refills tables, then the render runs.
+FUNCTION BrLatex(txt AS STRING) AS STRING
+    Nemeth.Reset()
+    RETURN BrTextResult("latex", Nemeth.ToLatex(txt))
+END FUNCTION
+
+FUNCTION BrMathml(txt AS STRING) AS STRING
+    Nemeth.Reset()
+    RETURN BrTextResult("mathml", Nemeth.ToMathML(txt))
+END FUNCTION
+
+--  B1b back-translation:  Nemeth cells -> canonical source.
+--  FromBrf/FromUni reset the ledger themselves; decode problems
+--  (bad chars, unclosed constructs, stray markers) land in "err".
+FUNCTION BrUnbrf(txt AS STRING) AS STRING
+    RETURN BrTextResult("src", Nemeth.FromBrf(txt))
+END FUNCTION
+
+FUNCTION BrUnuni(txt AS STRING) AS STRING
+    RETURN BrTextResult("src", Nemeth.FromUni(txt))
+END FUNCTION
+
+--  one-call dispatcher:  sys = "ueb" | "ueb-g1" | "nemeth"
+FUNCTION BrTranslate(sys AS STRING, txt AS STRING) AS STRING
+    IF sys = "ueb-g1" ORELSE sys = "g1" ORELSE sys = "ueb_g1" THEN
+        Ueb.TranscribeG1(txt)
+        RETURN BrResult("ueb")
+    END IF
+    IF sys = "nemeth" ORELSE sys = "math" ORELSE sys = "n" THEN
+        Nemeth.Transcribe(txt)
+        RETURN BrResult("nemeth")
+    END IF
+    IF sys = "ueb" ORELSE sys = "g2" ORELSE sys = "ueb-g2" ORELSE
+       sys = "ueb_g2" ORELSE sys = "" THEN
+        Ueb.Transcribe(txt)
+        RETURN BrResult("ueb")
+    END IF
+    RETURN `{{"sys":{JQ(sys)},"ok":false,"brf":"","uni":"","ncells":0,"cells":[],"errors":1,"err":["unknown system - use ueb, ueb-g1, or nemeth"]}`
+END FUNCTION
+
+FUNCTION BrInfo() AS STRING
+    RETURN `{{"app":"braille","engines":["ueb","ueb-g1","nemeth"],"formats":["brf","uni","cells","latex","mathml","src"],"ueb":{{"grade":2,"contractions":"ICEB 10.1-10.9 inventory","gaps":"greedy longest-match; no typeforms/foreign/tables"},"nemeth":{{"grammar":"latex-ish + asciimath superset","spatial":"matrix/cases/binom/stacked/long-division","export":["latex","mathml"],"back":"brf/uni cells -> canonical source (round-trip verified)","gaps":"no array colspecs/display envs"}}`
+END FUNCTION
+
+-- ---------------------------------------------------------------
+--  MCP surface
+-- ---------------------------------------------------------------
+MCP SERVER "braille"
+    TOOL BrUeb AS "br_ueb" DESCRIPTION "literary text -> UEB grade 2 contracted braille: brf+unicode+cells+errors"
+    TOOL BrUebG1 AS "br_ueb_g1" DESCRIPTION "literary text -> UEB grade 1 uncontracted braille"
+    TOOL BrNemeth AS "br_nemeth" DESCRIPTION "math expression (latex/asciimath) -> Nemeth braille incl. spatial matrices/stacked arithmetic"
+    TOOL BrLatex AS "br_latex" DESCRIPTION "math expression -> canonical LaTeX (B2 export)"
+    TOOL BrMathml AS "br_mathml" DESCRIPTION "math expression -> presentation MathML (B2 export)"
+    TOOL BrUnbrf AS "br_unbrf" DESCRIPTION "Nemeth BRF ascii -> canonical math source (back-translation; reads embossed/BRF files)"
+    TOOL BrUnuni AS "br_ununi" DESCRIPTION "Nemeth unicode braille -> canonical math source (back-translation)"
+    TOOL BrTranslate AS "br_translate" DESCRIPTION "dispatch by system: sys=ueb|ueb-g1|nemeth, txt=input string"
+    RESOURCE "alb://braille/status" -> BrInfo AS "engine status + capability notes"
+END MCP
+
+BEGIN
+    --  headless JSON-RPC driver:  lines on stdin are pumped through
+    --  the MCP surface (tools/list, tools/call, resources/read, ping)
+    MCP_LISTEN
+END

@@ -1,0 +1,11 @@
+-- 008 | Arithmetic/Integer: basic ops on two integers.
+BEGIN
+    LET a AS S32 = 12;
+    LET b AS S32 = 5;
+    PRINT$ "sum:  " | a + b;
+    PRINT$ "diff: " | a - b;
+    PRINT$ "prod: " | a * b;
+    PRINT$ "div:  " | a / b;
+    PRINT$ "mod:  " | a MOD b;
+    PRINT$ "pow:  " | a ^ b;
+END

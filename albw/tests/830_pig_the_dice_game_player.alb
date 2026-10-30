@@ -1,0 +1,59 @@
+-- 830 | Pig the dice game/Player: hold-at-N strategy. Play a
+-- deterministic (seeded) game: player holds at 20, opponent
+-- holds at 25; first to 100 wins.
+DECLARE MODULE Pg
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pg
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 6 + 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 99
+        LET me AS S64 = 0
+        LET op AS S64 = 0
+        LET who AS S64 = 0
+        LET moves AS S64 = 0
+        WHILE me < 100 ANDALSO op < 100
+            LET hold AS S64 = 20
+            IF who = 1 THEN hold = 25 END IF
+            LET acc AS S64 = 0
+            LET live AS S32 = 1
+            WHILE live = 1
+                LET d AS S64 = Nxt()
+                IF d = 1 THEN
+                    acc = 0
+                    live = 0
+                ELSE
+                    acc = acc + d
+                    IF who = 0 ANDALSO me + acc >= 100 THEN live = 0 END IF
+                    IF who = 1 ANDALSO op + acc >= 100 THEN live = 0 END IF
+                    IF acc >= hold THEN live = 0 END IF
+                END IF
+            END WHILE
+            IF who = 0 THEN
+                me = me + acc
+                PRINT "me +" | acc | " -> " | me
+            ELSE
+                op = op + acc
+                PRINT "op +" | acc | " -> " | op
+            END IF
+            moves = moves + 1
+            who = 1 - who
+        END WHILE
+        IF me >= 100 THEN PRINT "winner: me (hold 20)" END IF
+        IF op >= 100 THEN PRINT "winner: op (hold 25)" END IF
+        PRINT "turns=" | moves
+    END PROCEDURE
+END MODULE
+
+IMPORT Pg
+BEGIN
+    Pg.Run()
+END

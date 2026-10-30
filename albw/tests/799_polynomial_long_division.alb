@@ -1,0 +1,45 @@
+-- 799 | Polynomial long division: divide
+-- (x^3 - 2x^2 - 4) / (x - 3) -> quotient + remainder.
+DECLARE MODULE Pd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pd
+    STRICT nn[8] AS S64
+    STRICT qq[8] AS S64
+
+    PROCEDURE Run()
+        -- dividend coeffs descending: x^3 -2x^2 +0x -4
+        nn[1] = 1
+        nn[2] = 0 - 2
+        nn[3] = 0
+        nn[4] = 0 - 4
+        LET nd AS S64 = 3
+        -- divisor x - 3: lead 1, root 3
+        LET rt AS S64 = 3
+        FOR i = 1 TO 8
+            qq[i] = 0
+        END FOR
+        -- synthetic division by (x - rt)
+        LET qd AS S64 = nd
+        LET carry AS S64 = 0
+        FOR i = 1 TO nd
+            LET v AS S64 = nn[i] + carry * rt
+            qq[i] = v
+            carry = v
+        END FOR
+        -- remainder = last
+        LET rem AS S64 = nn[nd + 1] + carry * rt
+        LET s AS STRING = ""
+        FOR i = 1 TO nd
+            s = s | qq[i] | " "
+        END FOR
+        PRINT "quotient: " | s
+        PRINT "remainder=" | rem
+    END PROCEDURE
+END MODULE
+
+IMPORT Pd
+BEGIN
+    Pd.Run()
+END

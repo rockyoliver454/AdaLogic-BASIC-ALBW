@@ -1,0 +1,6 @@
+aabbcc  -> 1
+abcabc  -> 1
+aabbc   -> 0
+xaybzcq -> 1
+empty   -> 1
+noabc   -> 1

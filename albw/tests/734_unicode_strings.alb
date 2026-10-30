@@ -1,0 +1,48 @@
+-- 734 | Unicode strings: byte length vs UTF-8 codepoint count,
+-- and codepoint-wise reversal.
+DECLARE MODULE Us
+    FUNCTION CpCount(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Us
+    FUNCTION CpCount(s AS STRING) AS S64
+        LET n AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c < 128 ORELSE c >= 192 THEN n = n + 1 END IF
+        END FOR
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "hi h\xf3la \xe2\x9c\x93end"
+        PRINT "bytes=" | LEN(s)
+        PRINT "codepoints=" | CpCount(s)
+        -- reverse by codepoint boundaries
+        STRICT st[40] AS S64
+        LET cnt AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c < 128 ORELSE c >= 192 THEN
+                cnt = cnt + 1
+                st[cnt] = i
+            END IF
+        END FOR
+        st[cnt + 1] = LEN(s) + 1
+        LET r AS STRING = ""
+        LET i AS S64 = cnt
+        WHILE i >= 1
+            FOR j = st[i] TO st[i + 1] - 1
+                r = r | MID$(s, j, 1)
+            END FOR
+            i = i - 1
+        END WHILE
+        PRINT r
+    END PROCEDURE
+END MODULE
+
+IMPORT Us
+BEGIN
+    Us.Run()
+END

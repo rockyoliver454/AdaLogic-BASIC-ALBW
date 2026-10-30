@@ -1,0 +1,26 @@
+-- 609 | Determine sentence type: declarative (.), interrogative
+-- (?), or exclamatory (!).
+DECLARE MODULE Sent
+    FUNCTION Kind(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sent
+    FUNCTION Kind(s AS STRING) AS STRING
+        LET last AS STRING = MID$(s, LEN(s), 1)
+        IF last = "." THEN RETURN "declarative" END IF
+        IF last = "?" THEN RETURN "interrogative" END IF
+        RETURN "exclamatory"
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Kind("The cat sat on the mat.")
+        PRINT Kind("Where did you go?")
+        PRINT Kind("Watch out!")
+    END PROCEDURE
+END MODULE
+
+IMPORT Sent
+BEGIN
+    Sent.Run()
+END

@@ -1,0 +1,63 @@
+-- 565 | UTF-8 encode and decode: code points for "A", "ö" (0xF6),
+-- "€" (0x20AC), "𐍈" (0x10348) to byte sequences and back.
+DECLARE MODULE U8
+    PROCEDURE Show(cp AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE U8
+    PROCEDURE Show(cp AS S64)
+        LET s AS STRING = "cp=" | cp | " ->"
+        LET n AS S64 = 0
+        LET b1 AS S64 = 0
+        LET b2 AS S64 = 0
+        LET b3 AS S64 = 0
+        LET b4 AS S64 = 0
+        IF cp < 128 THEN
+            n = 1
+            b1 = cp
+        ELSE
+            IF cp < 2048 THEN
+                n = 2
+                b1 = 192 + cp / 64
+                b2 = 128 + cp MOD 64
+            ELSE
+                IF cp < 65536 THEN
+                    n = 3
+                    b1 = 224 + cp / 4096
+                    b2 = 128 + (cp / 64) MOD 64
+                    b3 = 128 + cp MOD 64
+                ELSE
+                    n = 4
+                    b1 = 240 + cp / 262144
+                    b2 = 128 + (cp / 4096) MOD 64
+                    b3 = 128 + (cp / 64) MOD 64
+                    b4 = 128 + cp MOD 64
+                END IF
+            END IF
+        END IF
+        s = s | " " | b1
+        IF n >= 2 THEN s = s | " " | b2 END IF
+        IF n >= 3 THEN s = s | " " | b3 END IF
+        IF n >= 4 THEN s = s | " " | b4 END IF
+        -- decode back
+        LET back AS S64 = 0
+        IF n = 1 THEN back = b1 END IF
+        IF n = 2 THEN back = (b1 - 192) * 64 + b2 - 128 END IF
+        IF n = 3 THEN back = (b1 - 224) * 4096 + (b2 - 128) * 64 + b3 - 128 END IF
+        IF n = 4 THEN back = (b1 - 240) * 262144 + (b2 - 128) * 4096 + (b3 - 128) * 64 + b4 - 128 END IF
+        PRINT s | " ; decoded=" | back
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(65)
+        Show(246)
+        Show(8364)
+        Show(66376)
+    END PROCEDURE
+END MODULE
+
+IMPORT U8
+BEGIN
+    U8.Run()
+END

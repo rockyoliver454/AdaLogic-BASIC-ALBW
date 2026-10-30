@@ -1,0 +1,23 @@
+-- 231 | Sudan function: a classic non-primitive-recursive function.
+DECLARE MODULE Sudan
+    FUNCTION F(n AS S32, x AS S64, y AS S64) AS S64
+END DECLARE MODULE
+
+MODULE Sudan
+    FUNCTION F(n AS S32, x AS S64, y AS S64) AS S64
+        IF n = 0 THEN RETURN x + y END IF
+        IF y = 0 THEN RETURN x END IF
+        LET inner_value AS S64 = F(n, x, y - 1)
+        RETURN F(n - 1, inner_value, inner_value + y)
+    END FUNCTION
+END MODULE
+
+IMPORT Sudan
+BEGIN
+    PRINT "F(0,0,0) = " | Sudan.F(0, 0, 0)
+    PRINT "F(1,1,1) = " | Sudan.F(1, 1, 1)
+    PRINT "F(1,3,3) = " | Sudan.F(1, 3, 3)
+    PRINT "F(2,1,1) = " | Sudan.F(2, 1, 1)
+    PRINT "F(2,2,1) = " | Sudan.F(2, 2, 1)
+    PRINT "F(3,1,1) = " | Sudan.F(3, 1, 1)
+END

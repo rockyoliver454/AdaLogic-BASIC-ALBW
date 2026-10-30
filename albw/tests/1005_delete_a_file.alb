@@ -1,0 +1,23 @@
+-- 1005 | Delete a file: create, delete via kernel32
+-- DeleteFileA, then verify it is gone.
+IMPORTDLL FUNCTION DeleteFileA(p AS S64) AS S32 FROM "kernel32"
+STRICT PB[128] AS U8
+FUNCTION Spath(s AS STRING) AS S64
+    FOR i = 1 TO LEN(s)
+        POKE @PB + i - 1, ASC(MID$(s, i, 1))
+    END FOR
+    POKE @PB + LEN(s), 0
+    RETURN @PB
+END FUNCTION
+BEGIN
+LET h = OPEN("rosetta_del.dat", "w")
+WRITE h, "temporary"
+CLOSE h
+LET r1 = OPEN("rosetta_del.dat", "r")
+PRINT "before: exists=" | (r1 <> 0)
+CLOSE r1
+LET rc AS S32 = DeleteFileA(Spath("rosetta_del.dat"))
+PRINT "delete rc=" | rc
+LET r2 = OPEN("rosetta_del.dat", "r")
+PRINT "after: exists=" | (r2 <> 0)
+END

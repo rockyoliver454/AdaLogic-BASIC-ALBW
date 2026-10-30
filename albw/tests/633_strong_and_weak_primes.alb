@@ -1,0 +1,52 @@
+-- 633 | Strong and weak primes: consecutive prime triple
+-- (p1,p2,p3): p2 strong if p2 > (p1+p3)/2, weak if <.
+DECLARE MODULE Sw
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sw
+    STRICT p[30] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 2
+        WHILE cnt < 30
+            IF IsPrime(n) = 1 THEN
+                cnt = cnt + 1
+                p[cnt] = n
+            END IF
+            n = n + 1
+        END WHILE
+        LET s AS STRING = "strong: "
+        FOR i = 2 TO 29
+            IF p[i] * 2 > p[i - 1] + p[i + 1] THEN s = s | p[i] | " " END IF
+        END FOR
+        PRINT s
+        LET w AS STRING = "weak: "
+        FOR j = 2 TO 29
+            IF p[j] * 2 < p[j - 1] + p[j + 1] THEN w = w | p[j] | " " END IF
+        END FOR
+        PRINT w
+        LET b AS STRING = "balanced: "
+        FOR k = 2 TO 29
+            IF p[k] * 2 = p[k - 1] + p[k + 1] THEN b = b | p[k] | " " END IF
+        END FOR
+        PRINT b
+    END PROCEDURE
+END MODULE
+
+IMPORT Sw
+BEGIN
+    Sw.Run()
+END

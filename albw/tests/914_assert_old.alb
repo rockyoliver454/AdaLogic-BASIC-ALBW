@@ -1,0 +1,41 @@
+-- ASSERT(expr) is an always-on contract (fault 27, no debug/release
+-- drift).  OLD(x) inside ENSURE names the routine-entry value; the
+-- emitter snapshots it to a `_alb_old_x` binding at the top of the fn.
+FUNCTION Bump(x AS S32) AS S32
+    REQUIRE x >= 0
+    ENSURE RESULT = OLD(x) + 1
+    RETURN x + 1
+END FUNCTION
+
+FUNCTION Scale(x AS S32, k AS S32) AS S32
+    REQUIRE k > 0
+    ENSURE RESULT >= OLD(x)
+    RETURN x * k
+END FUNCTION
+
+PROCEDURE Swap2(a AS S32, b AS S32)
+    --  procedure ENSURE (no RESULT): OLD still resolves entry values;
+    --  after the swap the local a must equal b's entry value.
+    ENSURE a = OLD(b)
+    LET t AS S32 = a
+    a = b
+    b = t
+END PROCEDURE
+
+BEGIN
+    PRINT Bump(5)
+    PRINT Scale(3, 4)
+
+    LET y AS S32 = 10
+    ASSERT(y = 10)
+    ASSERT(y > 5 ANDALSO y < 100)
+    y = y + 1
+    ASSERT(y = 11)
+    PRINT y
+
+    LET u AS S32 = 7
+    LET v AS S32 = 9
+    Swap2(u, v)
+    PRINT u
+    PRINT v
+END

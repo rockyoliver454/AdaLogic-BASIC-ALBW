@@ -1,0 +1,78 @@
+-- 443 | Yin and yang: render the taijitu symbol as text art.
+DECLARE MODULE YinYang
+    PROCEDURE Put(y AS S64, x AS S64, ch AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE YinYang
+    STRICT grid[42] AS STRING
+
+    PROCEDURE Put(y AS S64, x AS S64, ch AS S64)
+        LET row AS STRING = grid[y + 1]
+        LET ns AS STRING = ""
+        FOR i = 1 TO LEN(row)
+            IF i = x + 1 THEN ns = ns | CHR(ch) ELSE ns = ns | MID$(row, i, 1) END IF
+        END FOR
+        grid[y + 1] = ns
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR y = 0 TO 40
+            grid[y + 1] = ""
+            FOR x = 0 TO 80
+                grid[y + 1] = grid[y + 1] | " "
+            END FOR
+        END FOR
+
+        LET cx AS F64 = 40.0
+        LET cy AS F64 = 20.0
+        LET rad AS F64 = 19.0
+        FOR y2 = 0 TO 40
+            FOR x2 = 0 TO 80
+                LET fx AS F64 = x2
+                LET fy AS F64 = y2
+                LET dx AS F64 = (fx - cx) / 2.0
+                LET dy AS F64 = fy - cy
+                LET dist AS F64 = dx * dx + dy * dy
+                IF dist <= rad * rad ANDALSO dist > (rad - 1.0) * (rad - 1.0) THEN
+                    Put(y2, x2, 35)
+                END IF
+            END FOR
+        END FOR
+
+        FOR y3 = 0 TO 40
+            FOR x3 = 0 TO 80
+                LET fx3 AS F64 = x3
+                LET fy3 AS F64 = y3
+                LET dx3 AS F64 = (fx3 - cx) / 2.0
+                LET dy3 AS F64 = fy3 - cy
+                LET dist3 AS F64 = dx3 * dx3 + dy3 * dy3
+                IF dist3 <= (rad - 1.5) * (rad - 1.5) THEN
+                    LET rhalf AS F64 = rad / 2.0
+                    LET dtop AS F64 = dx3 * dx3 + (dy3 + rhalf) * (dy3 + rhalf)
+                    LET dbot AS F64 = dx3 * dx3 + (dy3 - rhalf) * (dy3 - rhalf)
+                    LET inTop AS S32 = 0
+                    LET inBot AS S32 = 0
+                    IF dtop < rhalf * rhalf THEN inTop = 1 END IF
+                    IF dbot < rhalf * rhalf THEN inBot = 1 END IF
+                    LET ch AS S64 = 42
+                    IF dy3 <= 0 THEN ch = 46 END IF
+                    IF inTop = 1 THEN ch = 42 END IF
+                    IF inBot = 1 THEN ch = 46 END IF
+                    IF dtop < 8.0 THEN ch = 46 END IF
+                    IF dbot < 8.0 THEN ch = 42 END IF
+                    Put(y3, x3, ch)
+                END IF
+            END FOR
+        END FOR
+
+        FOR y4 = 0 TO 40
+            PRINT grid[y4 + 1]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT YinYang
+BEGIN
+    YinYang.Run()
+END

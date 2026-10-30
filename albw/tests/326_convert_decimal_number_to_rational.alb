@@ -1,0 +1,57 @@
+-- 326 | Convert decimal number to rational: decimal string to lowest-term fraction.
+DECLARE MODULE DecToRat
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DecToRat
+    FUNCTION GcdOf(a AS S64, b AS S64) AS S64
+        IF a < 0 THEN a = 0 - a END IF
+        IF b < 0 THEN b = 0 - b END IF
+        WHILE b <> 0
+            LET temporary AS S64 = b
+            b = a - (a / b) * b
+            a = temporary
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    PROCEDURE Show(s AS STRING)
+        LET whole AS S64 = 0
+        LET frac AS S64 = 0
+        LET scale AS S64 = 1
+        LET seen_dot AS S32 = 0
+        LET neg AS S32 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S32 = ASC(MID$(s, i, 1))
+            IF c = 45 THEN
+                neg = 1
+            ELSEIF c = 46 THEN
+                seen_dot = 1
+            ELSE
+                IF seen_dot = 0 THEN
+                    whole = whole * 10 + (c - 48)
+                ELSE
+                    frac = frac * 10 + (c - 48)
+                    scale = scale * 10
+                END IF
+            END IF
+        END FOR
+        LET num AS S64 = whole * scale + frac
+        IF neg = 1 THEN num = 0 - num END IF
+        LET g AS S64 = GcdOf(num, scale)
+        PRINT s | " -> " | (num / g) | "/" | (scale / g)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show("0.375")
+        Show("1.5")
+        Show("2.25")
+        Show("0.2")
+        Show("-0.125")
+    END PROCEDURE
+END MODULE
+
+IMPORT DecToRat
+BEGIN
+    DecToRat.Run()
+END

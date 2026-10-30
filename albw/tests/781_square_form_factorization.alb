@@ -1,0 +1,137 @@
+-- 781 | Square form factorization (SQUFOF): Shanks' method
+-- with multiplier retries. Factors odd semiprimes.
+DECLARE MODULE Sq
+    FUNCTION Isqrt(n AS S64) AS S64
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+    FUNCTION Raw(n AS S64) AS S64
+    FUNCTION Squfof(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sq
+    STRICT tt[6] AS S64
+    STRICT ms[10] AS S64
+    STRICT mres[1] AS S64
+    STRICT mq[1] AS S64
+
+    FUNCTION Isqrt(n AS S64) AS S64
+        LET r AS S64 = 0
+        WHILE (r + 1) * (r + 1) <= n
+            r = r + 1
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        LET x AS S64 = a
+        LET y AS S64 = b
+        WHILE y <> 0
+            LET t AS S64 = x MOD y
+            x = y
+            y = t
+        END WHILE
+        RETURN x
+    END FUNCTION
+
+    PROCEDURE Raw2(nn AS S64, sn AS S64, lp AS S64, pi AS S64)
+        -- second cycle of SQUFOF on N=nn, square form scale lp,
+        -- last P of the forward cycle = pi; result via slot mq
+        mq[1] = 0
+        LET nm AS S64 = sn - pi
+        LET g AS S64 = nm / lp
+        -- floor-div for possibly negative numerator
+        IF nm < 0 ANDALSO nm <> g * lp THEN g = g - 1 END IF
+        LET p AS S64 = lp * g + pi
+        LET qc AS S64 = lp
+        LET qp AS S64 = (nn - p * p) / lp
+        LET it AS S64 = 0
+        WHILE it < 200000
+            it = it + 1
+            LET b AS S64 = (sn + p) / qc
+            LET p2 AS S64 = b * qc - p
+            LET q2 AS S64 = qp + b * (p - p2)
+            IF p2 = p THEN
+                mq[1] = qc
+                RETURN
+            END IF
+            p = p2
+            qp = qc
+            qc = q2
+        END WHILE
+    END PROCEDURE
+
+    FUNCTION Raw(nn AS S64) AS S64
+        -- SQUFOF on nn (odd, nonsquare); returns candidate divisor of nn
+        LET sn AS S64 = Isqrt(nn)
+        LET p AS S64 = sn
+        LET qp AS S64 = 1
+        LET qc AS S64 = nn - sn * sn
+        LET it AS S64 = 0
+        LET s AS S64 = 0
+        WHILE it < 100000 ANDALSO s = 0
+            it = it + 1
+            LET b AS S64 = (sn + p) / qc
+            LET p2 AS S64 = b * qc - p
+            LET q2 AS S64 = qp + b * (p - p2)
+            p = p2
+            qp = qc
+            qc = q2
+            IF it MOD 2 = 1 THEN
+                LET r AS S64 = Isqrt(qc)
+                IF r * r = qc ANDALSO r > 1 THEN s = r END IF
+            END IF
+        END WHILE
+        IF s = 0 THEN RETURN 0 END IF
+        -- second cycle seeded with last P of forward cycle
+        Raw2(nn, sn, s, p)
+        RETURN mq[1]
+    END FUNCTION
+
+    FUNCTION Squfof(n AS S64) AS S64
+        IF n MOD 2 = 0 THEN RETURN 2 END IF
+        ms[1] = 1
+        ms[2] = 3
+        ms[3] = 5
+        ms[4] = 7
+        ms[5] = 11
+        ms[6] = 13
+        ms[7] = 15
+        ms[8] = 17
+        ms[9] = 19
+        ms[10] = 21
+        FOR i = 1 TO 10
+            LET mm AS S64 = n * ms[i]
+            LET rr AS S64 = Isqrt(mm)
+            IF rr * rr <> mm THEN
+                LET f AS S64 = Raw(mm)
+                IF f > 1 THEN
+                    LET g AS S64 = Gcd(f, n)
+                    IF g > 1 ANDALSO g < n THEN RETURN g END IF
+                END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        tt[1] = 2501
+        tt[2] = 12851
+        tt[3] = 13289
+        tt[4] = 75301
+        tt[5] = 11111
+        tt[6] = 120787
+        FOR i = 1 TO 6
+            LET f AS S64 = Squfof(tt[i])
+            IF f > 1 ANDALSO f < tt[i] ANDALSO tt[i] MOD f = 0 THEN
+                PRINT tt[i] | " = " | f | " * " | tt[i] / f
+            ELSE
+                PRINT tt[i] | " squfof failed"
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sq
+BEGIN
+    Sq.Run()
+END

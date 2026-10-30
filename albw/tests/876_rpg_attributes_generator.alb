@@ -1,0 +1,38 @@
+-- 876 | RPG attributes generator: roll six attributes using
+-- "4d6 drop lowest", seeded RNG, print them in order.
+DECLARE MODULE Ra
+    FUNCTION D6() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ra
+    STRICT sd[1] AS S64
+
+    FUNCTION D6() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 6 + 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 2024
+        LET tot AS S64 = 0
+        FOR a = 1 TO 6
+            LET lo AS S64 = 7
+            LET s AS S64 = 0
+            FOR d = 1 TO 4
+                LET r AS S64 = D6()
+                s = s + r
+                IF r < lo THEN lo = r END IF
+            END FOR
+            LET v AS S64 = s - lo
+            tot = tot + v
+            PRINT "attr" | a | ": " | v
+        END FOR
+        PRINT "total=" | tot
+    END PROCEDURE
+END MODULE
+
+IMPORT Ra
+BEGIN
+    Ra.Run()
+END

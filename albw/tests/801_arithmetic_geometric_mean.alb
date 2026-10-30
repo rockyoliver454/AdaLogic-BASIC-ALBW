@@ -1,0 +1,13 @@
+-- 016 | Arithmetic-geometric mean -- iterate a=(a+g)/2, g=sqrt(a*g) to convergence
+BEGIN
+    LET a AS F64 = 1.0
+    LET g AS F64 = 0.7071067811865476
+    LET eps AS F64 = 0.0000000001
+    LET next_a AS F64 = 0.0
+    WHILE (a - g) > eps OR (g - a) > eps
+        next_a = (a + g) / 2.0
+        g = (a * g) ^ 0.5
+        a = next_a
+    END WHILE
+    PRINT a
+END

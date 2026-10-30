@@ -1,0 +1,74 @@
+-- 847 | ADFGVX cipher: Polybius square (6x6 keyed on
+-- ADFGVX) + columnar transposition. Encrypt a message.
+DECLARE MODULE Ad
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ad
+    STRICT sq[36] AS S64
+    STRICT col[16] AS S64
+    STRICT ord2[16] AS S64
+
+    FUNCTION Idx(c AS S64) AS S64
+        -- index of char c in square, or -1
+        FOR i = 1 TO 36
+            IF sq[i] = c THEN RETURN i END IF
+        END FOR
+        RETURN 0 - 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- square: "BTALPDHOZKQFVSNGICUXMREW Y"? use classic:
+        -- alphabet+ digits, keyed order A-Z0-9 standard polybius
+        LET alph AS STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        FOR i = 1 TO 36
+            sq[i] = ASC(MID$(alph, i, 1))
+        END FOR
+        LET lab AS STRING = "ADFGVX"
+        LET msg AS STRING = "ATTACKAT1200"
+        -- polybius encode -> label pairs
+        LET pe AS STRING = ""
+        FOR i = 1 TO LEN(msg)
+            LET ix AS S64 = Idx(ASC(MID$(msg, i, 1)))
+            IF ix > 0 THEN
+                LET r AS S64 = (ix - 1) / 6
+                LET c AS S64 = (ix - 1) MOD 6
+                pe = pe | MID$(lab, r + 1, 1) | MID$(lab, c + 1, 1)
+            END IF
+        END FOR
+        PRINT "polybius: " | pe
+        -- columnar transposition with ky "CARGO"
+        LET ky AS STRING = "CARGO"
+        LET nk AS S64 = LEN(ky)
+        -- order columns by ky letter (stable sort of indices)
+        FOR i = 1 TO nk
+            ord2[i] = i
+        END FOR
+        FOR i = 1 TO nk - 1
+            FOR j = 1 TO nk - i
+                IF ASC(MID$(ky, ord2[j], 1)) > ASC(MID$(ky, ord2[j + 1], 1)) THEN
+                    LET t AS S64 = ord2[j]
+                    ord2[j] = ord2[j + 1]
+                    ord2[j + 1] = t
+                END IF
+            END FOR
+        END FOR
+        -- read down each column in ky order
+        LET rs AS STRING = ""
+        LET n AS S64 = LEN(pe)
+        FOR i = 1 TO nk
+            LET c AS S64 = ord2[i]
+            LET k AS S64 = c
+            WHILE k <= n
+                rs = rs | MID$(pe, k, 1)
+                k = k + nk
+            END WHILE
+        END FOR
+        PRINT "cipher: " | rs
+    END PROCEDURE
+END MODULE
+
+IMPORT Ad
+BEGIN
+    Ad.Run()
+END

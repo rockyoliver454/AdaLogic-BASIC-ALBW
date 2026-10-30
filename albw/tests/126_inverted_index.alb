@@ -1,0 +1,28 @@
+-- 126 | Inverted index: word -> document positions.
+BEGIN
+    STRICT doc[6] AS STRING;
+    doc[0]="the"; doc[1]="cat"; doc[2]="sat"; doc[3]="the"; doc[4]="cat"; doc[5]="ran";
+    STRICT seen[6] AS STRING;
+    LET nseen AS S32 = 0;
+    FOR i = 0 TO 5
+        LET known AS S32 = 0;
+        FOR k = 0 TO nseen - 1
+            IF seen[k] = doc[i] THEN
+                known = 1;
+            END IF
+        END FOR
+        IF known = 0 THEN
+            seen[nseen] = doc[i];
+            nseen = nseen + 1;
+        END IF
+    END FOR
+    FOR k = 0 TO nseen - 1
+        LET row AS STRING = seen[k] | ":";
+        FOR i = 0 TO 5
+            IF doc[i] = seen[k] THEN
+                row = row | " " | i;
+            END IF
+        END FOR
+        PRINT$ row;
+    END FOR
+END

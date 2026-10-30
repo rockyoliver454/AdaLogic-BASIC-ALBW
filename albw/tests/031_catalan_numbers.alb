@@ -1,0 +1,9 @@
+BEGIN
+    LET n = 0
+    LET c = 1
+    WHILE n <= 9
+        PRINT$ c
+        c = (c * 2 * (2 * n + 1)) / (n + 2)
+        n = n + 1
+    END WHILE
+END

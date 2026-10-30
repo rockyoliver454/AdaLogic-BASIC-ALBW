@@ -1,0 +1,111 @@
+-- 840 | LZW compression: compress "TOBEORNOTTOBEORTOBEORNOT"
+-- (ASCII alphabet), print the code stream, then decode back.
+DECLARE MODULE Lz
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lz
+    STRICT dic[600] AS S64     -- dict entry -> string id? store prefix+char
+    STRICT dpre[600] AS S64    -- prefix code index
+    STRICT dch[600] AS S64     -- appended char
+    STRICT outc[600] AS S64    -- output code stream
+    STRICT ncode[1] AS S64
+    STRICT ndic[1] AS S64
+    STRICT stk[600] AS S64
+
+    FUNCTION Lk(pc AS S64, ch AS S64) AS S64
+        FOR i = 257 TO ndic[1]
+            IF dpre[i] = pc ANDALSO dch[i] = ch THEN RETURN i END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET msg AS STRING = "TOBEORNOTTOBEORTOBEORNOT"
+        -- init dict 1..256 single chars
+        FOR i = 1 TO 256
+            dpre[i] = 0
+            dch[i] = 0
+        END FOR
+        ndic[1] = 256
+        ncode[1] = 0
+        -- encode
+        LET pc AS S64 = 0
+        LET i AS S64 = 1
+        WHILE i <= LEN(msg)
+            LET ch AS S64 = ASC(MID$(msg, i, 1))
+            IF pc = 0 THEN
+                pc = ch
+            ELSE
+                LET f AS S64 = Lk(pc, ch)
+                IF f > 0 THEN
+                    pc = f
+                ELSE
+                    ncode[1] = ncode[1] + 1
+                    outc[ncode[1]] = pc
+                    ndic[1] = ndic[1] + 1
+                    dpre[ndic[1]] = pc
+                    dch[ndic[1]] = ch
+                    pc = ch
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        ncode[1] = ncode[1] + 1
+        outc[ncode[1]] = pc
+        LET s AS STRING = "codes:"
+        FOR i = 1 TO ncode[1]
+            s = s | " " | outc[i]
+        END FOR
+        PRINT s
+        -- decode
+        LET dec AS STRING = ""
+        LET prev AS S64 = 0
+        FOR i = 1 TO ncode[1]
+            LET cd AS S64 = outc[i]
+            -- expand code cd into stack (reverse)
+            LET top AS S64 = 0
+            LET cur AS S64 = cd
+            IF cur > ndic[1] THEN
+                -- code not in dict: = expand(prev)+first(prev)
+                top = top + 1
+                LET t AS S64 = prev
+                WHILE t > 256
+                    top = top + 1
+                    stk[top] = dch[t]
+                    t = dpre[t]
+                END WHILE
+                top = top + 1
+                stk[top] = t
+                cur = prev
+            ELSE
+                WHILE cur > 256
+                    top = top + 1
+                    stk[top] = dch[cur]
+                    cur = dpre[cur]
+                END WHILE
+                top = top + 1
+                stk[top] = cur
+            END IF
+            -- pop stack into dec, remember first char
+            LET fc AS S64 = stk[top]
+            WHILE top > 0
+                dec = dec | CHR(stk[top])
+                top = top - 1
+            END WHILE
+            -- add prev+fc to dict
+            IF prev > 0 THEN
+                ndic[1] = ndic[1] + 1
+                dpre[ndic[1]] = prev
+                dch[ndic[1]] = fc
+            END IF
+            prev = cd
+        END FOR
+        PRINT "decoded=" | dec
+    END PROCEDURE
+END MODULE
+
+IMPORT Lz
+BEGIN
+    Lz.Run()
+END

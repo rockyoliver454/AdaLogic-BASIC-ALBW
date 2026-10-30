@@ -1,0 +1,62 @@
+-- 526 | Cocktail sort with shifting bounds.
+DECLARE MODULE CockSB
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CockSB
+    STRICT a[10] AS S64
+
+    PROCEDURE Run()
+        a[1] = 23
+        a[2] = 45
+        a[3] = 12
+        a[4] = 87
+        a[5] = 34
+        a[6] = 56
+        a[7] = 11
+        a[8] = 90
+        a[9] = 64
+        a[10] = 38
+        LET lo AS S64 = 1
+        LET hi AS S64 = 10
+        LET done AS S32 = 0
+        WHILE done = 0
+            LET lastSwap AS S64 = lo
+            FOR i = lo TO hi - 1
+                IF a[i] > a[i + 1] THEN
+                    LET t AS S64 = a[i]
+                    a[i] = a[i + 1]
+                    a[i + 1] = t
+                    lastSwap = i
+                END IF
+            END FOR
+            hi = lastSwap
+            IF hi <= lo THEN done = 1 END IF
+            IF done = 0 THEN
+                LET lastSwap2 AS S64 = hi
+                LET j AS S64 = hi
+                WHILE j > lo
+                    IF a[j - 1] > a[j] THEN
+                        LET t2 AS S64 = a[j - 1]
+                        a[j - 1] = a[j]
+                        a[j] = t2
+                        lastSwap2 = j
+                    END IF
+                    j = j - 1
+                END WHILE
+                lo = lastSwap2
+                IF hi <= lo THEN done = 1 END IF
+            END IF
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO 10
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT CockSB
+BEGIN
+    CockSB.Run()
+END

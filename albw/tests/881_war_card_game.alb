@@ -1,0 +1,111 @@
+-- 881 | War card game: seeded shuffle, deal 26 each, play
+-- rounds; wars on ties. Cap rounds and report result.
+DECLARE MODULE War
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE War
+    STRICT sd[1] AS S64
+    STRICT dk[53] AS S64
+    STRICT p1[300] AS S64
+    STRICT p2[300] AS S64
+    STRICT pot[300] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 31337
+        FOR i = 1 TO 52
+            dk[i] = i - 1
+        END FOR
+        -- shuffle (Fisher-Yates via k loop)
+        FOR k = 1 TO 51
+            LET i AS S64 = 53 - k
+            LET j AS S64 = Nxt() MOD i + 1
+            LET t AS S64 = dk[i]
+            dk[i] = dk[j]
+            dk[j] = t
+        END FOR
+        LET h1 AS S64 = 1
+        LET t1 AS S64 = 27
+        LET h2 AS S64 = 1
+        LET t2 AS S64 = 27
+        FOR i = 1 TO 26
+            p1[i] = dk[i] MOD 13
+            p2[i] = dk[i + 26] MOD 13
+        END FOR
+        LET rounds AS S64 = 0
+        WHILE h1 < t1 ANDALSO h2 < t2 ANDALSO rounds < 500
+            rounds = rounds + 1
+            -- compact queues when tails near the end
+            IF t1 > 280 THEN
+                LET n1 AS S64 = 0
+                FOR i = h1 TO t1 - 1
+                    n1 = n1 + 1
+                    p1[n1] = p1[i]
+                END FOR
+                h1 = 1
+                t1 = n1 + 1
+            END IF
+            IF t2 > 280 THEN
+                LET n2 AS S64 = 0
+                FOR i = h2 TO t2 - 1
+                    n2 = n2 + 1
+                    p2[n2] = p2[i]
+                END FOR
+                h2 = 1
+                t2 = n2 + 1
+            END IF
+            LET np AS S64 = 0
+            LET done AS S32 = 0
+            WHILE done = 0 ANDALSO np < 250
+                pot[np + 1] = p1[h1]
+                h1 = h1 + 1
+                pot[np + 2] = p2[h2]
+                h2 = h2 + 1
+                np = np + 2
+                IF p1[h1 - 1] <> p2[h2 - 1] THEN
+                    done = 1
+                ELSE
+                    -- war: each player burns a card if available
+                    IF h1 < t1 ANDALSO h2 < t2 THEN
+                        pot[np + 1] = p1[h1]
+                        h1 = h1 + 1
+                        pot[np + 2] = p2[h2]
+                        h2 = h2 + 1
+                        np = np + 2
+                    ELSE
+                        done = 1
+                    END IF
+                END IF
+            END WHILE
+            LET a AS S64 = pot[np - 1]
+            LET b AS S64 = pot[np]
+            IF a > b THEN
+                FOR i = 1 TO np
+                    p1[t1] = pot[i]
+                    t1 = t1 + 1
+                END FOR
+            END IF
+            IF b > a THEN
+                FOR i = 1 TO np
+                    p2[t2] = pot[i]
+                    t2 = t2 + 1
+                END FOR
+            END IF
+        END WHILE
+        PRINT "rounds=" | rounds
+        PRINT "p1 cards=" | (t1 - h1) | " p2 cards=" | (t2 - h2)
+        IF h1 >= t1 THEN PRINT "player 2 wins" END IF
+        IF h2 >= t2 THEN PRINT "player 1 wins" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT War
+BEGIN
+    War.Run()
+END

@@ -1,0 +1,21 @@
+-- 389 | Department numbers: police=7, sanitation+fire=5, all combos 1..7.
+DECLARE MODULE Dept
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dept
+    PROCEDURE Run()
+        FOR s = 1 TO 7
+            FOR f = 1 TO 7
+                IF s + f = 5 THEN
+                    PRINT "police=7 sanitation=" | s | " fire=" | f
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Dept
+BEGIN
+    Dept.Run()
+END

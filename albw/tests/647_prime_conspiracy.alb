@@ -1,0 +1,45 @@
+-- 647 | Prime conspiracy: consecutive-prime last-digit
+-- transition counts below 1000.
+DECLARE MODULE Pcon
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pcon
+    STRICT tt[10] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 0 TO 9
+            tt[i] = 0
+        END FOR
+        LET prev AS S64 = -1
+        FOR n = 2 TO 999
+            IF IsPrime(n) = 1 THEN
+                IF prev = 1 THEN tt[1] = tt[1] + 1 END IF
+                IF prev = 3 THEN tt[3] = tt[3] + 1 END IF
+                IF prev = 7 THEN tt[7] = tt[7] + 1 END IF
+                IF prev = 9 THEN tt[9] = tt[9] + 1 END IF
+                prev = n MOD 10
+            END IF
+        END FOR
+        PRINT "1-> " | tt[1]
+        PRINT "3-> " | tt[3]
+        PRINT "7-> " | tt[7]
+        PRINT "9-> " | tt[9]
+    END PROCEDURE
+END MODULE
+
+IMPORT Pcon
+BEGIN
+    Pcon.Run()
+END

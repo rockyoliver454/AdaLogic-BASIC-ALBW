@@ -1,0 +1,30 @@
+-- 407 | Thue-Morse sequence: first 60 bits (parity of binary digit sum).
+DECLARE MODULE ThueMorse
+    FUNCTION Bit(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ThueMorse
+    FUNCTION Bit(n AS S64) AS S32
+        LET p AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            p = p + m MOD 2
+            m = m / 2
+        END WHILE
+        RETURN p MOD 2
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 0 TO 59
+            s = s | Bit(n)
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT ThueMorse
+BEGIN
+    ThueMorse.Run()
+END

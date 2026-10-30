@@ -1,0 +1,36 @@
+-- 365 | Ludic numbers: sieve the natural numbers; first 25.
+DECLARE MODULE Ludic
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ludic
+    STRICT arr[1024] AS S64
+    PROCEDURE Run()
+        LET hi AS S64 = 500
+        FOR i = 0 TO 499
+            arr[i] = i + 1
+        END FOR
+        LET sz AS S64 = hi
+        LET s AS STRING = "1 "
+        LET found AS S32 = 1
+        WHILE sz > 1 ANDALSO found < 25
+            LET luc AS S64 = arr[1]
+            s = s | luc | " "
+            found = found + 1
+            LET wi AS S32 = 1
+            FOR i = 1 TO sz - 1
+                IF (i - 1) MOD luc <> 0 THEN
+                    arr[wi] = arr[i]
+                    wi = wi + 1
+                END IF
+            END FOR
+            sz = wi
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Ludic
+BEGIN
+    Ludic.Run()
+END

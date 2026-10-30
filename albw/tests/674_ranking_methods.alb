@@ -1,0 +1,34 @@
+-- 674 | Ranking methods: standard competition ranking with
+-- tied scores sharing a rank.
+DECLARE MODULE Rnk
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rnk
+    STRICT sc[6] AS S64
+    STRICT rk[6] AS S64
+
+    PROCEDURE Run()
+        sc[1] = 44
+        sc[2] = 66
+        sc[3] = 66
+        sc[4] = 55
+        sc[5] = 66
+        sc[6] = 44
+        FOR i = 1 TO 6
+            LET r AS S64 = 1
+            FOR j = 1 TO 6
+                IF sc[j] > sc[i] THEN r = r + 1 END IF
+            END FOR
+            rk[i] = r
+        END FOR
+        FOR k = 1 TO 6
+            PRINT sc[k] | " -> rank " | rk[k]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rnk
+BEGIN
+    Rnk.Run()
+END

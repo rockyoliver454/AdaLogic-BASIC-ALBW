@@ -1,0 +1,55 @@
+-- 751 | Parsing/RPN calculator algorithm: evaluate postfix
+-- "3 4 + 5 *" style strings.
+DECLARE MODULE Rpn
+    FUNCTION EvalRpn(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rpn
+    STRICT stk[20] AS S64
+
+    FUNCTION EvalRpn(s AS STRING) AS S64
+        LET sp AS S64 = 0
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(s)
+        WHILE i <= n
+            LET c AS STRING = MID$(s, i, 1)
+            IF ASC(c) >= 48 ANDALSO ASC(c) <= 57 THEN
+                LET v AS S64 = 0
+                WHILE i <= n ANDALSO ASC(MID$(s, i, 1)) >= 48 ANDALSO ASC(MID$(s, i, 1)) <= 57
+                    v = v * 10 + ASC(MID$(s, i, 1)) - 48
+                    i = i + 1
+                END WHILE
+                sp = sp + 1
+                stk[sp] = v
+            ELSE
+            IF c = "+" ORELSE c = "-" ORELSE c = "*" ORELSE c = "/" THEN
+                LET b AS S64 = stk[sp]
+                sp = sp - 1
+                LET a AS S64 = stk[sp]
+                sp = sp - 1
+                LET r AS S64 = 0
+                IF c = "+" THEN r = a + b END IF
+                IF c = "-" THEN r = a - b END IF
+                IF c = "*" THEN r = a * b END IF
+                IF c = "/" THEN r = a / b END IF
+                sp = sp + 1
+                stk[sp] = r
+            END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN stk[sp]
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT EvalRpn("3 4 + 5 *")
+        PRINT EvalRpn("10 2 / 3 +")
+        PRINT EvalRpn("7 2 3 * -")
+    END PROCEDURE
+END MODULE
+
+IMPORT Rpn
+BEGIN
+    Rpn.Run()
+END

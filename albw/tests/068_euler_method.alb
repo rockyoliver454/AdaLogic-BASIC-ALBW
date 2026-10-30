@@ -1,0 +1,12 @@
+-- 068 | Euler method: integrate y' = -y (exact y(1) = 1/e).
+BEGIN
+    LET y AS F64 = 1.0;
+    LET h AS F64 = 0.001;
+    LET t AS F64 = 0.0;
+    WHILE t < 1.0
+        y = y + h * (0.0 - y);
+        t = t + h;
+    END WHILE
+    PRINT$ "euler: " | y;
+    PRINT$ "exact: " | EXP(-1.0);
+END

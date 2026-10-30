@@ -1,0 +1,34 @@
+-- 477 | Klarner-Rado sequence: first 40 terms — closure of {1} under
+-- x -> 2x+1 and x -> 3x+1, sorted.
+DECLARE MODULE KR
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE KR
+    STRICT a[41] AS S64
+
+    PROCEDURE Run()
+        a[1] = 1
+        LET p2 AS S64 = 1
+        LET p3 AS S64 = 1
+        FOR n = 2 TO 40
+            LET v2 AS S64 = 2 * a[p2] + 1
+            LET v3 AS S64 = 3 * a[p3] + 1
+            LET nxt AS S64 = v2
+            IF v3 < v2 THEN nxt = v3 END IF
+            IF nxt = v2 THEN p2 = p2 + 1 END IF
+            IF nxt = v3 THEN p3 = p3 + 1 END IF
+            a[n] = nxt
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 1 TO 40
+            s = s | a[i] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT KR
+BEGIN
+    KR.Run()
+END

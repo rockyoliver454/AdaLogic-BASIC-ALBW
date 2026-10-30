@@ -1,0 +1,37 @@
+-- 226 | Loops with multiple ranges: translate the PL/I ranges in sequence.
+BEGIN
+    LET total AS S64 = 0
+    LET product AS S64 = 1
+
+    FOR j = -3 TO 3 ^ 3 STEP 3
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = -7 TO 7 STEP 5
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = 555 TO 555
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = 22 TO -28 STEP -3
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = 1927 TO 1939
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = 5 TO -5 STEP -2
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+    FOR j = 11 ^ 5 TO 11 ^ 5 + 1
+        total = total + ABS(j)
+        IF ABS(product) < 2 ^ 27 ANDALSO j <> 0 THEN product = product * j END IF
+    END FOR
+
+    PRINT "sum = " | total
+    PRINT "product = " | product
+END

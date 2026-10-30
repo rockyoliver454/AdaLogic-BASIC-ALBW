@@ -1,0 +1,48 @@
+VERSION 1.0
+
+STRICT keys[8] AS STRING
+STRICT vals[8] AS STRING
+
+LET nk AS S64 = 0
+
+PROCEDURE ParseLine(ln AS STRING)
+    LET i AS S64 = 1
+    WHILE i <= LEN(ln)
+        IF MID$(ln, i, 1) = "=" THEN
+            keys[nk] = LEFT$(ln, i - 1)
+            vals[nk] = MID$(ln, i + 1, LEN(ln) - i)
+            nk = nk + 1
+            RETURN
+        END IF
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+BEGIN
+    LET h AS S64 = OPEN("cfg.ini", "w")
+    WRITE h, "host=example.com" | CHR(10) | "port=8080" | CHR(10) | "debug=true" | CHR(10)
+    CLOSE h
+
+    LET r AS S64 = OPEN("cfg.ini", "r")
+    LET whole AS STRING = READ(r, FILELEN("cfg.ini"))
+    CLOSE r
+    whole = whole | CHR(10)
+
+    LET start AS S64 = 1
+    LET i AS S64 = 1
+    WHILE i <= LEN(whole)
+        IF ASC(MID$(whole, i, 1)) = 10 THEN
+            LET ln AS STRING = MID$(whole, start, i - start)
+            ParseLine(ln)
+            start = i + 1
+        END IF
+        i = i + 1
+    END WHILE
+
+    PRINT "entries=" | nk
+    i = 0
+    WHILE i < nk
+        PRINT keys[i] | " -> " | vals[i]
+        i = i + 1
+    END WHILE
+END

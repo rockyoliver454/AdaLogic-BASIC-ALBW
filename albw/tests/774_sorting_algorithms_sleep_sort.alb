@@ -1,0 +1,38 @@
+-- 774 | Sorting algorithms/Sleep sort: each value sleeps
+-- proportional to its size then reports. Simulated
+-- deterministically with a tick clock.
+DECLARE MODULE Ss
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ss
+    STRICT vv[12] AS S64
+    STRICT dn[12] AS S32
+
+    PROCEDURE Run()
+        vv[1] = 5
+        vv[2] = 1
+        vv[3] = 9
+        vv[4] = 3
+        vv[5] = 7
+        vv[6] = 2
+        vv[7] = 8
+        LET mx AS S64 = 0
+        FOR i = 1 TO 7
+            IF vv[i] > mx THEN mx = vv[i] END IF
+        END FOR
+        FOR t = 1 TO mx
+            FOR i = 1 TO 7
+                IF dn[i] = 0 ANDALSO vv[i] <= t THEN
+                    PRINT "t=" | t | " woke " | vv[i]
+                    dn[i] = 1
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ss
+BEGIN
+    Ss.Run()
+END

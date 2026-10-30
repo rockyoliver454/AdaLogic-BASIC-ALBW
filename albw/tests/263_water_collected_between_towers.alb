@@ -1,0 +1,99 @@
+-- 263 | Water collected between towers: trapped water for seven bar charts.
+DECLARE MODULE Water
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Water
+    STRICT h[16] AS S32
+
+    FUNCTION Min2(a AS S32, b AS S32) AS S32
+        IF a < b THEN RETURN a END IF
+        RETURN b
+    END FUNCTION
+
+    FUNCTION Compute(count AS S32) AS S32
+        LET water AS S32 = 0
+        FOR i = 0 TO count - 1
+            LET left_max AS S32 = 0
+            FOR j = 0 TO i
+                IF h[j] > left_max THEN left_max = h[j] END IF
+            END FOR
+            LET right_max AS S32 = 0
+            FOR j = i TO count - 1
+                IF h[j] > right_max THEN right_max = h[j] END IF
+            END FOR
+            LET trapped AS S32 = Min2(left_max, right_max) - h[i]
+            IF trapped > 0 THEN water = water + trapped END IF
+        END FOR
+        RETURN water
+    END FUNCTION
+
+    PROCEDURE Run()
+        h[0] = 1
+        h[1] = 5
+        h[2] = 3
+        h[3] = 7
+        h[4] = 2
+        PRINT Compute(5)
+
+        h[0] = 5
+        h[1] = 3
+        h[2] = 7
+        h[3] = 2
+        h[4] = 6
+        h[5] = 4
+        h[6] = 5
+        h[7] = 9
+        h[8] = 1
+        h[9] = 2
+        PRINT Compute(10)
+
+        h[0] = 2
+        h[1] = 6
+        h[2] = 3
+        h[3] = 5
+        h[4] = 2
+        h[5] = 8
+        h[6] = 1
+        h[7] = 4
+        h[8] = 2
+        h[9] = 2
+        h[10] = 5
+        h[11] = 3
+        h[12] = 5
+        h[13] = 7
+        h[14] = 4
+        h[15] = 1
+        PRINT Compute(16)
+
+        h[0] = 5
+        h[1] = 5
+        h[2] = 5
+        h[3] = 5
+        PRINT Compute(4)
+
+        h[0] = 5
+        h[1] = 6
+        h[2] = 7
+        h[3] = 8
+        PRINT Compute(4)
+
+        h[0] = 8
+        h[1] = 7
+        h[2] = 7
+        h[3] = 6
+        PRINT Compute(4)
+
+        h[0] = 6
+        h[1] = 7
+        h[2] = 10
+        h[3] = 7
+        h[4] = 6
+        PRINT Compute(5)
+    END PROCEDURE
+END MODULE
+
+IMPORT Water
+BEGIN
+    Water.Run()
+END

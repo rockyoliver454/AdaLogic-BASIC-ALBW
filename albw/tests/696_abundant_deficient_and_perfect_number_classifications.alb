@@ -1,0 +1,39 @@
+-- 696 | Abundant, deficient and perfect number
+-- classifications: counts for n <= 20000 and the perfect list.
+DECLARE MODULE Adp
+    FUNCTION Sdiv(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Adp
+    FUNCTION Sdiv(n AS S64) AS S64
+        LET s AS S64 = 0
+        FOR d = 1 TO n / 2
+            IF n MOD d = 0 THEN s = s + d END IF
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET ab AS S64 = 0
+        LET df AS S64 = 0
+        LET pf AS S64 = 0
+        FOR n = 1 TO 20000
+            LET s AS S64 = Sdiv(n)
+            IF s > n THEN ab = ab + 1 END IF
+            IF s < n THEN df = df + 1 END IF
+            IF s = n THEN
+                pf = pf + 1
+                PRINT "perfect: " | n
+            END IF
+        END FOR
+        PRINT "abundant=" | ab
+        PRINT "deficient=" | df
+        PRINT "perfect=" | pf
+    END PROCEDURE
+END MODULE
+
+IMPORT Adp
+BEGIN
+    Adp.Run()
+END

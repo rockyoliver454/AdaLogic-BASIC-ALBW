@@ -1,0 +1,31 @@
+-- 257 | Sum of squares of a list of numbers.
+DECLARE MODULE SumSquares
+    FUNCTION SumOfSquares() AS S32
+END DECLARE MODULE
+
+MODULE SumSquares
+    STRICT arr[5] AS S32
+
+    FUNCTION SumOfSquares() AS S32
+        LET total AS S32 = 0
+        FOR i = 0 TO 4
+            LET v AS S32 = arr[i]
+            total = total + v * v
+        END FOR
+        RETURN total
+    END FUNCTION
+
+    PROCEDURE Init()
+        arr[0] = 1
+        arr[1] = 2
+        arr[2] = 3
+        arr[3] = 4
+        arr[4] = 5
+    END PROCEDURE
+END MODULE
+
+IMPORT SumSquares
+BEGIN
+    SumSquares.Init()
+    PRINT SumSquares.SumOfSquares()
+END

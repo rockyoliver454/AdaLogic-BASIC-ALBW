@@ -1,0 +1,16 @@
+-- 037 | Caesar cipher -- shift uppercase letters by 3, wrap A-Z
+BEGIN
+    LET plain AS STRING = "HELLO WORLD"
+    LET shift AS S32 = 3
+    LET cipher AS STRING = ""
+    LET i AS S32 = 0
+    FOR i = 0 TO LEN(plain) - 1
+        LET c AS S32 = ASC(MID$(plain, i + 1, 1))
+        IF c >= 65 AND c <= 90 THEN
+            c = 65 + ((c - 65 + shift) MOD 26)
+        END IF
+        cipher = cipher | CHR(c)
+    END FOR
+    PRINT$ cipher
+    PRINT$ ""
+END

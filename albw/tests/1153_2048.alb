@@ -1,0 +1,66 @@
+VERSION 1.0
+
+STRICT bd[16] AS S64
+STRICT tmp[4] AS S64
+STRICT mrg[4] AS S64
+
+LET score AS S64 = 0
+
+PROCEDURE SlideRow(r AS S64)
+    LET i AS S64 = 0
+    WHILE i < 4
+        tmp[i] = bd[r * 4 + i]
+        i = i + 1
+    END WHILE
+    LET p AS S64 = 0
+    i = 0
+    WHILE i < 4
+        bd[r * 4 + i] = 0
+        mrg[i] = 0
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < 4
+        IF tmp[i] > 0 THEN
+            IF p > 0 ANDALSO bd[r * 4 + p - 1] = tmp[i] ANDALSO mrg[p - 1] = 0 THEN
+                bd[r * 4 + p - 1] = bd[r * 4 + p - 1] * 2
+                score = score + bd[r * 4 + p - 1]
+                mrg[p - 1] = 1
+                tmp[i] = 0 - 1
+            ELSE
+                bd[r * 4 + p] = tmp[i]
+                p = p + 1
+            END IF
+        END IF
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+BEGIN
+    bd[0] = 2
+    bd[1] = 2
+    bd[4] = 4
+    bd[5] = 4
+    bd[8] = 2
+    bd[9] = 2
+    bd[10] = 8
+    bd[12] = 2
+    bd[13] = 2
+    bd[14] = 4
+    bd[15] = 0
+
+    score = 0
+    LET r AS S64 = 0
+    WHILE r < 4
+        SlideRow(r)
+        r = r + 1
+    END WHILE
+
+    r = 0
+    WHILE r < 4
+        PRINT bd[r * 4] | " " | bd[r * 4 + 1] | " " | bd[r * 4 + 2] | " " | bd[r * 4 + 3]
+        r = r + 1
+    END WHILE
+    PRINT "score=" | score
+END

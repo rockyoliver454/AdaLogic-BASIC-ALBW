@@ -1,0 +1,44 @@
+-- 486 | Hofstadter Figure-Figure sequences: first 40 of each.
+-- R(n) = smallest positive integer not yet used; S(n) = R(n)+R(n-1).
+DECLARE MODULE FigFig
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE FigFig
+    STRICT used[2000] AS S32
+    STRICT r[41] AS S64
+    STRICT s[41] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 1999
+            used[i] = 0
+        END FOR
+        s[1] = 1
+        r[1] = 2
+        used[1] = 1
+        used[2] = 1
+        FOR n = 2 TO 40
+            s[n] = s[n - 1] + r[n - 1]
+            used[s[n]] = 1
+            LET c AS S64 = r[n - 1] + 1
+            WHILE used[c] = 1
+                c = c + 1
+            END WHILE
+            r[n] = c
+            used[c] = 1
+        END FOR
+        LET rs AS STRING = ""
+        LET ss AS STRING = ""
+        FOR i2 = 1 TO 40
+            rs = rs | r[i2] | " "
+            ss = ss | s[i2] | " "
+        END FOR
+        PRINT "R: " | rs
+        PRINT "S: " | ss
+    END PROCEDURE
+END MODULE
+
+IMPORT FigFig
+BEGIN
+    FigFig.Run()
+END

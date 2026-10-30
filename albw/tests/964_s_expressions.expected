@@ -1,0 +1,12 @@
+(
+  (
+    atom data
+    str quoted text
+    atom 123
+    atom 4.5
+  (
+    atom more
+    (
+      atom a
+      atom b
+      atom c

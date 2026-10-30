@@ -1,0 +1,7 @@
+A <- root
+B <- A
+C <- B
+D <- B
+E <- A
+F <- E
+G <- F

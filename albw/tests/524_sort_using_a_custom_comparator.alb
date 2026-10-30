@@ -1,0 +1,54 @@
+-- 524 | Sort using a custom comparator: sort strings by length
+-- first, then byte-wise.
+DECLARE MODULE CustCmp
+    FUNCTION Less(x AS STRING, y AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CustCmp
+    STRICT a[8] AS STRING
+
+    FUNCTION Less(x AS STRING, y AS STRING) AS S32
+        LET xl AS S64 = LEN(x)
+        LET yl AS S64 = LEN(y)
+        IF xl <> yl THEN
+            IF xl < yl THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        FOR i = 1 TO xl
+            LET cx AS S64 = ASC(MID$(x, i, 1))
+            LET cy AS S64 = ASC(MID$(y, i, 1))
+            IF cx < cy THEN RETURN 1 END IF
+            IF cx > cy THEN RETURN 0 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = "bbb"
+        a[2] = "a"
+        a[3] = "cc"
+        a[4] = "dd"
+        a[5] = "bbb2"
+        a[6] = "ee"
+        a[7] = "aaa"
+        a[8] = "f"
+        FOR i = 2 TO 8
+            LET ky AS STRING = a[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO Less(ky, a[j]) = 1
+                a[j + 1] = a[j]
+                j = j - 1
+            END WHILE
+            a[j + 1] = ky
+        END FOR
+        FOR k = 1 TO 8
+            PRINT a[k]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT CustCmp
+BEGIN
+    CustCmp.Run()
+END

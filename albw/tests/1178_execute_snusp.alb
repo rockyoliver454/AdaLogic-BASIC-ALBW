@@ -1,0 +1,85 @@
+VERSION 1.0
+
+STRICT grid[4] AS STRING
+STRICT cell[16] AS S64
+LET outs AS STRING = ""
+
+
+BEGIN
+    grid[0] = "                                                                                                                                  "
+    grid[1] = "                                                                                                                                  "
+    grid[2] = "  $.+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+++++++++++.----------.---------------------------------.  "
+    grid[3] = "                                                                                                                                  "
+    LET i AS S64 = 0
+    WHILE i < 16
+        cell[i] = 0
+        i = i + 1
+    END WHILE
+
+    LET pcx AS S64 = 2
+    LET pcy AS S64 = 2
+    LET dx AS S64 = 1
+    LET dy AS S64 = 0
+    LET dp AS S64 = 0
+    LET steps AS S64 = 0
+    outs = ""
+    LET running AS S64 = 1
+
+    WHILE running = 1 ANDALSO steps < 3000
+        LET ins AS STRING = MID$(grid[pcy], pcx + 1, 1)
+        IF ins = "$" THEN
+        ELSE
+            IF ins = ">" THEN
+                dp = dp + 1
+            ELSE
+                IF ins = "<" THEN
+                    dp = dp - 1
+                ELSE
+                    IF ins = "+" THEN
+                        cell[dp] = cell[dp] + 1
+                    ELSE
+                        IF ins = "-" THEN
+                            cell[dp] = cell[dp] - 1
+                        ELSE
+                            IF ins = "." THEN
+                                outs = outs | CHR(cell[dp])
+                            ELSE
+                                IF ins = "!" THEN
+                                    pcx = pcx + dx
+                                    pcy = pcy + dy
+                                ELSE
+                                    IF ins = "?" THEN
+                                        IF cell[dp] = 0 THEN
+                                            pcx = pcx + dx
+                                            pcy = pcy + dy
+                                        END IF
+                                    ELSE
+                                        IF ins = "/" THEN
+                                            LET t AS S64 = dx
+                                            dx = 0 - dy
+                                            dy = 0 - t
+                                        ELSE
+                                            IF ins = "\" THEN
+                                                LET t AS S64 = dx
+                                                dx = dy
+                                                dy = t
+                                            END IF
+                                        END IF
+                                    END IF
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                END IF
+            END IF
+        END IF
+        pcx = pcx + dx
+        pcy = pcy + dy
+        IF pcx < 0 ORELSE pcx > 129 ORELSE pcy < 0 ORELSE pcy > 3 THEN
+            running = 0
+        END IF
+        steps = steps + 1
+    END WHILE
+    PRINT "snusp output: " | outs
+    PRINT "steps=" | steps
+END

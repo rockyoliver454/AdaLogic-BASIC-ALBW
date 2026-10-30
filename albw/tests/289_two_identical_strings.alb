@@ -1,0 +1,28 @@
+-- 289 | Two identical strings: byte-wise equality of string contents.
+BEGIN
+    STRICT pairs_a[3] AS STRING
+    STRICT pairs_b[3] AS STRING
+    pairs_a[0] = "abc"
+    pairs_b[0] = "abc"
+    pairs_a[1] = "abc"
+    pairs_b[1] = "abd"
+    pairs_a[2] = "abc"
+    pairs_b[2] = "abcd"
+
+    FOR p = 0 TO 2
+        LET a AS STRING = pairs_a[p]
+        LET b AS STRING = pairs_b[p]
+        LET same AS S32 = 1
+        IF LEN(a) <> LEN(b) THEN same = 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN same = 0 END IF
+        END FOR
+        LET out_line AS STRING = a | " " | b | " "
+        IF same = 1 THEN
+            out_line = out_line | "identical"
+        ELSE
+            out_line = out_line | "different"
+        END IF
+        PRINT out_line
+    END FOR
+END

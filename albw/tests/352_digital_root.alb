@@ -1,0 +1,40 @@
+-- 352 | Digital root: repeated digit summation until a single digit remains.
+DECLARE MODULE DigRoot
+    FUNCTION Root(n AS S64) AS S64
+    PROCEDURE Show(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DigRoot
+    FUNCTION Root(n AS S64) AS S64
+        LET m AS S64 = n
+        IF m < 0 THEN m = 0 - m END IF
+        WHILE m >= 10
+            LET s AS S64 = 0
+            WHILE m > 0
+                s = s + m MOD 10
+                m = m / 10
+            END WHILE
+            m = s
+        END WHILE
+        RETURN m
+    END FUNCTION
+
+    PROCEDURE Show(n AS S64)
+        PRINT n | " -> " | Root(n)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(627615)
+        Show(39390)
+        Show(588225)
+        Show(393900588225)
+        Show(0)
+        Show(9)
+    END PROCEDURE
+END MODULE
+
+IMPORT DigRoot
+BEGIN
+    DigRoot.Run()
+END

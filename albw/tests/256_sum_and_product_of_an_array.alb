@@ -1,0 +1,18 @@
+-- 256 | Sum and product of an array.
+BEGIN
+    STRICT nums[5] AS S32
+    LET i AS S32 = 0
+    FOR i = 0 TO 4
+        nums[i] = i + 1
+    END FOR
+
+    LET total AS S32 = 0
+    LET product AS S32 = 1
+    FOR i = 0 TO 4
+        total = total + nums[i]
+        product = product * nums[i]
+    END FOR
+
+    PRINT total
+    PRINT product
+END

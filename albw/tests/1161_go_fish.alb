@@ -1,0 +1,64 @@
+VERSION 1.0
+
+STRICT h1c[13] AS S64
+STRICT h2c[13] AS S64
+
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 4242
+    LET i AS S64 = 0
+    WHILE i < 52
+        LET card AS S64 = i MOD 13
+        IF i MOD 2 = 0 THEN
+            h1c[card] = h1c[card] + 1
+        ELSE
+            h2c[card] = h2c[card] + 1
+        END IF
+        i = i + 1
+    END WHILE
+
+    LET books1 AS S64 = 0
+    LET books2 AS S64 = 0
+    LET turn AS S64 = 1
+    LET asks AS S64 = 0
+    WHILE asks < 10
+        LET r AS S64 = Nxt() MOD 13
+        IF turn = 1 THEN
+            IF h1c[r] > 0 THEN
+                IF h2c[r] > 0 THEN
+                    h1c[r] = h1c[r] + h2c[r]
+                    h2c[r] = 0
+                    IF h1c[r] = 4 THEN books1 = books1 + 1 END IF
+                END IF
+            END IF
+            turn = 2
+        ELSE
+            IF h2c[r] > 0 THEN
+                IF h1c[r] > 0 THEN
+                    h2c[r] = h2c[r] + h1c[r]
+                    h1c[r] = 0
+                    IF h2c[r] = 4 THEN books2 = books2 + 1 END IF
+                END IF
+            END IF
+            turn = 1
+        END IF
+        asks = asks + 1
+    END WHILE
+    PRINT "p1 books=" | books1 | " p2 books=" | books2
+    LET h1t AS S64 = 0
+    LET h2t AS S64 = 0
+    i = 0
+    WHILE i < 13
+        h1t = h1t + h1c[i]
+        h2t = h2t + h2c[i]
+        i = i + 1
+    END WHILE
+    PRINT "p1 cards=" | h1t | " p2 cards=" | h2t
+END

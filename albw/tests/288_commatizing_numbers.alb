@@ -1,0 +1,101 @@
+-- 288 | Commatizing numbers: insert separators into the first numeric part of a string.
+DECLARE MODULE CommatizeMod
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CommatizeMod
+    FUNCTION GroupRight(ds AS STRING, period AS S32, sep AS STRING) AS STRING
+        LET n AS S32 = LEN(ds)
+        LET outp AS STRING = ""
+        FOR i = 1 TO n
+            outp = outp | MID$(ds, i, 1)
+            LET remaining AS S32 = n - i
+            IF remaining > 0 ANDALSO remaining MOD period = 0 THEN
+                outp = outp | sep
+            END IF
+        END FOR
+        RETURN outp
+    END FUNCTION
+
+    FUNCTION GroupLeft(ds AS STRING, period AS S32, sep AS STRING) AS STRING
+        LET n AS S32 = LEN(ds)
+        LET outp AS STRING = ""
+        FOR i = 1 TO n
+            IF i > 1 ANDALSO (i - 1) MOD period = 0 THEN
+                outp = outp | sep
+            END IF
+            outp = outp | MID$(ds, i, 1)
+        END FOR
+        RETURN outp
+    END FUNCTION
+
+    FUNCTION Commatize(s AS STRING, period AS S32, sep AS STRING) AS STRING
+        LET n AS S32 = LEN(s)
+        LET start AS S32 = 0
+        FOR i = 1 TO n
+            IF start = 0 THEN
+                LET c AS S32 = ASC(MID$(s, i, 1))
+                IF c >= 49 ANDALSO c <= 57 THEN start = i END IF
+            END IF
+        END FOR
+        IF start = 0 THEN RETURN s END IF
+
+        LET b AS S32 = start
+        WHILE b > 1 ANDALSO ASC(MID$(s, b - 1, 1)) = 48
+            b = b - 1
+        END WHILE
+        LET is_frac AS S32 = 0
+        IF b > 1 ANDALSO ASC(MID$(s, b - 1, 1)) = 46 THEN is_frac = 1 END IF
+
+        LET ip_end AS S32 = start
+        WHILE ip_end + 1 <= n ANDALSO ASC(MID$(s, ip_end + 1, 1)) >= 48 ANDALSO ASC(MID$(s, ip_end + 1, 1)) <= 57
+            ip_end = ip_end + 1
+        END WHILE
+
+        LET f_start AS S32 = 0
+        LET f_end AS S32 = ip_end
+        IF ip_end + 1 <= n ANDALSO ASC(MID$(s, ip_end + 1, 1)) = 46 THEN
+            f_start = ip_end + 2
+            f_end = ip_end + 1
+            WHILE f_end + 1 <= n ANDALSO ASC(MID$(s, f_end + 1, 1)) >= 48 ANDALSO ASC(MID$(s, f_end + 1, 1)) <= 57
+                f_end = f_end + 1
+            END WHILE
+        END IF
+
+        IF is_frac = 1 THEN
+            LET fp2 AS STRING = MID$(s, start, ip_end - start + 1)
+            RETURN LEFT$(s, start - 1) | GroupLeft(fp2, period, sep) | MID$(s, ip_end + 1, n - ip_end)
+        END IF
+
+        LET ip AS STRING = MID$(s, start, ip_end - start + 1)
+        LET newfield AS STRING = GroupRight(ip, period, sep)
+        IF f_start > 0 THEN
+            LET fp AS STRING = MID$(s, f_start, f_end - f_start + 1)
+            newfield = newfield | "." | GroupLeft(fp, period, sep)
+            RETURN LEFT$(s, start - 1) | newfield | MID$(s, f_end + 1, n - f_end)
+        END IF
+        RETURN LEFT$(s, start - 1) | newfield | MID$(s, ip_end + 1, n - ip_end)
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Commatize("123456789.123456789", 2, "*")
+        PRINT Commatize(".123456789", 3, "-")
+        PRINT Commatize("57256.1D-4", 4, "__")
+        PRINT Commatize("pi=3.14159265358979323846264338327950288419716939937510582097494459231", 5, " ")
+        PRINT Commatize("The author has two Z$100000000000000 Zimbabwe notes (100 trillion).", 3, ".")
+        PRINT Commatize("-in Aus$+1411.8millions", 3, ",")
+        PRINT Commatize("===US$0017440 millions=== (in 2000 dollars)", 3, ",")
+        PRINT Commatize("123.e8000 is pretty big.", 3, ",")
+        PRINT Commatize("The land area of the earth is 57268900(29% of the surface) square miles.", 3, ",")
+        PRINT Commatize("Ain't no numbers in this here words, nohow, no way, Jose.", 3, ",")
+        PRINT Commatize("James was never known as 0000000007", 3, ",")
+        PRINT Commatize("Arthur Eddington wrote: I believe there are 15747724136275002577605653961181555468044717914527116709366231425076185631031296 protons in the universe.", 3, ",")
+        PRINT Commatize("   $-140000" | CHR(194) | CHR(177) | "100 millions.", 3, ",")
+        PRINT Commatize("6/9/1946 was a good year for some.", 3, ",")
+    END PROCEDURE
+END MODULE
+
+IMPORT CommatizeMod
+BEGIN
+    CommatizeMod.Run()
+END

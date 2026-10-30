@@ -1,0 +1,43 @@
+-- 939 | Numerical integration/Tanh-Sinh quadrature:
+-- transform [-1,1] -> R via sinh; integrate f(x)=x on
+-- transformed domain to verify against known value 0.
+-- Use the RC demo: integrate exp(x) over [0,1] is common;
+-- we do integral of 1/sqrt(1-x^2) over (-1,1) -> pi.
+DECLARE MODULE Ts
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ts
+    PROCEDURE Run()
+        -- x = tanh(pi/2 * sinh(t)); dx/dt = pi/2*cosh(t)/cosh^2(...)
+        -- integrate f(x)=1/sqrt(1-x^2) -> pi
+        LET h AS F64 = 0.05
+        LET s AS F64 = 0.0
+        LET k AS S64 = 0 - 160
+        WHILE k <= 160
+            LET kf AS F64 = k * 1.0
+            LET t AS F64 = kf * h
+            LET sh AS F64 = (EXP(t) - EXP(0.0 - t)) / 2.0
+            LET ch AS F64 = (EXP(t) + EXP(0.0 - t)) / 2.0
+            LET u AS F64 = 1.5707963267948966 * sh
+            LET eu AS F64 = EXP(u)
+            LET eiu AS F64 = EXP(0.0 - u)
+            LET x AS F64 = (eu - eiu) / (eu + eiu)
+            -- weight dx/dt = pi/2 cosh(t) / cosh(u)^2
+            LET chu AS F64 = (eu + eiu) / 2.0
+            LET wt AS F64 = 1.5707963267948966 * ch / (chu * chu)
+            LET dd AS F64 = 1.0 - x * x
+            IF dd > 0.000000000001 THEN
+                s = s + wt / SQRT(dd)
+            END IF
+            k = k + 1
+        END WHILE
+        PRINT "integral=" | s * h
+        PRINT "pi      =3.141593"
+    END PROCEDURE
+END MODULE
+
+IMPORT Ts
+BEGIN
+    Ts.Run()
+END

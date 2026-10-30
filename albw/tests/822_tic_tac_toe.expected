@@ -1,0 +1,10 @@
+move1 player1 cell1
+move2 player2 cell5
+move3 player1 cell2
+move4 player2 cell3
+move5 player1 cell7
+move6 player2 cell4
+move7 player1 cell6
+move8 player2 cell8
+move9 player1 cell9
+draw

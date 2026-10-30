@@ -1,0 +1,30 @@
+-- 364 | Motzkin numbers: first 15 via M(n) = M(n-1) + sum M(k)M(n-2-k).
+DECLARE MODULE Motzkin
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Motzkin
+    STRICT m[16] AS S64
+
+    PROCEDURE Run()
+        m[0] = 1
+        m[1] = 1
+        FOR n = 2 TO 14
+            LET s AS S64 = m[n - 1]
+            FOR k = 0 TO n - 2
+                s = s + m[k] * m[n - 2 - k]
+            END FOR
+            m[n] = s
+        END FOR
+        LET res AS STRING = ""
+        FOR n = 0 TO 14
+            res = res | m[n] | " "
+        END FOR
+        PRINT res
+    END PROCEDURE
+END MODULE
+
+IMPORT Motzkin
+BEGIN
+    Motzkin.Run()
+END

@@ -1,0 +1,35 @@
+-- 891 | FASTA format: parse embedded FASTA records, print
+-- each record's header, length and GC content percent.
+DECLARE MODULE Fa
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fa
+    STRICT hd[4] AS STRING
+    STRICT sq[4] AS STRING
+
+    PROCEDURE Run()
+        -- two records; records live in parallel arrays.
+        hd[1] = "seq1 alpha"
+        sq[1] = "GCGCGCATGCATTCGATCGATCGATCG"
+        hd[2] = "seq2 beta"
+        sq[2] = "ATATATATGGGGCCCCAAAA"
+        LET nr AS S64 = 2
+        FOR i = 1 TO nr
+            LET s AS STRING = sq[i]
+            LET gc AS S64 = 0
+            FOR j = 1 TO LEN(s)
+                LET c AS S64 = ASC(MID$(s, j, 1))
+                IF c = 71 ORELSE c = 67 THEN gc = gc + 1 END IF
+            END FOR
+            LET pct AS S64 = (gc * 1000 / LEN(s) + 5) / 10
+            PRINT ">" | hd[i]
+            PRINT "len=" | LEN(s) | " gc=" | pct | "%"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fa
+BEGIN
+    Fa.Run()
+END

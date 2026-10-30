@@ -1,0 +1,32 @@
+-- 375 | Twin primes: pairs (p, p+2) with both prime, below 300.
+DECLARE MODULE Twin
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Twin
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR p = 3 TO 297
+            IF IsPrime(p) = 1 ANDALSO IsPrime(p + 2) = 1 THEN
+                PRINT "(" | p | ", " | (p + 2) | ")"
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Twin
+BEGIN
+    Twin.Run()
+END

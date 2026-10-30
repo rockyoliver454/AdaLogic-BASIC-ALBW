@@ -1,0 +1,34 @@
+-- 235 | Queue/Definition: fixed-capacity circular FIFO storage.
+DECLARE MODULE IntQueue
+    PROCEDURE Initialize()
+    FUNCTION Count() AS S32
+    FUNCTION Capacity() AS S32
+END DECLARE MODULE
+
+MODULE IntQueue
+    STRICT items[8] AS S32
+    LET head_pos AS S32 = 0
+    LET tail_pos AS S32 = 0
+    LET item_count AS S32 = 0
+
+    PROCEDURE Initialize()
+        head_pos = 0
+        tail_pos = 0
+        item_count = 0
+    END PROCEDURE
+
+    FUNCTION Count() AS S32
+        RETURN item_count
+    END FUNCTION
+
+    FUNCTION Capacity() AS S32
+        RETURN 8
+    END FUNCTION
+END MODULE
+
+IMPORT IntQueue
+BEGIN
+    IntQueue.Initialize()
+    PRINT "count = " | IntQueue.Count()
+    PRINT "capacity = " | IntQueue.Capacity()
+END

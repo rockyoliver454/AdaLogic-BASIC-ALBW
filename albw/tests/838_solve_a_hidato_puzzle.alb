@@ -1,0 +1,94 @@
+-- 838 | Solve a Hidato puzzle: fill a 5x5 grid 1..25 so that
+-- consecutive numbers are adjacent in any of the 8 directions.
+-- Backtracking with givens.
+DECLARE MODULE Hd
+    FUNCTION Place(v AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hd
+    STRICT gd[26] AS S64
+    STRICT gv[26] AS S64
+    STRICT mvx[8] AS S64
+    STRICT mvy[8] AS S64
+
+    FUNCTION Place(v AS S64) AS S32
+        IF v > 25 THEN RETURN 1 END IF
+        IF gv[v] > 0 THEN
+            LET prev AS S64 = 0
+            FOR i = 1 TO 25
+                IF gd[i] = v - 1 THEN prev = i END IF
+            END FOR
+            LET pr AS S64 = (prev - 1) / 5
+            LET pc AS S64 = (prev - 1) MOD 5
+            LET tr AS S64 = (gv[v] - 1) / 5
+            LET tc AS S64 = (gv[v] - 1) MOD 5
+            LET dd AS S64 = ABS(pr - tr)
+            LET de AS S64 = ABS(pc - tc)
+            IF dd <= 1 ANDALSO de <= 1 ANDALSO dd + de > 0 ANDALSO gd[gv[v]] = 0 THEN
+                gd[gv[v]] = v
+                IF Place(v + 1) = 1 THEN RETURN 1 END IF
+                gd[gv[v]] = 0
+            END IF
+            RETURN 0
+        END IF
+        LET prev AS S64 = 0
+        FOR i = 1 TO 25
+            IF gd[i] = v - 1 THEN prev = i END IF
+        END FOR
+        LET pr AS S64 = (prev - 1) / 5
+        LET pc AS S64 = (prev - 1) MOD 5
+        FOR m = 1 TO 8
+            LET nr AS S64 = pr + mvx[m]
+            LET nc AS S64 = pc + mvy[m]
+            IF nr >= 0 ANDALSO nr < 5 ANDALSO nc >= 0 ANDALSO nc < 5 THEN
+                LET cell AS S64 = nr * 5 + nc + 1
+                IF gd[cell] = 0 THEN
+                    LET res AS S32 = 0
+                    FOR w = 1 TO 25
+                        IF gv[w] = cell THEN res = 1 END IF
+                    END FOR
+                    IF res = 0 THEN
+                        gd[cell] = v
+                        IF Place(v + 1) = 1 THEN RETURN 1 END IF
+                        gd[cell] = 0
+                    END IF
+                END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        mvx[1] = 0 - 1; mvx[2] = 0 - 1; mvx[3] = 0 - 1; mvx[4] = 0
+        mvx[5] = 0; mvx[6] = 1; mvx[7] = 1; mvx[8] = 1
+        mvy[1] = 0 - 1; mvy[2] = 0; mvy[3] = 1; mvy[4] = 0 - 1
+        mvy[5] = 1; mvy[6] = 0 - 1; mvy[7] = 0; mvy[8] = 1
+        FOR i = 1 TO 25
+            gd[i] = 0
+            gv[i] = 0
+        END FOR
+        gv[1] = 1
+        gv[13] = 13
+        gv[25] = 25
+        gd[1] = 1
+        IF Place(2) = 1 THEN
+            FOR r = 0 TO 4
+                LET s AS STRING = ""
+                FOR c = 0 TO 4
+                    LET v AS S64 = gd[r * 5 + c + 1]
+                    IF v < 10 THEN s = s | " " END IF
+                    s = s | v | " "
+                END FOR
+                PRINT s
+            END FOR
+        ELSE
+            PRINT "no solution"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Hd
+BEGIN
+    Hd.Run()
+END

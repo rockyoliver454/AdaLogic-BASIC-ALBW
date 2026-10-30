@@ -1,0 +1,20 @@
+VERSION 1.0
+
+BEGIN
+    LET a1 AS F64 = 1.0
+    LET a2 AS F64 = 1.0
+    LET a3 AS F64 = 1.0
+    LET s AS F64 = SQRT(a1 * a2 + a2 * a3 + a3 * a1)
+    LET kp AS F64 = a1 + a2 + a3 + 2.0 * s
+    LET km AS F64 = a1 + a2 + a3 - 2.0 * s
+    PRINT "inner r=" | (1.0 / kp)
+    PRINT "outer r=" | (0.0 - 1.0 / km)
+    LET b1 AS F64 = 0.2
+    LET b2 AS F64 = 0.25
+    LET b3 AS F64 = 0.5
+    LET s2 AS F64 = SQRT(b1 * b2 + b2 * b3 + b3 * b1)
+    LET kp2 AS F64 = b1 + b2 + b3 + 2.0 * s2
+    LET km2 AS F64 = b1 + b2 + b3 - 2.0 * s2
+    PRINT "case2 inner r=" | (1.0 / kp2)
+    PRINT "case2 outer r=" | (0.0 - 1.0 / km2)
+END

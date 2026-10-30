@@ -1,0 +1,34 @@
+-- 376 | Sexy primes: pairs (p, p+6) with both prime, below 100.
+DECLARE MODULE Sexy
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sexy
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR p = 2 TO 99
+            IF IsPrime(p) = 1 ANDALSO IsPrime(p + 6) = 1 THEN
+                s = s | "(" | p | "," | (p + 6) | ") "
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Sexy
+BEGIN
+    Sexy.Run()
+END

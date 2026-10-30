@@ -1,0 +1,12 @@
+VERSION 1.0
+
+BEGIN
+    LET body AS STRING = "entire file contents: the quick brown fox"
+    LET h AS S64 = OPEN("entire.txt", "w")
+    WRITE h, body
+    CLOSE h
+    PRINT "wrote len=" | FILELEN("entire.txt")
+    LET r AS S64 = OPEN("entire.txt", "r")
+    PRINT "readback=" | READ(r, FILELEN("entire.txt"))
+    CLOSE r
+END

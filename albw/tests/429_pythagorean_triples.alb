@@ -1,0 +1,35 @@
+-- 429 | Pythagorean triples: all triples a<b<c with a+b+c <= 120,
+-- plus count of all triples with perimeter <= 1000.
+DECLARE MODULE PyTri
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PyTri
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR a = 1 TO 40
+            FOR b = a + 1 TO 60
+                FOR c = b + 1 TO 120 - a - b
+                    IF a * a + b * b = c * c THEN
+                        s = s | "(" | a | "," | b | "," | c | ") "
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+        PRINT s
+        LET cnt AS S64 = 0
+        FOR a2 = 1 TO 332
+            FOR b2 = a2 + 1 TO 500
+                FOR c2 = b2 + 1 TO 1000 - a2 - b2
+                    IF a2 * a2 + b2 * b2 = c2 * c2 THEN cnt = cnt + 1 END IF
+                END FOR
+            END FOR
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT PyTri
+BEGIN
+    PyTri.Run()
+END

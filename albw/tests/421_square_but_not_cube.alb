@@ -1,0 +1,36 @@
+-- 421 | Square but not cube: first 15 squares that are not cubes.
+DECLARE MODULE SqNc
+    FUNCTION IsCube(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SqNc
+    FUNCTION IsCube(n AS S64) AS S32
+        LET c AS S64 = 1
+        WHILE c * c * c < n
+            c = c + 1
+        END WHILE
+        IF c * c * c = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET k AS S64 = 2
+        LET got AS S64 = 0
+        WHILE got < 15
+            LET sq AS S64 = k * k
+            IF IsCube(sq) = 0 THEN
+                s = s | sq | " "
+                got = got + 1
+            END IF
+            k = k + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT SqNc
+BEGIN
+    SqNc.Run()
+END

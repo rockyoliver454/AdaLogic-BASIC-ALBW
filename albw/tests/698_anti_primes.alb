@@ -1,0 +1,36 @@
+-- 698 | Anti-primes (highly composite numbers): n with more
+-- divisors than any smaller positive integer, first 20.
+DECLARE MODULE Ap
+    FUNCTION Tau(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ap
+    FUNCTION Tau(n AS S64) AS S64
+        LET c AS S64 = 0
+        FOR d = 1 TO n
+            IF n MOD d = 0 THEN c = c + 1 END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET best AS S64 = 0
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < 20
+            LET t AS S64 = Tau(n)
+            IF t > best THEN
+                best = t
+                PRINT n | " tau=" | t
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Ap
+BEGIN
+    Ap.Run()
+END

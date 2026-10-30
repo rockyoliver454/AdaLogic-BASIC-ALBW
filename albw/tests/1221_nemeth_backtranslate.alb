@@ -1,0 +1,96 @@
+-- 1221:  Nemeth back-translation (B1b)
+--  ToSource / FromBrf / FromUni decode the emitted cell grammar back
+--  to canonical math source;  re-transcribing must reproduce the
+--  identical cell stream (round-trip oracle).
+INCLUDE "nemeth.albi"
+IMPORT Nemeth
+
+STRICT oc[256] AS S64
+
+PROCEDURE RT(tag AS STRING, s AS STRING)
+    LET src AS STRING = ""
+    LET i AS S64 = 0
+    LET n1 AS S64 = 0
+    LET ok AS S64 = 1
+    CALL Nemeth.Transcribe(s)
+    n1 = Nemeth.Count()
+    i = 0
+    WHILE i < n1 AND i < 256
+        oc[i] = Nemeth.Cell(i)
+        i = i + 1
+    END WHILE
+    src = Nemeth.ToSource()
+    CALL Nemeth.Transcribe(src)
+    IF Nemeth.Count() <> n1 THEN ok = 0 END IF
+    i = 0
+    WHILE i < n1 AND i < Nemeth.Count() AND i < 256
+        IF Nemeth.Cell(i) <> oc[i] THEN ok = 0 END IF
+        i = i + 1
+    END WHILE
+    IF ok = 1 THEN
+        PRINT tag | " RT-OK  " | src
+    ELSE
+        PRINT tag | " RT-BAD " | src
+    END IF
+END PROCEDURE
+
+PROCEDURE ER(tag AS STRING, b AS STRING)
+    LET r AS STRING = ""
+    r = Nemeth.FromBrf(b)
+    PRINT tag | " '" | r | "' errs=" | Nemeth.ErrCount() | " first=" | Nemeth.ErrText(0)
+END PROCEDURE
+
+BEGIN
+    CALL RT("num", "12")
+    CALL RT("let", "x")
+    CALL RT("scr", "x^2")
+    CALL RT("sbs", "x_1")
+    CALL RT("mlx", "2x")
+    CALL RT("frc", "\frac{1}{x+1}")
+    CALL RT("nfr", "\frac{a}{\frac{b}{c}}")
+    CALL RT("sqr", "\sqrt{x}")
+    CALL RT("sq3", "\sqrt[3]{x}")
+    CALL RT("eq",  "x = 2")
+    CALL RT("grp", "(x+1)")
+    CALL RT("brk", "[x]")
+    CALL RT("flr", "\lfloor x \rfloor")
+    CALL RT("ang", "\langle x \rangle")
+    CALL RT("brc", "\{x\}")
+    CALL RT("bar", "|x|")
+    CALL RT("sum", "\sum_{i=0}^{n} i")
+    CALL RT("int", "\int_{a}^{b} f(x)")
+    CALL RT("bin", "\binom{n}{k}")
+    CALL RT("pm",  "x \pm y")
+    CALL RT("grk", "\alpha + \beta")
+    CALL RT("caw", "ABC + x")
+    CALL RT("thr", "a \therefore b")
+    CALL RT("lim", "\lim_{x\to0} f(x)")
+    CALL RT("prm", "x'")
+    CALL RT("mix", "1\frac{1}{2}")
+    CALL RT("mtx", "\begin{pmatrix} a & b \\ c & d \end{pmatrix}")
+    CALL RT("bmt", "\begin{bmatrix} x \\ y \end{bmatrix}")
+    CALL RT("css", "\begin{cases} a & b \\ c & d \end{cases}")
+    CALL RT("vmt", "\begin{vmatrix} a \\ b \end{vmatrix}")
+
+    --  alternate inputs:  BRF + Unicode cell text
+    CALL Nemeth.Transcribe("x^2 + y_1")
+    PRINT "brf->" | Nemeth.FromBrf(Nemeth.ToBrf())
+    PRINT "uni->" | Nemeth.FromUni(Nemeth.ToUni())
+
+    --  inline builtins (auto-weave) + capture re-read surface
+    LET ub AS STRING = UNBRF(";X^2")
+    LET uu AS STRING = UNUNI(NUNI("x+1"))
+    NEMETH AS bt
+x_1^2
+END NEMETH
+    PRINT "ub=" | ub
+    PRINT "uu=" | uu
+    PRINT "rsrc=" | bt.rsrc
+
+    --  error ledger:  malformed streams report, never guess
+    CALL ER("uncl", "(A")
+    CALL ER("stray", "A)")
+    CALL ER("line", "/")
+    CALL ER("badc", "A~")
+    CALL ER("clean", "A")
+END

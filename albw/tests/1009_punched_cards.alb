@@ -1,0 +1,44 @@
+-- 1009 | Punched cards: render an 80-column Hollerith card
+-- with zone (12/11/0) and digit (1-9) punches per character.
+DECLARE MODULE Pc
+    PROCEDURE Run()
+END DECLARE MODULE
+MODULE Pc
+    STRICT hol[972] AS S64
+    PROCEDURE Punch(ch AS S64, col AS S64)
+        LET z AS S64 = 0
+        LET dg AS S64 = 0
+        IF ch >= 48 ANDALSO ch <= 57 THEN
+            dg = ch - 48
+        ELSEIF ch >= 65 ANDALSO ch <= 73 THEN
+            z = 1; dg = ch - 64
+        ELSEIF ch >= 74 ANDALSO ch <= 82 THEN
+            z = 2; dg = ch - 73
+        ELSEIF ch >= 83 ANDALSO ch <= 90 THEN
+            z = 3; dg = ch - 82
+        END IF
+        IF z > 0 THEN hol[(z - 1) * 81 + col] = 1 END IF
+        hol[(dg + 2) * 81 + col] = 1
+    END PROCEDURE
+    PROCEDURE Run()
+        LET msg AS STRING = "FORTRAN 77 ROSETTA CODE"
+        LET n AS S64 = LEN(msg)
+        FOR i = 1 TO n
+            Punch(ASC(MID$(msg, i, 1)), i + 1)
+        END FOR
+        -- render rows 12, 11, 0, 1..9 -> STRICT rows 1..12
+        LET rl AS STRING = "XY0123456789"
+        FOR r = 1 TO 12
+            LET row AS STRING = MID$(rl, r, 1) | " "
+            FOR c = 1 TO 80
+                IF hol[(r - 1) * 81 + c] = 1 THEN row = row | "X" ELSE row = row | "." END IF
+            END FOR
+            PRINT row
+        END FOR
+        PRINT "text: " | msg
+    END PROCEDURE
+END MODULE
+IMPORT Pc
+BEGIN
+    Pc.Run()
+END

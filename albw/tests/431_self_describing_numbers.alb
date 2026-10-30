@@ -1,0 +1,57 @@
+-- 431 | Self-describing numbers: verify the five known members.
+DECLARE MODULE SelfD
+    FUNCTION DigitAt(n AS S64, pos AS S64, ndig AS S64) AS S64
+    FUNCTION NumDigits(n AS S64) AS S64
+    FUNCTION IsSelfDesc(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SelfD
+    FUNCTION NumDigits(n AS S64) AS S64
+        LET c AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            t = t / 10
+            c = c + 1
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    FUNCTION DigitAt(n AS S64, pos AS S64, ndig AS S64) AS S64
+        LET div AS S64 = 1
+        FOR i = 1 TO ndig - 1 - pos
+            div = div * 10
+        END FOR
+        RETURN (n / div) MOD 10
+    END FUNCTION
+
+    FUNCTION IsSelfDesc(n AS S64) AS S32
+        LET nd AS S64 = NumDigits(n)
+        FOR i = 0 TO nd - 1
+            LET d AS S64 = DigitAt(n, i, nd)
+            LET cnt AS S64 = 0
+            FOR j = 0 TO nd - 1
+                IF DigitAt(n, j, nd) = i THEN cnt = cnt + 1 END IF
+            END FOR
+            IF cnt <> d THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 50000
+            IF IsSelfDesc(n) = 1 THEN PRINT n END IF
+        END FOR
+        PRINT IsSelfDesc(1210)
+        PRINT IsSelfDesc(2020)
+        PRINT IsSelfDesc(21200)
+        PRINT IsSelfDesc(3211000)
+        PRINT IsSelfDesc(42101000)
+        PRINT IsSelfDesc(100000000)
+    END PROCEDURE
+END MODULE
+
+IMPORT SelfD
+BEGIN
+    SelfD.Run()
+END

@@ -1,0 +1,27 @@
+-- Rosetta: Mandelbrot set -- ASCII density plot over the escape
+-- iteration count, exercising f64 arithmetic in nested loops.
+BEGIN
+    LET chars AS STRING = " .:-=+*#%@"
+    FOR row = 0 TO 14
+        LET cy AS F64 = -1.0 + (row * 2.0) / 14.0
+        LET rline AS STRING = ""
+        FOR col = 0 TO 49
+            LET cx AS F64 = -2.0 + (col * 2.5) / 49.0
+            LET zx AS F64 = 0.0
+            LET zy AS F64 = 0.0
+            LET it AS S32 = 0
+            WHILE it < 80 AND zx * zx + zy * zy < 4.0
+                LET nx AS F64 = zx * zx - zy * zy + cx
+                zy = 2.0 * zx * zy + cy
+                zx = nx
+                it = it + 1
+            END WHILE
+            LET idx AS S32 = it / 9
+            IF idx > 9 THEN
+                idx = 9
+            END IF
+            rline = rline | MID$(chars, idx + 1, 1)
+        END FOR
+        PRINT$ rline
+    END FOR
+END

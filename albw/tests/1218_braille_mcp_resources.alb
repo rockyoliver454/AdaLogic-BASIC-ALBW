@@ -1,0 +1,17 @@
+-- 1218 | MCP: named BRAILLE/NEMETH captures self-register as
+-- alb://braille/<name> + alb://nemeth/<name> resources returning a
+-- JSON payload — an agent reads transcripts with zero user glue.
+MCP SERVER "alb-mcp-braille"
+    VERSION "0.1.0"
+END MCP
+
+BEGIN
+    BRAILLE AS poem
+The quick brown fox
+END BRAILLE
+    NEMETH AS mx
+x^2
+END NEMETH
+    MCP_PUMP
+    MCP_LISTEN
+END

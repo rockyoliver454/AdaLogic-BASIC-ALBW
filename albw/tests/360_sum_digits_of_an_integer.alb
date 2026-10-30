@@ -1,0 +1,35 @@
+-- 360 | Sum digits of an integer: in base 10, base 16 and base 2.
+DECLARE MODULE SumDig
+    FUNCTION SumInBase(n AS S64, b AS S64) AS S64
+    PROCEDURE Show(n AS S64, b AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SumDig
+    FUNCTION SumInBase(n AS S64, b AS S64) AS S64
+        LET s AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            s = s + m MOD b
+            m = m / b
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Show(n AS S64, b AS S64)
+        PRINT n | " base " | b | " -> " | SumInBase(n, b)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(1, 10)
+        Show(12345, 10)
+        Show(255, 16)
+        Show(255, 2)
+        Show(987654321, 10)
+    END PROCEDURE
+END MODULE
+
+IMPORT SumDig
+BEGIN
+    SumDig.Run()
+END

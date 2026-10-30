@@ -1,0 +1,46 @@
+-- 947 | Centre and radius of a circle through 3 points:
+-- solve the perpendicular-bisector intersection. RC demo
+-- points: (22.83,2.07),(14.55,12.42),(-0.97,-0.9) plus the
+-- degenerate collinear case.
+DECLARE MODULE Cr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cr
+    STRICT g3[2] AS F64
+
+    PROCEDURE Solve(x1 AS F64, y1 AS F64, x2 AS F64, y2 AS F64)
+        LET x3 AS F64 = g3[1]
+        LET y3 AS F64 = g3[2]
+        LET a1 AS F64 = 2.0 * (x2 - x1)
+        LET b1 AS F64 = 2.0 * (y2 - y1)
+        LET c1 AS F64 = x2 * x2 + y2 * y2 - x1 * x1 - y1 * y1
+        LET a2 AS F64 = 2.0 * (x3 - x2)
+        LET b2 AS F64 = 2.0 * (y3 - y2)
+        LET c2 AS F64 = x3 * x3 + y3 * y3 - x2 * x2 - y2 * y2
+        LET dd AS F64 = a1 * b2 - a2 * b1
+        IF dd = 0.0 THEN
+            PRINT "collinear - no circle"
+            RETURN
+        END IF
+        LET cx AS F64 = (c1 * b2 - c2 * b1) / dd
+        LET cy AS F64 = (a1 * c2 - a2 * c1) / dd
+        LET rr AS F64 = SQRT((cx - x1) * (cx - x1) + (cy - y1) * (cy - y1))
+        PRINT "centre=" | cx | "," | cy | " radius=" | rr
+    END PROCEDURE
+
+    PROCEDURE Run()
+        g3[1] = 0.0 - 0.97
+        g3[2] = 0.0 - 0.9
+        Solve(22.83, 2.07, 14.55, 12.42)
+        -- collinear
+        g3[1] = 3.0
+        g3[2] = 3.0
+        Solve(1.0, 1.0, 2.0, 2.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Cr
+BEGIN
+    Cr.Run()
+END

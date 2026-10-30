@@ -1,0 +1,2 @@
+root=0.739085
+check: cos(root)=0.739085

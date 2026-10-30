@@ -1,0 +1,102 @@
+-- 020 | AVL tree: index-based nodes, insert with rebalancing.
+DECLARE MODULE A
+    PROCEDURE Insert(v AS S32)
+    PROCEDURE Inorder(u AS S32)
+    PROCEDURE Show()
+END DECLARE MODULE
+
+MODULE A
+    STRICT ky[16] AS S32;
+    STRICT lf[16] AS S32;
+    STRICT rt[16] AS S32;
+    STRICT h[16] AS S32;
+    LET n AS S32 = 0;
+    LET root AS S32 = -1;
+    FUNCTION Ht(u AS S32) AS S32
+        IF u < 0 THEN RETURN 0 END IF
+        RETURN h[u]
+    END FUNCTION
+    FUNCTION Bal(u AS S32) AS S32
+        RETURN Ht(lf[u]) - Ht(rt[u])
+    END FUNCTION
+    PROCEDURE Fix(u AS S32)
+        LET lh AS S32 = Ht(lf[u]);
+        LET rh AS S32 = Ht(rt[u]);
+        h[u] = lh;
+        IF rh > lh THEN
+            h[u] = rh;
+        END IF
+        h[u] = h[u] + 1;
+    END PROCEDURE
+    FUNCTION RotR(y AS S32) AS S32
+        LET x AS S32 = lf[y];
+        LET t AS S32 = rt[x];
+        rt[x] = y;
+        lf[y] = t;
+        Fix(y);
+        Fix(x);
+        RETURN x
+    END FUNCTION
+    FUNCTION RotL(x AS S32) AS S32
+        LET y AS S32 = rt[x];
+        LET t AS S32 = lf[y];
+        lf[y] = x;
+        rt[x] = t;
+        Fix(x);
+        Fix(y);
+        RETURN y
+    END FUNCTION
+    FUNCTION Add(u AS S32, v AS S32) AS S32
+        IF u < 0 THEN
+            ky[n] = v;
+            lf[n] = -1;
+            rt[n] = -1;
+            h[n] = 1;
+            n = n + 1;
+            RETURN n - 1
+        END IF
+        IF v < ky[u] THEN
+            lf[u] = Add(lf[u], v);
+        ELSE
+            rt[u] = Add(rt[u], v);
+        END IF
+        Fix(u);
+        LET b AS S32 = Bal(u);
+        IF b > 1 ANDALSO Bal(lf[u]) >= 0 THEN
+            RETURN RotR(u)
+        END IF
+        IF b > 1 ANDALSO Bal(lf[u]) < 0 THEN
+            lf[u] = RotL(lf[u]);
+            RETURN RotR(u)
+        END IF
+        IF b < -1 ANDALSO Bal(rt[u]) <= 0 THEN
+            RETURN RotL(u)
+        END IF
+        IF b < -1 ANDALSO Bal(rt[u]) > 0 THEN
+            rt[u] = RotR(rt[u]);
+            RETURN RotL(u)
+        END IF
+        RETURN u
+    END FUNCTION
+    PROCEDURE Insert(v AS S32)
+        root = Add(root, v);
+    END PROCEDURE
+    PROCEDURE Inorder(u AS S32)
+        IF u >= 0 THEN
+            Inorder(lf[u]);
+            PRINT$ ky[u] | "(h" | h[u] | ") ";
+            Inorder(rt[u]);
+        END IF
+    END PROCEDURE
+    PROCEDURE Show()
+        Inorder(root);
+        PRINT$ "";
+    END PROCEDURE
+END MODULE
+
+IMPORT A
+BEGIN
+    A.Insert(10); A.Insert(20); A.Insert(30);
+    A.Insert(40); A.Insert(50); A.Insert(25);
+    A.Show()
+END

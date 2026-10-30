@@ -1,0 +1,29 @@
+-- 987 | Temperature conversion: Kelvin <-> Celsius,
+-- Fahrenheit, Rankine for a few sample values.
+DECLARE MODULE Tc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tc
+    PROCEDURE Show(k AS F64)
+        LET c AS F64 = k - 273.15
+        LET f AS F64 = c * 9.0 / 5.0 + 32.0
+        LET r AS F64 = k * 9.0 / 5.0
+        PRINT "K=" | k | " C=" | c | " F=" | f | " R=" | r
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(273.15)
+        Show(373.15)
+        Show(233.15)
+        Show(0.0)
+        -- reverse checks: F->K for 212
+        PRINT "F=212 -> K=" | (212.0 - 32.0) * 5.0 / 9.0 + 273.15
+        PRINT "C=100 -> K=" | 100.0 + 273.15
+    END PROCEDURE
+END MODULE
+
+IMPORT Tc
+BEGIN
+    Tc.Run()
+END

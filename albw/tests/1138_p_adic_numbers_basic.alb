@@ -1,0 +1,22 @@
+VERSION 1.0
+
+BEGIN
+    LET n AS S64 = 360
+    LET p AS S64 = 5
+    LET v AS S64 = 0
+    LET m AS S64 = n
+    WHILE m MOD p = 0
+        m = m / p
+        v = v + 1
+    END WHILE
+    PRINT "v_" | p | "(" | n | ")=" | v
+    PRINT "unit=" | m
+
+    LET digits AS STRING = ""
+    LET x AS S64 = n
+    WHILE x > 0
+        digits = digits | (x MOD p)
+        x = x / p
+    END WHILE
+    PRINT n | " in p-adic base " | p | " digits (lsd first): " | digits
+END

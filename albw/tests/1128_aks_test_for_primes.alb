@@ -1,0 +1,36 @@
+VERSION 1.0
+
+STRICT cf[64] AS S64
+
+
+BEGIN
+    LET n AS S64 = 2
+    PRINT "aks primes to 35:"
+    WHILE n <= 35
+        LET i AS S64 = 0
+        WHILE i <= n
+            cf[i] = 0
+            i = i + 1
+        END WHILE
+        cf[0] = 1
+        LET k AS S64 = 1
+        WHILE k <= n
+            LET j AS S64 = k
+            WHILE j >= 1
+                cf[j] = cf[j] + cf[j - 1]
+                j = j - 1
+            END WHILE
+            k = k + 1
+        END WHILE
+        LET prime AS S64 = 1
+        i = 1
+        WHILE i < n
+            IF cf[i] MOD n <> 0 THEN prime = 0 END IF
+            i = i + 1
+        END WHILE
+        IF prime = 1 THEN
+            PRINT n
+        END IF
+        n = n + 1
+    END WHILE
+END

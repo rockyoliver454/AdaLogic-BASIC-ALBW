@@ -1,0 +1,50 @@
+-- 604 | Anadromes: words whose reversal is a different valid word.
+-- Checks a fixed word list against itself.
+DECLARE MODULE Ana
+    FUNCTION Rev(s AS STRING) AS STRING
+    FUNCTION Has(t AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ana
+    STRICT w[8] AS STRING
+
+    FUNCTION Rev(s AS STRING) AS STRING
+        LET r AS STRING = ""
+        LET i AS S64 = LEN(s)
+        WHILE i >= 1
+            r = r | MID$(s, i, 1)
+            i = i - 1
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Has(t AS STRING) AS S32
+        FOR i = 1 TO 8
+            IF w[i] = t THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "drawer"
+        w[2] = "reward"
+        w[3] = "regal"
+        w[4] = "lager"
+        w[5] = "dog"
+        w[6] = "god"
+        w[7] = "time"
+        w[8] = "evil"
+        FOR i = 1 TO 8
+            LET r AS STRING = Rev(w[i])
+            IF Has(r) = 1 THEN
+                IF w[i] <> r THEN PRINT w[i] | " -> " | r END IF
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ana
+BEGIN
+    Ana.Run()
+END

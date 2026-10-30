@@ -1,0 +1,23 @@
+-- 1220 | B2: Nemeth -> LaTeX/MathML export.  Nemeth.ToLatex(s) and
+-- Nemeth.ToMathML(s) translate the same LaTeX-flavored grammar the
+-- parser accepts (fracs, roots, scripts, big-ops, symbols, envs).
+-- A NEMETH AS name capture snapshots name_latex / name_mathml so
+-- the dotted surface name.latex works like name.brf.  Translation
+-- errors land in the shared engine ledger (Nemeth.ErrCount).
+BEGIN
+    PRINT "L1=" | Nemeth.ToLatex("x^2 + y_1")
+    PRINT "L2=" | Nemeth.ToLatex("\frac{1}{x+1} + \sqrt[3]{z}")
+    PRINT "L3=" | Nemeth.ToLatex("\sum_{i=0}^{n} i + a/b")
+    PRINT "M1=" | Nemeth.ToMathML("x^2 + y_1")
+    PRINT "M2=" | Nemeth.ToMathML("\frac{1}{x+1}")
+    PRINT "M3=" | Nemeth.ToMathML("\sqrt[3]{x}")
+    PRINT "M4=" | Nemeth.ToMathML("\sum_{i=0}^{n} i")
+    NEMETH AS mx
+x^2/(x+1)
+END NEMETH
+    PRINT "CL=" | mx.latex
+    PRINT "CM=" | mx.mathml
+    LET e0 = Nemeth.ErrCount()
+    LET junk = Nemeth.ToLatex("\nosuchcmd & bad")
+    PRINT "ERRS=" | Nemeth.ErrCount() - e0
+END

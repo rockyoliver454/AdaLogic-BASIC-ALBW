@@ -1,0 +1,25 @@
+VERSION 1.0
+
+
+BEGIN
+    LET note AS STRING = ""
+    LET i AS S64 = 1
+    WHILE i < ARGC()
+        IF i > 1 THEN
+            note = note | " "
+        END IF
+        note = note | ARGV$(i)
+        i = i + 1
+    END WHILE
+    IF note = "" THEN
+        note = "reporter: buy milk"
+    END IF
+    LET fh AS S64 = OPEN("notes.txt", "w")
+    WRITE(fh, note)
+    CLOSE(fh)
+    LET fh2 AS S64 = OPEN("notes.txt", "r")
+    LET back AS STRING = READ(fh2, FILELEN("notes.txt"))
+    CLOSE(fh2)
+    PRINT "note saved: " | back
+    KILL("notes.txt")
+END

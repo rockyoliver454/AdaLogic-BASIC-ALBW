@@ -1,0 +1,29 @@
+-- 323 | Two's complement: 32-bit binary representation of signed integers.
+DECLARE MODULE TwosComp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE TwosComp
+    PROCEDURE Show(v AS S32)
+        LET wide AS S64 = v
+        IF wide < 0 THEN wide = wide + 4294967296 END IF
+        LET s AS STRING = ""
+        FOR i = 0 TO 31
+            LET bit AS S64 = wide - (wide / 2) * 2
+            s = bit | s
+            wide = wide / 2
+        END FOR
+        PRINT v | " -> " | s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(6)
+        Show(-1)
+        Show(-5)
+    END PROCEDURE
+END MODULE
+
+IMPORT TwosComp
+BEGIN
+    TwosComp.Run()
+END

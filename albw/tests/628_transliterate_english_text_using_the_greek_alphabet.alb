@@ -1,0 +1,56 @@
+-- 628 | Transliterate English text using the Greek alphabet:
+-- map latin letters to greek letter names.
+DECLARE MODULE Grk
+    FUNCTION Greek(c AS S64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Grk
+    STRICT gk[27] AS STRING
+
+    FUNCTION Greek(c AS S64) AS STRING
+        IF c >= 97 ANDALSO c <= 122 THEN RETURN gk[c - 96] END IF
+        IF c >= 65 ANDALSO c <= 90 THEN RETURN gk[c - 64] END IF
+        RETURN CHR(c)
+    END FUNCTION
+
+    PROCEDURE Run()
+        gk[1] = "alpha"
+        gk[2] = "beta"
+        gk[3] = "gamma"
+        gk[4] = "delta"
+        gk[5] = "epsilon"
+        gk[6] = "zeta"
+        gk[7] = "eta"
+        gk[8] = "theta"
+        gk[9] = "iota"
+        gk[10] = "kappa"
+        gk[11] = "lambda"
+        gk[12] = "mu"
+        gk[13] = "nu"
+        gk[14] = "xi"
+        gk[15] = "omicron"
+        gk[16] = "pi"
+        gk[17] = "rho"
+        gk[18] = "sigma"
+        gk[19] = "tau"
+        gk[20] = "upsilon"
+        gk[21] = "phi"
+        gk[22] = "chi"
+        gk[23] = "psi"
+        gk[24] = "omega"
+        gk[25] = "?"
+        gk[26] = "?"
+        LET s AS STRING = "rosetta"
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            r = r | Greek(ASC(MID$(s, i, 1))) | " "
+        END FOR
+        PRINT r
+    END PROCEDURE
+END MODULE
+
+IMPORT Grk
+BEGIN
+    Grk.Run()
+END

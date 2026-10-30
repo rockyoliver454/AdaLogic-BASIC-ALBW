@@ -1,0 +1,11 @@
+-- 061 | Empty string: literal, length, and concatenation.
+BEGIN
+    LET s AS STRING = "";
+    PRINT LEN(s);
+    IF s = "" THEN
+        PRINT$ "empty";
+    END IF
+    s = s | "x";
+    PRINT LEN(s);
+    PRINT$ s;
+END

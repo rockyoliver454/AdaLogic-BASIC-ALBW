@@ -1,0 +1,64 @@
+-- 760 | ABC problem: given letter blocks (two letters per
+-- block), can a word be spelled using each block at most once?
+DECLARE MODULE Abc
+    FUNCTION CanSpell(w AS STRING, i AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Abc
+    STRICT bl[20] AS STRING
+    STRICT used[20] AS S32
+
+    FUNCTION CanSpell(w AS STRING, pos AS S64) AS S32
+        IF pos > LEN(w) THEN RETURN 1 END IF
+        LET c AS STRING = MID$(w, pos, 1)
+        FOR b = 1 TO 19
+            IF used[b] = 0 THEN
+                IF MID$(bl[b], 1, 1) = c ORELSE MID$(bl[b], 2, 1) = c THEN
+                    used[b] = 1
+                    IF CanSpell(w, pos + 1) = 1 THEN RETURN 1 END IF
+                    used[b] = 0
+                END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        bl[1] = "BO"
+        bl[2] = "XK"
+        bl[3] = "DQ"
+        bl[4] = "CP"
+        bl[5] = "NA"
+        bl[6] = "GT"
+        bl[7] = "RE"
+        bl[8] = "TG"
+        bl[9] = "QD"
+        bl[10] = "FS"
+        bl[11] = "JW"
+        bl[12] = "HU"
+        bl[13] = "VI"
+        bl[14] = "AN"
+        bl[15] = "OB"
+        bl[16] = "ER"
+        bl[17] = "FS"
+        bl[18] = "LY"
+        bl[19] = "PC"
+        STRICT tw[4] AS STRING
+        tw[1] = "BARK"
+        tw[2] = "TREAT"
+        tw[3] = "SQUAD"
+        tw[4] = "CONFUSE"
+        FOR i = 1 TO 4
+            FOR j = 1 TO 19
+                used[j] = 0
+            END FOR
+            PRINT tw[i] | ": " | CanSpell(tw[i], 1)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Abc
+BEGIN
+    Abc.Run()
+END

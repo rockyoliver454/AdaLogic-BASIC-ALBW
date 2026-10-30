@@ -1,0 +1,13 @@
+BEGIN
+    LET n = 1
+    LET row = 1
+    WHILE row <= 3
+        LET col = 1
+        WHILE col <= row
+            PRINT$ n
+            n = n + 1
+            col = col + 1
+        END WHILE
+        row = row + 1
+    END WHILE
+END

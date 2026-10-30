@@ -1,0 +1,51 @@
+-- 451 | Own digits power sum: numbers n in 0..100000 equal to sum of
+-- their digits each raised to power n's digit count... (n-th powers
+-- variant: print all 3..8 digit solutions below 1000000).
+DECLARE MODULE ODPS
+    FUNCTION DigCount(n AS S64) AS S64
+    FUNCTION Check(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ODPS
+    FUNCTION DigCount(n AS S64) AS S64
+        LET c AS S64 = 0
+        LET t AS S64 = n
+        IF t = 0 THEN RETURN 1 END IF
+        WHILE t > 0
+            t = t / 10
+            c = c + 1
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    FUNCTION Check(n AS S64) AS S32
+        LET nd AS S64 = DigCount(n)
+        LET total AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            LET d AS S64 = t MOD 10
+            LET p AS S64 = 1
+            FOR i = 1 TO nd
+                p = p * d
+            END FOR
+            total = total + p
+            t = t / 10
+        END WHILE
+        IF total = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 3 TO 999999
+            IF Check(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT ODPS
+BEGIN
+    ODPS.Run()
+END

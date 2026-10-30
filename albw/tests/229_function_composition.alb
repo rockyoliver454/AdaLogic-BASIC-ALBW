@@ -1,0 +1,25 @@
+-- 229 | Function composition: apply Double after Square.
+DECLARE MODULE Composition
+    FUNCTION Square(x AS S32) AS S32
+    FUNCTION DoubleValue(x AS S32) AS S32
+    FUNCTION DoubleAfterSquare(x AS S32) AS S32
+END DECLARE MODULE
+
+MODULE Composition
+    FUNCTION Square(x AS S32) AS S32
+        RETURN x * x
+    END FUNCTION
+
+    FUNCTION DoubleValue(x AS S32) AS S32
+        RETURN x * 2
+    END FUNCTION
+
+    FUNCTION DoubleAfterSquare(x AS S32) AS S32
+        RETURN DoubleValue(Square(x))
+    END FUNCTION
+END MODULE
+
+IMPORT Composition
+BEGIN
+    PRINT Composition.DoubleAfterSquare(5)
+END

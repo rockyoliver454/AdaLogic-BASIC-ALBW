@@ -1,0 +1,25 @@
+-- 546 | Calculating the value of e via the series sum 1/n! until
+-- the term drops below machine precision.
+DECLARE MODULE CalcE
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CalcE
+    PROCEDURE Run()
+        LET e AS F64 = 0.0
+        LET t AS F64 = 1.0
+        LET n AS S64 = 0
+        WHILE t > 0.000000000000001
+            e = e + t
+            n = n + 1
+            t = t / n
+        END WHILE
+        PRINT "e = " | e
+        PRINT "terms = " | n
+    END PROCEDURE
+END MODULE
+
+IMPORT CalcE
+BEGIN
+    CalcE.Run()
+END

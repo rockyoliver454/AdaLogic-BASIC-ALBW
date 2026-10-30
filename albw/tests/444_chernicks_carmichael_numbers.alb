@@ -1,0 +1,38 @@
+-- 444 | Chernick's Carmichael numbers: (6m+1)(12m+1)(18m+1) for
+-- m = 1..10 where all three factors are prime.
+DECLARE MODULE Chern
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Chern
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR m = 1 TO 10
+            LET a AS S64 = 6 * m + 1
+            LET b AS S64 = 12 * m + 1
+            LET c AS S64 = 18 * m + 1
+            IF IsPrime(a) = 1 ANDALSO IsPrime(b) = 1 ANDALSO IsPrime(c) = 1 THEN
+                PRINT "m=" | m | " -> " | a * b * c
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Chern
+BEGIN
+    Chern.Run()
+END

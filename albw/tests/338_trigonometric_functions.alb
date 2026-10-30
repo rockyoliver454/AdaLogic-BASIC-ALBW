@@ -1,0 +1,22 @@
+-- 338 | Trigonometric functions: sine, cosine, tangent and inverses.
+DECLARE MODULE Trig
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Trig
+    PROCEDURE Run()
+        LET pi AS F64 = 4.0 * ATAN(1.0)
+        PRINT "sin(pi/6) = " | SIN(pi / 6.0)
+        PRINT "cos(pi/3) = " | COS(pi / 3.0)
+        PRINT "tan(pi/4) = " | TAN(pi / 4.0)
+        PRINT "asin(0.5) = " | ASIN(0.5)
+        PRINT "acos(0.5) = " | ACOS(0.5)
+        PRINT "atan(1) = " | ATAN(1.0)
+        PRINT "atan2(1,1) = " | ATAN2(1.0, 1.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Trig
+BEGIN
+    Trig.Run()
+END

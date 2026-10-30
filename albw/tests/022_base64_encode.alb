@@ -1,0 +1,42 @@
+-- 022 | Base64 encode: 3 bytes -> 4 sextets.
+DECLARE MODULE B64
+    FUNCTION Encode(s AS STRING) AS STRING
+END DECLARE MODULE
+
+MODULE B64
+    FUNCTION Encode(s AS STRING) AS STRING
+        LET alpha AS STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        LET res AS STRING = "";
+        LET n AS S32 = LEN(s);
+        LET i AS S32 = 1;
+        WHILE i <= n
+            LET b1 AS S32 = ASC(MID$(s, i, 1));
+            LET b2 AS S32 = 0;
+            LET b3 AS S32 = 0;
+            IF i + 1 <= n THEN b2 = ASC(MID$(s, i + 1, 1)) END IF
+            IF i + 2 <= n THEN b3 = ASC(MID$(s, i + 2, 1)) END IF
+            LET v AS S32 = b1 * 65536 + b2 * 256 + b3;
+            res = res | MID$(alpha, v / 262144 + 1, 1);
+            res = res | MID$(alpha, (v / 4096) MOD 64 + 1, 1);
+            IF i + 1 <= n THEN
+                res = res | MID$(alpha, (v / 64) MOD 64 + 1, 1);
+            ELSE
+                res = res | "=";
+            END IF
+            IF i + 2 <= n THEN
+                res = res | MID$(alpha, v MOD 64 + 1, 1);
+            ELSE
+                res = res | "=";
+            END IF
+            i = i + 3;
+        END WHILE
+        RETURN res
+    END FUNCTION
+END MODULE
+
+IMPORT B64
+BEGIN
+    PRINT$ B64.Encode("ABCDEFG");
+    PRINT$ B64.Encode("hello");
+    PRINT$ B64.Encode("A");
+END

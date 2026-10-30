@@ -1,0 +1,50 @@
+-- 055 | Dice game probabilities: P(9d4 > 6d6) by convolution.
+BEGIN
+    STRICT d1[37] AS U64;
+    STRICT d2[37] AS U64;
+    STRICT tmp[37] AS U64;
+    d1[0] = 1;
+    FOR die = 1 TO 9
+        FOR s = 0 TO 36
+            tmp[s] = 0;
+        END FOR
+        FOR s = 0 TO 36
+            IF d1[s] > 0 THEN
+                FOR f = 1 TO 4
+                    tmp[s + f] = tmp[s + f] + d1[s];
+                END FOR
+            END IF
+        END FOR
+        FOR s = 0 TO 36
+            d1[s] = tmp[s];
+        END FOR
+    END FOR
+    d2[0] = 1;
+    FOR die = 1 TO 6
+        FOR s = 0 TO 36
+            tmp[s] = 0;
+        END FOR
+        FOR s = 0 TO 36
+            IF d2[s] > 0 THEN
+                FOR f = 1 TO 6
+                    tmp[s + f] = tmp[s + f] + d2[s];
+                END FOR
+            END IF
+        END FOR
+        FOR s = 0 TO 36
+            d2[s] = tmp[s];
+        END FOR
+    END FOR
+    LET wins AS U64 = 0;
+    LET total AS U64 = 0;
+    FOR s1 = 0 TO 36
+        FOR s2 = 0 TO 36
+            IF s1 > s2 THEN
+                wins = wins + d1[s1] * d2[s2];
+            END IF
+            total = total + d1[s1] * d2[s2];
+        END FOR
+    END FOR
+    PRINT$ wins | " / " | total;
+    PRINT wins * 1.0 / total;
+END

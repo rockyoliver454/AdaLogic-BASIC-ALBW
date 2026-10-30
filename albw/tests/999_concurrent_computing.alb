@@ -1,0 +1,37 @@
+-- 999 | Concurrent computing: SPAWN workers each compute a
+-- partial sum into a slot; SYNC joins; print total.
+-- (FASM SPAWN is synchronous/deterministic by design.)
+DECLARE MODULE Cc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cc
+    STRICT part[4] AS S64
+
+    PROCEDURE Work(slot AS S64, lo AS S64, hi AS S64)
+        LET s AS S64 = 0
+        FOR i = lo TO hi
+            s = s + i * i
+        END FOR
+        part[slot] = s
+        PRINT "worker " | slot | " sum " | lo | ".." | hi | " = " | s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 1 TO 4
+            part[i] = 0
+        END FOR
+        SPAWN Work(1, 1, 25)
+        SPAWN Work(2, 26, 50)
+        SPAWN Work(3, 51, 75)
+        SPAWN Work(4, 76, 100)
+        SYNC
+        LET tot AS S64 = part[1] + part[2] + part[3] + part[4]
+        PRINT "total=" | tot | " expect=" | 100 * 101 * 201 / 6
+    END PROCEDURE
+END MODULE
+
+IMPORT Cc
+BEGIN
+    Cc.Run()
+END

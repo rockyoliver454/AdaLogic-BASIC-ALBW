@@ -1,0 +1,53 @@
+-- 463 | Rhonda numbers: first 15 base-10 numbers where the product
+-- of digits equals 10 times the sum of prime factors (with repetition).
+DECLARE MODULE Rhonda
+    FUNCTION DigProd(n AS S64) AS S64
+    FUNCTION FacSum(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rhonda
+    FUNCTION DigProd(n AS S64) AS S64
+        LET p AS S64 = 1
+        WHILE n > 0
+            p = p * (n MOD 10)
+            n = n / 10
+        END WHILE
+        RETURN p
+    END FUNCTION
+
+    FUNCTION FacSum(n AS S64) AS S64
+        LET m AS S64 = n
+        LET s AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                s = s + d
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN s = s + m END IF
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 10
+        LET got AS S64 = 0
+        WHILE got < 15
+            LET dp AS S64 = DigProd(n)
+            IF dp > 0 ANDALSO dp = 10 * FacSum(n) THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Rhonda
+BEGIN
+    Rhonda.Run()
+END

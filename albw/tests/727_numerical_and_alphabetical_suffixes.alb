@@ -1,0 +1,48 @@
+-- 727 | Numerical and alphabetical suffixes: sort file-like
+-- names numerically on the embedded number.
+DECLARE MODULE Na
+    FUNCTION NumOf(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Na
+    STRICT nm[7] AS STRING
+
+    FUNCTION NumOf(s AS STRING) AS S64
+        LET v AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c >= 48 ANDALSO c <= 57 THEN
+                v = v * 10 + c - 48
+            END IF
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        nm[1] = "file10"
+        nm[2] = "file2"
+        nm[3] = "file1"
+        nm[4] = "file20"
+        nm[5] = "file3"
+        -- insertion sort by NumOf
+        FOR i = 2 TO 5
+            LET kv AS STRING = nm[i]
+            LET kn AS S64 = NumOf(kv)
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO NumOf(nm[j]) > kn
+                nm[j + 1] = nm[j]
+                j = j - 1
+            END WHILE
+            nm[j + 1] = kv
+        END FOR
+        FOR i = 1 TO 5
+            PRINT nm[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Na
+BEGIN
+    Na.Run()
+END

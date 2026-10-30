@@ -1,0 +1,70 @@
+VERSION 1.0
+
+STRICT pts[4] AS S64
+STRICT gf[4] AS S64
+STRICT ga[4] AS S64
+STRICT tname[4] AS STRING
+
+
+PROCEDURE PlayM(h AS S64, a AS S64, hs AS S64, a_s AS S64)
+    gf[h] = gf[h] + hs
+    ga[h] = ga[h] + a_s
+    gf[a] = gf[a] + a_s
+    ga[a] = ga[a] + hs
+    IF hs > a_s THEN
+        pts[h] = pts[h] + 3
+    ELSE
+        IF hs = a_s THEN
+            pts[h] = pts[h] + 1
+            pts[a] = pts[a] + 1
+        ELSE
+            pts[a] = pts[a] + 3
+        END IF
+    END IF
+END PROCEDURE
+
+
+BEGIN
+    tname[0] = "Albion" tname[1] = "Berland" tname[2] = "Cascadia" tname[3] = "Dalania"
+    PlayM(0, 1, 2, 1)
+    PlayM(2, 3, 0, 0)
+    PlayM(0, 2, 3, 1)
+    PlayM(1, 3, 1, 2)
+    PlayM(0, 3, 1, 1)
+    PlayM(1, 2, 2, 2)
+
+    LET i AS S64 = 0
+    WHILE i < 3
+        LET j AS S64 = i + 1
+        WHILE j < 4
+            LET gdi AS S64 = gf[i] - ga[i]
+            LET gdj AS S64 = gf[j] - ga[j]
+            LET swap AS S64 = 0
+            IF pts[j] > pts[i] THEN
+                swap = 1
+            ELSE
+                IF pts[j] = pts[i] ANDALSO gdj > gdi THEN
+                    swap = 1
+                ELSE
+                    IF pts[j] = pts[i] ANDALSO gdj = gdi ANDALSO gf[j] > gf[i] THEN
+                        swap = 1
+                    END IF
+                END IF
+            END IF
+            IF swap = 1 THEN
+                LET tp AS S64 = pts[i] pts[i] = pts[j] pts[j] = tp
+                LET tf AS S64 = gf[i] gf[i] = gf[j] gf[j] = tf
+                LET ta AS S64 = ga[i] ga[i] = ga[j] ga[j] = ta
+                LET tn AS STRING = tname[i] tname[i] = tname[j] tname[j] = tn
+            END IF
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+
+    i = 0
+    WHILE i < 4
+        PRINT tname[i] | " pts=" | pts[i] | " gf=" | gf[i] | " ga=" | ga[i]
+        i = i + 1
+    END WHILE
+END

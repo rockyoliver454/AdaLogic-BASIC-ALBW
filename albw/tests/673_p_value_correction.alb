@@ -1,0 +1,38 @@
+-- 673 | P-value correction: Bonferroni and Benjamini-Hochberg
+-- adjusted p-values for a sorted p-value list.
+DECLARE MODULE Pv
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pv
+    STRICT p[6] AS F64
+    STRICT bh[6] AS F64
+
+    PROCEDURE Run()
+        p[1] = 0.01
+        p[2] = 0.02
+        p[3] = 0.05
+        p[4] = 0.08
+        p[5] = 0.2
+        LET n AS F64 = 5.0
+        -- BH adjusted values, enforced monotone from the largest down
+        LET run AS F64 = 1.0
+        LET i AS S64 = 5
+        WHILE i >= 1
+            LET v AS F64 = p[i] * n / i
+            IF v < run THEN run = v END IF
+            bh[i] = run
+            i = i - 1
+        END WHILE
+        FOR j = 1 TO 5
+            LET bon AS F64 = p[j] * n
+            IF bon > 1.0 THEN bon = 1.0 END IF
+            PRINT p[j] | ": bonferroni=" | bon | " bh=" | bh[j]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pv
+BEGIN
+    Pv.Run()
+END

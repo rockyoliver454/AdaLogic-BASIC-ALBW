@@ -1,0 +1,46 @@
+-- 890 | CSV to HTML translation: convert CSV records to an
+-- HTML table with proper entity escaping.
+DECLARE MODULE Cv
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cv
+    PROCEDURE Row(s AS STRING, hd AS S32)
+        LET cell AS STRING = ""
+        LET o AS STRING = ""
+        IF hd = 1 THEN o = o | "  <tr><th>" END IF
+        IF hd = 0 THEN o = o | "  <tr><td>" END IF
+        LET inq AS S32 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c = 34 THEN
+                inq = 1 - inq
+            ELSE
+                IF c = 44 ANDALSO inq = 0 THEN
+                    IF hd = 1 THEN o = o | cell | "</th><th>" END IF
+                    IF hd = 0 THEN o = o | cell | "</td><td>" END IF
+                    cell = ""
+                ELSE
+                    cell = cell | CHR(c)
+                END IF
+            END IF
+        END FOR
+        IF hd = 1 THEN o = o | cell | "</th></tr>" END IF
+        IF hd = 0 THEN o = o | cell | "</td></tr>" END IF
+        PRINT o
+    END PROCEDURE
+
+    PROCEDURE Run()
+        PRINT "<table>"
+        Row("name,age,city", 1)
+        Row("alice,30,london", 0)
+        Row("bob,25,paris", 0)
+        Row(CHR(34) | "smith, jr." | CHR(34) | ",41,rome", 0)
+        PRINT "</table>"
+    END PROCEDURE
+END MODULE
+
+IMPORT Cv
+BEGIN
+    Cv.Run()
+END

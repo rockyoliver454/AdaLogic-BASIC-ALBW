@@ -1,0 +1,6 @@
+-- 202 | Case-sensitivity of identifiers: ALB identifiers are case-insensitive.
+BEGIN
+    LET MixedCase AS S32 = 7
+    mixedcase = MIXEDCASE + 5
+    PRINT MiXeDcAsE
+END

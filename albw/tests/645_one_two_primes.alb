@@ -1,0 +1,41 @@
+-- 645 | One-two primes: primes made only of digits 1 and 2.
+DECLARE MODULE Otp
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION Only12(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Otp
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Only12(n AS S64) AS S32
+        LET m AS S64 = n
+        WHILE m > 0
+            LET d AS S64 = m MOD 10
+            IF d <> 1 ANDALSO d <> 2 THEN RETURN 0 END IF
+            m = m / 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 2 TO 10000
+            IF Only12(n) = 1 ANDALSO IsPrime(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Otp
+BEGIN
+    Otp.Run()
+END

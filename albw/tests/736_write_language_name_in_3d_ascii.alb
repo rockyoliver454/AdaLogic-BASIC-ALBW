@@ -1,0 +1,40 @@
+-- 736 | Write language name in 3D ASCII: block letters for
+-- "ALB".
+DECLARE MODULE Wl
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wl
+    STRICT l1[6] AS STRING
+    STRICT l2[6] AS STRING
+    STRICT l3[6] AS STRING
+
+    PROCEDURE Run()
+        l1[1] = "  ##   "
+        l1[2] = " #  #  "
+        l1[3] = " #  #  "
+        l1[4] = " ####  "
+        l1[5] = " #  #  "
+        l1[6] = " #  #  "
+        l2[1] = " #     "
+        l2[2] = " #     "
+        l2[3] = " #     "
+        l2[4] = " #     "
+        l2[5] = " #     "
+        l2[6] = " ##### "
+        l3[1] = " ####  "
+        l3[2] = " #   # "
+        l3[3] = " ####  "
+        l3[4] = " #   # "
+        l3[5] = " #   # "
+        l3[6] = " ####  "
+        FOR i = 1 TO 6
+            PRINT l1[i] | l2[i] | l3[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Wl
+BEGIN
+    Wl.Run()
+END

@@ -1,0 +1,14 @@
+-- 154 | Longest string challenge: find the longest of a list.
+BEGIN
+    STRICT w[5] AS STRING;
+    w[0] = "short"; w[1] = "longer"; w[2] = "tiny";
+    w[3] = "the longest of them all"; w[4] = "mid";
+    LET best AS STRING = w[0];
+    FOR i = 1 TO 4
+        IF LEN(w[i]) > LEN(best) THEN
+            best = w[i];
+        END IF
+    END FOR
+    PRINT$ best;
+    PRINT LEN(best);
+END

@@ -1,0 +1,39 @@
+-- 465 | Tau number (refactorable): first 50 n where tau(n) divides n.
+DECLARE MODULE TauN
+    FUNCTION Tau(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE TauN
+    FUNCTION Tau(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                cnt = cnt + 1
+                IF d * d <> n THEN cnt = cnt + 1 END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 50
+            IF n MOD Tau(n) = 0 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT TauN
+BEGIN
+    TauN.Run()
+END

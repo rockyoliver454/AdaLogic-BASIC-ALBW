@@ -1,0 +1,42 @@
+-- 923 | Pick random element: seeded uniform selection from a
+-- list, repeated to show the distribution.
+DECLARE MODULE Pe
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pe
+    STRICT sd[1] AS S64
+    STRICT el[6] AS STRING
+    STRICT ct[6] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        el[1] = "alpha"
+        el[2] = "beta"
+        el[3] = "gamma"
+        el[4] = "delta"
+        el[5] = "epsilon"
+        LET ne AS S64 = 5
+        sd[1] = 999
+        FOR i = 1 TO 5
+            PRINT "pick: " | el[Nxt() MOD ne + 1]
+        END FOR
+        FOR i = 1 TO 500
+            LET j AS S64 = Nxt() MOD ne + 1
+            ct[j] = ct[j] + 1
+        END FOR
+        FOR i = 1 TO 5
+            PRINT el[i] | ": " | ct[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pe
+BEGIN
+    Pe.Run()
+END

@@ -1,0 +1,35 @@
+-- 762 | Exceptions/Catch an exception thrown in a nested call:
+-- throw from a deeply nested routine, catch at top level.
+DECLARE MODULE Ex2
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ex2
+    PROCEDURE Level3()
+        PRINT "level3 throws"
+        THROW 77
+    END PROCEDURE
+
+    PROCEDURE Level2()
+        Level3()
+        PRINT "level2 unreached"
+    END PROCEDURE
+
+    PROCEDURE Level1()
+        Level2()
+        PRINT "level1 unreached"
+    END PROCEDURE
+
+    PROCEDURE Run()
+        TRY
+            Level1()
+        CATCH
+            PRINT "top caught"
+        END TRY
+    END PROCEDURE
+END MODULE
+
+IMPORT Ex2
+BEGIN
+    Ex2.Run()
+END

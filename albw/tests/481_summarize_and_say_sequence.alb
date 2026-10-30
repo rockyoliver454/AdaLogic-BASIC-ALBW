@@ -1,0 +1,36 @@
+-- 481 | Summarize and say sequence (look-and-say): first 10 rows
+-- starting from 21.
+DECLARE MODULE LaS
+    FUNCTION NextRow(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE LaS
+    FUNCTION NextRow(s AS STRING) AS STRING
+        LET outln AS STRING = ""
+        LET i AS S64 = 1
+        WHILE i <= LEN(s)
+            LET ch AS STRING = MID$(s, i, 1)
+            LET cnt AS S64 = 1
+            WHILE i + cnt <= LEN(s) ANDALSO MID$(s, i + cnt, 1) = ch
+                cnt = cnt + 1
+            END WHILE
+            outln = outln | cnt | ch
+            i = i + cnt
+        END WHILE
+        RETURN outln
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET row AS STRING = "21"
+        FOR n = 1 TO 10
+            PRINT row
+            row = NextRow(row)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT LaS
+BEGIN
+    LaS.Run()
+END

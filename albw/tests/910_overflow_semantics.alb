@@ -1,0 +1,24 @@
+-- 910 | Overflow semantics (spec section 6.2):
+--       int + - * / MOD trap via _alb_fault (24 arith, 25 div);
+--       SHL/SHR and bitwise AND/OR/XOR keep wrapping semantics.
+--       Trap cases verified manually: S32 2e9+2e9 -> rc 24,
+--       x/0 -> rc 25.  This test checks the non-trapping paths.
+BEGIN
+    LET big AS S64 = 2000000000;
+    PRINT big + big;
+    PRINT big * 3;
+    PRINT 7 / 2;
+    PRINT 7 MOD 2;
+
+    -- wrapping shifts: 2^62 << 1 wraps to i64::MIN
+    LET x AS S64 = 4611686018427387904;
+    PRINT (x SHL 1);
+    PRINT (x SHL 2);
+    PRINT ((0 - 8) SHR 1);
+
+    -- bitwise ops wrap freely
+    LET m AS S64 = 4294967295;
+    PRINT (m AND 255);
+    PRINT (m OR 0);
+    PRINT (m XOR m);
+END

@@ -1,0 +1,7 @@
+-- 272 | String concatenation: combine two strings and a literal into one.
+BEGIN
+    LET first AS STRING = "Ada"
+    LET last AS STRING = "Logic"
+    LET whole AS STRING = first | " " | last
+    PRINT whole
+END

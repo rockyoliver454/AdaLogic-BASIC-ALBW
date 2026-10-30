@@ -1,0 +1,31 @@
+-- 542 | Sum of elements below the main diagonal of a 4x4 matrix.
+DECLARE MODULE Below
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Below
+    STRICT m[16] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 16
+            m[i] = i
+        END FOR
+        LET n AS S64 = 4
+        LET sum AS S64 = 0
+        FOR r = 2 TO n
+            FOR c = 1 TO r - 1
+                sum = sum + m[r * n + c - n]
+            END FOR
+        END FOR
+        PRINT "matrix:"
+        FOR rr = 1 TO n
+            PRINT m[rr * n + 1 - n] | " " | m[rr * n + 2 - n] | " " | m[rr * n + 3 - n] | " " | m[rr * n + 4 - n]
+        END FOR
+        PRINT "sum below diagonal: " | sum
+    END PROCEDURE
+END MODULE
+
+IMPORT Below
+BEGIN
+    Below.Run()
+END

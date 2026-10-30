@@ -1,0 +1,48 @@
+-- 564 | URL encoding and URL decoding (percent-escapes).
+DECLARE MODULE Url
+    FUNCTION HexDigit(d AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Url
+    FUNCTION HexDigit(d AS S64) AS S64
+        IF d < 10 THEN RETURN 48 + d END IF
+        RETURN 55 + d
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "a b&c=d?"
+        LET enc AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF (c >= 48 ANDALSO c <= 57) ORELSE (c >= 65 ANDALSO c <= 90) ORELSE (c >= 97 ANDALSO c <= 122) THEN
+                enc = enc | CHR(c)
+            ELSE
+                enc = enc | "%" | CHR(HexDigit(c / 16)) | CHR(HexDigit(c MOD 16))
+            END IF
+        END FOR
+        PRINT enc
+        LET dec AS STRING = ""
+        LET j AS S64 = 1
+        WHILE j <= LEN(enc)
+            LET ch AS STRING = MID$(enc, j, 1)
+            IF ch = "%" THEN
+                LET h1 AS S64 = ASC(MID$(enc, j + 1, 1))
+                LET h2 AS S64 = ASC(MID$(enc, j + 2, 1))
+                IF h1 > 57 THEN h1 = h1 - 7 END IF
+                IF h2 > 57 THEN h2 = h2 - 7 END IF
+                dec = dec | CHR((h1 - 48) * 16 + h2 - 48)
+                j = j + 3
+            ELSE
+                dec = dec | ch
+                j = j + 1
+            END IF
+        END WHILE
+        PRINT dec
+    END PROCEDURE
+END MODULE
+
+IMPORT Url
+BEGIN
+    Url.Run()
+END

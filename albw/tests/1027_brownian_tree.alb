@@ -1,0 +1,95 @@
+VERSION 1.0
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+LET stuck AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+FUNCTION Adj(x AS S64, y AS S64) AS S64
+    IF img[y * 64 + x + 1] <> 0 THEN RETURN 1 END IF
+    IF img[y * 64 + x - 1] <> 0 THEN RETURN 1 END IF
+    IF img[(y + 1) * 64 + x] <> 0 THEN RETURN 1 END IF
+    IF img[(y - 1) * 64 + x] <> 0 THEN RETURN 1 END IF
+    RETURN 0
+END FUNCTION
+
+BEGIN
+    img[32 * 64 + 32] = 16777215
+    sd = 31337
+    LET p AS S64 = 0
+    WHILE p < 400 ANDALSO stuck < 220
+        LET x AS S64 = 1 + (Nxt() MOD 62)
+        LET y AS S64 = 1 + (Nxt() MOD 62)
+        LET steps AS S64 = 0
+        LET done AS S64 = 0
+        WHILE done = 0 ANDALSO steps < 5000
+            IF Adj(x, y) = 1 THEN
+                img[y * 64 + x] = 16777215
+                stuck = stuck + 1
+                done = 1
+            ELSE
+                LET dx AS S64 = 0
+                LET dy AS S64 = 0
+                LET m AS S64 = Nxt() MOD 4
+                IF m = 0 THEN dx = 1 END IF
+                IF m = 1 THEN dx = 0 - 1 END IF
+                IF m = 2 THEN dy = 1 END IF
+                IF m = 3 THEN dy = 0 - 1 END IF
+                LET nx AS S64 = x + dx
+                LET ny AS S64 = y + dy
+                IF nx < 1 THEN nx = 1 END IF
+                IF nx > 62 THEN nx = 62 END IF
+                IF ny < 1 THEN ny = 1 END IF
+                IF ny > 62 THEN ny = 62 END IF
+                x = nx
+                y = ny
+                steps = steps + 1
+            END IF
+        END WHILE
+        p = p + 1
+    END WHILE
+
+    CREATE_WINDOW "Brownian tree", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET kiter AS S64 = 0
+        CLEAR $000000
+        kiter = 0
+        ink = 0
+        chk = 0
+        WHILE kiter < 4096
+            IF img[kiter] <> 0 THEN
+                COLOR img[kiter]
+                PLOT kiter MOD 64, kiter / 64
+                ink = ink + 1
+                chk = chk + kiter
+            END IF
+            kiter = kiter + 1
+        END WHILE
+        fpx = READ_PIXEL(32, 32)
+    END
+
+    LISTEN
+
+    PRINT "seed=(32,32) particles=400"
+    PRINT "stuck=" | stuck
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "seed_px=" | fpx
+END

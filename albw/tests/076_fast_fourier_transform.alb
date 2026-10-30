@@ -1,0 +1,49 @@
+-- 076 | Fast Fourier transform: radix-2 DIT, parallel re/im arrays.
+BEGIN
+    STRICT re[8] AS F64;
+    STRICT im[8] AS F64;
+    re[0]=1.0; re[1]=1.0; re[2]=1.0; re[3]=1.0;
+    re[4]=0.0; re[5]=0.0; re[6]=0.0; re[7]=0.0;
+    FOR i = 0 TO 7
+        im[i] = 0.0;
+    END FOR
+    --  bit-reversal permutation
+    FOR i = 1 TO 6
+        LET j AS S32 = 0;
+        LET v AS S32 = i;
+        FOR b = 0 TO 2
+            j = j * 2 + v MOD 2;
+            v = v / 2;
+        END FOR
+        IF j > i THEN
+            LET t AS F64 = re[i];
+            re[i] = re[j];
+            re[j] = t;
+        END IF
+    END FOR
+    LET size AS S32 = 2;
+    WHILE size <= 8
+        LET half AS S32 = size / 2;
+        LET ang AS F64 = 0.0 - 6.283185307179586 / size;
+        LET start AS S32 = 0;
+        WHILE start < 8
+            FOR k = 0 TO half - 1
+                LET wr AS F64 = COS(ang * k);
+                LET wi AS F64 = SIN(ang * k);
+                LET i1 AS S32 = start + k;
+                LET i2 AS S32 = start + k + half;
+                LET tr AS F64 = wr * re[i2] - wi * im[i2];
+                LET ti AS F64 = wr * im[i2] + wi * re[i2];
+                re[i2] = re[i1] - tr;
+                im[i2] = im[i1] - ti;
+                re[i1] = re[i1] + tr;
+                im[i1] = im[i1] + ti;
+            END FOR
+            start = start + size;
+        END WHILE
+        size = size * 2;
+    END WHILE
+    FOR i = 0 TO 7
+        PRINT$ re[i] | " + " | im[i] | "i";
+    END FOR
+END

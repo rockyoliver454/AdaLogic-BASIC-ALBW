@@ -1,0 +1,33 @@
+-- 605 | Bioinformatics/Base count: count A, C, G, T in a DNA
+-- string and report GC percentage.
+DECLARE MODULE Base
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Base
+    PROCEDURE Run()
+        LET dna AS STRING = "GATTACAGCATGCATCGATCGATGCATCGATCGA"
+        LET a AS S64 = 0
+        LET c AS S64 = 0
+        LET g AS S64 = 0
+        LET t AS S64 = 0
+        FOR i = 1 TO LEN(dna)
+            LET ch AS STRING = MID$(dna, i, 1)
+            IF ch = "A" THEN a = a + 1 END IF
+            IF ch = "C" THEN c = c + 1 END IF
+            IF ch = "G" THEN g = g + 1 END IF
+            IF ch = "T" THEN t = t + 1 END IF
+        END FOR
+        PRINT "A: " | a
+        PRINT "C: " | c
+        PRINT "G: " | g
+        PRINT "T: " | t
+        LET gc AS F64 = (g + c) * 100.0 / LEN(dna)
+        PRINT "GC%: " | gc
+    END PROCEDURE
+END MODULE
+
+IMPORT Base
+BEGIN
+    Base.Run()
+END

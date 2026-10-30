@@ -1,0 +1,37 @@
+-- 459 | Minimum multiple of m where digital sum equals m, for
+-- m = 1..45.
+DECLARE MODULE MinMulDS
+    FUNCTION DigSum(n AS S64) AS S64
+    FUNCTION Solve(m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MinMulDS
+    FUNCTION DigSum(n AS S64) AS S64
+        LET s AS S64 = 0
+        WHILE n > 0
+            s = s + n MOD 10
+            n = n / 10
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION Solve(m AS S64) AS S64
+        LET k AS S64 = m
+        WHILE DigSum(k) <> m
+            k = k + m
+        END WHILE
+        RETURN k
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR m = 1 TO 45
+            PRINT m | " -> " | Solve(m)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT MinMulDS
+BEGIN
+    MinMulDS.Run()
+END

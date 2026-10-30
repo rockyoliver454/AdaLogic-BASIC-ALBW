@@ -1,0 +1,31 @@
+-- 554 | ISBN13 check digit: compute the 13th digit for
+-- 978-0-306-40615-? -> 7 (RC reference).
+DECLARE MODULE ISBN
+    FUNCTION Chk(prefix AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ISBN
+    FUNCTION Chk(prefix AS STRING) AS S64
+        LET sum AS S64 = 0
+        FOR i = 1 TO LEN(prefix)
+            LET d AS S64 = ASC(MID$(prefix, i, 1)) - 48
+            IF i MOD 2 = 0 THEN
+                sum = sum + d * 3
+            ELSE
+                sum = sum + d
+            END IF
+        END FOR
+        RETURN (10 - sum MOD 10) MOD 10
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "978030640615 -> " | Chk("978030640615")
+        PRINT "978144937950 -> " | Chk("978144937950")
+    END PROCEDURE
+END MODULE
+
+IMPORT ISBN
+BEGIN
+    ISBN.Run()
+END

@@ -1,0 +1,16 @@
+-- 189 | Monte Carlo: estimate pi by sampling the unit circle.
+BEGIN
+    LET seed AS S64 = 12345;
+    LET hits AS S64 = 0;
+    LET n AS S64 = 20000;
+    FOR i = 1 TO n
+        seed = (seed * 1103515245 + 12345) MOD 2147483648;
+        LET x AS F64 = seed / 2147483648.0;
+        seed = (seed * 1103515245 + 12345) MOD 2147483648;
+        LET y AS F64 = seed / 2147483648.0;
+        IF x * x + y * y <= 1.0 THEN
+            hits = hits + 1;
+        END IF
+    END FOR
+    PRINT hits * 4.0 / n;
+END

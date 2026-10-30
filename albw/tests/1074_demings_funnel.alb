@@ -1,0 +1,81 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT tx[120] AS S64
+STRICT ty[120] AS S64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 5150
+    LET i AS S64 = 0
+    WHILE i < 120
+        LET ex AS S64 = Nxt() MOD 30
+        LET ey AS S64 = Nxt() MOD 30
+        LET fx AS S64 = 30 + ex / 2
+        LET fy AS S64 = 30 + ey / 2
+        tx[i] = fx - 15 + Nxt() MOD 8
+        ty[i] = fy - 15 + Nxt() MOD 8
+        i = i + 1
+    END WHILE
+
+    i = 0
+    WHILE i < 120
+        IF tx[i] >= 0 ANDALSO tx[i] < 64 ANDALSO ty[i] >= 0 ANDALSO ty[i] < 64 THEN
+            img[ty[i] * 64 + tx[i]] = 65280
+        END IF
+        i = i + 1
+    END WHILE
+    img[30 * 64 + 30] = 16711680
+    img[30 * 64 + 31] = 16711680
+    img[31 * 64 + 30] = 16711680
+    img[31 * 64 + 31] = 16711680
+
+    CREATE_WINDOW "Deming funnel", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "drops=120 target=(30,30)"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

@@ -1,0 +1,6 @@
+enc1=|LHello|G|J|M
+roundtrip1=1
+enc2=|M|J|E|!t|M|!
+roundtrip2=1
+enc3=quoted||text
+roundtrip3=1

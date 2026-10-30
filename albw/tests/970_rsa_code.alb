@@ -1,0 +1,43 @@
+-- 970 | RSA code: textbook keys p=61 q=53 n=3233 e=17
+-- d=2753; encrypt/decrypt message value 65 (canonical demo).
+DECLARE MODULE Rc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rc
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        b = b MOD m
+        WHILE e > 0
+            IF e MOD 2 = 1 THEN r = r * b MOD m END IF
+            b = b * b MOD m
+            e = e / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET p AS S64 = 61
+        LET q AS S64 = 53
+        LET n AS S64 = p * q
+        LET ph AS S64 = (p - 1) * (q - 1)
+        LET e AS S64 = 17
+        LET d AS S64 = 2753
+        PRINT "n=" | n | " phi=" | ph | " e*d mod phi=" | e * d MOD ph
+        LET msg AS S64 = 65
+        LET c AS S64 = Powm(msg, e, n)
+        PRINT "cipher=" | c
+        PRINT "plain =" | Powm(c, d, n)
+        -- per-char encrypt of "RSA"
+        LET ct AS STRING = ""
+        FOR i = 1 TO 3
+            ct = ct | Powm(ASC(MID$("RSA", i, 1)), e, n) | " "
+        END FOR
+        PRINT "RSA -> " | ct
+    END PROCEDURE
+END MODULE
+
+IMPORT Rc
+BEGIN
+    Rc.Run()
+END

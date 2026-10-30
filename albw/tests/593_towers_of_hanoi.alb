@@ -1,0 +1,23 @@
+-- 593 | Towers of Hanoi: move 4 discs A->C, listing all 15 moves.
+DECLARE MODULE Hanoi
+    PROCEDURE Move(n AS S64, a AS S64, b AS S64, c AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hanoi
+    PROCEDURE Move(n AS S64, a AS S64, b AS S64, c AS S64)
+        IF n = 0 THEN RETURN END IF
+        Move(n - 1, a, c, b)
+        PRINT a | "->" | c
+        Move(n - 1, b, a, c)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Move(4, 1, 2, 3)
+    END PROCEDURE
+END MODULE
+
+IMPORT Hanoi
+BEGIN
+    Hanoi.Run()
+END

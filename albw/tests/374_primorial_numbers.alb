@@ -1,0 +1,39 @@
+-- 374 | Primorial numbers: product of the first n primes, for n = 0..10.
+DECLARE MODULE Primorial
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Primorial
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET acc AS S64 = 1
+        LET p AS S64 = 1
+        LET s AS STRING = "1 "
+        FOR i = 1 TO 10
+            p = p + 1
+            WHILE IsPrime(p) = 0
+                p = p + 1
+            END WHILE
+            acc = acc * p
+            s = s | acc | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Primorial
+BEGIN
+    Primorial.Run()
+END

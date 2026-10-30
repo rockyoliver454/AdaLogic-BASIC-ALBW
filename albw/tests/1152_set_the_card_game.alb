@@ -1,0 +1,43 @@
+VERSION 1.0
+
+STRICT cd[48] AS S64
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 12
+        cd[i * 4] = i MOD 3
+        cd[i * 4 + 1] = (i / 3) MOD 3
+        cd[i * 4 + 2] = (i / 9 + i) MOD 3
+        cd[i * 4 + 3] = (i * 2 + i / 3) MOD 3
+        i = i + 1
+    END WHILE
+
+    LET sets AS S64 = 0
+    i = 0
+    WHILE i < 12
+        LET j AS S64 = i + 1
+        WHILE j < 12
+            LET k AS S64 = j + 1
+            WHILE k < 12
+                LET ok AS S64 = 1
+                LET a AS S64 = 0
+                WHILE a < 4
+                    LET v1 AS S64 = cd[i * 4 + a]
+                    LET v2 AS S64 = cd[j * 4 + a]
+                    LET v3 AS S64 = cd[k * 4 + a]
+                    IF (v1 + v2 + v3) MOD 3 <> 0 THEN ok = 0 END IF
+                    a = a + 1
+                END WHILE
+                IF ok = 1 THEN
+                    sets = sets + 1
+                    PRINT "set: " | i | "," | j | "," | k
+                END IF
+                k = k + 1
+            END WHILE
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+    PRINT "sets found=" | sets
+END

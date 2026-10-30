@@ -1,0 +1,36 @@
+-- 573 | Averages/Mean angle: atan2 of summed unit vectors.
+-- RC examples: [350,10] -> 0; [90,180,270,360] -> -90(=270);
+-- [10,20,30] -> 20.
+DECLARE MODULE MAng
+    FUNCTION MeanAng(a1 AS F64, a2 AS F64, a3 AS F64, n AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MAng
+    FUNCTION MeanAng(a1 AS F64, a2 AS F64, a3 AS F64, n AS S64) AS F64
+        LET rad AS F64 = 3.141592653589793 / 180.0
+        LET sx AS F64 = COS(a1 * rad) + COS(a2 * rad) + COS(a3 * rad)
+        LET sy AS F64 = SIN(a1 * rad) + SIN(a2 * rad) + SIN(a3 * rad)
+        sx = sx / n
+        sy = sy / n
+        LET m AS F64 = ATAN2(sy, sx) / rad
+        WHILE m < 0.0
+            m = m + 360.0
+        END WHILE
+        WHILE m >= 360.0
+            m = m - 360.0
+        END WHILE
+        RETURN m
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT MeanAng(350.0, 10.0, 0.0, 2)
+        PRINT MeanAng(90.0, 180.0, 270.0, 3)
+        PRINT MeanAng(10.0, 20.0, 30.0, 3)
+    END PROCEDURE
+END MODULE
+
+IMPORT MAng
+BEGIN
+    MAng.Run()
+END

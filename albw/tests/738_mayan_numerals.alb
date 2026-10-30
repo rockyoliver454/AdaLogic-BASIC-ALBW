@@ -1,0 +1,37 @@
+-- 738 | Mayan numerals: render numbers 0..19 with dots
+-- (units) and bars (fives), shell for zero.
+DECLARE MODULE My
+    PROCEDURE Render(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE My
+    PROCEDURE Render(n AS S64)
+        IF n = 0 THEN
+            PRINT "(@@@)"
+            RETURN
+        END IF
+        LET d AS STRING = ""
+        LET u AS S64 = n MOD 5
+        FOR i = 1 TO u
+            d = d | "o"
+        END FOR
+        IF u > 0 THEN PRINT d END IF
+        LET bars AS S64 = n / 5
+        FOR i = 1 TO bars
+            PRINT "===="
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 0 TO 8
+            PRINT "-- " | n
+            Render(n)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT My
+BEGIN
+    My.Run()
+END

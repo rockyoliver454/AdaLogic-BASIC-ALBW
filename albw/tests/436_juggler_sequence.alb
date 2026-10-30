@@ -1,0 +1,37 @@
+-- 436 | Juggler sequence: steps to 1 and max term for seeds 20 and 113.
+DECLARE MODULE Jug
+    PROCEDURE Show(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Jug
+    PROCEDURE Show(n AS S64)
+        LET steps AS S64 = 0
+        LET max AS S64 = n
+        LET v AS F64 = n
+        WHILE v <> 1
+            LET hv AS S64 = v / 2
+            IF v - hv * 2 < 0.5 THEN
+                v = v ^ 0.5
+            ELSE
+                v = v ^ 1.5
+            END IF
+            LET iv AS S64 = v
+            v = iv
+            steps = steps + 1
+            IF v > max THEN max = v END IF
+        END WHILE
+        PRINT "seed=" | n | " steps=" | steps | " max=" | max
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(20)
+        Show(21)
+        Show(113)
+    END PROCEDURE
+END MODULE
+
+IMPORT Jug
+BEGIN
+    Jug.Run()
+END

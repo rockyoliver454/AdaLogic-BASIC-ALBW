@@ -1,0 +1,38 @@
+-- 603 | ABC words: words whose letters appear in alphabetical
+-- order (non-decreasing).
+DECLARE MODULE Abc
+    FUNCTION Ordered(s AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Abc
+    STRICT w[7] AS STRING
+
+    FUNCTION Ordered(s AS STRING) AS S32
+        LET prev AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c < prev THEN RETURN 0 END IF
+            prev = c
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "abc"
+        w[2] = "bill"
+        w[3] = "almost"
+        w[4] = "biopsy"
+        w[5] = "effort"
+        w[6] = "chintz"
+        w[7] = "zebra"
+        FOR i = 1 TO 7
+            PRINT w[i] | ": " | Ordered(w[i])
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Abc
+BEGIN
+    Abc.Run()
+END

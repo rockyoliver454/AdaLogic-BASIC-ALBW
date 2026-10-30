@@ -1,0 +1,174 @@
+-- 267 | Set consolidation: repeatedly union overlapping sets. Elements are letters A..K (0..10).
+DECLARE MODULE SetConsol
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SetConsol
+    STRICT present[88] AS S32
+    LET set_count AS S32 = 0
+    LET merge_j AS S32 = -1
+    LET out_line AS STRING = ""
+
+    PROCEDURE AddElem(s AS S32, e AS S32)
+        present[s * 11 + e] = 1
+    END PROCEDURE
+
+    FUNCTION Intersects(a AS S32, b AS S32) AS S32
+        FOR e = 0 TO 10
+            IF present[a * 11 + e] = 1 ANDALSO present[b * 11 + e] = 1 THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION FindMerge() AS S32
+        FOR i = 0 TO set_count - 1
+            FOR j = i + 1 TO set_count - 1
+                IF Intersects(i, j) = 1 THEN
+                    merge_j = j
+                    RETURN i
+                END IF
+            END FOR
+        END FOR
+        RETURN -1
+    END FUNCTION
+
+    PROCEDURE UnionInto(a AS S32, b AS S32)
+        FOR e = 0 TO 10
+            IF present[b * 11 + e] = 1 THEN present[a * 11 + e] = 1 END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE RemoveSet(j AS S32)
+        FOR s = j TO set_count - 2
+            FOR e = 0 TO 10
+                present[s * 11 + e] = present[(s + 1) * 11 + e]
+            END FOR
+        END FOR
+        FOR e = 0 TO 10
+            present[(set_count - 1) * 11 + e] = 0
+        END FOR
+        set_count = set_count - 1
+    END PROCEDURE
+
+    PROCEDURE Consolidate()
+        WHILE 1
+            LET i AS S32 = FindMerge()
+            IF i < 0 THEN BREAK END IF
+            UnionInto(i, merge_j)
+            RemoveSet(merge_j)
+        END WHILE
+    END PROCEDURE
+
+    FUNCTION MinElem(s AS S32) AS S32
+        FOR e = 0 TO 10
+            IF present[s * 11 + e] = 1 THEN RETURN e END IF
+        END FOR
+        RETURN 99
+    END FUNCTION
+
+    PROCEDURE SortSets()
+        FOR i = 0 TO set_count - 2
+            FOR j = i + 1 TO set_count - 1
+                IF MinElem(j) < MinElem(i) THEN
+                    FOR e = 0 TO 10
+                        LET temporary AS S32 = present[i * 11 + e]
+                        present[i * 11 + e] = present[j * 11 + e]
+                        present[j * 11 + e] = temporary
+                    END FOR
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE PrintSets()
+        SortSets()
+        FOR s = 0 TO set_count - 1
+            out_line = out_line | "{"
+            LET first AS S32 = 1
+            FOR e = 0 TO 10
+                IF present[s * 11 + e] = 1 THEN
+                    IF first = 0 THEN out_line = out_line | "," END IF
+                    out_line = out_line | CHR(65 + e)
+                    first = 0
+                END IF
+            END FOR
+            out_line = out_line | "}"
+        END FOR
+        PRINT out_line
+        out_line = ""
+        set_count = 0
+    END PROCEDURE
+
+    PROCEDURE Reset()
+        FOR i = 0 TO 87
+            present[i] = 0
+        END FOR
+        set_count = 0
+    END PROCEDURE
+
+    PROCEDURE Case1()
+        Reset()
+        AddElem(0, 0)
+        AddElem(0, 1)
+        AddElem(1, 2)
+        AddElem(1, 3)
+        set_count = 2
+        Consolidate()
+        PrintSets()
+    END PROCEDURE
+
+    PROCEDURE Case2()
+        Reset()
+        AddElem(0, 0)
+        AddElem(0, 1)
+        AddElem(1, 1)
+        AddElem(1, 3)
+        set_count = 2
+        Consolidate()
+        PrintSets()
+    END PROCEDURE
+
+    PROCEDURE Case3()
+        Reset()
+        AddElem(0, 0)
+        AddElem(0, 1)
+        AddElem(1, 2)
+        AddElem(1, 3)
+        AddElem(2, 3)
+        AddElem(2, 1)
+        set_count = 3
+        Consolidate()
+        PrintSets()
+    END PROCEDURE
+
+    PROCEDURE Case4()
+        Reset()
+        AddElem(0, 7)
+        AddElem(0, 8)
+        AddElem(0, 10)
+        AddElem(1, 0)
+        AddElem(1, 1)
+        AddElem(2, 2)
+        AddElem(2, 3)
+        AddElem(3, 3)
+        AddElem(3, 1)
+        AddElem(4, 5)
+        AddElem(4, 6)
+        AddElem(4, 7)
+        set_count = 5
+        Consolidate()
+        PrintSets()
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Case1()
+        Case2()
+        Case3()
+        Case4()
+    END PROCEDURE
+END MODULE
+
+IMPORT SetConsol
+BEGIN
+    SetConsol.Run()
+END

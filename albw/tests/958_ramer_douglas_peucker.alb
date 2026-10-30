@@ -1,0 +1,61 @@
+-- 958 | Ramer-Douglas-Peucker line simplification: keep
+-- endpoints, recursively keep the farthest point from the
+-- chord when its distance exceeds epsilon.
+DECLARE MODULE Rd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rd
+    STRICT px[10] AS F64
+    STRICT py[10] AS F64
+    STRICT kp[10] AS S64
+    STRICT eps[1] AS F64
+
+    PROCEDURE Simp(a AS S64, b AS S64)
+        LET dmax AS F64 = 0.0
+        LET idx AS S64 = 0
+        LET dx AS F64 = px[b] - px[a]
+        LET dy AS F64 = py[b] - py[a]
+        LET ll AS F64 = SQRT(dx * dx + dy * dy)
+        FOR i = a + 1 TO b - 1
+            LET dd AS F64 = dx * (py[a] - py[i]) - dy * (px[a] - px[i])
+            IF dd < 0.0 THEN dd = 0.0 - dd END IF
+            IF ll > 0.0 THEN dd = dd / ll END IF
+            IF dd > dmax THEN
+                dmax = dd
+                idx = i
+            END IF
+        END FOR
+        IF dmax > eps[1] THEN
+            kp[idx] = 1
+            Simp(a, idx)
+            Simp(idx, b)
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        eps[1] = 1.0
+        LET n AS S64 = 8
+        px[1] = 0.0; py[1] = 0.0
+        px[2] = 1.0; py[2] = 0.1
+        px[3] = 2.0; py[3] = 0.0 - 0.1
+        px[4] = 3.0; py[4] = 5.0
+        px[5] = 4.0; py[5] = 6.0
+        px[6] = 5.0; py[6] = 7.0
+        px[7] = 6.0; py[7] = 8.1
+        px[8] = 7.0; py[8] = 9.0
+        kp[1] = 1
+        kp[n] = 1
+        Simp(1, n)
+        FOR i = 1 TO n
+            IF kp[i] = 1 THEN
+                PRINT px[i] | "," | py[i]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rd
+BEGIN
+    Rd.Run()
+END

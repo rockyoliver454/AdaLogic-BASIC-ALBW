@@ -1,0 +1,64 @@
+-- 247 | Vector: 2D addition, subtraction, scalar multiplication, and division.
+STRUCT Vector2
+    x AS F64
+    y AS F64
+END STRUCT
+
+DECLARE MODULE Vectors
+    PROCEDURE Initialize(a_x AS F64, a_y AS F64, b_x AS F64, b_y AS F64)
+    PROCEDURE Add()
+    PROCEDURE Subtract()
+    PROCEDURE Multiply(scalar_value AS F64)
+    PROCEDURE Divide(scalar_value AS F64)
+    PROCEDURE PrintResult(label_value AS STRING)
+END DECLARE MODULE
+
+MODULE Vectors
+    LET a AS Vector2
+    LET b AS Vector2
+    LET result_vector AS Vector2
+
+    PROCEDURE Initialize(a_x AS F64, a_y AS F64, b_x AS F64, b_y AS F64)
+        a.x = a_x
+        a.y = a_y
+        b.x = b_x
+        b.y = b_y
+    END PROCEDURE
+
+    PROCEDURE Add()
+        result_vector.x = a.x + b.x
+        result_vector.y = a.y + b.y
+    END PROCEDURE
+
+    PROCEDURE Subtract()
+        result_vector.x = a.x - b.x
+        result_vector.y = a.y - b.y
+    END PROCEDURE
+
+    PROCEDURE Multiply(scalar_value AS F64)
+        result_vector.x = a.x * scalar_value
+        result_vector.y = a.y * scalar_value
+    END PROCEDURE
+
+    PROCEDURE Divide(scalar_value AS F64)
+        result_vector.x = a.x / scalar_value
+        result_vector.y = a.y / scalar_value
+    END PROCEDURE
+
+    PROCEDURE PrintResult(label_value AS STRING)
+        PRINT label_value | " (" | result_vector.x | ", " | result_vector.y | ")"
+    END PROCEDURE
+END MODULE
+
+IMPORT Vectors
+BEGIN
+    Vectors.Initialize(5.0, 7.0, 2.0, 3.0)
+    Vectors.Add()
+    Vectors.PrintResult("add:")
+    Vectors.Subtract()
+    Vectors.PrintResult("subtract:")
+    Vectors.Multiply(11.0)
+    Vectors.PrintResult("multiply:")
+    Vectors.Divide(2.0)
+    Vectors.PrintResult("divide:")
+END

@@ -1,0 +1,21 @@
+p1 eats meal 1 (forks 1,2)
+p1 thinks
+p1 eats meal 2 (forks 1,2)
+p1 thinks
+p2 eats meal 1 (forks 2,3)
+p2 thinks
+p2 eats meal 2 (forks 2,3)
+p2 thinks
+p3 eats meal 1 (forks 3,4)
+p3 thinks
+p3 eats meal 2 (forks 3,4)
+p3 thinks
+p4 eats meal 1 (forks 4,5)
+p4 thinks
+p4 eats meal 2 (forks 4,5)
+p4 thinks
+p5 eats meal 1 (forks 1,5)
+p5 thinks
+p5 eats meal 2 (forks 1,5)
+p5 thinks
+total meals=10

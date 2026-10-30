@@ -1,0 +1,29 @@
+-- 992 | Sierpinski triangle: Pascal parity / bitwise rule
+-- cell filled iff (x AND y) = 0 on a 32-row grid.
+DECLARE MODULE St
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE St
+    PROCEDURE Run()
+        FOR y = 0 TO 31
+            LET row AS STRING = ""
+            FOR x = 0 TO 31 - y
+                row = row | " "
+            END FOR
+            FOR x = 0 TO y
+                IF (x AND (y - x)) = 0 THEN
+                    row = row | "# "
+                ELSE
+                    row = row | "  "
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT St
+BEGIN
+    St.Run()
+END

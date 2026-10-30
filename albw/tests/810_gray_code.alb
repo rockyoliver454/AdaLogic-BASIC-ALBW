@@ -1,0 +1,7 @@
+BEGIN
+    LET n = 0
+    WHILE n <= 15
+        PRINT$ n XOR (n / 2)
+        n = n + 1
+    END WHILE
+END

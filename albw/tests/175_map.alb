@@ -1,0 +1,12 @@
+-- 175 | Map: apply a transform to every element.
+BEGIN
+    STRICT a[5] AS S32;
+    STRICT sq[5] AS S32;
+    a[0] = 1; a[1] = 2; a[2] = 3; a[3] = 4; a[4] = 5;
+    FOR i = 0 TO 4
+        sq[i] = a[i] * a[i];
+    END FOR
+    FOR i = 0 TO 4
+        PRINT sq[i];
+    END FOR
+END

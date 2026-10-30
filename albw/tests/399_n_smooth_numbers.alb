@@ -1,0 +1,46 @@
+-- 399 | N-smooth numbers: first 25 numbers smooth for primes 2, 3, 5.
+DECLARE MODULE NSmooth
+    FUNCTION Smooth(n AS S64, lim AS S64) AS S32
+    PROCEDURE Show(lim AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NSmooth
+    FUNCTION Smooth(n AS S64, lim AS S64) AS S32
+        LET m AS S64 = n
+        LET d AS S64 = 2
+        WHILE d <= lim
+            WHILE m MOD d = 0
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(lim AS S64)
+        LET s AS STRING = lim | "-smooth: "
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 25
+            IF Smooth(n, lim) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(2)
+        Show(3)
+        Show(5)
+    END PROCEDURE
+END MODULE
+
+IMPORT NSmooth
+BEGIN
+    NSmooth.Run()
+END

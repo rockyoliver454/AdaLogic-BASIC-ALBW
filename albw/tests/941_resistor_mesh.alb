@@ -1,0 +1,57 @@
+-- 941 | Resistor mesh: 10x10 grid of 1-ohm resistors, inject
+-- 1A at a source node, extract at drain; solve node voltages
+-- by Gauss-Seidel relaxation; print effective resistance.
+DECLARE MODULE Rs
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rs
+    STRICT v[121] AS F64
+
+    PROCEDURE Run()
+        -- nodes (r,c) in 10x10 -> index r*10+c+1
+        -- inject at (2,1) idx 21+1? use idx(r,c)=r*10+c+1
+        -- source = (2,1) -> r=2,c=1 -> 22 ; drain = (7,6) -> 77
+        LET src AS S64 = 22
+        LET drn AS S64 = 77
+        FOR i = 1 TO 100
+            v[i] = 0.0
+        END FOR
+        -- Gauss-Seidel: interior node v = avg(neighbours) + i/4
+        -- inject +1 at src (KCL), drain forced to 0 (ground)
+        LET it AS S64 = 0
+        LET chg AS F64 = 1.0
+        WHILE it < 5000 ANDALSO chg > 0.0000001
+            it = it + 1
+            chg = 0.0
+            FOR r = 0 TO 9
+                FOR c = 0 TO 9
+                    LET ix AS S64 = r * 10 + c + 1
+                    IF ix <> drn THEN
+                        LET sm AS F64 = 0.0
+                        LET cn AS S64 = 0
+                        IF r > 0 THEN sm = sm + v[ix - 10]; cn = cn + 1 END IF
+                        IF r < 9 THEN sm = sm + v[ix + 10]; cn = cn + 1 END IF
+                        IF c > 0 THEN sm = sm + v[ix - 1]; cn = cn + 1 END IF
+                        IF c < 9 THEN sm = sm + v[ix + 1]; cn = cn + 1 END IF
+                        LET inj AS F64 = 0.0
+                        IF ix = src THEN inj = 1.0 END IF
+                        LET nv AS F64 = (sm + inj) / cn
+                        LET df AS F64 = nv - v[ix]
+                        IF df < 0.0 THEN df = 0.0 - df END IF
+                        IF df > chg THEN chg = df END IF
+                        v[ix] = nv
+                    END IF
+                END FOR
+            END FOR
+        END WHILE
+        PRINT "iters=" | it
+        PRINT "V(src)=" | v[src]
+        PRINT "R_eff=" | v[src] - v[drn]
+    END PROCEDURE
+END MODULE
+
+IMPORT Rs
+BEGIN
+    Rs.Run()
+END

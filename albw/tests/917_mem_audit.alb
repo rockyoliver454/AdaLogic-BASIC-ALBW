@@ -1,0 +1,22 @@
+-- Deterministic-memory observability: MEMUSED() is the arena
+-- watermark, MEMFREE() is remaining headroom.  Arena-carved strings
+-- (concat) move the watermark; CLAIM/SWEEP rewinds it.
+
+BEGIN
+    LET base AS S64 = MEMUSED()
+    LET cap  AS S64 = MEMFREE()
+
+    --  Carve arena strings: each concat claims bytes.
+    LET s AS STRING = "alpha" | "-" | "beta"
+    PRINT MEMUSED() > base
+    PRINT MEMUSED() + MEMFREE() = cap + base
+
+    --  CLAIM checkpoint, carve, SWEEP back to it.
+    CLAIM m
+    LET mark AS S64 = MEMUSED()
+    LET t AS STRING = "garbage" | "pad" | "data" | "more"
+    PRINT MEMUSED() > mark
+    SWEEP m
+    PRINT MEMUSED() = mark
+    PRINT MEMUSED() + MEMFREE() = cap + base
+END

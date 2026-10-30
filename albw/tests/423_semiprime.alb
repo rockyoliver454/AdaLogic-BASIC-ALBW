@@ -1,0 +1,41 @@
+-- 423 | Semiprime: all semiprimes below 100.
+DECLARE MODULE Semi
+    FUNCTION IsSemiprime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Semi
+    FUNCTION IsSemiprime(n AS S64) AS S32
+        LET m AS S64 = n
+        LET factors AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                m = m / d
+                factors = factors + 1
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN factors = factors + 1 END IF
+        IF factors = 2 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET cnt AS S64 = 0
+        FOR n = 2 TO 99
+            IF IsSemiprime(n) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Semi
+BEGIN
+    Semi.Run()
+END

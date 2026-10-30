@@ -1,0 +1,12 @@
+VERSION 1.0
+
+BEGIN
+    LET n AS S64 = ARGC()
+    PRINT "argc=" | n
+    PRINT "argv0 nonempty=" | (LEN(ARGV$(0)) > 0)
+    LET i AS S64 = 0
+    WHILE i < n
+        PRINT "arg " | i | " present"
+        i = i + 1
+    END WHILE
+END

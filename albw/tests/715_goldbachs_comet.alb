@@ -1,0 +1,42 @@
+-- 715 | Goldbach's comet: number of ways to write each even
+-- n <= 100 as a sum of two primes.
+DECLARE MODULE Gc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gc
+    STRICT sv[101] AS S32
+
+    PROCEDURE Run()
+        FOR i = 0 TO 100
+            sv[i] = 1
+        END FOR
+        sv[0] = 0
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= 100
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m <= 100
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        LET e AS S64 = 4
+        WHILE e <= 100
+            LET c AS S64 = 0
+            FOR q = 2 TO e / 2
+                IF sv[q] = 1 ANDALSO sv[e - q] = 1 THEN c = c + 1 END IF
+            END FOR
+            PRINT e | ": " | c
+            e = e + 2
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Gc
+BEGIN
+    Gc.Run()
+END

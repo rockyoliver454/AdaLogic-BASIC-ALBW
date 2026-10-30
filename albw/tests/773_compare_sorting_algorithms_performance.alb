@@ -1,0 +1,118 @@
+-- 773 | Compare sorting algorithms' performance: comparison
+-- counts of bubble / insertion / quicksort on fixed data.
+DECLARE MODULE Cs
+    PROCEDURE Ld()
+    PROCEDURE Bb()
+    PROCEDURE Insertion()
+    PROCEDURE Qsort(lo AS S64, hi AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cs
+    STRICT aa[30] AS S64
+    STRICT cm[1] AS S64
+
+    PROCEDURE Ld()
+        aa[1] = 42
+        aa[2] = 7
+        aa[3] = 99
+        aa[4] = 13
+        aa[5] = 56
+        aa[6] = 1
+        aa[7] = 88
+        aa[8] = 30
+        aa[9] = 64
+        aa[10] = 21
+    END PROCEDURE
+
+    PROCEDURE Bb()
+        FOR i = 1 TO 9
+            FOR j = 1 TO 10 - i
+                cm[1] = cm[1] + 1
+                IF aa[j] > aa[j + 1] THEN
+                    LET t AS S64 = aa[j]
+                    aa[j] = aa[j + 1]
+                    aa[j + 1] = t
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Insertion()
+        FOR i = 2 TO 10
+            LET v AS S64 = aa[i]
+            LET j AS S64 = i - 1
+            LET go AS S32 = 1
+            WHILE j >= 1 ANDALSO go = 1
+                cm[1] = cm[1] + 1
+                IF aa[j] > v THEN
+                    aa[j + 1] = aa[j]
+                    j = j - 1
+                ELSE
+                    go = 0
+                END IF
+            END WHILE
+            aa[j + 1] = v
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Qsort(lo AS S64, hi AS S64)
+        IF lo >= hi THEN RETURN END IF
+        LET pv AS S64 = aa[(lo + hi) / 2]
+        LET i AS S64 = lo
+        LET j AS S64 = hi
+        WHILE i <= j
+            LET g1 AS S32 = 1
+            WHILE g1 = 1
+                cm[1] = cm[1] + 1
+                IF aa[i] < pv THEN
+                    i = i + 1
+                ELSE
+                    g1 = 0
+                END IF
+            END WHILE
+            LET g2 AS S32 = 1
+            WHILE g2 = 1
+                cm[1] = cm[1] + 1
+                IF aa[j] > pv THEN
+                    j = j - 1
+                ELSE
+                    g2 = 0
+                END IF
+            END WHILE
+            IF i <= j THEN
+                LET t AS S64 = aa[i]
+                aa[i] = aa[j]
+                aa[j] = t
+                i = i + 1
+                j = j - 1
+            END IF
+        END WHILE
+        Qsort(lo, j)
+        Qsort(i, hi)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Ld()
+        cm[1] = 0
+        Bb()
+        PRINT "bubble comparisons=" | cm[1]
+        Ld()
+        cm[1] = 0
+        Insertion()
+        PRINT "insertion comparisons=" | cm[1]
+        Ld()
+        cm[1] = 0
+        Qsort(1, 10)
+        PRINT "quicksort comparisons=" | cm[1]
+        PRINT "sorted:"
+        FOR i = 1 TO 10
+            PRINT aa[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cs
+BEGIN
+    Cs.Run()
+END

@@ -1,0 +1,76 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET npx AS S64 = 0
+
+PROCEDURE Plot8(cx AS S64, cy AS S64, x AS S64, y AS S64)
+    img[(cy + y) * 64 + cx + x] = 16776960
+    img[(cy - y) * 64 + cx + x] = 16776960
+    img[(cy + y) * 64 + cx - x] = 16776960
+    img[(cy - y) * 64 + cx - x] = 16776960
+    img[(cy + x) * 64 + cx + y] = 16776960
+    img[(cy - x) * 64 + cx + y] = 16776960
+    img[(cy + x) * 64 + cx - y] = 16776960
+    img[(cy - x) * 64 + cx - y] = 16776960
+END PROCEDURE
+
+PROCEDURE MCirc(cx AS S64, cy AS S64, r AS S64)
+    LET x AS S64 = r
+    LET y AS S64 = 0
+    LET e AS S64 = 1 - r
+    WHILE x >= y
+        CALL Plot8(cx, cy, x, y)
+        npx = npx + 8
+        y = y + 1
+        IF e < 0 THEN
+            e = e + 2 * y + 1
+        ELSE
+            x = x - 1
+            e = e + 2 * (y - x) + 1
+        END IF
+    END WHILE
+END PROCEDURE
+
+
+BEGIN
+    CALL MCirc(32, 32, 20)
+
+    CREATE_WINDOW "Midpoint circle", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(52, 32)
+    END
+
+    LISTEN
+
+    PRINT "r=20"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "px(52,32)=" | fpx
+END

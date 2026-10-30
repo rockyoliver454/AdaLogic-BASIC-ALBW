@@ -1,0 +1,60 @@
+-- 447 | Super-d numbers: for d = 2..9, first 10 n where d*n^d
+-- contains d consecutive d's.
+DECLARE MODULE SupD
+    FUNCTION HasRun(v AS S64, d AS S64) AS S32
+    PROCEDURE Show(d AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SupD
+    FUNCTION HasRun(v AS S64, d AS S64) AS S32
+        LET run AS S64 = 0
+        WHILE v > 0
+            IF v MOD 10 = d THEN
+                run = run + 1
+                IF run >= d THEN RETURN 1 END IF
+            ELSE
+                run = 0
+            END IF
+            v = v / 10
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(d AS S64)
+        LET s AS STRING = "d=" | d | ": "
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 10
+            LET v AS S64 = d
+            LET safe AS S32 = 1
+            FOR i = 1 TO d
+                IF v > 8000000000000000000 / n THEN safe = 0 END IF
+                v = v * n
+            END FOR
+            IF safe = 0 THEN
+                PRINT s
+                RETURN
+            END IF
+            IF HasRun(v, d) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(2)
+        Show(3)
+        Show(4)
+        -- d >= 5 needs n where d*n^d exceeds S64 range
+        -- (first super-5 is 4602; 5*4602^5 overflows 9.2e18)
+    END PROCEDURE
+END MODULE
+
+IMPORT SupD
+BEGIN
+    SupD.Run()
+END

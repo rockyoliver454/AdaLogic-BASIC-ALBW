@@ -1,0 +1,51 @@
+-- 446 | Smarandache-Wellin primes: which of the first 8 SW numbers
+-- (concatenation of first n primes) are prime.
+DECLARE MODULE SmWe
+    FUNCTION NthPrime(k AS S64) AS S64
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SmWe
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION NthPrime(k AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < k
+            n = n + 1
+            IF IsPrime(n) = 1 THEN cnt = cnt + 1 END IF
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET sw AS S64 = 0
+        FOR i = 1 TO 8
+            LET p AS S64 = NthPrime(i)
+            LET digits AS S64 = 1
+            WHILE digits <= p
+                digits = digits * 10
+            END WHILE
+            sw = sw * digits + p
+            PRINT sw | " -> " | IsPrime(sw)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT SmWe
+BEGIN
+    SmWe.Run()
+END

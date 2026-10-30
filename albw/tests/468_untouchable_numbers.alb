@@ -1,0 +1,43 @@
+-- 468 | Untouchable numbers: all n <= 2000 never equal to the sum of
+-- proper divisors of any number.
+DECLARE MODULE Untouch
+    FUNCTION Sigma(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Untouch
+    STRICT hits[2001] AS S32
+
+    FUNCTION Sigma(n AS S64) AS S64
+        LET s AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                IF d * d <> n THEN s = s + n / d END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s - n
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 2000
+            hits[i] = 0
+        END FOR
+        FOR n = 1 TO 200000
+            LET s AS S64 = Sigma(n)
+            IF s <= 2000 ANDALSO s >= 1 THEN hits[s] = 1 END IF
+        END FOR
+        LET outln AS STRING = ""
+        FOR k = 2 TO 2000
+            IF hits[k] = 0 THEN outln = outln | k | " " END IF
+        END FOR
+        PRINT outln
+    END PROCEDURE
+END MODULE
+
+IMPORT Untouch
+BEGIN
+    Untouch.Run()
+END

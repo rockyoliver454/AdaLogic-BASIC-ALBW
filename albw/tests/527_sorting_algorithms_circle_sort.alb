@@ -1,0 +1,63 @@
+-- 527 | Sorting algorithms/Circle sort.
+DECLARE MODULE Circ
+    FUNCTION Csort(lo AS S64, hi AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Circ
+    STRICT a[16] AS S64
+
+    FUNCTION Csort(lo AS S64, hi AS S64) AS S32
+        IF lo = hi THEN RETURN 0 END IF
+        LET swapped AS S32 = 0
+        LET l2 AS S64 = lo
+        LET h2 AS S64 = hi
+        WHILE l2 < h2
+            IF a[l2] > a[h2] THEN
+                LET t AS S64 = a[l2]
+                a[l2] = a[h2]
+                a[h2] = t
+                swapped = 1
+            END IF
+            l2 = l2 + 1
+            h2 = h2 - 1
+        END WHILE
+        LET mid AS S64 = (hi - lo + 1) / 2
+        LET s1 AS S32 = Csort(lo, lo + mid - 1)
+        LET s2 AS S32 = Csort(lo + mid, hi)
+        IF swapped = 1 ORELSE s1 = 1 ORELSE s2 = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = 6
+        a[2] = 7
+        a[3] = 8
+        a[4] = 9
+        a[5] = 2
+        a[6] = 5
+        a[7] = 3
+        a[8] = 4
+        a[9] = 1
+        a[10] = 10
+        a[11] = 15
+        a[12] = 13
+        a[13] = 11
+        a[14] = 12
+        a[15] = 14
+        a[16] = 16
+        WHILE Csort(1, 16) = 1
+            a[1] = a[1]
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO 16
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Circ
+BEGIN
+    Circ.Run()
+END

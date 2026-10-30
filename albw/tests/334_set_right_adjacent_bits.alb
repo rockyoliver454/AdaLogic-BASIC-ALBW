@@ -1,0 +1,39 @@
+-- 334 | Set right-adjacent bits: n contiguous bits starting at bit m-1.
+DECLARE MODULE AdjBits
+    FUNCTION Bits(v AS S64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AdjBits
+    FUNCTION Bits(v AS S64) AS STRING
+        LET s AS STRING = ""
+        LET hi AS S64 = 128
+        LET seen AS S32 = 0
+        WHILE hi > 0
+            IF v >= hi THEN
+                s = s | "1"
+                v = v - hi
+                seen = 1
+            ELSE
+                IF seen = 1 THEN s = s | "0" END IF
+            END IF
+            hi = hi / 2
+        END WHILE
+        IF s = "" THEN s = "0" END IF
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR m = 1 TO 7
+            FOR n = 1 TO 4
+                LET v AS S64 = ((2 ^ n) - 1) * (2 ^ (m - 1))
+                PRINT "m=" | m | " n=" | n | " " | Bits(v)
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT AdjBits
+BEGIN
+    AdjBits.Run()
+END

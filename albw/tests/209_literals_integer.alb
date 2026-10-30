@@ -1,0 +1,8 @@
+-- 209 | Integer literals: decimal, hexadecimal, binary, octal, and negative forms.
+BEGIN
+    PRINT 42
+    PRINT $2A
+    PRINT %101010
+    PRINT &O52
+    PRINT -42
+END

@@ -1,0 +1,79 @@
+-- 754 | Arithmetic evaluation: recursive-descent evaluator
+-- for + - * / parentheses over integers.
+DECLARE MODULE Ae
+    FUNCTION Cur() AS STRING
+    FUNCTION Expr() AS S64
+    FUNCTION Term() AS S64
+    FUNCTION Fct() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ae
+    STRICT tx[1] AS STRING
+    STRICT pp[1] AS S64
+
+    FUNCTION Cur() AS STRING
+        IF pp[1] > LEN(tx[1]) THEN RETURN "" END IF
+        RETURN MID$(tx[1], pp[1], 1)
+    END FUNCTION
+
+    FUNCTION Fct() AS S64
+        WHILE Cur() = " "
+            pp[1] = pp[1] + 1
+        END WHILE
+        LET c AS STRING = Cur()
+        IF c = "(" THEN
+            pp[1] = pp[1] + 1
+            LET v AS S64 = Expr()
+            pp[1] = pp[1] + 1
+            RETURN v
+        END IF
+        LET v2 AS S64 = 0
+        WHILE pp[1] <= LEN(tx[1]) ANDALSO ASC(Cur()) >= 48 ANDALSO ASC(Cur()) <= 57
+            v2 = v2 * 10 + ASC(Cur()) - 48
+            pp[1] = pp[1] + 1
+        END WHILE
+        RETURN v2
+    END FUNCTION
+
+    FUNCTION Term() AS S64
+        LET v AS S64 = Fct()
+        WHILE Cur() = "*" ORELSE Cur() = "/"
+            LET op AS STRING = Cur()
+            pp[1] = pp[1] + 1
+            LET r AS S64 = Fct()
+            IF op = "*" THEN v = v * r END IF
+            IF op = "/" THEN v = v / r END IF
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Expr() AS S64
+        LET v AS S64 = Term()
+        WHILE Cur() = "+" ORELSE Cur() = "-"
+            LET op AS STRING = Cur()
+            pp[1] = pp[1] + 1
+            LET r AS S64 = Term()
+            IF op = "+" THEN v = v + r END IF
+            IF op = "-" THEN v = v - r END IF
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        tx[1] = "3+4*2"
+        pp[1] = 1
+        PRINT tx[1] | " = " | Expr()
+        tx[1] = "(1+2)*7"
+        pp[1] = 1
+        PRINT tx[1] | " = " | Expr()
+        tx[1] = "8*2-6/3"
+        pp[1] = 1
+        PRINT tx[1] | " = " | Expr()
+    END PROCEDURE
+END MODULE
+
+IMPORT Ae
+BEGIN
+    Ae.Run()
+END

@@ -1,0 +1,14 @@
+BEGIN
+    LET b = 99
+    WHILE b > 0
+        PRINT$ b | " bottles of beer on the wall"
+        PRINT$ b | " bottles of beer"
+        PRINT$ "Take one down, pass it around"
+        b = b - 1
+        IF b = 0 THEN
+            PRINT$ "No more bottles of beer on the wall"
+        ELSE
+            PRINT$ b | " bottles of beer on the wall"
+        END IF
+    END WHILE
+END

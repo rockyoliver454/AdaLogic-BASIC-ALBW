@@ -1,0 +1,11 @@
+-- 320 | Integer overflow: wrap behavior at S32 limits.
+BEGIN
+    LET v AS S32 = 2147483647
+    PRINT v
+    v = v + 1
+    PRINT v
+    LET n AS S32 = -2147483648
+    PRINT n
+    n = n - 1
+    PRINT n
+END

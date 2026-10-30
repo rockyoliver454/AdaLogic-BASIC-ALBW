@@ -1,0 +1,20 @@
+-- 586 | Apery's constant: zeta(3) via partial sum 1/k^3 to 1000.
+DECLARE MODULE Apery
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Apery
+    PROCEDURE Run()
+        LET s AS F64 = 0.0
+        FOR k = 1 TO 1000
+            LET kk AS F64 = k
+            s = s + 1.0 / (kk * kk * kk)
+        END FOR
+        PRINT "zeta(3) ~= " | s
+    END PROCEDURE
+END MODULE
+
+IMPORT Apery
+BEGIN
+    Apery.Run()
+END

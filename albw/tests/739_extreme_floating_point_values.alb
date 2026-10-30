@@ -1,0 +1,23 @@
+-- 739 | Extreme floating point values: overflow to infinity,
+-- tiny normals, and NaN-style results.
+DECLARE MODULE Ef
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ef
+    PROCEDURE Run()
+        LET big AS F64 = 1.0e308
+        LET inf AS F64 = big * 10.0
+        PRINT "1e308 * 10 = " | inf
+        LET small AS F64 = 1.0e-300
+        PRINT "1e-300 / 1e20 = " | small / 1.0e20
+        LET x AS F64 = inf - inf
+        PRINT "inf - inf = " | x
+        PRINT "2^1024-ish: " | 2.0 ^ 1024.0
+    END PROCEDURE
+END MODULE
+
+IMPORT Ef
+BEGIN
+    Ef.Run()
+END

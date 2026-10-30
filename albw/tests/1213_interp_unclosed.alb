@@ -1,0 +1,3 @@
+BEGIN
+    PRINT `bad {x no close
+END

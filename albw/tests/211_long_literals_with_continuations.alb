@@ -1,0 +1,7 @@
+-- 211 | Long literals with continuations: compose one value across source lines.
+BEGIN
+    LET message AS STRING = "AdaLogic BASIC lets long strings " |
+        "continue across source lines " |
+        "without changing their value."
+    PRINT message
+END

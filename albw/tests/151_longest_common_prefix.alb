@@ -1,0 +1,12 @@
+-- 151 | Longest common prefix of a list of strings.
+BEGIN
+    STRICT w[3] AS STRING;
+    w[0] = "flower"; w[1] = "flow"; w[2] = "flight";
+    LET p AS STRING = w[0];
+    FOR i = 1 TO 2
+        WHILE LEN(p) > 0 ANDALSO LEFT$(w[i], LEN(p)) <> p
+            p = LEFT$(p, LEN(p) - 1);
+        END WHILE
+    END FOR
+    PRINT$ "[" | p | "]";
+END

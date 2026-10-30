@@ -1,0 +1,67 @@
+-- 688 | First perfect square in base n with n unique digits:
+-- smallest square whose base-n form is pandigital, n=2..12.
+DECLARE MODULE Pan
+    FUNCTION PanSq(sq AS S64, b AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pan
+    STRICT seen[17] AS S32
+
+    FUNCTION PanSq(sq AS S64, b AS S64) AS S32
+        FOR i = 1 TO 16
+            seen[i] = 0
+        END FOR
+        LET cnt AS S64 = 0
+        LET v AS S64 = sq
+        WHILE v > 0
+            LET d AS S64 = v MOD b
+            cnt = cnt + 1
+            IF seen[d + 1] = 1 THEN RETURN 0 END IF
+            seen[d + 1] = 1
+            v = v / b
+        END WHILE
+        IF cnt = b THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR b = 2 TO 12
+            -- smallest pandigital value in base b is "10"
+            -- followed by digits 2..b-1; start just below its sqrt
+            LET pw AS S64 = 1
+            FOR p = 1 TO b - 1
+                pw = pw * b
+            END FOR
+            LET v AS S64 = pw
+            pw = pw / b / b
+            FOR d = 2 TO b - 1
+                v = v + d * pw
+                pw = pw / b
+            END FOR
+            -- integer sqrt of v (start a little low)
+            LET k AS S64 = 1
+            WHILE k * k <= v
+                k = k + 1
+            END WHILE
+            k = k - 1
+            LET found AS S64 = 0
+            LET tries AS S64 = 0
+            WHILE found = 0 ANDALSO tries < 2000000
+                k = k + 1
+                tries = tries + 1
+                IF PanSq(k * k, b) = 1 THEN found = k END IF
+            END WHILE
+            IF found > 0 THEN
+                PRINT "base " | b | ": " | found | "^2 = " | found * found
+            ELSE
+                PRINT "base " | b | ": none"
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pan
+BEGIN
+    Pan.Run()
+END

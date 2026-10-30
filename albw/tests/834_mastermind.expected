@@ -1,0 +1,6 @@
+guess1 1122 black=2 white=0
+guess2 1111 black=1 white=0
+guess3 1323 black=0 white=2
+guess4 4142 black=3 white=0
+guess5 4152 black=4 white=0
+cracked: 4152

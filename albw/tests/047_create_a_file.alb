@@ -1,0 +1,12 @@
+-- Rosetta: Create a file
+-- Writes "output.txt" in the run directory (host FS or --memfs table),
+-- then reads it back and reports its length.
+BEGIN
+LET h = OPEN("output.txt", "w")
+WRITE h, "created by malbr"
+CLOSE h
+PRINT "exists len=" | FILELEN("output.txt")
+LET r = OPEN("output.txt", "r")
+PRINT READ(r, 0)
+CLOSE r
+END

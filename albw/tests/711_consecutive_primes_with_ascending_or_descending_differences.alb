@@ -1,0 +1,49 @@
+-- 711 | Consecutive primes with ascending or descending
+-- differences: runs of 5 consecutive primes with monotone gaps.
+DECLARE MODULE Cd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cd
+    STRICT pr[310] AS S64
+
+    PROCEDURE Run()
+        -- collect primes below 1500
+        LET cnt AS S64 = 0
+        LET n AS S64 = 2
+        WHILE n < 1500
+            LET isp AS S32 = 1
+            LET d AS S64 = 2
+            WHILE d * d <= n
+                IF n MOD d = 0 THEN isp = 0 END IF
+                d = d + 1
+            END WHILE
+            IF isp = 1 THEN
+                cnt = cnt + 1
+                pr[cnt] = n
+            END IF
+            n = n + 1
+        END WHILE
+        FOR i = 1 TO cnt - 4
+            LET asc AS S32 = 1
+            LET dsc AS S32 = 1
+            FOR j = i TO i + 2
+                LET g1 AS S64 = pr[j + 1] - pr[j]
+                LET g2 AS S64 = pr[j + 2] - pr[j + 1]
+                IF g1 >= g2 THEN asc = 0 END IF
+                IF g1 <= g2 THEN dsc = 0 END IF
+            END FOR
+            IF asc = 1 THEN
+                PRINT "asc: " | pr[i] | " " | pr[i + 1] | " " | pr[i + 2] | " " | pr[i + 3] | " " | pr[i + 4]
+            END IF
+            IF dsc = 1 THEN
+                PRINT "dsc: " | pr[i] | " " | pr[i + 1] | " " | pr[i + 2] | " " | pr[i + 3] | " " | pr[i + 4]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cd
+BEGIN
+    Cd.Run()
+END

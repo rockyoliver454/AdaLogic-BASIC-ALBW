@@ -1,0 +1,45 @@
+-- 661 | Last Friday of each month: last Friday in each month
+-- of 2025.
+DECLARE MODULE Lf
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lf
+    STRICT dim[13] AS S64
+
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+        LET a AS S64 = (14 - m) / 12
+        LET y2 AS S64 = y - a
+        LET m2 AS S64 = m + 12 * a - 3
+        LET j AS S64 = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400
+        RETURN (j + 1) MOD 7
+    END FUNCTION
+
+    PROCEDURE Run()
+        dim[1] = 31
+        dim[2] = 28
+        dim[3] = 31
+        dim[4] = 30
+        dim[5] = 31
+        dim[6] = 30
+        dim[7] = 31
+        dim[8] = 31
+        dim[9] = 30
+        dim[10] = 31
+        dim[11] = 30
+        dim[12] = 31
+        FOR m = 1 TO 12
+            LET d AS S64 = dim[m]
+            WHILE Wd(2025, m, d) <> 4
+                d = d - 1
+            END WHILE
+            PRINT "2025-" | m | "-" | d
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lf
+BEGIN
+    Lf.Run()
+END

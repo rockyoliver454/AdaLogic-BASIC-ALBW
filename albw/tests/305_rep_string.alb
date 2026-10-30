@@ -1,0 +1,42 @@
+-- 305 | Rep-string: is a string made by repeating a shorter substring?
+DECLARE MODULE RepStr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RepStr
+    PROCEDURE Check(s AS STRING)
+        LET n AS S32 = LEN(s)
+        LET base AS STRING = ""
+        FOR d = 1 TO n - 1
+            IF n MOD d = 0 ANDALSO LEN(base) = 0 THEN
+                LET unit AS STRING = MID$(s, 1, d)
+                LET ok AS S32 = 1
+                FOR i = 1 TO n
+                    LET j AS S32 = (i - 1) MOD d + 1
+                    IF ASC(MID$(s, i, 1)) <> ASC(MID$(unit, j, 1)) THEN ok = 0 END IF
+                END FOR
+                IF ok = 1 THEN base = unit END IF
+            END IF
+        END FOR
+        LET out_line AS STRING = s | " -> "
+        IF LEN(base) = 0 THEN
+            out_line = out_line | "none"
+        ELSE
+            out_line = out_line | base
+        END IF
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Check("1010")
+        Check("ab")
+        Check("abcab")
+        Check("abababab")
+        Check("abcabcabc")
+    END PROCEDURE
+END MODULE
+
+IMPORT RepStr
+BEGIN
+    RepStr.Run()
+END

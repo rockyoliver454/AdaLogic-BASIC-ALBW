@@ -1,0 +1,80 @@
+-- 887 | 24 game/Solve: exhaustive search over permutations,
+-- operators and the 5 parenthesisation patterns for digits
+-- 4 7 8 8 and 1 1 8 8? -> demonstrates on 4 7 8 8.
+DECLARE MODULE G24
+    FUNCTION Op2(x AS F64, y AS F64, o AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE G24
+    STRICT nm[5] AS F64
+    STRICT got[1] AS S64
+    STRICT och[4] AS STRING
+
+    FUNCTION Op2(x AS F64, y AS F64, o AS S64) AS F64
+        IF o = 0 THEN RETURN x + y END IF
+        IF o = 1 THEN RETURN x - y END IF
+        IF o = 2 THEN RETURN x * y END IF
+        IF y <> 0.0 THEN RETURN x / y END IF
+        RETURN 1000000.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        och[0] = "+"
+        och[1] = "-"
+        och[2] = "*"
+        och[3] = "/"
+        nm[1] = 4.0
+        nm[2] = 7.0
+        nm[3] = 8.0
+        nm[4] = 8.0
+        got[1] = 0
+        FOR a = 1 TO 4
+        FOR b = 1 TO 4
+        FOR c = 1 TO 4
+        FOR d = 1 TO 4
+            IF got[1] = 0 ANDALSO a <> b ANDALSO a <> c ANDALSO a <> d ANDALSO b <> c ANDALSO b <> d ANDALSO c <> d THEN
+                FOR o1 = 0 TO 3
+                FOR o2 = 0 TO 3
+                FOR o3 = 0 TO 3
+                    LET r1 AS F64 = Op2(Op2(Op2(nm[a], nm[b], o1), nm[c], o2), nm[d], o3)
+                    LET r2 AS F64 = Op2(Op2(nm[a], Op2(nm[b], nm[c], o2), o1), nm[d], o3)
+                    LET r3 AS F64 = Op2(Op2(nm[a], nm[b], o1), Op2(nm[c], nm[d], o3), o2)
+                    LET r4 AS F64 = Op2(nm[a], Op2(Op2(nm[b], nm[c], o2), nm[d], o3), o1)
+                    LET r5 AS F64 = Op2(nm[a], Op2(nm[b], Op2(nm[c], nm[d], o3), o2), o1)
+                    IF r1 > 23.9999 ANDALSO r1 < 24.0001 THEN
+                        PRINT "solution: ((" | nm[a] | och[o1] | nm[b] | ")" | och[o2] | nm[c] | ")" | och[o3] | nm[d] | " =24"
+                        got[1] = 1
+                    END IF
+                    IF r2 > 23.9999 ANDALSO r2 < 24.0001 ANDALSO got[1] = 0 THEN
+                        PRINT "solution: (" | nm[a] | och[o1] | "(" | nm[b] | och[o2] | nm[c] | "))" | och[o3] | nm[d] | " =24"
+                        got[1] = 1
+                    END IF
+                    IF r3 > 23.9999 ANDALSO r3 < 24.0001 ANDALSO got[1] = 0 THEN
+                        PRINT "solution: (" | nm[a] | och[o1] | nm[b] | ")" | och[o2] | "(" | nm[c] | och[o3] | nm[d] | ") =24"
+                        got[1] = 1
+                    END IF
+                    IF r4 > 23.9999 ANDALSO r4 < 24.0001 ANDALSO got[1] = 0 THEN
+                        PRINT "solution: " | nm[a] | och[o1] | "((" | nm[b] | och[o2] | nm[c] | ")" | och[o3] | nm[d] | ") =24"
+                        got[1] = 1
+                    END IF
+                    IF r5 > 23.9999 ANDALSO r5 < 24.0001 ANDALSO got[1] = 0 THEN
+                        PRINT "solution: " | nm[a] | och[o1] | "(" | nm[b] | och[o2] | "(" | nm[c] | och[o3] | nm[d] | ")) =24"
+                        got[1] = 1
+                    END IF
+                END FOR
+                END FOR
+                END FOR
+            END IF
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        IF got[1] = 0 THEN PRINT "no solution" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT G24
+BEGIN
+    G24.Run()
+END

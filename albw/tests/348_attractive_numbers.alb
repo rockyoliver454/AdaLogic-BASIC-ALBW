@@ -1,0 +1,48 @@
+-- 348 | Attractive numbers: count of prime factors (with multiplicity) is prime; 1..120.
+DECLARE MODULE Attractive
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION FactorCount(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Attractive
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION FactorCount(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET m AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                cnt = cnt + 1
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN cnt = cnt + 1 END IF
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 120
+            IF IsPrime(FactorCount(n)) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Attractive
+BEGIN
+    Attractive.Run()
+END

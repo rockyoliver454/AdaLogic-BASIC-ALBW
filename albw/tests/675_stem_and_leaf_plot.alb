@@ -1,0 +1,51 @@
+-- 675 | Stem-and-leaf plot: stem tens digit, leaf ones digits
+-- sorted.
+DECLARE MODULE Stem
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Stem
+    STRICT v[12] AS S64
+
+    PROCEDURE Run()
+        v[1] = 12
+        v[2] = 127
+        v[3] = 28
+        v[4] = 42
+        v[5] = 39
+        v[6] = 113
+        v[7] = 42
+        v[8] = 18
+        v[9] = 44
+        v[10] = 118
+        v[11] = 44
+        v[12] = 37
+        -- insertion sort
+        FOR i = 2 TO 12
+            LET x AS S64 = v[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO v[j] > x
+                v[j + 1] = v[j]
+                j = j - 1
+            END WHILE
+            v[j + 1] = x
+        END FOR
+        LET cur AS S64 = -1
+        LET line2 AS STRING = ""
+        FOR k = 1 TO 12
+            LET st AS S64 = v[k] / 10
+            IF st <> cur THEN
+                IF cur >= 0 THEN PRINT line2 END IF
+                cur = st
+                line2 = cur | " |"
+            END IF
+            line2 = line2 | " " | (v[k] - st * 10)
+        END FOR
+        PRINT line2
+    END PROCEDURE
+END MODULE
+
+IMPORT Stem
+BEGIN
+    Stem.Run()
+END

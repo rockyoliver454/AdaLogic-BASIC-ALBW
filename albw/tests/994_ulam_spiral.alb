@@ -1,0 +1,62 @@
+-- 994 | Ulam spiral (for primes): 21x21 spiral of numbers,
+-- print prime cells as # and composites as dots.
+DECLARE MODULE Us
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Us
+    STRICT g[442] AS S64
+
+    FUNCTION IsP(x AS S64) AS S64
+        IF x < 2 THEN RETURN 0 END IF
+        LET i AS S64 = 2
+        WHILE i * i <= x
+            IF x MOD i = 0 THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- spiral: start center (10,10) v=1; steps R1 U1 L2 D2 R3 U3 ...
+        LET x AS S64 = 10
+        LET y AS S64 = 10
+        LET v AS S64 = 1
+        g[y * 21 + x + 1] = IsP(v)
+        LET stp AS S64 = 1
+        WHILE v < 441
+            FOR r = 0 TO 1
+                LET dx AS S64 = 0
+                LET dy AS S64 = 0
+                IF r = 0 THEN
+                    IF stp MOD 2 = 1 THEN dx = 1 ELSE dx = 0 - 1 END IF
+                ELSE
+                    IF stp MOD 2 = 1 THEN dy = 0 - 1 ELSE dy = 1 END IF
+                END IF
+                FOR k = 1 TO stp
+                    x = x + dx
+                    y = y + dy
+                    v = v + 1
+                    IF v <= 441 THEN g[y * 21 + x + 1] = IsP(v) END IF
+                END FOR
+            END FOR
+            stp = stp + 1
+        END WHILE
+        FOR y = 0 TO 20
+            LET row AS STRING = ""
+            FOR x = 0 TO 20
+                IF g[y * 21 + x + 1] = 1 THEN
+                    row = row | "#"
+                ELSE
+                    row = row | "."
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Us
+BEGIN
+    Us.Run()
+END

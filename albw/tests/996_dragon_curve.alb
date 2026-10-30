@@ -1,0 +1,52 @@
+-- 996 | Dragon curve: fold sequence via turn sequence
+-- t(n) = ((n & -n) << 1 & n) != 0 trick -> ASCII turtle.
+DECLARE MODULE Dc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dc
+    STRICT g[1681] AS S64
+
+    PROCEDURE Run()
+        -- 2^10 steps dragon; turns: bit trick or recurrence
+        LET x AS S64 = 20
+        LET y AS S64 = 20
+        LET d AS S64 = 0
+        g[y * 41 + x + 1] = 1
+        FOR n = 1 TO 1023
+            -- turn dir: 1 = left, 0 = right (dragon sequence)
+            LET b AS S64 = n AND (0 - n)
+            LET t AS S64 = ((n + b) AND n) / b
+            -- standard: turn = ((n & -n) * 2) AND n : nonzero -> right
+            LET tn AS S64 = (n AND (0 - n)) * 2
+            IF (tn AND n) <> 0 THEN
+                d = (d + 1) MOD 4
+            ELSE
+                d = (d + 3) MOD 4
+            END IF
+            IF d = 0 THEN x = x + 1 END IF
+            IF d = 1 THEN y = y - 1 END IF
+            IF d = 2 THEN x = x - 1 END IF
+            IF d = 3 THEN y = y + 1 END IF
+            IF x >= 0 ANDALSO x <= 40 ANDALSO y >= 0 ANDALSO y <= 40 THEN
+                g[y * 41 + x + 1] = 1
+            END IF
+        END FOR
+        FOR y2 = 0 TO 40
+            LET row AS STRING = ""
+            FOR x2 = 0 TO 40
+                IF g[y2 * 41 + x2 + 1] = 1 THEN
+                    row = row | "#"
+                ELSE
+                    row = row | " "
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Dc
+BEGIN
+    Dc.Run()
+END

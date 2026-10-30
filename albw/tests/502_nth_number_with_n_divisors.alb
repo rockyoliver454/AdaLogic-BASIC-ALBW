@@ -1,0 +1,39 @@
+-- 502 | Sequence: nth number with exactly n divisors, n = 1..8.
+DECLARE MODULE NthDiv
+    FUNCTION Tau(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NthDiv
+    FUNCTION Tau(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                cnt = cnt + 1
+                IF d * d <> n THEN cnt = cnt + 1 END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 6
+            LET m AS S64 = 1
+            LET cnt AS S64 = 0
+            WHILE cnt < n
+                IF Tau(m) = n THEN cnt = cnt + 1 END IF
+                m = m + 1
+            END WHILE
+            s = s | m - 1 | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT NthDiv
+BEGIN
+    NthDiv.Run()
+END

@@ -1,0 +1,13 @@
+-- Rosetta: Append a record to the end of a text file
+BEGIN
+LET w = OPEN("records.txt", "w")
+WRITE w, "rec1:alpha"
+CLOSE w
+LET a = OPEN("records.txt", "a")
+WRITE a, "|rec2:beta"
+CLOSE a
+LET r = OPEN("records.txt", "r")
+PRINT READ(r, 0)
+PRINT "len=" | FILELEN("records.txt")
+CLOSE r
+END

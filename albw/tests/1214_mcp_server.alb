@@ -1,0 +1,42 @@
+-- 1214 | MCP: agent-callable server — JSON-RPC over stdio.
+-- PRINT inside a tool must reroute to stderr (protocol-safe).
+
+PROCEDURE AddNums(a AS S64, b AS S64)
+    MCP TOOL AS "add_nums" DESCRIPTION "add two numbers"
+BEGIN
+   PRINT "sum=" | a + b
+END
+
+FUNCTION GetStatus() AS STRING
+    MCP TOOL AS "get_status" DESCRIPTION "status text"
+BEGIN
+   RETURN "ready"
+END
+
+FUNCTION HelloText() AS STRING
+BEGIN
+   RETURN "hello world"
+END
+
+MCP SERVER "alb-mcp-test"
+    VERSION "0.1.0"
+    TOOL DoubleIt AS "double_it" DESCRIPTION "double a number"
+    RESOURCE "alb://hello" -> HelloText AS "hello"
+END MCP
+
+MCP TOOL Shout AS "shout" DESCRIPTION "uppercase echo"
+
+PROCEDURE DoubleIt(n AS S64)
+BEGIN
+   PRINT "dbl=" | n * 2
+END
+
+PROCEDURE Shout(msg AS STRING)
+BEGIN
+   PRINT "shout=" | msg
+END
+
+BEGIN
+   MCP_PUMP
+   MCP_LISTEN
+END

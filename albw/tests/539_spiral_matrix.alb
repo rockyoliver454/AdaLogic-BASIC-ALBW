@@ -1,0 +1,57 @@
+-- 539 | Spiral matrix: fill a 5x5 with 0..24 in spiral order.
+DECLARE MODULE Spiral
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Spiral
+    STRICT m[25] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 24
+            m[i] = 0
+        END FOR
+        LET top AS S64 = 0
+        LET bot AS S64 = 4
+        LET lf AS S64 = 0
+        LET rt AS S64 = 4
+        LET v AS S64 = 0
+        WHILE top <= bot ANDALSO lf <= rt
+            FOR c = lf TO rt
+                m[top * 5 + c + 1] = v
+                v = v + 1
+            END FOR
+            top = top + 1
+            FOR r = top TO bot
+                m[r * 5 + rt + 1] = v
+                v = v + 1
+            END FOR
+            rt = rt - 1
+            IF top <= bot THEN
+                LET c2 AS S64 = rt
+                WHILE c2 >= lf
+                    m[bot * 5 + c2 + 1] = v
+                    v = v + 1
+                    c2 = c2 - 1
+                END WHILE
+                bot = bot - 1
+            END IF
+            IF lf <= rt THEN
+                LET r2 AS S64 = bot
+                WHILE r2 >= top
+                    m[r2 * 5 + lf + 1] = v
+                    v = v + 1
+                    r2 = r2 - 1
+                END WHILE
+                lf = lf + 1
+            END IF
+        END WHILE
+        FOR rr = 0 TO 4
+            PRINT m[rr * 5 + 1] | " " | m[rr * 5 + 2] | " " | m[rr * 5 + 3] | " " | m[rr * 5 + 4] | " " | m[rr * 5 + 5]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Spiral
+BEGIN
+    Spiral.Run()
+END

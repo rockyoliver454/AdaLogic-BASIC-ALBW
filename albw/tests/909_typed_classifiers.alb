@@ -1,0 +1,34 @@
+-- Classifier coverage: indexed reads on typed arrays, call-spelling
+-- reads, CHOOSE arms, float MOD.  Without element-type lookup, a[i] on
+-- STRING/F64 arrays classified as i32 and broke PRINT/concat.
+
+STRICT sa[3] AS STRING
+STRICT fa[3] AS F64
+
+sa[0] = "alpha"
+sa[1] = "beta"
+sa[2] = "gamma"
+fa[0] = 1.5
+fa[1] = 2.5
+fa[2] = 3.5
+
+BEGIN
+    -- String array elements: indexed + call spelling.
+    PRINT sa[0]
+    PRINT sa[1]
+    PRINT sa(2)
+    PRINT "join=" | sa[0] | "-" | sa[2]
+
+    -- Float array elements route to f64 print, not i32 truncation.
+    PRINT fa[0]
+    PRINT fa[1]
+    PRINT fa(2)
+    PRINT "fsum=" | (fa[0] + fa[1] + fa[2])
+
+    -- CHOOSE ternary carries the arms' type.
+    PRINT CHOOSE(1 = 1, "yes", "no")
+    PRINT CHOOSE(1 = 1, 1.25, 9.75)
+
+    -- Float MOD stays float.
+    PRINT 5.5 MOD 2
+END

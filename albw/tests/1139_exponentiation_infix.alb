@@ -1,0 +1,9 @@
+VERSION 1.0
+
+BEGIN
+    PRINT "2^10=" | 2 ^ 10
+    PRINT "3**4=" | 3 ** 4
+    LET b AS F64 = 2.5
+    PRINT "2.5^3=" | b ^ 3
+    PRINT "2^0.5=" | 2 ^ 0.5
+END

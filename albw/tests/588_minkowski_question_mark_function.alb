@@ -1,0 +1,50 @@
+-- 588 | Minkowski question-mark function: ?(x) for x in [0,1]
+-- with CF x = [0; a1, a2, ...] gives
+-- ?(x) = 2 * sum_k (-1)^(k+1) * 2^(-(a1+..+ak)).
+-- Checks: ?(1/2)=0.5, ?(1/3)=0.25, ?(2/3)=0.75.
+DECLARE MODULE Mink
+    FUNCTION Q(x AS F64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mink
+    FUNCTION Q(x AS F64) AS F64
+        LET r AS F64 = 0.0
+        LET s AS F64 = 0.0
+        LET xx AS F64 = 1.0 / x
+        LET sgn AS F64 = 1.0
+        LET it AS S64 = 0
+        WHILE it < 50 ANDALSO xx > 0.0000000000001
+            LET a AS S64 = 0
+            LET rem AS F64 = xx
+            WHILE rem >= 1.0
+                rem = rem - 1.0
+                a = a + 1
+            END WHILE
+            s = s + a
+            LET pw AS F64 = 1.0
+            LET sp AS S64 = s
+            FOR j = 1 TO sp
+                pw = pw / 2.0
+            END FOR
+            r = r + sgn * pw
+            sgn = 0.0 - sgn
+            xx = 0.0
+            IF rem > 0.0000000000001 THEN xx = 1.0 / rem END IF
+            it = it + 1
+        END WHILE
+        RETURN 2.0 * r
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "?(0.5) = " | Q(0.5)
+        PRINT "?(0.3333333333333333) = " | Q(0.3333333333333333)
+        PRINT "?(0.6666666666666666) = " | Q(0.6666666666666666)
+        PRINT "?(1.0) = " | Q(1.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Mink
+BEGIN
+    Mink.Run()
+END

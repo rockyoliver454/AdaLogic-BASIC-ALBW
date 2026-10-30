@@ -1,0 +1,67 @@
+-- 652 | Zsigmondy numbers: Z(n) for (a,b) = (2,1), n = 1..10 --
+-- largest divisor of a^n - b^n coprime to all earlier a^k - b^k.
+DECLARE MODULE Zsig
+    FUNCTION Z(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Zsig
+    STRICT mem[12] AS S64
+
+    FUNCTION Z(n AS S64) AS S64
+        LET an AS S64 = 1
+        FOR i = 1 TO n
+            an = an * 2
+        END FOR
+        LET v AS S64 = an - 1
+        -- divide out gcd with each earlier term
+        FOR k = 1 TO n - 1
+            LET g AS S64 = mem[k]
+            LET r AS S64 = v MOD g
+            WHILE r <> 0
+                v = g
+                g = r
+                r = v MOD g
+            END WHILE
+            -- g now gcd(v, mem[k])
+            IF g > 1 THEN
+                WHILE v MOD g = 0
+                    v = v / g
+                END WHILE
+            END IF
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 10
+            LET an2 AS S64 = 1
+            FOR i = 1 TO n
+                an2 = an2 * 2
+            END FOR
+            LET v AS S64 = an2 - 1
+            FOR k = 1 TO n - 1
+                LET g2 AS S64 = mem[k]
+                LET x AS S64 = v
+                LET r AS S64 = x MOD g2
+                WHILE r <> 0
+                    x = g2
+                    g2 = r
+                    r = x MOD g2
+                END WHILE
+                IF g2 > 1 THEN
+                    WHILE v MOD g2 = 0
+                        v = v / g2
+                    END WHILE
+                END IF
+            END FOR
+            mem[n] = an2 - 1
+            PRINT "Z(" | n | ") = " | v
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Zsig
+BEGIN
+    Zsig.Run()
+END

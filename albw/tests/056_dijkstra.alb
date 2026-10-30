@@ -1,0 +1,41 @@
+-- 056 | Dijkstra's algorithm: shortest paths from node 0.
+BEGIN
+    STRICT w[5,5] AS S32;
+    FOR i = 0 TO 4
+        FOR j = 0 TO 4
+            w[i,j] = 999;
+        END FOR
+    END FOR
+    w[0,1] = 4; w[0,2] = 1;
+    w[1,3] = 1; w[2,1] = 2; w[2,3] = 5;
+    w[3,4] = 3; w[1,4] = 10;
+    STRICT dist[5] AS S32;
+    STRICT done[5] AS S32;
+    FOR i = 0 TO 4
+        dist[i] = 999;
+    END FOR
+    dist[0] = 0;
+    FOR it = 0 TO 4
+        LET u AS S32 = 0 - 1;
+        LET best AS S32 = 999;
+        FOR i = 0 TO 4
+            IF done[i] = 0 ANDALSO dist[i] < best THEN
+                best = dist[i];
+                u = i;
+            END IF
+        END FOR
+        IF u < 0 THEN
+            it = 5;
+        ELSE
+            done[u] = 1;
+            FOR v = 0 TO 4
+                IF w[u,v] < 999 ANDALSO dist[u] + w[u,v] < dist[v] THEN
+                    dist[v] = dist[u] + w[u,v];
+                END IF
+            END FOR
+        END IF
+    END FOR
+    FOR i = 0 TO 4
+        PRINT$ "0 -> " | i | " = " | dist[i];
+    END FOR
+END

@@ -1,0 +1,35 @@
+-- 575 | Angles (geometric), normalization and conversion:
+-- normalize degrees to [0,360), grads to [0,400), mils to
+-- [0,6400), radians to [0,2pi); and degree<->radian conversions.
+DECLARE MODULE AngN
+    FUNCTION NormDeg(a AS F64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AngN
+    FUNCTION NormDeg(a AS F64) AS F64
+        WHILE a < 0.0
+            a = a + 360.0
+        END WHILE
+        WHILE a >= 360.0
+            a = a - 360.0
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "norm(-12) = " | NormDeg(-12.0)
+        PRINT "norm(370.5) = " | NormDeg(370.5)
+        PRINT "norm(725) = " | NormDeg(725.0)
+        LET pi AS F64 = 3.141592653589793
+        PRINT "180 deg in rad = " | (180.0 * pi / 180.0)
+        PRINT "pi rad in deg = " | (pi * 180.0 / pi)
+        PRINT "100 grad in deg = " | (100.0 * 360.0 / 400.0)
+        PRINT "1600 mil in deg = " | (1600.0 * 360.0 / 6400.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT AngN
+BEGIN
+    AngN.Run()
+END

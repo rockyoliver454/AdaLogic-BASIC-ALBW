@@ -1,0 +1,29 @@
+-- 668 | Averages/Mean time of day: circular mean of times
+-- 23:00, 23:30, 00:30 (should land near 23:50).
+DECLARE MODULE Mtd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mtd
+    PROCEDURE Run()
+        LET t1 AS F64 = 23.0
+        LET t2 AS F64 = 23.5
+        LET t3 AS F64 = 0.5
+        LET rad AS F64 = 3.141592653589793 / 12.0
+        LET sx AS F64 = COS(t1 * rad) + COS(t2 * rad) + COS(t3 * rad)
+        LET sy AS F64 = SIN(t1 * rad) + SIN(t2 * rad) + SIN(t3 * rad)
+        LET m AS F64 = ATAN2(sy, sx) / rad
+        WHILE m < 0.0
+            m = m + 24.0
+        END WHILE
+        WHILE m >= 24.0
+            m = m - 24.0
+        END WHILE
+        PRINT "mean time: " | m | "h"
+    END PROCEDURE
+END MODULE
+
+IMPORT Mtd
+BEGIN
+    Mtd.Run()
+END

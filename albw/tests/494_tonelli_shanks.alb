@@ -1,0 +1,76 @@
+-- 494 | Tonelli-Shanks algorithm: modular square roots for
+-- (10,13), (56,101), (1030,10009), (44402,100049).
+DECLARE MODULE TS
+    FUNCTION Mpow(a AS S64, e AS S64, m AS S64) AS S64
+    FUNCTION Ts(n AS S64, p AS S64) AS S64
+    PROCEDURE Show(n AS S64, p AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE TS
+    FUNCTION Mpow(a AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET base AS S64 = a MOD m
+        WHILE e > 0
+            IF e MOD 2 = 1 THEN r = r * base MOD m END IF
+            base = base * base MOD m
+            e = e / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Ts(n AS S64, p AS S64) AS S64
+        LET nn AS S64 = n MOD p
+        IF nn = 0 THEN RETURN 0 END IF
+        IF Mpow(nn, (p - 1) / 2, p) <> 1 THEN RETURN -1 END IF
+        IF p MOD 4 = 3 THEN RETURN Mpow(nn, (p + 1) / 4, p) END IF
+        LET q AS S64 = p - 1
+        LET s AS S64 = 0
+        WHILE q MOD 2 = 0
+            q = q / 2
+            s = s + 1
+        END WHILE
+        LET z AS S64 = 2
+        WHILE Mpow(z, (p - 1) / 2, p) <> p - 1
+            z = z + 1
+        END WHILE
+        LET c AS S64 = Mpow(z, q, p)
+        LET r AS S64 = Mpow(nn, (q + 1) / 2, p)
+        LET t AS S64 = Mpow(nn, q, p)
+        LET m AS S64 = s
+        WHILE t <> 1
+            LET i AS S64 = 1
+            LET t2 AS S64 = t * t MOD p
+            WHILE t2 <> 1
+                t2 = t2 * t2 MOD p
+                i = i + 1
+            END WHILE
+            LET b AS S64 = Mpow(c, 1, p)
+            FOR j = 1 TO m - i - 1
+                b = b * b MOD p
+            END FOR
+            r = r * b MOD p
+            c = b * b MOD p
+            t = t * c MOD p
+            m = i
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Show(n AS S64, p AS S64)
+        LET r AS S64 = Ts(n, p)
+        PRINT "sqrt(" | n | " mod " | p | ") = " | r
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(10, 13)
+        Show(56, 101)
+        Show(1030, 10009)
+        Show(44402, 100049)
+    END PROCEDURE
+END MODULE
+
+IMPORT TS
+BEGIN
+    TS.Run()
+END

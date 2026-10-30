@@ -1,0 +1,18 @@
+-- 062 | Entropy: Shannon H of a string in bits.
+BEGIN
+    LET s AS STRING = "1223334444";
+    STRICT cnt[256] AS S32;
+    FOR i = 1 TO LEN(s)
+        LET c AS S32 = ASC(MID$(s, i, 1));
+        cnt[c] = cnt[c] + 1;
+    END FOR
+    LET h AS F64 = 0.0;
+    LET n AS F64 = LEN(s);
+    FOR c = 0 TO 255
+        IF cnt[c] > 0 THEN
+            LET p AS F64 = cnt[c] / n;
+            h = h - p * LOG2(p);
+        END IF
+    END FOR
+    PRINT h;
+END

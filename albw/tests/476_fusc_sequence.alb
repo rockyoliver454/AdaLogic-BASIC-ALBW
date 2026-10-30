@@ -1,0 +1,45 @@
+-- 476 | Fusc sequence: first 61 terms and the terms of record length.
+DECLARE MODULE Fusc
+    FUNCTION DigCount(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fusc
+    STRICT a[64] AS S64
+
+    FUNCTION DigCount(n AS S64) AS S64
+        LET c AS S64 = 0
+        IF n = 0 THEN RETURN 1 END IF
+        WHILE n > 0
+            n = n / 10
+            c = c + 1
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = 0
+        a[2] = 1
+        FOR n = 1 TO 31
+            a[2 * n + 1] = a[n + 1]
+            a[2 * n + 2] = a[n + 1] + a[n + 2]
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 1 TO 61
+            s = s | a[i] | " "
+        END FOR
+        PRINT s
+        LET best AS S64 = 0
+        FOR j = 1 TO 61
+            IF DigCount(a[j]) > best THEN
+                best = DigCount(a[j])
+                PRINT "index " | j - 1 | " -> " | a[j]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fusc
+BEGIN
+    Fusc.Run()
+END

@@ -1,0 +1,17 @@
+-- Classic BASIC NOT precedence: NOT binds looser than comparisons and
+-- arithmetic but tighter than AND (matches the FASM backend's whole-
+-- register `not`).  NOT 0 yields -1, the BASIC TRUE.
+BEGIN
+    LET x AS S32 = 5
+    PRINT NOT x = 5
+    PRINT NOT 0
+    PRINT NOT 0 AND 0
+    PRINT NOT 0 AND NOT 0
+    PRINT NOT (1 < 2)
+    LET flag AS S32 = 1
+    IF NOT flag = 0 THEN
+        PRINT "set"
+    ELSE
+        PRINT "clear"
+    END IF
+END

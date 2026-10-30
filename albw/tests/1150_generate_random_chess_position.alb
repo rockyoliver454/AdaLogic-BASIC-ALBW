@@ -1,0 +1,70 @@
+VERSION 1.0
+
+STRICT bd[64] AS S64
+
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 777
+    LET i AS S64 = 0
+    WHILE i < 64
+        bd[i] = 0
+        i = i + 1
+    END WHILE
+    bd[Nxt() MOD 64] = 1
+    LET s2 AS S64 = Nxt() MOD 64
+    WHILE bd[s2] <> 0
+        s2 = Nxt() MOD 64
+    END WHILE
+    bd[s2] = 0 - 1
+
+    LET pcs AS S64 = 4 + Nxt() MOD 8
+    i = 0
+    WHILE i < pcs
+        LET sq AS S64 = Nxt() MOD 64
+        IF bd[sq] = 0 THEN
+            LET pc AS S64 = 2 + Nxt() MOD 5
+            IF Nxt() MOD 2 = 0 THEN pc = 0 - pc END IF
+            bd[sq] = pc
+            i = i + 1
+        END IF
+    END WHILE
+
+    LET names AS STRING = " KQBRNP"
+    LET r AS S64 = 0
+    WHILE r < 8
+        LET row AS STRING = ""
+        LET f AS S64 = 0
+        WHILE f < 8
+            LET v AS S64 = bd[r * 8 + f]
+            IF v = 0 THEN
+                row = row | "."
+            ELSE
+                LET av AS S64 = v
+                IF av < 0 THEN av = 0 - av END IF
+                LET ch AS STRING = MID$(names, av + 1, 1)
+                IF v < 0 THEN
+                    row = row | CHR(ASC(ch) + 32)
+                ELSE
+                    row = row | ch
+                END IF
+            END IF
+            f = f + 1
+        END WHILE
+        PRINT row
+        r = r + 1
+    END WHILE
+    LET occ AS S64 = 0
+    i = 0
+    WHILE i < 64
+        IF bd[i] <> 0 THEN occ = occ + 1 END IF
+        i = i + 1
+    END WHILE
+    PRINT "occupied=" | occ
+END

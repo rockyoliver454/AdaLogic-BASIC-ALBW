@@ -1,0 +1,12 @@
+BEGIN
+    LET a = 1
+    LET b = 2
+    LET c = 3
+    LET d = 4
+    LET am = (a + b + c + d) * 100 / 4
+    LET gm = 100
+    LET hm = 4 * 12 * 100 / 25
+    PRINT$ am
+    PRINT$ gm
+    PRINT$ hm
+END

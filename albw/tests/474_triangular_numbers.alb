@@ -1,0 +1,20 @@
+-- 474 | Triangular numbers: first 30, plus which of the first 20
+-- triangular numbers are prime (none) — show n(n+1)/2 mod 2 parity.
+DECLARE MODULE Tri
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tri
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 30
+            s = s | n * (n + 1) / 2 | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Tri
+BEGIN
+    Tri.Run()
+END

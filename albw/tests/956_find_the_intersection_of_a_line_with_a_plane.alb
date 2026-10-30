@@ -1,0 +1,39 @@
+-- 956 | Intersection of a line with a plane:
+-- line r(t)=p0+t*d, plane dot(n,x)+h=0 -> t=-(dot(n,p0)+h)/dot(n,d)
+DECLARE MODULE Lp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lp
+    PROCEDURE Run()
+        -- plane x+y+z-3=0 ; line through (0,0,0) dir (1,2,3)
+        LET nx AS F64 = 1.0
+        LET ny AS F64 = 1.0
+        LET nz AS F64 = 1.0
+        LET hh AS F64 = 0.0 - 3.0
+        LET px AS F64 = 0.0
+        LET py AS F64 = 0.0
+        LET pz AS F64 = 0.0
+        LET dx AS F64 = 1.0
+        LET dy AS F64 = 2.0
+        LET dz AS F64 = 3.0
+        LET den AS F64 = nx * dx + ny * dy + nz * dz
+        IF den = 0.0 THEN
+            PRINT "line parallel to plane"
+            RETURN
+        END IF
+        LET t AS F64 = 0.0 - (nx * px + ny * py + nz * pz + hh) / den
+        PRINT "t=" | t | " point=" | px + t * dx | "," | py + t * dy | "," | pz + t * dz
+        -- second: line parallel (dir=(1,-1,0) to x+y+z=3)
+        dx = 1.0
+        dy = 0.0 - 1.0
+        dz = 0.0
+        den = nx * dx + ny * dy + nz * dz
+        IF den = 0.0 THEN PRINT "parallel case: no intersection" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Lp
+BEGIN
+    Lp.Run()
+END

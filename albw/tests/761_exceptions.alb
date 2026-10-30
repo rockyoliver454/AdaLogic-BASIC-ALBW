@@ -1,0 +1,27 @@
+-- 761 | Exceptions: TRY/CATCH/THROW basic usage.
+-- Note: THROW is emitted within the same routine frame here;
+-- cross-frame unwinding is a separate fixture (762).
+DECLARE MODULE Ex
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ex
+    PROCEDURE Run()
+        LET v AS S64 = 5
+        TRY
+            PRINT "v=" | v
+            IF v > 0 THEN
+                THROW 42
+            END IF
+            PRINT "unreached"
+        CATCH e
+            PRINT "caught err=" | e
+        END TRY
+        PRINT "after"
+    END PROCEDURE
+END MODULE
+
+IMPORT Ex
+BEGIN
+    Ex.Run()
+END

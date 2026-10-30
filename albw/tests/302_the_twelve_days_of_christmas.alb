@@ -1,0 +1,45 @@
+-- 302 | The Twelve Days of Christmas: cumulative verse lyrics.
+BEGIN
+    STRICT ordinals[12] AS STRING
+    STRICT gifts[12] AS STRING
+
+    ordinals[0] = "first"
+    ordinals[1] = "second"
+    ordinals[2] = "third"
+    ordinals[3] = "fourth"
+    ordinals[4] = "fifth"
+    ordinals[5] = "sixth"
+    ordinals[6] = "seventh"
+    ordinals[7] = "eighth"
+    ordinals[8] = "ninth"
+    ordinals[9] = "tenth"
+    ordinals[10] = "eleventh"
+    ordinals[11] = "twelfth"
+
+    gifts[0] = "a partridge in a pear tree"
+    gifts[1] = "two turtle doves"
+    gifts[2] = "three french hens"
+    gifts[3] = "four calling birds"
+    gifts[4] = "five golden rings"
+    gifts[5] = "six geese a-laying"
+    gifts[6] = "seven swans a-swimming"
+    gifts[7] = "eight maids a-milking"
+    gifts[8] = "nine ladies dancing"
+    gifts[9] = "ten lords a-leaping"
+    gifts[10] = "eleven pipers piping"
+    gifts[11] = "twelve drummers drumming"
+
+    FOR d = 0 TO 11
+        PRINT "On the " | ordinals[d] | " day of Christmas,"
+        PRINT "my true love sent to me:"
+        FOR g = d TO 1 STEP -1
+            PRINT gifts[g]
+        END FOR
+        IF d = 0 THEN
+            PRINT "A partridge in a pear tree."
+        ELSE
+            PRINT "And a partridge in a pear tree."
+        END IF
+        PRINT ""
+    END FOR
+END

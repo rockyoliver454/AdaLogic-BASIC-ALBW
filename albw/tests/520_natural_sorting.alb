@@ -1,0 +1,78 @@
+-- 520 | Natural sorting: compare strings digit-run-aware so
+-- "item10" sorts after "item9". Implements an insertion sort over
+-- a fixed list of strings.
+DECLARE MODULE Nat
+    FUNCTION Digit(c AS S64) AS S32
+    FUNCTION NatLess(x AS STRING, y AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nat
+    STRICT a[9] AS STRING
+
+    FUNCTION Digit(c AS S64) AS S32
+        IF c >= 48 ANDALSO c <= 57 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION NatLess(x AS STRING, y AS STRING) AS S32
+        LET i AS S64 = 1
+        LET j AS S64 = 1
+        LET xl AS S64 = LEN(x)
+        LET yl AS S64 = LEN(y)
+        LET res AS S64 = 0
+        WHILE i <= xl ANDALSO j <= yl ANDALSO res = 0
+            LET cx AS S64 = ASC(MID$(x, i, 1))
+            LET cy AS S64 = ASC(MID$(y, j, 1))
+            IF Digit(cx) = 1 ANDALSO Digit(cy) = 1 THEN
+                LET nx AS S64 = 0
+                WHILE i <= xl ANDALSO Digit(ASC(MID$(x, i, 1))) = 1
+                    nx = nx * 10 + ASC(MID$(x, i, 1)) - 48
+                    i = i + 1
+                END WHILE
+                LET ny AS S64 = 0
+                WHILE j <= yl ANDALSO Digit(ASC(MID$(y, j, 1))) = 1
+                    ny = ny * 10 + ASC(MID$(y, j, 1)) - 48
+                    j = j + 1
+                END WHILE
+                IF nx <> ny THEN res = nx - ny END IF
+            ELSE
+                IF cx <> cy THEN res = cx - cy END IF
+                i = i + 1
+                j = j + 1
+            END IF
+        END WHILE
+        IF res = 0 THEN res = xl - yl END IF
+        IF res < 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = "item10"
+        a[2] = "item2"
+        a[3] = "item1"
+        a[4] = "item20"
+        a[5] = "item3"
+        a[6] = "alpha"
+        a[7] = "item100"
+        a[8] = "item9"
+        a[9] = "beta1"
+        FOR i = 2 TO 9
+            LET v AS STRING = a[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO NatLess(v, a[j]) = 1
+                a[j + 1] = a[j]
+                j = j - 1
+            END WHILE
+            a[j + 1] = v
+        END FOR
+        FOR k = 1 TO 9
+            PRINT a[k]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Nat
+BEGIN
+    Nat.Run()
+END

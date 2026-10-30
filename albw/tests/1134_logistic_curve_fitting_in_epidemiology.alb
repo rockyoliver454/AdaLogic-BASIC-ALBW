@@ -1,0 +1,43 @@
+VERSION 1.0
+
+STRICT yv[12] AS S64
+
+
+BEGIN
+    LET k AS F64 = 100.0
+    LET t AS S64 = 0
+    WHILE t < 12
+        LET tf AS F64 = t * 4.0 + 4.0
+        LET ex AS F64 = EXP(0.0 - 0.5 * (tf - 24.0))
+        LET yy AS F64 = k / (1.0 + ex)
+        yv[t] = ROUND(yy)
+        t = t + 1
+    END WHILE
+
+    LET sx AS F64 = 0.0
+    LET sy AS F64 = 0.0
+    LET sxx AS F64 = 0.0
+    LET sxy AS F64 = 0.0
+    LET np AS S64 = 0
+    t = 0
+    WHILE t < 12
+        IF yv[t] > 2 ANDALSO yv[t] < 98 THEN
+            LET yf AS F64 = yv[t]
+            LET rat AS F64 = yf / (k - yf)
+            LET z AS F64 = LN(rat)
+            LET tf2 AS F64 = t * 4.0 + 4.0
+            sx = sx + tf2
+            sy = sy + z
+            sxx = sxx + tf2 * tf2
+            sxy = sxy + tf2 * z
+            np = np + 1
+        END IF
+        t = t + 1
+    END WHILE
+    LET npf AS F64 = np * 1.0
+    LET r AS F64 = (npf * sxy - sx * sy) / (npf * sxx - sx * sx)
+    LET c AS F64 = (sy - r * sx) / npf
+    PRINT "fitted r=" | r
+    PRINT "fitted t0=" | (0.0 - c / r)
+    PRINT "expected r=0.5 t0=24"
+END

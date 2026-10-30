@@ -1,0 +1,42 @@
+-- 504 | Sort an integer array: insertion sort over a fixed list.
+DECLARE MODULE SortInt
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SortInt
+    STRICT a[12] AS S64
+
+    PROCEDURE Run()
+        a[1] = 12
+        a[2] = 5
+        a[3] = 9
+        a[4] = 1
+        a[5] = 7
+        a[6] = 3
+        a[7] = 8
+        a[8] = 2
+        a[9] = 11
+        a[10] = 4
+        a[11] = 6
+        a[12] = 10
+        FOR i = 2 TO 12
+            LET v AS S64 = a[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO a[j] > v
+                a[j + 1] = a[j]
+                j = j - 1
+            END WHILE
+            a[j + 1] = v
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 12
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT SortInt
+BEGIN
+    SortInt.Run()
+END

@@ -1,0 +1,21 @@
+-- NEURAL_TOPOLOGY: deterministic seeded weights, linear forward pass,
+-- sign-rule last-layer training, WITH EMOTION input bias.
+EMOTION emo AXES joy END_EMOTION
+NEURAL_TOPOLOGY nn
+  LAYER INPUT SIZE 1
+  LAYER Dense SIZE 1
+END_TOPOLOGY
+STRICT tr[1] AS S64
+STRICT ex[1] AS S64
+STRICT outp[1] AS S64
+tr[0] = 1
+ex[0] = 10
+INFER_NETWORK nn FROM tr INTO outp
+PRINT outp[0]
+SET_AXIS emo joy 3
+INFER_NETWORK nn FROM tr INTO outp WITH EMOTION emo
+PRINT outp[0]
+SET_AXIS emo joy 0
+TRAIN_NETWORK nn WITH tr EXPECTED ex EPOCHS 8
+INFER_NETWORK nn FROM tr INTO outp
+PRINT outp[0]

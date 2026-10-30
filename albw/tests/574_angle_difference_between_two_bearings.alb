@@ -1,0 +1,36 @@
+-- 574 | Angle difference between two bearings: signed difference
+-- in (-180,180] and unsigned in [0,180].
+-- RC: (20,45)->25/-25... actually diff(b1,b2) = fmod(b2-b1+540,360)-180
+DECLARE MODULE AngD
+    FUNCTION Diff(a AS F64, b AS F64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AngD
+    FUNCTION Diff(a AS F64, b AS F64) AS F64
+        LET d AS F64 = b - a
+        WHILE d > 180.0
+            d = d - 360.0
+        END WHILE
+        WHILE d <= -180.0
+            d = d + 360.0
+        END WHILE
+        RETURN d
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Diff(20.0, 45.0)
+        PRINT Diff(-45.0, 45.0)
+        PRINT Diff(-85.0, 90.0)
+        PRINT Diff(-95.0, 90.0)
+        PRINT Diff(-45.0, 125.0)
+        PRINT Diff(-45.0, 145.0)
+        PRINT Diff(29.4803, -88.6381)
+        PRINT Diff(-78.3251, -159.036)
+    END PROCEDURE
+END MODULE
+
+IMPORT AngD
+BEGIN
+    AngD.Run()
+END

@@ -1,0 +1,7 @@
+-- 116 | Include a file: declarations from a sibling .albi.
+INCLUDE "inc_116_helper.albi"
+IMPORT Hlp
+
+BEGIN
+    PRINT Hlp.Triple(7);
+END

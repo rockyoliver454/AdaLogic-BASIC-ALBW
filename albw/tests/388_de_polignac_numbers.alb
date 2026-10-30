@@ -1,0 +1,48 @@
+-- 388 | De Polignac numbers: odd n > 1 not expressible as p + 2^k; first 15.
+DECLARE MODULE DePolignac
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION IsDePol(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DePolignac
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IsDePol(n AS S64) AS S32
+        LET p AS S64 = 1
+        WHILE p < n
+            IF IsPrime(n - p) = 1 THEN RETURN 0 END IF
+            p = p * 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 15
+            IF n MOD 2 = 1 ANDALSO n > 1 ANDALSO IsDePol(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT DePolignac
+BEGIN
+    DePolignac.Run()
+END

@@ -1,0 +1,40 @@
+-- 346 | Arithmetic derivative: D(0) = D(1) = 0, D(p) = 1, D(ab) = D(a)b + aD(b).
+DECLARE MODULE Deriv
+    FUNCTION D(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Deriv
+    FUNCTION D(n AS S64) AS S64
+        IF n < 2 THEN RETURN 0 END IF
+        LET m AS S64 = n
+        LET total AS S64 = 0
+        LET f AS S64 = 2
+        WHILE f * f <= m
+            LET cnt AS S64 = 0
+            WHILE m MOD f = 0
+                m = m / f
+                cnt = cnt + 1
+            END WHILE
+            IF cnt > 0 THEN
+                total = total + n * cnt / f
+            END IF
+            f = f + 1
+        END WHILE
+        IF m > 1 THEN total = total + n / m END IF
+        RETURN total
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 0 TO 30
+            s = s | D(n) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Deriv
+BEGIN
+    Deriv.Run()
+END

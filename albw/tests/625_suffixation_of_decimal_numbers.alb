@@ -1,0 +1,37 @@
+-- 625 | Suffixation of decimal numbers: render large numbers
+-- with SI suffixes.
+DECLARE MODULE Suf
+    FUNCTION Suff(n AS F64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Suf
+    STRICT sfx[5] AS STRING
+
+    FUNCTION Suff(n AS F64) AS STRING
+        LET v AS F64 = n
+        LET i AS S64 = 1
+        WHILE v >= 1000.0 ANDALSO i < 5
+            v = v / 1000.0
+            i = i + 1
+        END WHILE
+        RETURN v | sfx[i]
+    END FUNCTION
+
+    PROCEDURE Run()
+        sfx[1] = ""
+        sfx[2] = "k"
+        sfx[3] = "M"
+        sfx[4] = "G"
+        sfx[5] = "T"
+        PRINT Suff(9876543210.0)
+        PRINT Suff(12345.0)
+        PRINT Suff(999.0)
+        PRINT Suff(2500000.0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Suf
+BEGIN
+    Suf.Run()
+END

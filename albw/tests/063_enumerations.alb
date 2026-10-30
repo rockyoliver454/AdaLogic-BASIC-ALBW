@@ -1,0 +1,22 @@
+-- Rosetta: Enumerations -- ALB enums are bare integer constants, not
+-- namespaced variants; members auto-number from 0 and fold at compile
+-- time (usable in arithmetic, CASE arms, array bounds).
+ENUM
+    RED, GREEN, BLUE
+END ENUM
+
+ENUM Fruit APPLE, BANANA, CHERRY END ENUM
+
+BEGIN
+    PRINT RED
+    PRINT GREEN
+    PRINT BLUE
+    PRINT APPLE + BANANA + CHERRY
+    LET pick AS S32 = CHERRY
+    SELECT pick
+        CASE APPLE => PRINT "apple"
+        CASE BANANA => PRINT "banana"
+        CASE CHERRY => PRINT "cherry"
+        ELSE PRINT "?"
+    END SELECT
+END

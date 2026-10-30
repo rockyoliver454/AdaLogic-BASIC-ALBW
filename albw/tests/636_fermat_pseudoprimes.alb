@@ -1,0 +1,48 @@
+-- 636 | Fermat pseudoprimes: composite n < 10000 with
+-- 2^(n-1) mod n = 1.
+DECLARE MODULE Fpp
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION ModPow(a AS S64, e AS S64, m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fpp
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION ModPow(a AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET b AS S64 = a MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN
+                r = (r * b) MOD m
+            END IF
+            b = (b * b) MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 3 TO 9999
+            IF n MOD 2 = 1 ANDALSO IsPrime(n) = 0 THEN
+                IF ModPow(2, n - 1, n) = 1 THEN s = s | n | " " END IF
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Fpp
+BEGIN
+    Fpp.Run()
+END

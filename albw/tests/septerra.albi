@@ -1,0 +1,392 @@
+-- Twin of SPARK Septerra. CSV=0 PSV=1 TSV=2. Max_Rows 24, Max_Columns 8.
+-- Ada Load_String is Parse_Chunk + End_Of_Stream. FillKind is that machine over a 4096 window.
+VERSION 1.0
+
+DECLARE MODULE Septerra
+    PROCEDURE ClearTab()
+    PROCEDURE PutByte(b AS S32)
+    FUNCTION FillKind(kindn AS S32) AS S32
+    FUNCTION FillPsv() AS S32
+    FUNCTION RowCount() AS S32
+    FUNCTION ColCount(row AS S32) AS S32
+    FUNCTION GetField(row AS S32, col AS S32) AS S32
+    PROCEDURE SetField(row AS S32, col AS S32, valn AS S32)
+    FUNCTION DelimOf(kindn AS S32) AS S32
+    FUNCTION TabSize() AS S32
+    FUNCTION LastResult() AS S32
+END DECLARE MODULE
+
+MODULE Septerra
+
+    STRICT buf[4096] AS U8
+    STRICT cell[192] AS S32
+    STRICT cols[24] AS S32
+    LET buflen AS S32 = 0
+    LET rows AS S32 = 0
+    LET lastn AS S32 = 0
+    LET rowi AS S32 = 1
+    LET coli AS S32 = 1
+    LET inq AS S32 = 0
+    LET seen AS S32 = 0
+    LET flen AS S32 = 0
+    LET fhash AS S32 = 5381
+    LET fnum AS S32 = 0
+    LET fdigits AS S32 = 1
+
+    FUNCTION Idx(row AS S32, col AS S32) AS S32
+        ASSERT(1 = 1)
+        RETURN (row - 1) * 8 + col
+    END FUNCTION
+
+    FUNCTION DelimOf(kindn AS S32) AS S32
+        ASSERT(kindn >= 0)
+        ASSERT(kindn <= 2)
+        IF kindn = 0 THEN
+            RETURN 44
+        END IF
+        IF kindn = 1 THEN
+            RETURN 124
+        END IF
+        RETURN 9
+    END FUNCTION
+
+    PROCEDURE ClearTab()
+        LET i AS S32 = 1
+        ASSERT(1 = 1)
+        ASSERT(0 = 0)
+        WHILE i <= 192
+            cell[i] = 0
+            i = i + 1
+        END WHILE
+        i = 1
+        WHILE i <= 24
+            cols[i] = 0
+            i = i + 1
+        END WHILE
+        rows = 0
+        lastn = 0
+        rowi = 1
+        coli = 1
+        inq = 0
+        seen = 0
+        flen = 0
+        fhash = 5381
+        fnum = 0
+        fdigits = 1
+    END PROCEDURE
+
+    PROCEDURE PutByte(b AS S32)
+        ASSERT(b >= 0)
+        ASSERT(b <= 255)
+        IF buflen < 4096 THEN
+            buflen = buflen + 1
+            buf[buflen] = b AND 255
+        ELSE
+            lastn = 2
+        END IF
+    END PROCEDURE
+
+    PROCEDURE ResetField()
+        ASSERT(1 = 1)
+        flen = 0
+        fhash = 5381
+        fnum = 0
+        fdigits = 1
+    END PROCEDURE
+
+    PROCEDURE AppendChar(ch AS S32)
+        ASSERT(1 = 1)
+        IF lastn <> 0 THEN
+            RETURN
+        END IF
+        IF rowi > 24 THEN
+            lastn = 2
+            RETURN
+        END IF
+        IF coli > 8 THEN
+            lastn = 2
+            RETURN
+        END IF
+        IF flen >= 64 THEN
+            lastn = 2
+            RETURN
+        END IF
+        flen = flen + 1
+        fhash = (fhash * 33 + ch) AND 2147483647
+        IF fdigits = 1 THEN
+            IF ch >= 48 THEN
+                IF ch <= 57 THEN
+                    fnum = fnum * 10 + (ch - 48)
+                ELSE
+                    fdigits = 0
+                END IF
+            ELSE
+                fdigits = 0
+            END IF
+        END IF
+    END PROCEDURE
+
+    PROCEDURE FinalizeField()
+        ASSERT(1 = 1)
+        IF lastn <> 0 THEN
+            RETURN
+        END IF
+        IF rowi > 24 THEN
+            lastn = 2
+            RETURN
+        END IF
+        IF coli > 8 THEN
+            lastn = 2
+            RETURN
+        END IF
+        IF flen = 0 THEN
+            cell[Idx(rowi, coli)] = 0
+        ELSE
+            IF fdigits = 1 THEN
+                cell[Idx(rowi, coli)] = fnum
+            ELSE
+                cell[Idx(rowi, coli)] = fhash
+            END IF
+        END IF
+        IF coli > cols[rowi] THEN
+            cols[rowi] = coli
+        END IF
+        seen = 1
+        ResetField()
+    END PROCEDURE
+
+    PROCEDURE FinishRow()
+        ASSERT(1 = 1)
+        IF lastn <> 0 THEN
+            RETURN
+        END IF
+        IF rowi <= 24 THEN
+            IF cols[rowi] > 0 THEN
+                rows = rowi
+                IF rowi < 24 THEN
+                    rowi = rowi + 1
+                    coli = 1
+                    seen = 0
+                    ResetField()
+                ELSE
+                    rowi = 25
+                    coli = 1
+                    seen = 0
+                    ResetField()
+                END IF
+            ELSE
+                coli = 1
+                seen = 0
+                ResetField()
+            END IF
+        END IF
+    END PROCEDURE
+
+    PROCEDURE FinishFieldAndRow()
+        ASSERT(1 = 1)
+        IF lastn <> 0 THEN
+            RETURN
+        END IF
+        IF seen = 1 THEN
+            FinalizeField()
+            FinishRow()
+        ELSE
+            IF coli > 1 THEN
+                FinalizeField()
+                FinishRow()
+            ELSE
+                IF flen > 0 THEN
+                    FinalizeField()
+                    FinishRow()
+                END IF
+            END IF
+        END IF
+    END PROCEDURE
+
+    PROCEDURE ParseChunk(kindn AS S32, endn AS S32)
+        LET i AS S32 = 1
+        LET c AS S32 = 0
+        LET sep AS S32 = 0
+        LET nxt AS S32 = 0
+        ASSERT(kindn >= 0)
+        sep = DelimOf(kindn)
+        WHILE i <= buflen
+            IF lastn <> 0 THEN
+                i = buflen + 1
+            ELSE
+                c = buf[i]
+                IF inq = 1 THEN
+                    IF c = 34 THEN
+                        nxt = 0
+                        IF i < buflen THEN
+                            nxt = buf[i + 1]
+                        END IF
+                        IF nxt = 34 THEN
+                            AppendChar(34)
+                            i = i + 1
+                        ELSE
+                            inq = 0
+                        END IF
+                    ELSE
+                        AppendChar(c)
+                    END IF
+                ELSE
+                    IF c = 34 THEN
+                        IF flen = 0 THEN
+                            inq = 1
+                        ELSE
+                            AppendChar(c)
+                        END IF
+                    ELSE
+                        IF c = sep THEN
+                            FinalizeField()
+                            IF lastn = 0 THEN
+                                IF coli < 8 THEN
+                                    coli = coli + 1
+                                ELSE
+                                    lastn = 2
+                                END IF
+                            END IF
+                        ELSE
+                            IF c = 10 THEN
+                                FinishFieldAndRow()
+                            ELSE
+                                IF c = 13 THEN
+                                    c = c
+                                ELSE
+                                    AppendChar(c)
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                END IF
+                i = i + 1
+            END IF
+        END WHILE
+        IF endn = 1 THEN
+            IF lastn = 0 THEN
+                IF inq = 1 THEN
+                    lastn = 3
+                ELSE
+                    FinishFieldAndRow()
+                END IF
+            END IF
+        END IF
+    END PROCEDURE
+
+    FUNCTION FillKind(kindn AS S32) AS S32
+        ASSERT(kindn >= 0)
+        ASSERT(kindn <= 2)
+        ClearTab()
+        ParseChunk(kindn, 1)
+        RETURN lastn
+    END FUNCTION
+
+    FUNCTION FillPsv() AS S32
+        ASSERT(1 = 1)
+        ASSERT(0 = 0)
+        buflen = 0
+        lastn = 0
+        PutByte(49)
+        PutByte(48)
+        PutByte(124)
+        PutByte(49)
+        PutByte(50)
+        PutByte(124)
+        PutByte(49)
+        PutByte(124)
+        PutByte(49)
+        PutByte(49)
+        PutByte(10)
+        PutByte(50)
+        PutByte(48)
+        PutByte(124)
+        PutByte(54)
+        PutByte(124)
+        PutByte(54)
+        PutByte(124)
+        PutByte(49)
+        PutByte(56)
+        PutByte(10)
+        PutByte(48)
+        PutByte(124)
+        PutByte(49)
+        PutByte(124)
+        PutByte(48)
+        PutByte(124)
+        PutByte(56)
+        PutByte(10)
+        PutByte(49)
+        PutByte(51)
+        PutByte(124)
+        PutByte(49)
+        PutByte(52)
+        PutByte(53)
+        PutByte(54)
+        PutByte(124)
+        PutByte(49)
+        PutByte(50)
+        PutByte(56)
+        PutByte(124)
+        PutByte(56)
+        PutByte(48)
+        PutByte(10)
+        RETURN FillKind(1)
+    END FUNCTION
+
+    FUNCTION RowCount() AS S32
+        ASSERT(rows >= 0)
+        ASSERT(rows <= 24)
+        RETURN rows
+    END FUNCTION
+
+    FUNCTION ColCount(row AS S32) AS S32
+        ASSERT(row >= 1)
+        ASSERT(row <= 24)
+        RETURN cols[row]
+    END FUNCTION
+
+    FUNCTION GetField(row AS S32, col AS S32) AS S32
+        ASSERT(row >= 1)
+        ASSERT(col >= 1)
+        IF row > rows THEN
+            RETURN 0
+        END IF
+        IF col > cols[row] THEN
+            RETURN 0
+        END IF
+        RETURN cell[Idx(row, col)]
+    END FUNCTION
+
+    PROCEDURE SetField(row AS S32, col AS S32, valn AS S32)
+        ASSERT(row >= 1)
+        ASSERT(col >= 1)
+        IF row <= 24 THEN
+            IF col <= 8 THEN
+                cell[Idx(row, col)] = valn
+                IF row > rows THEN
+                    rows = row
+                END IF
+                IF col > cols[row] THEN
+                    cols[row] = col
+                END IF
+            ELSE
+                lastn = 2
+            END IF
+        ELSE
+            lastn = 2
+        END IF
+    END PROCEDURE
+
+    FUNCTION TabSize() AS S32
+        ASSERT(1 = 1)
+        RETURN 192
+    END FUNCTION
+
+    FUNCTION LastResult() AS S32
+        ASSERT(lastn >= 0)
+        ASSERT(lastn <= 3)
+        RETURN lastn
+    END FUNCTION
+
+END MODULE

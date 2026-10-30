@@ -1,0 +1,26 @@
+-- 587 | Metallic ratios: golden, silver, bronze via
+-- r = (n + sqrt(n^2+4))/2 for n=1..5, plus continued-fraction
+-- check for silver.
+DECLARE MODULE Metal
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Metal
+    PROCEDURE Run()
+        FOR n = 1 TO 5
+            LET nn AS F64 = n
+            LET r AS F64 = (nn + SQRT(nn * nn + 4.0)) / 2.0
+            PRINT "metal " | n | " = " | r
+        END FOR
+        LET x AS F64 = 1.0
+        FOR i = 1 TO 30
+            x = 2.0 + 1.0 / x
+        END FOR
+        PRINT "silver via CF = " | x
+    END PROCEDURE
+END MODULE
+
+IMPORT Metal
+BEGIN
+    Metal.Run()
+END

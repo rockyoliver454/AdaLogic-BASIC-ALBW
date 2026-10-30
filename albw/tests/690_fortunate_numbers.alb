@@ -1,0 +1,45 @@
+-- 690 | Fortunate numbers: smallest m>1 such that primorial
+-- p# + m is prime, for the first 8 primorials.
+DECLARE MODULE Fo
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fo
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET p AS S64 = 1
+        LET cand AS S64 = 2
+        FOR i = 1 TO 8
+            -- advance p to next prime
+            WHILE Prime(cand) = 0
+                cand = cand + 1
+            END WHILE
+            p = p * cand
+            LET m AS S64 = 2
+            WHILE Prime(p + m) = 0
+                m = m + 1
+            END WHILE
+            PRINT "p#=" | p | " -> " | m
+            cand = cand + 1
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fo
+BEGIN
+    Fo.Run()
+END

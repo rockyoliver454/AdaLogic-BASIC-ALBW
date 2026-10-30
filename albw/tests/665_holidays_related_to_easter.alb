@@ -1,0 +1,66 @@
+-- 665 | Holidays related to Easter: compute Easter Sunday
+-- (Anonymous Gregorian algorithm) for 2020-2025 plus Ash
+-- Wednesday (Easter - 46).
+DECLARE MODULE East
+    FUNCTION Easter(y AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE East
+    STRICT dim[13] AS S64
+
+    FUNCTION Easter(y AS S64) AS S64
+        -- returns day-of-year of Easter Sunday
+        LET a AS S64 = y MOD 19
+        LET b AS S64 = y / 100
+        LET c AS S64 = y MOD 100
+        LET d AS S64 = b / 4
+        LET e AS S64 = b MOD 4
+        LET f AS S64 = (b + 8) / 25
+        LET g AS S64 = (b - f + 1) / 3
+        LET h AS S64 = (19 * a + b - d - g + 15) MOD 30
+        LET i AS S64 = c / 4
+        LET k AS S64 = c MOD 4
+        LET l AS S64 = (32 + 2 * e + 2 * i - h - k) MOD 7
+        LET m AS S64 = (a + 11 * h + 22 * l) / 451
+        LET mm AS S64 = (h + l - 7 * m + 114) / 31
+        LET dd AS S64 = (h + l - 7 * m + 114) MOD 31 + 1
+        -- day of year
+        LET dy AS S64 = dd
+        FOR j = 1 TO mm - 1
+            dy = dy + dim[j]
+        END FOR
+        RETURN dy
+    END FUNCTION
+
+    PROCEDURE Run()
+        dim[1] = 31
+        dim[2] = 28
+        dim[3] = 31
+        dim[4] = 30
+        dim[5] = 31
+        dim[6] = 30
+        FOR y = 2020 TO 2025
+            LET dy AS S64 = Easter(y)
+            LET mm AS S64 = 1
+            LET dd AS S64 = dy
+            WHILE dd > dim[mm]
+                dd = dd - dim[mm]
+                mm = mm + 1
+            END WHILE
+            LET aw AS S64 = dy - 46
+            LET mm2 AS S64 = 1
+            LET dd2 AS S64 = aw
+            WHILE dd2 > dim[mm2]
+                dd2 = dd2 - dim[mm2]
+                mm2 = mm2 + 1
+            END WHILE
+            PRINT y | ": Easter " | mm | "/" | dd | ", Ash Wed " | mm2 | "/" | dd2
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT East
+BEGIN
+    East.Run()
+END

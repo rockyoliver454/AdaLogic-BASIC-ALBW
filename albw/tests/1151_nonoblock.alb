@@ -1,0 +1,27 @@
+VERSION 1.0
+
+STRICT cell[20] AS S64
+
+LET cnt AS S64 = 0
+
+PROCEDURE Place(pos AS S64, bi AS S64, rem AS S64)
+    IF bi > 2 THEN
+        cnt = cnt + 1
+        RETURN
+    END IF
+    LET bs AS S64 = 0
+    IF bi = 0 THEN bs = 3 END IF
+    IF bi = 1 THEN bs = 1 END IF
+    IF bi = 2 THEN bs = 2 END IF
+    LET p AS S64 = pos
+    WHILE p + bs <= 15
+        Place(p + bs + 1, bi + 1, 0)
+        p = p + 1
+    END WHILE
+END PROCEDURE
+
+
+BEGIN
+    Place(0, 0, 0)
+    PRINT "nonoblock len15 blocks(3,1,2) combos=" | cnt
+END

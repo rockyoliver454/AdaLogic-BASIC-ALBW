@@ -1,0 +1,59 @@
+-- 765 | Zeckendorf arithmetic: convert to/from Zeckendorf
+-- (nonconsecutive Fibonacci digit) representation and add.
+DECLARE MODULE Zk
+    FUNCTION ToZ(v AS S64) AS STRING
+    FUNCTION FromZ(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Zk
+    STRICT zf[46] AS S64
+
+    FUNCTION ToZ(v AS S64) AS STRING
+        LET s AS STRING = ""
+        LET r AS S64 = v
+        LET i AS S64 = 44
+        WHILE i >= 2
+            IF zf[i] <= r THEN
+                s = s | "1"
+                r = r - zf[i]
+            ELSE
+                IF s <> "" THEN s = s | "0" END IF
+            END IF
+            i = i - 1
+        END WHILE
+        IF s = "" THEN s = "0" END IF
+        RETURN s
+    END FUNCTION
+
+    FUNCTION FromZ(s AS STRING) AS S64
+        LET n AS S64 = LEN(s)
+        LET v AS S64 = 0
+        FOR i = 1 TO n
+            IF MID$(s, i, 1) = "1" THEN
+                v = v + zf[2 + n - i]
+            END IF
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        zf[2] = 1
+        zf[3] = 2
+        FOR i = 4 TO 44
+            zf[i] = zf[i - 1] + zf[i - 2]
+        END FOR
+        LET a AS S64 = 100
+        LET b AS S64 = 39
+        PRINT "100=" | ToZ(a)
+        PRINT "39=" | ToZ(b)
+        PRINT "139=" | ToZ(a + b)
+        PRINT "61=" | ToZ(a - b)
+        PRINT "check=" | FromZ(ToZ(a + b))
+    END PROCEDURE
+END MODULE
+
+IMPORT Zk
+BEGIN
+    Zk.Run()
+END

@@ -1,0 +1,6 @@
+<table>
+<tr><th>name</th><th>value</th></tr>
+<tr><td>alpha</td><td>10</td></tr>
+<tr><td>beta</td><td>25</td></tr>
+<tr><td>gamma</td><td>7</td></tr>
+</table>

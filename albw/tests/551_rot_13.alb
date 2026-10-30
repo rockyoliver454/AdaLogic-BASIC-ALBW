@@ -1,0 +1,31 @@
+-- 551 | Rot-13: encode and decode the RC reference string.
+DECLARE MODULE R13
+    FUNCTION Enc(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE R13
+    FUNCTION Enc(s AS STRING) AS STRING
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            LET o AS S64 = c
+            IF c >= 65 ANDALSO c <= 90 THEN o = 65 + (c - 65 + 13) MOD 26 END IF
+            IF c >= 97 ANDALSO c <= 122 THEN o = 97 + (c - 97 + 13) MOD 26 END IF
+            r = r | CHR(o)
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET t AS STRING = "The quick brown fox jumps over the lazy dog"
+        LET e AS STRING = Enc(t)
+        PRINT e
+        PRINT Enc(e)
+    END PROCEDURE
+END MODULE
+
+IMPORT R13
+BEGIN
+    R13.Run()
+END

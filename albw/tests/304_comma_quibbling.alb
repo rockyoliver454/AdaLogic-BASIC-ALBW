@@ -1,0 +1,40 @@
+-- 304 | Comma quibbling: join words with commas and "and".
+DECLARE MODULE Quibble
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Quibble
+    STRICT items[4] AS STRING
+
+    FUNCTION Build(count AS S32) AS STRING
+        LET out_line AS STRING = "{"
+        FOR i = 0 TO count - 1
+            IF i > 0 THEN
+                IF i = count - 1 THEN
+                    out_line = out_line | " and "
+                ELSE
+                    out_line = out_line | ", "
+                END IF
+            END IF
+            out_line = out_line | items[i]
+        END FOR
+        out_line = out_line | "}"
+        RETURN out_line
+    END FUNCTION
+
+    PROCEDURE Run()
+        items[0] = "ABC"
+        items[1] = "DEF"
+        items[2] = "G"
+        items[3] = "H"
+        PRINT Build(0)
+        PRINT Build(1)
+        PRINT Build(2)
+        PRINT Build(4)
+    END PROCEDURE
+END MODULE
+
+IMPORT Quibble
+BEGIN
+    Quibble.Run()
+END

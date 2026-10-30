@@ -1,0 +1,39 @@
+-- 621 | Sorensen-Dice coefficient: bigram overlap measure,
+-- 2*|A&B| / (|A|+|B|).
+DECLARE MODULE Dice
+    FUNCTION BigramsIn(a AS STRING, b AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dice
+    FUNCTION BigramsIn(a AS STRING, b AS STRING) AS S64
+        LET cnt AS S64 = 0
+        FOR i = 1 TO LEN(a) - 1
+            FOR j = 1 TO LEN(b) - 1
+                IF MID$(a, i, 2) = MID$(b, j, 2) THEN
+                    cnt = cnt + 1
+                END IF
+            END FOR
+        END FOR
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET a AS STRING = "night"
+        LET b AS STRING = "nacht"
+        LET nb AS F64 = BigramsIn(a, b)
+        LET denom AS F64 = (LEN(a) - 1) + (LEN(b) - 1)
+        LET d AS F64 = 2.0 * nb / denom
+        PRINT "night/nacht = " | d
+        LET c AS STRING = "context"
+        LET e AS STRING = "contact"
+        LET nb2 AS F64 = BigramsIn(c, e)
+        LET d2 AS F64 = 2.0 * nb2 / ((LEN(c) - 1) + (LEN(e) - 1))
+        PRINT "context/contact = " | d2
+    END PROCEDURE
+END MODULE
+
+IMPORT Dice
+BEGIN
+    Dice.Run()
+END

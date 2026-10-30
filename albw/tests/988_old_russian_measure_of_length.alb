@@ -1,0 +1,37 @@
+-- 988 | Old Russian measure of length: convert between
+-- versta, sazhen, arshin, vershok, pyad, tochka, liniya.
+DECLARE MODULE Ru
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ru
+    PROCEDURE Run()
+        -- liniya = 2.54 mm base unit; units in linii:
+        -- tochka=10, vershok=17.5, pyad=70, fut=120, arshin=280,
+        -- lokot=168, sagin=280?(arshin), sazhen=840, versta=42000
+        -- canonical: 1 verst = 500 sazhen = 1500 arshin =
+        -- 24000 vershok = 42000 liniya(?) -> use mm:
+        -- liniya=2.54mm tochka=25.4 vershok=44.45 pyad=177.8
+        -- arshin=711.2 fut=304.8 sazhen=2133.6 versta=1066800
+        LET v AS F64 = 1.0
+        PRINT "1 versta  = " | v * 1066.8 | " m"
+        PRINT "1 sazhen  = " | 2133.6 / 1000.0 | " m"
+        PRINT "1 arshin  = " | 711.2 / 1000.0 | " m"
+        PRINT "1 vershok = " | 44.45 / 1000.0 | " m"
+        PRINT "1 pyad    = " | 177.8 / 1000.0 | " m"
+        PRINT "1 fut     = " | 304.8 / 1000.0 | " m"
+        PRINT "1 tochka  = " | 25.4 / 1000.0 | " m"
+        PRINT "1 liniya  = " | 2.54 / 1000.0 | " m"
+        -- chain: 1 versta = 500 sazhen = 1500 arshin =
+        -- 24000 vershok = 6000 pyad? (pyad=1/4 arshin*?)
+        PRINT "versta->sazhen=" | 500
+        PRINT "sazhen->arshin=" | 3
+        PRINT "arshin->vershok=" | 16
+        PRINT "vershok->liniya=" | 17.5
+    END PROCEDURE
+END MODULE
+
+IMPORT Ru
+BEGIN
+    Ru.Run()
+END

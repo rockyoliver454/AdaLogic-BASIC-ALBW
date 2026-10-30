@@ -1,0 +1,14 @@
+-- 212 | Menu: display choices, read a selection, and dispatch it.
+BEGIN
+    PRINT "1. Add"
+    PRINT "2. Edit"
+    PRINT "3. Quit"
+    LET choice AS S32 = 0
+    INPUT >> choice
+    SELECT choice
+        CASE 1 => PRINT "Add selected"
+        CASE 2 => PRINT "Edit selected"
+        CASE 3 => PRINT "Quit selected"
+        ELSE => PRINT "Invalid selection"
+    END SELECT
+END

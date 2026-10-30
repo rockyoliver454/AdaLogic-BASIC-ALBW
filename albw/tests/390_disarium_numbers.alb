@@ -1,0 +1,38 @@
+-- 390 | Disarium numbers: n = sum of digits^position (1-based); all below 600.
+DECLARE MODULE Disarium
+    FUNCTION IsDisarium(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Disarium
+    FUNCTION IsDisarium(n AS S64) AS S32
+        LET m AS S64 = n
+        LET rev AS S64 = 0
+        WHILE m > 0
+            rev = rev * 10 + m MOD 10
+            m = m / 10
+        END WHILE
+        LET s AS S64 = 0
+        LET pos AS S32 = 1
+        WHILE rev > 0
+            s = s + (rev MOD 10) ^ pos
+            pos = pos + 1
+            rev = rev / 10
+        END WHILE
+        IF s = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 0 TO 599
+            IF IsDisarium(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Disarium
+BEGIN
+    Disarium.Run()
+END

@@ -1,0 +1,27 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT "         /\\"
+    PRINT "         ||"
+    PRINT "         ||"
+    PRINT "        /||\\"
+    PRINT "        |  |"
+    LET row AS S64 = 0
+    WHILE row < 10
+        PRINT "      |======|"
+        PRINT "      | [] []|"
+        row = row + 1
+    END WHILE
+    PRINT "   ___|______|___"
+    PRINT "  |   [] [] []  |"
+    PRINT "  | [] [] [] [] |"
+    PRINT "  |___[]_[]_[]__|"
+    PRINT " |_______________|"
+    PRINT " |   []  []  []  |"
+    PRINT " | []  []  []  []|"
+    PRINT " |_______________|"
+    PRINT " |   __________  |"
+    PRINT " |  |          | |"
+    PRINT " |__|__________|_|"
+END

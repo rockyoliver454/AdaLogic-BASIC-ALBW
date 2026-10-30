@@ -1,0 +1,51 @@
+-- 898 | Seven-sided dice from five-sided dice: roll two d5
+-- to get 0-24, reject >= 21, take mod 7. Seeded; print a
+-- sample and the histogram of 700 rolls.
+DECLARE MODULE Sd
+    FUNCTION Nxt() AS S64
+    FUNCTION D5() AS S64
+    FUNCTION D7() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sd
+    STRICT sd[1] AS S64
+    STRICT hs[8] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536
+    END FUNCTION
+
+    FUNCTION D5() AS S64
+        RETURN Nxt() MOD 5
+    END FUNCTION
+
+    FUNCTION D7() AS S64
+        WHILE 1 = 1
+            LET v AS S64 = D5() * 5 + D5()
+            IF v < 21 THEN RETURN v MOD 7 + 1 END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 2024
+        LET s AS STRING = "sample:"
+        FOR i = 1 TO 14
+            s = s | " " | D7()
+        END FOR
+        PRINT s
+        FOR i = 1 TO 700
+            hs[D7()] = hs[D7()] + 1
+        END FOR
+        FOR i = 1 TO 7
+            PRINT i | ": " | hs[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sd
+BEGIN
+    Sd.Run()
+END

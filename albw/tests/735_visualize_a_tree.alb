@@ -1,0 +1,45 @@
+-- 735 | Visualize a tree: ASCII rendering with connectors.
+DECLARE MODULE Vt
+    PROCEDURE Show(n AS S64, ind AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vt
+    STRICT nm[8] AS STRING
+    STRICT lc[8] AS S64
+    STRICT rc[8] AS S64
+
+    PROCEDURE Show(n AS S64, ind AS STRING)
+        IF n = 0 THEN RETURN END IF
+        PRINT ind | nm[n]
+        Show(lc[n], ind | "  |--")
+        Show(rc[n], ind | "  |--")
+    END PROCEDURE
+
+    PROCEDURE Run()
+        nm[1] = "root"
+        nm[2] = "left"
+        nm[3] = "right"
+        nm[4] = "leafA"
+        nm[5] = "leafB"
+        nm[6] = "leafC"
+        lc[1] = 2
+        rc[1] = 3
+        lc[2] = 4
+        rc[2] = 5
+        lc[3] = 6
+        rc[3] = 0
+        lc[4] = 0
+        rc[4] = 0
+        lc[5] = 0
+        rc[5] = 0
+        lc[6] = 0
+        rc[6] = 0
+        Show(1, "")
+    END PROCEDURE
+END MODULE
+
+IMPORT Vt
+BEGIN
+    Vt.Run()
+END

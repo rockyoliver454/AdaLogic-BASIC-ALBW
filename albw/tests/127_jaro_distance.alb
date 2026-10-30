@@ -1,0 +1,69 @@
+-- 127 | Jaro distance: character-window string similarity.
+DECLARE MODULE J
+    FUNCTION Jaro(s1 AS STRING, s2 AS STRING) AS F64
+END DECLARE MODULE
+
+MODULE J
+    FUNCTION Jaro(s1 AS STRING, s2 AS STRING) AS F64
+        LET l1 AS S32 = LEN(s1);
+        LET l2 AS S32 = LEN(s2);
+        IF l1 = 0 ANDALSO l2 = 0 THEN
+            RETURN 1.0
+        END IF
+        LET md AS S32 = l1;
+        IF l2 > md THEN
+            md = l2;
+        END IF
+        md = md / 2 - 1;
+        IF md < 0 THEN
+            md = 0;
+        END IF
+        STRICT m1[32] AS S32;
+        STRICT m2[32] AS S32;
+        LET matches AS S32 = 0;
+        FOR i = 1 TO l1
+            LET lo AS S32 = i - md;
+            IF lo < 1 THEN
+                lo = 1;
+            END IF
+            LET hi AS S32 = i + md;
+            IF hi > l2 THEN
+                hi = l2;
+            END IF
+            FOR j = lo TO hi
+                IF m2[j - 1] = 0 ANDALSO MID$(s1, i, 1) = MID$(s2, j, 1) THEN
+                    m1[i - 1] = 1;
+                    m2[j - 1] = 1;
+                    matches = matches + 1;
+                    j = hi + 1;
+                END IF
+            END FOR
+        END FOR
+        IF matches = 0 THEN
+            RETURN 0.0
+        END IF
+        LET k AS S32 = 1;
+        LET trans AS S32 = 0;
+        FOR i = 1 TO l1
+            IF m1[i - 1] = 1 THEN
+                WHILE m2[k - 1] = 0
+                    k = k + 1;
+                END WHILE
+                IF MID$(s1, i, 1) <> MID$(s2, k, 1) THEN
+                    trans = trans + 1;
+                END IF
+                k = k + 1;
+            END IF
+        END FOR
+        trans = trans / 2;
+        LET m AS F64 = matches;
+        RETURN (m / l1 + m / l2 + (m - trans) / m) / 3.0
+    END FUNCTION
+END MODULE
+
+IMPORT J
+BEGIN
+    PRINT J.Jaro("MARTHA", "MARHTA");
+    PRINT J.Jaro("DWAYNE", "DUANE");
+    PRINT J.Jaro("DIXON", "DICKSONX");
+END

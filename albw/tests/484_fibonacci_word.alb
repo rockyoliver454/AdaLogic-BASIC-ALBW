@@ -1,0 +1,23 @@
+-- 484 | Fibonacci word: first 60 characters of the infinite word
+-- over {0,1} built by the morphism 0->01, 1->0.
+DECLARE MODULE FibW
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE FibW
+    PROCEDURE Run()
+        LET a AS STRING = "0"
+        LET b AS STRING = "01"
+        WHILE LEN(b) < 60
+            LET t AS STRING = b
+            b = b | a
+            a = t
+        END WHILE
+        PRINT MID$(b, 1, 60)
+    END PROCEDURE
+END MODULE
+
+IMPORT FibW
+BEGIN
+    FibW.Run()
+END

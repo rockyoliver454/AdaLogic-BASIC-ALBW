@@ -1,0 +1,84 @@
+VERSION 1.0
+STRICT x1[260] AS S64
+STRICT y1[260] AS S64
+STRICT x2[260] AS S64
+STRICT y2[260] AS S64
+
+LET frames AS S64 = 0
+LET nseg AS S64 = 0
+LET nsq AS S64 = 0
+LET fpx AS S64 = 0
+
+FUNCTION Sn(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN SIN(df * 0.017453292519943295)
+END FUNCTION
+
+FUNCTION Cs(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN COS(df * 0.017453292519943295)
+END FUNCTION
+
+PROCEDURE ESeg(ax AS S64, ay AS S64, bvx AS S64, bvy AS S64)
+    x1[nseg] = ax / 100 y1[nseg] = ay / 100
+    x2[nseg] = bvx / 100 y2[nseg] = bvy / 100
+    nseg = nseg + 1
+END PROCEDURE
+
+PROCEDURE PSq(xi AS S64, yi AS S64, s AS S64, adp AS S64)
+    LET d AS S64 = adp MOD 16
+    LET ad AS S64 = adp / 16 - 512
+    LET sf AS F64 = s * 1.0
+    LET ux AS S64 = ROUND(sf * Cs(ad))
+    LET uy AS S64 = 0 - ROUND(sf * Sn(ad))
+    LET rx AS S64 = ROUND(sf * Sn(ad))
+    LET ry AS S64 = 0 - ROUND(sf * Cs(ad))
+    CALL ESeg(xi, yi, xi + ux, yi + uy)
+    CALL ESeg(xi + ux, yi + uy, xi + ux + rx, yi + uy + ry)
+    CALL ESeg(xi + ux + rx, yi + uy + ry, xi + rx, yi + ry)
+    CALL ESeg(xi + rx, yi + ry, xi, yi)
+    nsq = nsq + 1
+    IF d > 0 THEN
+        LET s2 AS S64 = (s * 7071) / 10000
+        LET p3x AS S64 = xi + rx
+        LET p3y AS S64 = yi + ry
+        CALL PSq(p3x, p3y, s2, (ad + 45 + 512) * 16 + d - 1)
+        LET sf2 AS F64 = s2 * 1.0
+        LET lx AS S64 = ROUND(sf2 * Cs(ad + 45))
+        LET ly AS S64 = 0 - ROUND(sf2 * Sn(ad + 45))
+        CALL PSq(p3x + lx, p3y + ly, s2, (ad - 45 + 512) * 16 + d - 1)
+    END IF
+END PROCEDURE
+
+BEGIN
+    CALL PSq(2600, 5600, 1200, (0 + 512) * 16 + 5)
+
+    CREATE_WINDOW "Pythagoras tree", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET i AS S64 = 0
+        CLEAR $000000
+        COLOR $FF8040
+        i = 0
+        WHILE i < nseg
+            DRAW LINE x1[i], y1[i], x2[i], y2[i]
+            i = i + 1
+        END WHILE
+        fpx = READ_PIXEL(x1[0], y1[0])
+    END
+
+    LISTEN
+
+    PRINT "depth=5"
+    PRINT "squares=" | nsq
+    PRINT "segments=" | nseg
+    PRINT "base_px=" | fpx
+END

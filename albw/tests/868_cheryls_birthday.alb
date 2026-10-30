@@ -1,0 +1,104 @@
+-- 868 | Cheryl's birthday: deduce the date from Albert's and
+-- Bernard's statements. Candidates are the ten dates from the
+-- classic puzzle; the answer is July 16.
+DECLARE MODULE Cb
+    FUNCTION DayOf(v AS S64) AS S64
+    FUNCTION MonOf(v AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cb
+    -- dates encoded mon*100+day
+    STRICT cand[16] AS S64
+    STRICT nc[1] AS S64
+    STRICT ok[16] AS S64
+    STRICT kil[16] AS S64
+
+    FUNCTION DayOf(v AS S64) AS S64
+        RETURN v MOD 100
+    END FUNCTION
+
+    FUNCTION MonOf(v AS S64) AS S64
+        RETURN v / 100
+    END FUNCTION
+
+    FUNCTION CntM(arr AS S64, m AS S64, nn AS S64) AS S64
+        -- count candidates with month m among kept ones is
+        -- simulated via DayOf/MonOf on kept list
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- months: 5=May 6=Jun 7=Jul 8=Aug
+        cand[1] = 515
+        cand[2] = 516
+        cand[3] = 519
+        cand[4] = 617
+        cand[5] = 618
+        cand[6] = 714
+        cand[7] = 716
+        cand[8] = 814
+        cand[9] = 815
+        cand[10] = 817
+        nc[1] = 10
+        -- 1: Albert (knows month) is sure Bernard doesn't know:
+        -- no day of the month is unique. Unique days: 18,19
+        -- (appear once). Months containing them: May(19), Jun(18)
+        -- -> eliminate all May and June dates.
+        FOR i = 1 TO nc[1]
+            ok[i] = 1
+            LET m AS S64 = MonOf(cand[i])
+            IF m = 5 ORELSE m = 6 THEN ok[i] = 0 END IF
+        END FOR
+        -- 2: Bernard (knows day) now knows: the day must appear in
+        -- only one remaining candidate. Mark-then-apply so the
+        -- counts aren't disturbed mid-pass.
+        FOR i = 1 TO nc[1]
+            kil[i] = 0
+        END FOR
+        FOR i = 1 TO nc[1]
+            IF ok[i] = 1 THEN
+                LET d AS S64 = DayOf(cand[i])
+                LET cnt AS S64 = 0
+                FOR j = 1 TO nc[1]
+                    IF ok[j] = 1 ANDALSO DayOf(cand[j]) = d THEN
+                        cnt = cnt + 1
+                    END IF
+                END FOR
+                IF cnt > 1 THEN kil[i] = 1 END IF
+            END IF
+        END FOR
+        FOR i = 1 TO nc[1]
+            IF kil[i] = 1 THEN ok[i] = 0 END IF
+        END FOR
+        -- 3: Albert now knows too: the month must appear once.
+        FOR i = 1 TO nc[1]
+            kil[i] = 0
+        END FOR
+        FOR i = 1 TO nc[1]
+            IF ok[i] = 1 THEN
+                LET m AS S64 = MonOf(cand[i])
+                LET cnt AS S64 = 0
+                FOR j = 1 TO nc[1]
+                    IF ok[j] = 1 ANDALSO MonOf(cand[j]) = m THEN
+                        cnt = cnt + 1
+                    END IF
+                END FOR
+                IF cnt > 1 THEN kil[i] = 1 END IF
+            END IF
+        END FOR
+        FOR i = 1 TO nc[1]
+            IF kil[i] = 1 THEN ok[i] = 0 END IF
+        END FOR
+        FOR i = 1 TO nc[1]
+            IF ok[i] = 1 THEN
+                PRINT "answer: " | MonOf(cand[i]) | "/" | DayOf(cand[i])
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cb
+BEGIN
+    Cb.Run()
+END

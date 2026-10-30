@@ -1,0 +1,119 @@
+-- 778 | Quad-power prime seeds: n where n^k + n + 1 is prime
+-- for k = 1,2,3,4. First 12 seeds (A219117).
+DECLARE MODULE Qp
+    FUNCTION MMod(a AS S64, b AS S64, m AS S64) AS S64
+    FUNCTION PMod(b AS S64, e AS S64, m AS S64) AS S64
+    FUNCTION MR(n AS S64, b AS S64) AS S32
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Qp
+    FUNCTION MMod(a AS S64, b AS S64, m AS S64) AS S64
+        -- (a*b) mod m via doubling, avoids S64 overflow
+        LET r AS S64 = 0
+        LET x AS S64 = a MOD m
+        LET y AS S64 = b
+        WHILE y > 0
+            IF y MOD 2 = 1 THEN
+                r = r + x
+                IF r >= m THEN r = r - m END IF
+            END IF
+            x = x + x
+            IF x >= m THEN x = x - m END IF
+            y = y / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION PMod(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN r = MMod(r, bb, m) END IF
+            bb = MMod(bb, bb, m)
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION MR(n AS S64, b AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF b MOD n = 0 THEN RETURN 1 END IF
+        LET d AS S64 = n - 1
+        LET s AS S64 = 0
+        WHILE d MOD 2 = 0
+            d = d / 2
+            s = s + 1
+        END WHILE
+        LET x AS S64 = PMod(b, d, n)
+        IF x = 1 ORELSE x = n - 1 THEN RETURN 1 END IF
+        LET ok AS S32 = 0
+        FOR i = 1 TO s - 1
+            x = MMod(x, x, n)
+            IF x = n - 1 THEN ok = 1 END IF
+        END FOR
+        IF s = 1 ANDALSO x = n - 1 THEN ok = 1 END IF
+        RETURN ok
+    END FUNCTION
+
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        -- small trial first
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF n MOD 3 = 0 THEN
+            IF n = 3 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF n MOD 5 = 0 THEN
+            IF n = 5 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        -- deterministic MR bases for < 3.4e18
+        IF MR(n, 2) = 0 THEN RETURN 0 END IF
+        IF MR(n, 3) = 0 THEN RETURN 0 END IF
+        IF MR(n, 5) = 0 THEN RETURN 0 END IF
+        IF MR(n, 7) = 0 THEN RETURN 0 END IF
+        IF MR(n, 11) = 0 THEN RETURN 0 END IF
+        IF MR(n, 13) = 0 THEN RETURN 0 END IF
+        IF MR(n, 17) = 0 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < 12
+            LET n1 AS S64 = n + 1
+            LET ok AS S32 = 0
+            IF Prime(n + n1) = 1 THEN
+                LET p AS S64 = n * n
+                IF Prime(p + n1) = 1 THEN
+                    p = p * n
+                    IF Prime(p + n1) = 1 THEN
+                        p = p * n
+                        IF Prime(p + n1) = 1 THEN ok = 1 END IF
+                    END IF
+                END IF
+            END IF
+            IF ok = 1 THEN
+                PRINT n
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Qp
+BEGIN
+    Qp.Run()
+END

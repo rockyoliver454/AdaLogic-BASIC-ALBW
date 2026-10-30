@@ -1,0 +1,62 @@
+-- 249 | Search a list: find first/last index of a string needle in a string array.
+DECLARE MODULE SearchList
+    FUNCTION FirstIndex(needle AS STRING) AS S32
+    FUNCTION LastIndex(needle AS STRING) AS S32
+END DECLARE MODULE
+
+MODULE SearchList
+    STRICT haystack[9] AS STRING
+    LET count AS S32 = 9
+
+    PROCEDURE Init()
+        haystack[0] = "Zig"
+        haystack[1] = "Zag"
+        haystack[2] = "Wally"
+        haystack[3] = "Ronald"
+        haystack[4] = "Bush"
+        haystack[5] = "Krusty"
+        haystack[6] = "Charlie"
+        haystack[7] = "Bush"
+        haystack[8] = "Bozo"
+    END PROCEDURE
+
+    FUNCTION StringsEqual(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION FirstIndex(needle AS STRING) AS S32
+        FOR i = 0 TO count - 1
+            IF StringsEqual(haystack[i], needle) THEN RETURN i END IF
+        END FOR
+        RETURN -1
+    END FUNCTION
+
+    FUNCTION LastIndex(needle AS STRING) AS S32
+        LET answer AS S32 = -1
+        FOR i = 0 TO count - 1
+            IF StringsEqual(haystack[i], needle) THEN answer = i END IF
+        END FOR
+        RETURN answer
+    END FUNCTION
+END MODULE
+
+IMPORT SearchList
+BEGIN
+    SearchList.Init()
+
+    LET needle1 AS STRING = "Washington"
+    LET idx AS S32 = SearchList.FirstIndex(needle1)
+    IF idx < 0 THEN
+        PRINT needle1 | " is not in haystack"
+    ELSE
+        PRINT idx | " " | needle1
+    END IF
+
+    LET needle2 AS STRING = "Bush"
+    PRINT SearchList.FirstIndex(needle2) | " " | needle2
+    PRINT SearchList.LastIndex(needle2) | " " | needle2
+END

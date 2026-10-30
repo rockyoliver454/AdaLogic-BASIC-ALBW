@@ -1,0 +1,41 @@
+-- 227 | Wrong ranges: safely classify zero steps and wrong directions.
+DECLARE MODULE Ranges
+    FUNCTION Render(first_value AS S32, last_value AS S32, step_value AS S32) AS STRING
+END DECLARE MODULE
+
+MODULE Ranges
+    FUNCTION Render(first_value AS S32, last_value AS S32, step_value AS S32) AS STRING
+        IF step_value = 0 THEN RETURN "not allowed" END IF
+        IF first_value < last_value ANDALSO step_value < 0 THEN RETURN "empty" END IF
+        IF first_value > last_value ANDALSO step_value > 0 THEN RETURN "empty" END IF
+        LET result_text AS STRING = ""
+        LET n AS S32 = first_value
+        IF step_value > 0 THEN
+            WHILE n <= last_value
+                IF LEN(result_text) > 0 THEN result_text = result_text | " " END IF
+                result_text = result_text | n
+                n = n + step_value
+            END WHILE
+        ELSE
+            WHILE n >= last_value
+                IF LEN(result_text) > 0 THEN result_text = result_text | " " END IF
+                result_text = result_text | n
+                n = n + step_value
+            END WHILE
+        END IF
+        RETURN result_text
+    END FUNCTION
+END MODULE
+
+IMPORT Ranges
+BEGIN
+    PRINT "-2,2,1: " | Ranges.Render(-2, 2, 1)
+    PRINT "-2,2,0: " | Ranges.Render(-2, 2, 0)
+    PRINT "-2,2,-1: " | Ranges.Render(-2, 2, -1)
+    PRINT "-2,2,10: " | Ranges.Render(-2, 2, 10)
+    PRINT "2,-2,1: " | Ranges.Render(2, -2, 1)
+    PRINT "2,2,1: " | Ranges.Render(2, 2, 1)
+    PRINT "2,2,-1: " | Ranges.Render(2, 2, -1)
+    PRINT "2,2,0: " | Ranges.Render(2, 2, 0)
+    PRINT "0,0,0: " | Ranges.Render(0, 0, 0)
+END

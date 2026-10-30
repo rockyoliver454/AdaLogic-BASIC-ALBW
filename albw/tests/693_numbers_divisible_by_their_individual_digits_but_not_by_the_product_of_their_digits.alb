@@ -1,0 +1,39 @@
+-- 693 | Numbers divisible by their individual digits, but not
+-- by the product of their digits: first 40.
+DECLARE MODULE Nd
+    FUNCTION Ok(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nd
+    FUNCTION Ok(n AS S64) AS S32
+        LET v AS S64 = n
+        LET prod AS S64 = 1
+        WHILE v > 0
+            LET d AS S64 = v MOD 10
+            IF d = 0 THEN RETURN 0 END IF
+            IF n MOD d <> 0 THEN RETURN 0 END IF
+            prod = prod * d
+            v = v / 10
+        END WHILE
+        IF n MOD prod <> 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < 40
+            IF Ok(n) = 1 THEN
+                PRINT n
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Nd
+BEGIN
+    Nd.Run()
+END

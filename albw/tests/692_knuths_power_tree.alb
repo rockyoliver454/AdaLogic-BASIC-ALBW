@@ -1,0 +1,63 @@
+-- 692 | Knuth's power tree: shortest addition chains for
+-- n = 2..15 via depth-limited DFS.
+DECLARE MODULE Pt
+    FUNCTION Dfs(n AS S64, dep AS S64, mx AS S64) AS S32
+    PROCEDURE Show(n AS S64, mx AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pt
+    STRICT ch[20] AS S64
+
+    FUNCTION Dfs(n AS S64, dep AS S64, mx AS S64) AS S32
+        IF ch[dep] = n THEN RETURN 1 END IF
+        IF dep = mx THEN RETURN 0 END IF
+        -- try largest sums first for speed
+        LET i AS S64 = dep
+        WHILE i >= 1
+            LET j AS S64 = dep
+            WHILE j >= i
+                LET s AS S64 = ch[i] + ch[j]
+                IF s <= n ANDALSO s > ch[dep] THEN
+                    ch[dep + 1] = s
+                    IF Dfs(n, dep + 1, mx) = 1 THEN RETURN 1 END IF
+                END IF
+                j = j - 1
+            END WHILE
+            i = i - 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(n AS S64, mx AS S64)
+        ch[1] = 1
+        LET done AS S32 = 0
+        LET d AS S64 = 1
+        WHILE done = 0
+            IF Dfs(n, 1, d) = 1 THEN
+                done = 1
+                LET s AS STRING = ""
+                FOR i = 1 TO d
+                    IF s = "" THEN
+                        s = ch[i] | ""
+                    ELSE
+                        s = s | " " | ch[i]
+                    END IF
+                END FOR
+                PRINT n | ": " | s
+            END IF
+            d = d + 1
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 2 TO 15
+            Show(n, 1)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pt
+BEGIN
+    Pt.Run()
+END

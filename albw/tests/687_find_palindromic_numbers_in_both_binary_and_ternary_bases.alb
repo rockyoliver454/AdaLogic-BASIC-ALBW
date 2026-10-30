@@ -1,0 +1,36 @@
+-- 687 | Find palindromic numbers in both binary and ternary
+-- bases: first values below 2 million.
+DECLARE MODULE Pal
+    FUNCTION PalB(n AS S64, b AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pal
+    STRICT dg[40] AS S64
+
+    FUNCTION PalB(n AS S64, b AS S64) AS S32
+        LET v AS S64 = n
+        LET cnt AS S64 = 0
+        IF v = 0 THEN RETURN 1 END IF
+        WHILE v > 0
+            cnt = cnt + 1
+            dg[cnt] = v MOD b
+            v = v / b
+        END WHILE
+        FOR i = 1 TO cnt / 2
+            IF dg[i] <> dg[cnt - i + 1] THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 2000000
+            IF PalB(n, 2) = 1 ANDALSO PalB(n, 3) = 1 THEN PRINT n END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pal
+BEGIN
+    Pal.Run()
+END

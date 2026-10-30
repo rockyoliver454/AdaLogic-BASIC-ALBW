@@ -1,0 +1,11 @@
+-- 022 | Averages/Arithmetic mean
+BEGIN
+    STRICT v[5] AS S32;
+    v[0] = 10; v[1] = 20; v[2] = 30; v[3] = 40; v[4] = 50;
+    LET total AS S32 = 0;
+    LET i AS S32 = 0;
+    FOR i = 0 TO 4
+        total = total + v[i];
+    END FOR
+    PRINT$ "mean=" | total / 5;
+END

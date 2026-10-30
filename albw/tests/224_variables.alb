@@ -1,0 +1,12 @@
+-- 224 | Variables: typed declarations, initialization, reassignment, and use.
+BEGIN
+    LET count AS S32 = 10
+    LET ratio AS F64 = 2.5
+    LET label AS STRING = "items"
+    count = count + 2
+    ratio = ratio * 2.0
+    label = "total " | label
+    PRINT count
+    PRINT ratio
+    PRINT label
+END

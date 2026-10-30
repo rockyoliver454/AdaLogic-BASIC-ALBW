@@ -1,0 +1,16 @@
+-- 292 | Strip whitespace from a string/Top and tail: trim leading and trailing blanks and tabs.
+BEGIN
+    LET s AS STRING = " " | CHR(9) | "  padded  " | CHR(9) | " "
+    LET lo AS S32 = 1
+    LET hi AS S32 = LEN(s)
+    WHILE lo <= hi ANDALSO (ASC(MID$(s, lo, 1)) = 32 ORELSE ASC(MID$(s, lo, 1)) = 9)
+        lo = lo + 1
+    END WHILE
+    WHILE hi >= lo ANDALSO (ASC(MID$(s, hi, 1)) = 32 ORELSE ASC(MID$(s, hi, 1)) = 9)
+        hi = hi - 1
+    END WHILE
+    LET trimmed AS STRING = ""
+    IF lo <= hi THEN trimmed = MID$(s, lo, hi - lo + 1) END IF
+    PRINT "[" | trimmed | "]"
+    PRINT LEN(trimmed)
+END

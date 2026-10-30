@@ -1,0 +1,13 @@
+-- 311 | Count in octal: print 1..16 in base 8.
+BEGIN
+    FOR v = 1 TO 16
+        LET s AS STRING = ""
+        LET n AS S32 = v
+        IF n = 0 THEN s = "0" END IF
+        WHILE n > 0
+            s = (n - (n / 8) * 8) | s
+            n = n / 8
+        END WHILE
+        PRINT s
+    END FOR
+END

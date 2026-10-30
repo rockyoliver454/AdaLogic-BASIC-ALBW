@@ -1,0 +1,29 @@
+-- 473 | Van der Corput sequence: first 30 terms in base 2.
+DECLARE MODULE VdC
+    FUNCTION RevBase2(n AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE VdC
+    FUNCTION RevBase2(n AS S64) AS F64
+        LET v AS F64 = 0.0
+        LET denom AS F64 = 2.0
+        WHILE n > 0
+            IF n MOD 2 = 1 THEN v = v + 1.0 / denom END IF
+            denom = denom * 2.0
+            n = n / 2
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 0 TO 29
+            PRINT RevBase2(n)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT VdC
+BEGIN
+    VdC.Run()
+END

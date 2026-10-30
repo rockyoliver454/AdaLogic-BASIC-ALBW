@@ -1,0 +1,83 @@
+-- 942 | Routh-Hurwitz stability criterion: build the Routh
+-- array for a polynomial, count sign changes in column 1.
+-- Test polynomial: s^4+2s^3+3s^2+4s+5 (unstable, 2 changes)
+-- and s^3+6s^2+11s+6 (stable).
+DECLARE MODULE Rh
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rh
+    STRICT cf[6] AS F64
+    STRICT tb[20] AS F64
+
+    PROCEDURE Check(n AS S64, lbl AS STRING)
+        -- cf[1..n+1] descending powers. Rows alternate.
+        LET nr AS S64 = (n + 1) / 2 + 1
+        -- zero table
+        FOR i = 1 TO 20
+            tb[i] = 0.0
+        END FOR
+        -- row1: cf[1],cf[3],cf[5]... row2: cf[2],cf[4]...
+        LET j AS S64 = 1
+        FOR i = 1 TO n + 1 STEP 2
+            tb[j] = cf[i]
+            j = j + 1
+        END FOR
+        j = nr + 1
+        FOR i = 2 TO n + 1 STEP 2
+            tb[j] = cf[i]
+            j = j + 1
+        END FOR
+        -- build rows
+        LET rows AS S64 = n + 1
+        FOR r = 2 TO rows
+            LET prev2 AS S64 = (r - 2) * nr
+            LET prev1 AS S64 = (r - 1) * nr
+            FOR c = 1 TO nr - 1
+                LET a AS F64 = tb[prev1 + 1]
+                LET b AS F64 = tb[prev1 + c + 1]
+                LET cc AS F64 = tb[prev2 + 1]
+                LET d AS F64 = tb[prev2 + c + 1]
+                LET x AS F64 = 0.0
+                IF a <> 0.0 THEN x = (a * d - cc * b) / a END IF
+                tb[r * nr + c] = x
+            END FOR
+        END FOR
+        -- count sign changes in first column
+        LET sgn AS S64 = 0
+        LET chn AS S64 = 0
+        FOR r = 1 TO rows
+            LET v AS F64 = tb[(r - 1) * nr + 1]
+            IF v > 0.0 THEN
+                IF sgn = -1 THEN chn = chn + 1 END IF
+                sgn = 1
+            END IF
+            IF v < 0.0 THEN
+                IF sgn = 1 THEN chn = chn + 1 END IF
+                sgn = 0 - 1
+            END IF
+        END FOR
+        PRINT lbl | ": first-col signs=" | chn
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- s^3 + 6s^2 + 11s + 6 -> stable
+        cf[1] = 1
+        cf[2] = 6
+        cf[3] = 11
+        cf[4] = 6
+        Check(3, "s3+6s2+11s+6")
+        -- s^4 + 2s^3 + 3s^2 + 4s + 5 -> Routh shows sign changes
+        cf[1] = 1
+        cf[2] = 2
+        cf[3] = 3
+        cf[4] = 4
+        cf[5] = 5
+        Check(4, "s4+2s3+3s2+4s+5")
+    END PROCEDURE
+END MODULE
+
+IMPORT Rh
+BEGIN
+    Rh.Run()
+END

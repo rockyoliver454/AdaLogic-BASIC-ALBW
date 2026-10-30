@@ -1,0 +1,27 @@
+-- 740 | Pathological floating point problems: Muller's
+-- sequence converges (falsely) to 100 in floating point.
+DECLARE MODULE Pa
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pa
+    PROCEDURE Run()
+        -- Muller: x0=4, x1=4.25, x=(111 - (1130 - 3000/x2)/x1)
+        LET x0 AS F64 = 4.0
+        LET x1 AS F64 = 4.25
+        FOR i = 2 TO 12
+            LET t1 AS F64 = 3000.0 / x0
+            LET t2 AS F64 = 1130.0 - t1
+            LET t3 AS F64 = t2 / x1
+            LET x2 AS F64 = 111.0 - t3
+            x0 = x1
+            x1 = x2
+            PRINT i | ": " | x2
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pa
+BEGIN
+    Pa.Run()
+END

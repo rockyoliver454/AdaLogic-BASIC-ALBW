@@ -1,0 +1,41 @@
+-- ============================================================================
+-- alb_sort — module-owned sort buffer with caller-supplied comparators.
+--
+-- MALBR routines can't take array params (arrays are fixed statics), so
+-- the module owns a fixed BUF: Put() to fill, Sort() orders the first N
+-- entries, Get() reads back. Sort is insertion sort — stable, static,
+-- O(n^2) worst case, zero allocation. The comparator is a routine
+-- reference: `cmp(a,b) < 0` means a sorts before b.
+--
+--   AlbSort.Put(0, 5)
+--   AlbSort.Sort(1, REF MyCmp)    -- 1 entry
+--   PRINT AlbSort.Get(0)
+-- ============================================================================
+
+MODULE AlbSort
+    STRICT BUF[1024] AS S64
+
+    TYPE Cmp IS ROUTINE(a AS S64, b AS S64) AS S32
+
+    PROCEDURE Put(ix AS S32, v AS S64)
+        BUF[ix] = v
+    END PROCEDURE
+
+    FUNCTION Get(ix AS S32) AS S64
+        RETURN BUF[ix]
+    END FUNCTION
+
+    PROCEDURE Sort(n AS S32, cmp AS Cmp)
+        LET ix AS S32 = 1
+        WHILE ix < n
+            LET kval AS S64 = BUF[ix]
+            LET j AS S32 = ix - 1
+            WHILE j >= 0 ANDALSO cmp(BUF[j], kval) > 0
+                BUF[j + 1] = BUF[j]
+                j = j - 1
+            END WHILE
+            BUF[j + 1] = kval
+            ix = ix + 1
+        END WHILE
+    END PROCEDURE
+END MODULE

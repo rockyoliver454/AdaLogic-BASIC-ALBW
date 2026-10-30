@@ -1,0 +1,88 @@
+VERSION 1.0
+
+STRICT A[16] AS S64
+STRICT B[16] AS S64
+STRICT C[16] AS S64
+STRICT R[16] AS S64
+
+LET qa AS S64 = 0
+LET qb AS S64 = 0
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 16
+        A[i] = i + 1
+        B[i] = i * 2 + 1
+        i = i + 1
+    END WHILE
+
+    LET r AS S64 = 0
+    WHILE r < 4
+        LET c AS S64 = 0
+        WHILE c < 4
+            LET s AS S64 = 0
+            LET k AS S64 = 0
+            WHILE k < 4
+                s = s + A[r * 4 + k] * B[k * 4 + c]
+                k = k + 1
+            END WHILE
+            R[r * 4 + c] = s
+            c = c + 1
+        END WHILE
+        r = r + 1
+    END WHILE
+
+    qa = 0
+    WHILE qa < 2
+        qb = 0
+        WHILE qb < 2
+            LET c11 AS S64 = 0
+            LET c12 AS S64 = 0
+            LET c21 AS S64 = 0
+            LET c22 AS S64 = 0
+            LET kk AS S64 = 0
+            WHILE kk < 2
+                LET base AS S64 = (qa * 2) * 4 + kk * 2
+                LET a11 AS S64 = A[base]
+                LET a12 AS S64 = A[base + 1]
+                LET a21 AS S64 = A[base + 4]
+                LET a22 AS S64 = A[base + 5]
+                LET bb AS S64 = (kk * 2) * 4 + qb * 2
+                LET b11 AS S64 = B[bb]
+                LET b12 AS S64 = B[bb + 1]
+                LET b21 AS S64 = B[bb + 4]
+                LET b22 AS S64 = B[bb + 5]
+                LET m1 AS S64 = (a11 + a22) * (b11 + b22)
+                LET m2 AS S64 = (a21 + a22) * b11
+                LET m3 AS S64 = a11 * (b12 - b22)
+                LET m4 AS S64 = a22 * (b21 - b11)
+                LET m5 AS S64 = (a11 + a12) * b22
+                LET m6 AS S64 = (a21 - a11) * (b11 + b12)
+                LET m7 AS S64 = (a12 - a22) * (b21 + b22)
+                c11 = c11 + m1 + m4 - m5 + m7
+                c12 = c12 + m3 + m5
+                c21 = c21 + m2 + m4
+                c22 = c22 + m1 - m2 + m3 + m6
+                kk = kk + 1
+            END WHILE
+            LET cb AS S64 = (qa * 2) * 4 + qb * 2
+            C[cb] = c11
+            C[cb + 1] = c12
+            C[cb + 4] = c21
+            C[cb + 5] = c22
+            qb = qb + 1
+        END WHILE
+        qa = qa + 1
+    END WHILE
+
+    PRINT "strassen C[0]=" | C[0] | " C[5]=" | C[5] | " C[15]=" | C[15]
+    PRINT "naive    R[0]=" | R[0] | " R[5]=" | R[5] | " R[15]=" | R[15]
+    LET ok AS S64 = 1
+    i = 0
+    WHILE i < 16
+        IF C[i] <> R[i] THEN ok = 0 END IF
+        i = i + 1
+    END WHILE
+    PRINT "match=" | ok
+END

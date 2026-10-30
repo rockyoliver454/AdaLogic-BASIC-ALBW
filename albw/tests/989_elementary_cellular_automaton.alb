@@ -1,0 +1,45 @@
+-- 989 | Elementary cellular automaton: rule 110, 25 rows,
+-- width 60, single seed cell at center.
+DECLARE MODULE Ea
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ea
+    STRICT a[61] AS S64
+    STRICT b[61] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 60
+            a[i] = 0
+        END FOR
+        a[30] = 1
+        FOR gen = 1 TO 25
+            LET row AS STRING = ""
+            FOR i = 1 TO 60
+                IF a[i] = 1 THEN
+                    row = row | "#"
+                ELSE
+                    row = row | " "
+                END IF
+            END FOR
+            PRINT row
+            FOR i = 1 TO 60
+                LET l AS S64 = 0
+                LET c AS S64 = a[i]
+                LET r AS S64 = 0
+                IF i > 1 THEN l = a[i - 1] END IF
+                IF i < 60 THEN r = a[i + 1] END IF
+                LET pat AS S64 = l * 4 + c * 2 + r
+                b[i] = (110 / (2 ^ pat)) MOD 2
+            END FOR
+            FOR i = 1 TO 60
+                a[i] = b[i]
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ea
+BEGIN
+    Ea.Run()
+END

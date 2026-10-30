@@ -1,0 +1,34 @@
+-- 321 | Four bit adder: ripple-carry addition of two 4-bit values.
+DECLARE MODULE Adder4
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Adder4
+    PROCEDURE AddPrint(a AS S32, b AS S32)
+        LET carry AS S32 = 0
+        LET result AS S32 = 0
+        LET place AS S32 = 1
+        FOR i = 0 TO 3
+            LET abit AS S32 = (a / place) - ((a / place) / 2) * 2
+            LET bbit AS S32 = (b / place) - ((b / place) / 2) * 2
+            LET sbit AS S32 = abit + bbit + carry
+            LET out_bit AS S32 = sbit - (sbit / 2) * 2
+            carry = sbit / 2
+            result = result + out_bit * place
+            place = place * 2
+        END FOR
+        result = result + carry * place
+        PRINT a | " + " | b | " = " | result
+    END PROCEDURE
+
+    PROCEDURE Run()
+        AddPrint(9, 11)
+        AddPrint(15, 15)
+        AddPrint(0, 0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Adder4
+BEGIN
+    Adder4.Run()
+END

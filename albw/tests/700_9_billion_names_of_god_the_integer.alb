@@ -1,0 +1,29 @@
+-- 700 | 9 billion names of God the integer: partition
+-- function p(n) for n = 1..23 via DP over part sizes.
+DECLARE MODULE Pn
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pn
+    STRICT dp[24] AS S64
+
+    PROCEDURE Run()
+        dp[0] = 1
+        FOR i = 1 TO 23
+            dp[i] = 0
+        END FOR
+        FOR part = 1 TO 23
+            FOR v = part TO 23
+                dp[v] = dp[v] + dp[v - part]
+            END FOR
+        END FOR
+        FOR n = 1 TO 23
+            PRINT n | ": " | dp[n]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pn
+BEGIN
+    Pn.Run()
+END

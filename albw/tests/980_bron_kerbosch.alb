@@ -1,0 +1,50 @@
+-- 980 | Bron-Kerbosch: enumerate all maximal cliques of an
+-- undirected graph (adjacency bitmask per vertex, 8 verts).
+DECLARE MODULE Bk
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bk
+    STRICT adj[8] AS S64
+
+    PROCEDURE Prt(r AS S64)
+        LET s AS STRING = "clique:"
+        FOR v = 1 TO 8
+            IF (r / (2 ^ (v - 1))) MOD 2 = 1 THEN s = s | " " | v END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Recur(r AS S64, p AS S64, x AS S64)
+        IF p = 0 ANDALSO x = 0 THEN
+            Prt(r)
+            RETURN
+        END IF
+        LET pp AS S64 = p
+        FOR v = 1 TO 8
+            IF (pp / (2 ^ (v - 1))) MOD 2 = 1 THEN
+                Recur(r + 2 ^ (v - 1), pp AND adj[v], x AND adj[v])
+                pp = pp - 2 ^ (v - 1)
+                x = x + 2 ^ (v - 1)
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- edges: 1-2 1-3 2-3 3-4 4-5 4-6 5-6 5-7 6-7 7-8
+        adj[1] = 6
+        adj[2] = 5
+        adj[3] = 11
+        adj[4] = 52
+        adj[5] = 104
+        adj[6] = 88
+        adj[7] = 176
+        adj[8] = 64
+        Recur(0, 255, 0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Bk
+BEGIN
+    Bk.Run()
+END

@@ -1,0 +1,37 @@
+-- 303 | Old lady swallowed a fly: cumulative verse lyrics.
+BEGIN
+    STRICT animals[8] AS STRING
+    STRICT tags[8] AS STRING
+
+    animals[0] = "fly"
+    animals[1] = "spider"
+    animals[2] = "bird"
+    animals[3] = "cat"
+    animals[4] = "dog"
+    animals[5] = "goat"
+    animals[6] = "cow"
+    animals[7] = "horse"
+
+    tags[0] = "I don't know why she swallowed a fly"
+    tags[1] = "that wriggled and jiggled and tickled inside her"
+    tags[2] = "how absurd to swallow a bird"
+    tags[3] = "imagine that to swallow a cat"
+    tags[4] = "what a hog to swallow a dog"
+    tags[5] = "she just opened her throat to swallow a goat"
+    tags[6] = "I don't know how she swallowed a cow"
+
+    FOR k = 0 TO 7
+        PRINT "There was an old lady who swallowed a " | animals[k]
+        IF k = 7 THEN
+            PRINT "she's dead, of course!"
+        ELSE
+            PRINT tags[k]
+            FOR j = k TO 1 STEP -1
+                PRINT "she swallowed the " | animals[j] | " to catch the " | animals[j - 1]
+            END FOR
+            IF k > 0 THEN PRINT "I don't know why she swallowed the fly" END IF
+            PRINT "perhaps she'll die"
+        END IF
+        PRINT ""
+    END FOR
+END

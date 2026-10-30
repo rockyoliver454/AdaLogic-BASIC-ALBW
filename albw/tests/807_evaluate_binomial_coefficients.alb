@@ -1,0 +1,25 @@
+-- 080 | Evaluate binomial coefficients -- C(5,3) and C(10,4) via product form
+DECLARE MODULE Comb
+    FUNCTION Binom(n AS S32, k AS S32) AS S32
+END MODULE
+
+MODULE Comb
+    FUNCTION Binom(n AS S32, k AS S32) AS S32
+        LET kk AS S32 = k
+        IF kk > n - kk THEN
+            kk = n - kk
+        END IF
+        LET r AS S32 = 1
+        LET i AS S32 = 0
+        FOR i = 0 TO kk - 1
+            r = r * (n - i) / (i + 1)
+        END FOR
+        RETURN r
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT Comb.Binom(5, 3)
+    PRINT Comb.Binom(10, 4)
+    PRINT Comb.Binom(52, 5)
+END

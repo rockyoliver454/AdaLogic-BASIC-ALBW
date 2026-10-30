@@ -1,0 +1,48 @@
+-- 507 | Sorting algorithms/Comb sort.
+DECLARE MODULE Comb
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Comb
+    STRICT a[11] AS S64
+
+    PROCEDURE Run()
+        a[1] = 88
+        a[2] = 18
+        a[3] = 31
+        a[4] = 44
+        a[5] = 4
+        a[6] = 0
+        a[7] = 8
+        a[8] = 81
+        a[9] = 14
+        a[10] = 78
+        a[11] = 26
+        LET gap AS S64 = 11
+        LET done AS S32 = 0
+        WHILE done = 0
+            gap = gap * 10 / 13
+            IF gap < 1 THEN gap = 1 END IF
+            LET swaps AS S32 = 0
+            FOR i = 1 TO 11 - gap
+                IF a[i] > a[i + gap] THEN
+                    LET t AS S64 = a[i]
+                    a[i] = a[i + gap]
+                    a[i + gap] = t
+                    swaps = 1
+                END IF
+            END FOR
+            IF gap = 1 ANDALSO swaps = 0 THEN done = 1 END IF
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO 11
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Comb
+BEGIN
+    Comb.Run()
+END

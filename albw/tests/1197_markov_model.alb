@@ -1,0 +1,23 @@
+-- MARKOV_MODEL + PREDICT_MARKOV: 1-based argmax over the current row;
+-- -1 for out-of-range state; WITH EMOTION adds axis bias per column.
+EMOTION emo AXES joy fear END_EMOTION
+MARKOV_MODEL mm
+  STATES 3
+  TRANSITION_MATRIX
+    [10, 20, 30]
+    [40, 50, 60]
+    [70, 80, 90]
+  END_MATRIX
+END_MODEL
+LET n AS S64 = 0
+PREDICT_MARKOV mm FROM 1 INTO n
+PRINT n
+PREDICT_MARKOV mm FROM 2 INTO n
+PRINT n
+SET_AXIS emo fear 100
+PREDICT_MARKOV mm FROM 1 INTO n WITH EMOTION emo
+PRINT n
+PREDICT_MARKOV mm FROM 0 INTO n
+PRINT n
+PREDICT_MARKOV mm FROM 9 INTO n
+PRINT n

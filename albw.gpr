@@ -1,0 +1,11 @@
+project Albw is
+
+   for Source_Dirs use ("src/COMPILER/", "src/CORE/", "src/EMITTER/",
+                        "src/MATH/", "src/SECURITY/", "src/TYPES/",
+                        "src/");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   for Main use ("albw.adb");
+
+end Albw;

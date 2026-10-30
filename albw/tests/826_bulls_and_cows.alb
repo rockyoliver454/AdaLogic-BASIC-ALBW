@@ -1,0 +1,84 @@
+-- 826 | Bulls and cows: scoring function on 4-digit codes.
+-- Bulls = right digit right place; cows = right digit wrong place.
+DECLARE MODULE Bc
+    FUNCTION Bulls() AS S64
+    FUNCTION Cows() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bc
+    STRICT sd[5] AS S64
+    STRICT gdd[5] AS S64
+    STRICT usd[5] AS S64
+    STRICT tmp[5] AS S64
+
+    PROCEDURE Split(v AS S64, wh AS S64)
+        tmp[4] = v MOD 10
+        tmp[3] = (v / 10) MOD 10
+        tmp[2] = (v / 100) MOD 10
+        tmp[1] = (v / 1000) MOD 10
+        IF wh = 0 THEN
+            FOR i = 1 TO 4
+                sd[i] = tmp[i]
+            END FOR
+        ELSE
+            FOR i = 1 TO 4
+                gdd[i] = tmp[i]
+            END FOR
+        END IF
+    END PROCEDURE
+
+    FUNCTION Bulls() AS S64
+        LET c AS S64 = 0
+        FOR i = 1 TO 4
+            IF sd[i] = gdd[i] THEN c = c + 1 END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    FUNCTION Cows() AS S64
+        FOR i = 1 TO 4
+            usd[i] = 0
+        END FOR
+        FOR i = 1 TO 4
+            IF sd[i] = gdd[i] THEN usd[i] = 1 END IF
+        END FOR
+        LET c AS S64 = 0
+        FOR i = 1 TO 4
+            IF sd[i] <> gdd[i] THEN
+                -- find first unused secret slot matching gdd[i]
+                LET j AS S64 = 1
+                LET got AS S32 = 0
+                WHILE j <= 4 ANDALSO got = 0
+                    IF usd[j] = 0 ANDALSO j <> i ANDALSO gdd[i] = sd[j] ANDALSO sd[j] <> gdd[j] THEN
+                        usd[j] = 1
+                        c = c + 1
+                        got = 1
+                    END IF
+                    j = j + 1
+                END WHILE
+            END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Show(s AS S64, g AS S64)
+        Split(s, 0)
+        Split(g, 1)
+        PRINT "secret=" | s | " guess=" | g | " bulls=" | Bulls() | " cows=" | Cows()
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(1234, 1234)
+        Show(1234, 1243)
+        Show(1234, 4321)
+        Show(1234, 5678)
+        Show(1122, 2211)
+        Show(9305, 5309)
+    END PROCEDURE
+END MODULE
+
+IMPORT Bc
+BEGIN
+    Bc.Run()
+END

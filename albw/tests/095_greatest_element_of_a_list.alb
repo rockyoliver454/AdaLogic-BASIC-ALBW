@@ -1,0 +1,12 @@
+-- 095 | Greatest element of a list.
+BEGIN
+    STRICT a[6] AS S32;
+    a[0] = 3; a[1] = 17; a[2] = 9; a[3] = 42; a[4] = 8; a[5] = 21;
+    LET best AS S32 = a[0];
+    FOR i = 1 TO 5
+        IF a[i] > best THEN
+            best = a[i];
+        END IF
+    END FOR
+    PRINT best;
+END

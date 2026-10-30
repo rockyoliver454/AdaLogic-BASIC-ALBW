@@ -1,0 +1,17 @@
+VERSION 1.0
+
+BEGIN
+    LET rc AS S64 = SHELL("mkdir flatdir 2>nul & echo a > flatdir\x.txt & echo b > flatdir\y.txt")
+    LET rc2 AS S64 = SHELL("dir /b flatdir > flatlist.txt")
+    LET r AS S64 = OPEN("flatlist.txt", "r")
+    LET s AS STRING = READ(r, FILELEN("flatlist.txt"))
+    CLOSE r
+    LET n AS S64 = 0
+    LET i AS S64 = 1
+    WHILE i <= LEN(s)
+        IF ASC(MID$(s, i, 1)) = 10 THEN n = n + 1 END IF
+        i = i + 1
+    END WHILE
+    PRINT "files=" | n
+    LET k AS S64 = SHELL("rmdir /s /q flatdir & del flatlist.txt")
+END

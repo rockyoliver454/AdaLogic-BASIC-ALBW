@@ -1,0 +1,10 @@
+#!/bin/sh
+# ALBW entry point - zero-setup wrapper (POSIX).
+#   ./albw [albw options] <input.alb> [output.ts]
+# Sets ALB_LIB (stdlib + mathkit + bundled braille engines) and puts
+# the bundled node/tsc on PATH so `--tsc` and `tsc` work out of the box.
+ALB_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export ALB_HOME
+export ALB_LIB="$ALB_HOME/stdlib:$ALB_HOME/malbr-testing/lib:$ALB_HOME/braille"
+export PATH="$ALB_HOME/bin:$ALB_HOME/deps/node/bin:$PATH"
+exec "$ALB_HOME/bin/albw" "$@"

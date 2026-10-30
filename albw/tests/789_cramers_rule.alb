@@ -1,0 +1,50 @@
+-- 789 | Cramer's rule: solve a 3x3 linear system via
+-- determinants. System: 2x - y + 3z = 9, x + 4y - z = 1,
+-- 3x + y + 2z = 7.
+DECLARE MODULE Cr
+    FUNCTION Det3(m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cr
+    STRICT mm[9] AS S64
+    STRICT sv[3] AS S64
+    STRICT orig[3] AS S64
+
+    FUNCTION Det3(base AS S64) AS S64
+        RETURN mm[base] * (mm[base + 4] * mm[base + 8] - mm[base + 5] * mm[base + 7]) - mm[base + 1] * (mm[base + 3] * mm[base + 8] - mm[base + 5] * mm[base + 6]) + mm[base + 2] * (mm[base + 3] * mm[base + 7] - mm[base + 4] * mm[base + 6])
+    END FUNCTION
+
+    PROCEDURE Run()
+        mm[1] = 2
+        mm[2] = 0 - 1
+        mm[3] = 3
+        mm[4] = 1
+        mm[5] = 4
+        mm[6] = 0 - 1
+        mm[7] = 3
+        mm[8] = 1
+        mm[9] = 2
+        LET d AS S64 = Det3(1)
+        sv[1] = 9
+        sv[2] = 1
+        sv[3] = 7
+        FOR col = 1 TO 3
+            -- replace column col with sv, compute det
+            FOR r = 1 TO 3
+                orig[r] = mm[(r - 1) * 3 + col]
+                mm[(r - 1) * 3 + col] = sv[r]
+            END FOR
+            LET dc AS S64 = Det3(1)
+            PRINT "x" | col | " = " | dc | "/" | d | " = " | (dc * 1.0) / d
+            FOR r = 1 TO 3
+                mm[(r - 1) * 3 + col] = orig[r]
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cr
+BEGIN
+    Cr.Run()
+END

@@ -1,0 +1,42 @@
+VERSION 1.0
+
+
+FUNCTION IsP(v AS S64) AS S64
+    IF v < 2 THEN
+        RETURN 0
+    END IF
+    LET d AS S64 = 2
+    WHILE d * d <= v
+        IF v MOD d = 0 THEN
+            RETURN 0
+        END IF
+        d = d + 1
+    END WHILE
+    RETURN 1
+END FUNCTION
+
+
+BEGIN
+    LET n AS S64 = 1
+    WHILE n <= 5
+        LET e2 AS S64 = 1
+        LET i AS S64 = 0
+        WHILE i < n
+            e2 = e2 * 2
+            i = i + 1
+        END WHILE
+        LET top AS S64 = 1
+        i = 0
+        WHILE i < e2
+            top = top * 2
+            i = i + 1
+        END WHILE
+        LET k AS S64 = 1
+        WHILE IsP(top - k) = 0
+            k = k + 2
+        END WHILE
+        PRINT "n=" | n | " 2^2^n-k prime, k=" | k
+        n = n + 1
+    END WHILE
+    PRINT "(n=6 onward needs 2^64+ bits, beyond S64)"
+END

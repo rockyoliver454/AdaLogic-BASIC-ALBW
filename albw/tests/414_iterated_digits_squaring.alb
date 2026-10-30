@@ -1,0 +1,37 @@
+-- 414 | Iterated digits squaring: count how many numbers below 1,000,000
+-- eventually reach 89 under repeated digit-square summation.
+DECLARE MODULE DigSq
+    FUNCTION NextVal(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DigSq
+    FUNCTION NextVal(n AS S64) AS S64
+        LET s AS S64 = 0
+        WHILE n > 0
+            LET d AS S64 = n MOD 10
+            s = s + d * d
+            n = n / 10
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET to89 AS S64 = 0
+        LET to1 AS S64 = 0
+        FOR n = 1 TO 999999
+            LET v AS S64 = n
+            WHILE v <> 1 ANDALSO v <> 89
+                v = NextVal(v)
+            END WHILE
+            IF v = 89 THEN to89 = to89 + 1 ELSE to1 = to1 + 1 END IF
+        END FOR
+        PRINT "to89=" | to89
+        PRINT "to1=" | to1
+    END PROCEDURE
+END MODULE
+
+IMPORT DigSq
+BEGIN
+    DigSq.Run()
+END

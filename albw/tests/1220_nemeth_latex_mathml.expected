@@ -1,0 +1,11 @@
+L1=x^{2} + y_{1}
+L2=\frac{1}{x+1} + \sqrt[3]{z}
+L3=\sum _{i = 0}^{n} i + \frac{a}{b}
+M1=<math><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msub><mi>y</mi><mn>1</mn></msub></math>
+M2=<math><mfrac><mrow><mn>1</mn></mrow><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow></mfrac></math>
+M3=<math><mroot><mrow><mi>x</mi></mrow><mrow><mn>3</mn></mrow></mroot></math>
+M4=<math><munderover><mo>&sum;</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi></mrow></munderover><mi>i</mi></math>
+CL=\frac{x^{2}}{x+1}\\
+
+CM=<math><mfrac><msup><mi>x</mi><mn>2</mn></msup><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow></mfrac><mspace linebreak='newline'/></math>
+ERRS=2

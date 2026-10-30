@@ -1,0 +1,46 @@
+-- 888 | CUSIP checksum: validate 9-character CUSIPs.
+-- Letters A-Z -> 10-35, '*'=36 '@'=37 '#'=38; digits at even
+-- positions doubled (Luhn-style), check digit makes sum%10=0.
+DECLARE MODULE Cu
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cu
+    FUNCTION Cval(c AS S64) AS S64
+        IF c >= 48 ANDALSO c <= 57 THEN RETURN c - 48 END IF
+        IF c >= 65 ANDALSO c <= 90 THEN RETURN c - 55 END IF
+        IF c = 42 THEN RETURN 36 END IF
+        IF c = 64 THEN RETURN 37 END IF
+        IF c = 35 THEN RETURN 38 END IF
+        RETURN 0 - 1
+    END FUNCTION
+
+    PROCEDURE Check(s AS STRING)
+        LET sm AS S64 = 0
+        FOR i = 1 TO 8
+            LET v AS S64 = Cval(ASC(MID$(s, i, 1)))
+            IF i MOD 2 = 0 THEN v = v * 2 END IF
+            sm = sm + v / 10 + v MOD 10
+        END FOR
+        LET cd AS S64 = (10 - (sm MOD 10)) MOD 10
+        LET ch AS S64 = Cval(ASC(MID$(s, 9, 1)))
+        IF ch = cd THEN
+            PRINT s | " valid"
+        ELSE
+            PRINT s | " INVALID (want " | cd | ")"
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Check("037833100")
+        Check("931142103")
+        Check("17275R102")
+        Check("38259P508")
+        Check("037833105")
+    END PROCEDURE
+END MODULE
+
+IMPORT Cu
+BEGIN
+    Cu.Run()
+END

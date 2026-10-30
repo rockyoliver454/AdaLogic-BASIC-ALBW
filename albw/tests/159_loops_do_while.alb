@@ -1,0 +1,13 @@
+-- 159 | Loops/Do-while: REPEAT runs the body at least once.
+BEGIN
+    LET i AS S32 = 0;
+    REPEAT
+        i = i + 1;
+        PRINT i;
+    UNTIL i >= 5
+    LET once AS S32 = 0;
+    REPEAT
+        PRINT$ "ran once";
+        once = 1;
+    UNTIL once = 1
+END

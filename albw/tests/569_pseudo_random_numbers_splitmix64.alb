@@ -1,0 +1,50 @@
+-- 569 | Pseudo-random numbers/Splitmix64: print first 5 outputs
+-- from seed 0 (reference values from the Splitmix64 paper).
+-- UShift emulates an unsigned right shift on two's-complement S64:
+-- negative z is treated as z + 2^64, so floor(z/2^k) + 2^(64-k).
+DECLARE MODULE SM64
+    FUNCTION UShift(z AS S64, k AS S64) AS S64
+    FUNCTION Next() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SM64
+    STRICT st[1] AS S64
+
+    FUNCTION UShift(z AS S64, k AS S64) AS S64
+        LET p AS S64 = 1
+        FOR i = 1 TO k
+            p = p * 2
+        END FOR
+        LET r AS S64 = z / p
+        IF z < 0 THEN
+            IF z - r * p <> 0 THEN r = r - 1 END IF
+            LET add AS S64 = 1
+            FOR j = 1 TO 64 - k
+                add = add * 2
+            END FOR
+            r = r + add
+        END IF
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Next() AS S64
+        st[1] = st[1] + -7046029254386353131
+        LET z AS S64 = st[1]
+        z = (z XOR UShift(z, 30)) * -4658895280553007687
+        z = (z XOR UShift(z, 27)) * -7723592293110705685
+        RETURN z XOR UShift(z, 31)
+    END FUNCTION
+
+    PROCEDURE Run()
+        st[1] = 0
+        FOR i = 1 TO 5
+            PRINT Next()
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT SM64
+BEGIN
+    SM64.Run()
+END

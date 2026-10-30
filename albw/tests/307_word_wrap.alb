@@ -1,0 +1,26 @@
+-- 307 | Word wrap: greedy wrap of a paragraph at column 40.
+BEGIN
+    LET body AS STRING = "The quick brown fox jumps over the lazy dog and then keeps running through the forest"
+    LET width AS S32 = 40
+
+    LET row AS STRING = ""
+    LET word AS STRING = ""
+    FOR i = 1 TO LEN(body) + 1
+        LET c AS S32 = 32
+        IF i <= LEN(body) THEN c = ASC(MID$(body, i, 1)) END IF
+        IF c = 32 THEN
+            IF LEN(row) = 0 THEN
+                row = word
+            ELSEIF LEN(row) + 1 + LEN(word) <= width THEN
+                row = row | " " | word
+            ELSE
+                PRINT row
+                row = word
+            END IF
+            word = ""
+        ELSE
+            word = word | CHR(c)
+        END IF
+    END FOR
+    IF LEN(row) > 0 THEN PRINT row END IF
+END

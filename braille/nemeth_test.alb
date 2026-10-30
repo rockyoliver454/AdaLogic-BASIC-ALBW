@@ -1,0 +1,49 @@
+--  nemeth_test.alb - layer-1 smoke: linear builder -> BRF/unicode
+INCLUDE "nemeth.albi"
+IMPORT Nemeth
+
+BEGIN
+    Nemeth.Reset()
+
+    --  "3+4 = 7"
+    Nemeth.Num("3")
+    Nemeth.Plus()
+    Nemeth.Num("4")
+    Nemeth.Space()
+    Nemeth.Equals()
+    Nemeth.Space()
+    Nemeth.Num("7")
+    PRINT "A: [" | Nemeth.ToBrf() | "]"
+    PRINT "U: " | Nemeth.ToUni()
+
+    --  "x^2" then "1,234.56" on a fresh stream
+    Nemeth.Reset()
+    Nemeth.Letters("x")
+    Nemeth.Sup()
+    Nemeth.Num("2")
+    PRINT "B: [" | Nemeth.ToBrf() | "]"
+
+    Nemeth.Reset()
+    Nemeth.Num("1,234.56")
+    Nemeth.Newline()
+    Nemeth.Letters("A")
+    Nemeth.Letters("sin")
+    PRINT "C: [" | Nemeth.ToBrf() | "]"
+
+    --  fraction 2/3 and sqrt(5)
+    Nemeth.Reset()
+    Nemeth.FracOpen(0)
+    Nemeth.Num("2")
+    Nemeth.FracLine(0)
+    Nemeth.Num("3")
+    Nemeth.FracClose(0)
+    PRINT "D: [" | Nemeth.ToBrf() | "]"
+
+    Nemeth.Reset()
+    Nemeth.Rad()
+    Nemeth.Num("5")
+    Nemeth.Term()
+    PRINT "E: [" | Nemeth.ToBrf() | "]"
+
+    PRINT "errs=" | Nemeth.ErrCount()
+END

@@ -1,0 +1,58 @@
+-- 519 | Dutch national flag problem: 3-way partition of
+-- reds(0)/whites(1)/blues(2).
+DECLARE MODULE Flag
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Flag
+    STRICT a[15] AS S64
+
+    PROCEDURE Run()
+        a[1] = 2
+        a[2] = 0
+        a[3] = 1
+        a[4] = 2
+        a[5] = 1
+        a[6] = 0
+        a[7] = 2
+        a[8] = 0
+        a[9] = 1
+        a[10] = 0
+        a[11] = 2
+        a[12] = 1
+        a[13] = 0
+        a[14] = 2
+        a[15] = 1
+        LET lo AS S64 = 1
+        LET mid AS S64 = 1
+        LET hi AS S64 = 15
+        WHILE mid <= hi
+            IF a[mid] = 0 THEN
+                LET t AS S64 = a[lo]
+                a[lo] = a[mid]
+                a[mid] = t
+                lo = lo + 1
+                mid = mid + 1
+            ELSE
+                IF a[mid] = 2 THEN
+                    LET t2 AS S64 = a[mid]
+                    a[mid] = a[hi]
+                    a[hi] = t2
+                    hi = hi - 1
+                ELSE
+                    mid = mid + 1
+                END IF
+            END IF
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO 15
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Flag
+BEGIN
+    Flag.Run()
+END

@@ -1,0 +1,19 @@
+-- 278 | Palindrome detection: check whether strings equal their reversal.
+BEGIN
+    STRICT words[3] AS STRING
+    words[0] = "rotator"
+    words[1] = "motor"
+    words[2] = "level"
+
+    FOR w = 0 TO 2
+        LET s AS STRING = words[w]
+        LET pal AS S32 = 1
+        LET n AS S32 = LEN(s)
+        FOR i = 1 TO n
+            IF ASC(MID$(s, i, 1)) <> ASC(MID$(s, n - i + 1, 1)) THEN pal = 0 END IF
+        END FOR
+        LET out_line AS STRING = s | " no"
+        IF pal = 1 THEN out_line = s | " yes" END IF
+        PRINT out_line
+    END FOR
+END

@@ -1,0 +1,55 @@
+-- 571 | Fivenum: five-number summary (min, Q1, median, Q3, max)
+-- of the RC example data using the Tukey hinge method.
+DECLARE MODULE Fiv
+    FUNCTION Q1(lo AS S64, hi AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fiv
+    STRICT a[15] AS F64
+
+    FUNCTION Q1(lo AS S64, hi AS S64) AS F64
+        LET n AS S64 = hi - lo + 1
+        IF n MOD 2 = 1 THEN RETURN a[lo + n / 2] END IF
+        RETURN (a[lo + n / 2 - 1] + a[lo + n / 2]) / 2.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- RC sample: 15 values (already sorted)
+        a[1] = 36
+        a[2] = 40
+        a[3] = 7
+        a[4] = 39
+        a[5] = 41
+        a[6] = 15
+        a[7] = 11
+        a[8] = 16
+        a[9] = 33
+        a[10] = 42
+        a[11] = 22
+        a[12] = 8
+        a[13] = 17
+        a[14] = 19
+        a[15] = 5
+        -- insertion sort
+        FOR i = 2 TO 15
+            LET v AS F64 = a[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO a[j] > v
+                a[j + 1] = a[j]
+                j = j - 1
+            END WHILE
+            a[j + 1] = v
+        END FOR
+        PRINT "min: " | a[1]
+        PRINT "q1: " | Q1(1, 7)
+        PRINT "median: " | a[8]
+        PRINT "q3: " | Q1(9, 15)
+        PRINT "max: " | a[15]
+    END PROCEDURE
+END MODULE
+
+IMPORT Fiv
+BEGIN
+    Fiv.Run()
+END

@@ -1,0 +1,36 @@
+-- 349 | Brazilian numbers: n < 100 that are repdigits in some base b with 2 <= b < n-1.
+DECLARE MODULE Brazil
+    FUNCTION IsBrazilian(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Brazil
+    FUNCTION IsBrazilian(n AS S64) AS S32
+        LET b AS S64 = 2
+        WHILE b < n - 1
+            LET m AS S64 = n
+            LET dig AS S64 = m MOD b
+            LET ok AS S32 = 1
+            WHILE m > 0
+                IF m MOD b <> dig THEN ok = 0 END IF
+                m = m / b
+            END WHILE
+            IF ok = 1 THEN RETURN 1 END IF
+            b = b + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 7 TO 99
+            IF IsBrazilian(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Brazil
+BEGIN
+    Brazil.Run()
+END

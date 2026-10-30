@@ -1,0 +1,40 @@
+VERSION 1.0
+
+STRICT h1[4] AS S64
+STRICT m1[4] AS S64
+STRICT s1[4] AS S64
+STRICT ms1[4] AS S64
+STRICT h2[4] AS S64
+STRICT m2[4] AS S64
+STRICT s2[4] AS S64
+STRICT ms2[4] AS S64
+
+
+BEGIN
+    h1[0] = 0 m1[0] = 0 s1[0] = 20 ms1[0] = 0
+    h2[0] = 0 m2[0] = 0 s2[0] = 24 ms2[0] = 400
+    h1[1] = 0 m1[1] = 0 s1[1] = 30 ms1[1] = 500
+    h2[1] = 0 m2[1] = 0 s2[1] = 33 ms2[1] = 0
+    h1[2] = 0 m1[2] = 0 s1[2] = 59 ms1[2] = 900
+    h2[2] = 0 m2[2] = 1 s2[2] = 5 ms2[2] = 100
+    h1[3] = 0 m1[3] = 2 s1[3] = 10 ms1[3] = 0
+    h2[3] = 0 m2[3] = 2 s2[3] = 14 ms2[3] = 600
+
+    LET shift AS S64 = 2500
+    LET i AS S64 = 0
+    WHILE i < 4
+        LET t AS S64 = ((h1[i] * 60 + m1[i]) * 60 + s1[i]) * 1000 + ms1[i] + shift
+        LET t2 AS S64 = ((h2[i] * 60 + m2[i]) * 60 + s2[i]) * 1000 + ms2[i] + shift
+        LET nh1 AS S64 = t / 3600000
+        LET nm1 AS S64 = (t / 60000) MOD 60
+        LET ns1 AS S64 = (t / 1000) MOD 60
+        LET nms1 AS S64 = t MOD 1000
+        LET nh2 AS S64 = t2 / 3600000
+        LET nm2 AS S64 = (t2 / 60000) MOD 60
+        LET ns2 AS S64 = (t2 / 1000) MOD 60
+        LET nms2 AS S64 = t2 MOD 1000
+        PRINT i + 1
+        PRINT nh1 | ":" | nm1 | ":" | ns1 | "," | nms1 | " --> " | nh2 | ":" | nm2 | ":" | ns2 | "," | nms2
+        i = i + 1
+    END WHILE
+END

@@ -1,0 +1,79 @@
+-- 356 | Aliquot sequence classifications: perfect, amicable, sociable, aspiring,
+--        terminating, or non-terminating for n = 1..14.
+DECLARE MODULE Aliquot
+    FUNCTION PropSum(n AS S64) AS S64
+    PROCEDURE Classify(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Aliquot
+    STRICT seen[64] AS S64
+
+    FUNCTION PropSum(n AS S64) AS S64
+        IF n <= 1 THEN RETURN 0 END IF
+        LET s AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Classify(n AS S64)
+        LET label AS STRING = "terminating"
+        LET m AS S64 = n
+        LET steps AS S32 = 0
+        LET cnt AS S32 = 0
+        WHILE steps < 16 ANDALSO m > 0
+            m = PropSum(m)
+            steps = steps + 1
+            IF m = 0 THEN
+                steps = 99
+            ELSE
+                IF m = n THEN
+                    IF steps = 1 THEN
+                        label = "perfect"
+                    ELSE
+                        IF steps = 2 THEN
+                            label = "amicable"
+                        ELSE
+                            label = "sociable"
+                        END IF
+                    END IF
+                    steps = 99
+                ELSE
+                    LET dup AS S32 = 0
+                    FOR i = 0 TO cnt - 1
+                        IF seen[i] = m THEN dup = 1 END IF
+                    END FOR
+                    IF cnt < 64 THEN
+                        seen[cnt] = m
+                        cnt = cnt + 1
+                    END IF
+                    IF dup = 1 THEN
+                        label = "aspiring"
+                        steps = 99
+                    END IF
+                END IF
+            END IF
+        END WHILE
+        IF steps = 16 THEN label = "non-terminating" END IF
+        PRINT n | " is " | label
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 1 TO 14
+            Classify(n)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Aliquot
+BEGIN
+    Aliquot.Run()
+END

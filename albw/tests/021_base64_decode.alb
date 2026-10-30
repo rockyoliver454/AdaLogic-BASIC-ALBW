@@ -1,0 +1,48 @@
+-- 021 | Base64 decode: 4 sextets -> 3 bytes.
+DECLARE MODULE B64
+    FUNCTION Sext(c AS S32) AS S32
+    FUNCTION Decode(s AS STRING) AS STRING
+END DECLARE MODULE
+
+MODULE B64
+    FUNCTION Sext(c AS S32) AS S32
+        IF c >= 65 ANDALSO c <= 90 THEN RETURN c - 65 END IF
+        IF c >= 97 ANDALSO c <= 122 THEN RETURN c - 71 END IF
+        IF c >= 48 ANDALSO c <= 57 THEN RETURN c + 4 END IF
+        IF c = 43 THEN RETURN 62 END IF
+        IF c = 47 THEN RETURN 63 END IF
+        RETURN 0
+    END FUNCTION
+    FUNCTION Decode(s AS STRING) AS STRING
+        LET res AS STRING = "";
+        LET n AS S32 = LEN(s);
+        LET i AS S32 = 1;
+        WHILE i <= n
+            LET c1 AS S32 = ASC(MID$(s, i, 1));
+            LET c2 AS S32 = ASC(MID$(s, i + 1, 1));
+            LET c3 AS S32 = 61;
+            LET c4 AS S32 = 61;
+            IF i + 2 <= n THEN c3 = ASC(MID$(s, i + 2, 1)) END IF
+            IF i + 3 <= n THEN c4 = ASC(MID$(s, i + 3, 1)) END IF
+            LET v AS S32 = Sext(c1) * 262144 + Sext(c2) * 4096;
+            IF c3 <> 61 THEN v = v + Sext(c3) * 64 END IF
+            IF c4 <> 61 THEN v = v + Sext(c4) END IF
+            res = res | CHR(v / 65536);
+            IF c3 <> 61 THEN res = res | CHR((v / 256) MOD 256) END IF
+            IF c4 <> 61 THEN res = res | CHR(v MOD 256) END IF
+            i = i + 4;
+        END WHILE
+        RETURN res
+    END FUNCTION
+END MODULE
+
+IMPORT B64
+BEGIN
+    PRINT$ B64.Decode("QUJDREVGRw");
+    PRINT$ B64.Decode("aGVsbG8");
+    LET bin AS STRING = B64.Decode("AAE");
+    PRINT$ "len=" | LEN(bin);
+    FOR i = 1 TO LEN(bin)
+        PRINT$ " " | ASC(MID$(bin, i, 1));
+    END FOR
+END

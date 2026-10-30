@@ -1,0 +1,73 @@
+-- 702 | Miller-Rabin primality test: deterministic bases for
+-- 32-bit range; verdicts on known primes and pseudoprimes.
+DECLARE MODULE Mr
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+    FUNCTION Mr(n AS S64, a AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mr
+    STRICT bs[8] AS S64
+    STRICT tv[8] AS S64
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN
+                r = r * bb MOD m
+            END IF
+            bb = bb * bb MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Mr(n AS S64, a AS S64) AS S32
+        LET d AS S64 = n - 1
+        LET s AS S64 = 0
+        WHILE d MOD 2 = 0
+            d = d / 2
+            s = s + 1
+        END WHILE
+        LET x AS S64 = Powm(a, d, n)
+        IF x = 1 ORELSE x = n - 1 THEN RETURN 1 END IF
+        FOR i = 1 TO s - 1
+            x = x * x MOD n
+            IF x = n - 1 THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        bs[1] = 2
+        bs[2] = 3
+        bs[3] = 5
+        bs[4] = 7
+        bs[5] = 11
+        bs[6] = 13
+        bs[7] = 17
+        tv[1] = 561
+        tv[2] = 1105
+        tv[3] = 2047
+        tv[4] = 7919
+        tv[5] = 104729
+        tv[6] = 3215031751
+        tv[7] = 999999937
+        FOR i = 1 TO 7
+            LET n AS S64 = tv[i]
+            LET ok AS S32 = 1
+            IF n < 2 THEN ok = 0 END IF
+            IF n MOD 2 = 0 ANDALSO n <> 2 THEN ok = 0 END IF
+            FOR b = 1 TO 7
+                IF bs[b] < n ANDALSO Mr(n, bs[b]) = 0 THEN ok = 0 END IF
+            END FOR
+            PRINT n | ": " | ok
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Mr
+BEGIN
+    Mr.Run()
+END

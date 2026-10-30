@@ -1,0 +1,54 @@
+-- 682 | Erdos-Nicolas numbers: n equals the sum of its first
+-- k divisors for some k below the total (n not perfect).
+DECLARE MODULE En
+    FUNCTION Eno(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE En
+    STRICT dv[200] AS S64
+
+    FUNCTION Eno(n AS S64) AS S32
+        -- collect divisors ascending via sqrt walk
+        LET cnt AS S64 = 0
+        LET r AS S64 = 1
+        WHILE r * r <= n
+            r = r + 1
+        END WHILE
+        r = r - 1
+        FOR d = 1 TO r
+            IF n MOD d = 0 THEN
+                cnt = cnt + 1
+                dv[cnt] = d
+            END IF
+        END FOR
+        LET cnt2 AS S64 = cnt
+        FOR d2 = 1 TO r
+            LET j AS S64 = r - d2 + 1
+            IF n MOD j = 0 THEN
+                LET q AS S64 = n / j
+                IF q <> j THEN
+                    cnt = cnt + 1
+                    dv[cnt] = q
+                END IF
+            END IF
+        END FOR
+        FOR i = 1 TO cnt
+            s = s + dv[i]
+            IF s = n ANDALSO i < cnt - 1 THEN RETURN 1 END IF
+            IF s > n THEN RETURN 0 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 50000
+            IF Eno(n) = 1 THEN PRINT n END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT En
+BEGIN
+    En.Run()
+END

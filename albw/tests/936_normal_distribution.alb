@@ -1,0 +1,46 @@
+-- 936 | Statistics/Normal distribution: Box-Muller transform
+-- on a seeded uniform generator; report sample mean & sd of
+-- 10000 draws (expected ~0 and ~1).
+DECLARE MODULE Nd
+    FUNCTION Nxt() AS S64
+    FUNCTION U01() AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nd
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    FUNCTION U01() AS F64
+        RETURN (Nxt() + 0.5) / 32768.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 24601
+        LET sm AS F64 = 0.0
+        LET sq AS F64 = 0.0
+        LET n AS S64 = 10000
+        FOR i = 1 TO n / 2
+            LET u1 AS F64 = U01()
+            LET u2 AS F64 = U01()
+            LET r AS F64 = SQRT(0.0 - 2.0 * LN(u1))
+            LET z1 AS F64 = r * COS(6.283185307179586 * u2)
+            LET z2 AS F64 = r * SIN(6.283185307179586 * u2)
+            sm = sm + z1 + z2
+            sq = sq + z1 * z1 + z2 * z2
+        END FOR
+        LET mean AS F64 = sm / n
+        LET var AS F64 = sq / n - mean * mean
+        PRINT "mean=" | mean
+        PRINT "sd=" | SQRT(var)
+    END PROCEDURE
+END MODULE
+
+IMPORT Nd
+BEGIN
+    Nd.Run()
+END

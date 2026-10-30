@@ -1,0 +1,22 @@
+-- 127 | Increment a numerical string -- digit-wise carry from the right
+BEGIN
+    LET s AS STRING = "1999"
+    LET carry AS S32 = 1
+    LET i AS S32 = LEN(s)
+    WHILE i >= 1 AND carry = 1
+        LET d AS S32 = ASC(MID$(s, i, 1)) - 48 + carry
+        IF d > 9 THEN
+            d = 0
+            carry = 1
+        ELSE
+            carry = 0
+        END IF
+        s = LEFT$(s, i - 1) | CHR(d + 48) | MID$(s, i + 1, LEN(s))
+        i = i - 1
+    END WHILE
+    IF carry = 1 THEN
+        s = "1" | s
+    END IF
+    PRINT$ s
+    PRINT$ ""
+END

@@ -1,0 +1,34 @@
+-- 345 | Chowla numbers: sum of proper divisors excluding 1 and n, for n = 1..37.
+DECLARE MODULE Chowla
+    FUNCTION ChowlaOf(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Chowla
+    FUNCTION ChowlaOf(n AS S64) AS S64
+        LET s AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 1 TO 37
+            s = s | ChowlaOf(n) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Chowla
+BEGIN
+    Chowla.Run()
+END

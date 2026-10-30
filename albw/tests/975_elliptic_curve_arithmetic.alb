@@ -1,0 +1,61 @@
+-- 975 | Elliptic curve arithmetic: point add/double on
+-- y^2 = x^3 + 2x + 2 (mod 17), G=(5,1); scalar multiples.
+DECLARE MODULE Ec
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ec
+    STRICT px[1] AS S64
+    STRICT py[1] AS S64
+    STRICT ok[1] AS S64
+    STRICT qx[1] AS S64
+    STRICT qy[1] AS S64
+    STRICT qok[1] AS S64
+
+    FUNCTION Inv(x AS S64) AS S64
+        x = x MOD 17
+        IF x < 0 THEN x = x + 17 END IF
+        FOR i = 1 TO 16
+            IF i * x MOD 17 = 1 THEN RETURN i END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Add()
+        -- adds (px,py)+(qx,qy) -> (px,py); ok flags validity
+        IF ok[1] = 0 THEN
+            px[1] = qx[1]; py[1] = qy[1]; ok[1] = qok[1]
+            RETURN
+        END IF
+        IF qok[1] = 0 THEN RETURN END IF
+        LET m AS S64 = 0
+        IF px[1] = qx[1] ANDALSO py[1] = qy[1] THEN
+            IF py[1] MOD 17 = 0 THEN ok[1] = 0; RETURN END IF
+            m = (3 * px[1] * px[1] + 2) * Inv(2 * py[1]) MOD 17
+        ELSE
+            IF (px[1] - qx[1]) MOD 17 = 0 THEN ok[1] = 0; RETURN END IF
+            m = (qy[1] - py[1]) * Inv(qx[1] - px[1]) MOD 17
+            IF m < 0 THEN m = m + 17 END IF
+        END IF
+        LET x AS S64 = (m * m - px[1] - qx[1]) MOD 17
+        IF x < 0 THEN x = x + 17 END IF
+        LET y AS S64 = (m * (px[1] - x) - py[1]) MOD 17
+        IF y < 0 THEN y = y + 17 END IF
+        px[1] = x
+        py[1] = y
+    END PROCEDURE
+
+    PROCEDURE Run()
+        px[1] = 5; py[1] = 1; ok[1] = 1
+        qx[1] = 5; qy[1] = 1; qok[1] = 1
+        FOR k = 1 TO 19
+            PRINT k | "G = (" | px[1] | "," | py[1] | ") ok=" | ok[1]
+            Add()
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ec
+BEGIN
+    Ec.Run()
+END

@@ -1,0 +1,11 @@
+-- 1001 | File size: create a file of known content and report
+-- its byte length via FILELEN.
+BEGIN
+LET h = OPEN("rosetta_size.dat", "w")
+WRITE h, "The quick brown fox jumps over the lazy dog."
+CLOSE h
+PRINT "size=" | FILELEN("rosetta_size.dat")
+LET h2 = OPEN("rosetta_size.dat", "r")
+PRINT "read=" | READ(h2, 0)
+CLOSE h2
+END

@@ -1,0 +1,6 @@
+-- 314 | Zero to the zero power: 0^0 and related edge cases.
+BEGIN
+    PRINT 0 ** 0
+    PRINT 0 ** 2
+    PRINT 2 ** 0
+END

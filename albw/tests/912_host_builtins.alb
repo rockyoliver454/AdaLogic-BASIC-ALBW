@@ -1,0 +1,23 @@
+-- 912 | host builtins: ARGC/ARGV$/ENV$/SHELL/KILL/TIME$/DATE$/TIMER/DIR$.
+--       All checks are shape/exit-code based so output is deterministic.
+BEGIN
+    PRINT ARGC();
+    PRINT LEN(ARGV$(0)) > 0;
+
+    PRINT LEN(ENV$("PATH")) > 0;
+    PRINT LEN(ENV$("ALB_NO_SUCH_VAR_XYZ"));
+
+    PRINT LEN(TIME$());
+    PRINT MID$(TIME$(), 3, 1);
+    PRINT LEN(DATE$());
+    PRINT MID$(DATE$(), 5, 1);
+    PRINT TIMER() > 0.0;
+
+    PRINT SHELL("exit 7");
+
+    PRINT LEN(DIR$("*")) > 0;
+
+    PRINT SHELL("echo x > k.tmp");
+    PRINT KILL("k.tmp");
+    PRINT KILL("k.tmp");
+END

@@ -1,0 +1,47 @@
+-- 193 | Multiple regression: least squares y ~ b0 + b1*x1 + b2*x2.
+--  Normal equations solved by Gaussian elimination.
+BEGIN
+    STRICT x1[6] AS F64;
+    STRICT x2[6] AS F64;
+    STRICT y[6] AS F64;
+    x1[0]=1.0; x2[0]=1.0; y[0]=6.0;
+    x1[1]=2.0; x2[1]=1.0; y[1]=8.0;
+    x1[2]=1.0; x2[2]=2.0; y[2]=7.0;
+    x1[3]=3.0; x2[3]=2.0; y[3]=11.0;
+    x1[4]=2.0; x2[4]=3.0; y[4]=10.0;
+    x1[5]=4.0; x2[5]=3.0; y[5]=14.0;
+    STRICT xt[3,4] AS F64;
+    FOR i = 0 TO 5
+        LET v AS F64 = 1.0;
+        FOR k = 0 TO 2
+            IF k = 1 THEN
+                v = x1[i];
+            END IF
+            IF k = 2 THEN
+                v = x2[i];
+            END IF
+            xt[k,0] = xt[k,0] + v;
+            xt[k,1] = xt[k,1] + v * x1[i];
+            xt[k,2] = xt[k,2] + v * x2[i];
+            xt[k,3] = xt[k,3] + v * y[i];
+        END FOR
+    END FOR
+    --  gaussian elimination on the 3x4 augmented matrix
+    FOR c = 0 TO 2
+        LET piv AS F64 = xt[c,c];
+        FOR j = c TO 3
+            xt[c,j] = xt[c,j] / piv;
+        END FOR
+        FOR r = 0 TO 2
+            IF r <> c THEN
+                LET f AS F64 = xt[r,c];
+                FOR j = c TO 3
+                    xt[r,j] = xt[r,j] - f * xt[c,j];
+                END FOR
+            END IF
+        END FOR
+    END FOR
+    PRINT$ "b0 = " | xt[0,3];
+    PRINT$ "b1 = " | xt[1,3];
+    PRINT$ "b2 = " | xt[2,3];
+END

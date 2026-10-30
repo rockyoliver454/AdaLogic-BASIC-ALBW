@@ -1,0 +1,17 @@
+-- 173 | Matrix transpose
+BEGIN
+    STRICT m[2,3] AS S32;
+    m[0,0] = 1; m[0,1] = 2; m[0,2] = 3;
+    m[1,0] = 4; m[1,1] = 5; m[1,2] = 6;
+    STRICT t[3,2] AS S32;
+    LET i AS S32 = 0;
+    LET j AS S32 = 0;
+    FOR i = 0 TO 1
+        FOR j = 0 TO 2
+            t[j,i] = m[i,j];
+        END FOR
+    END FOR
+    FOR i = 0 TO 2
+        PRINT$ t[i,0] | " " | t[i,1];
+    END FOR
+END

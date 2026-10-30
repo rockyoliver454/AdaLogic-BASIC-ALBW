@@ -1,0 +1,34 @@
+-- 985 | Box the compass: degrees -> 32-point compass name.
+DECLARE MODULE Bc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bc
+    PROCEDURE Run()
+        LET nm AS STRING = "N NbE NNE NEbN NE NEbE ENE EbN E EbS ESE SEbE SE SEbS SSE SbE S SbW SSW SWbS SW SWbW WSW WbS W WbN WNW NWbW NW NWbN NNW NbW"
+        STRICT wd[1] AS STRING
+        wd[1] = nm
+        FOR t = 0 TO 31
+            LET deg AS F64 = t * 11.25
+            LET i AS S64 = t + 1
+            -- extract i-th word
+            LET w AS S64 = 0
+            LET j AS S64 = 1
+            LET n AS S64 = LEN(wd[1])
+            WHILE w < i - 1
+                IF ASC(MID$(wd[1], j, 1)) = 32 THEN w = w + 1 END IF
+                j = j + 1
+            END WHILE
+            LET k AS S64 = j
+            WHILE k <= n ANDALSO ASC(MID$(wd[1], k, 1)) <> 32
+                k = k + 1
+            END WHILE
+            PRINT t + 1 | " " | deg | " " | MID$(wd[1], j, k - j)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Bc
+BEGIN
+    Bc.Run()
+END

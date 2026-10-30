@@ -1,0 +1,10 @@
+-- 214 | Operator precedence: multiplication, grouping, comparisons, and logical AND.
+BEGIN
+    PRINT 2 + 3 * 4
+    LET grouped AS S32 = (2 + 3) * 4
+    PRINT grouped
+    PRINT 10 - 6 / 2
+    IF 2 + 3 * 4 = 14 AND 5 > 2 THEN
+        PRINT "precedence preserved"
+    END IF
+END

@@ -1,0 +1,63 @@
+-- 720 | Balanced ternary: convert integers to/from balanced
+-- ternary digits (+, -, 0).
+DECLARE MODULE Bt
+    FUNCTION ToBt(v AS S64) AS STRING
+    FUNCTION FromBt(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bt
+    STRICT dg[24] AS S64
+    STRICT tv[6] AS S64
+
+    FUNCTION ToBt(v AS S64) AS STRING
+        LET n AS S64 = v
+        LET cnt AS S64 = 0
+        IF n = 0 THEN RETURN "0" END IF
+        WHILE n <> 0
+            LET d AS S64 = n - (n / 3) * 3
+            IF d = 2 THEN d = -1 END IF
+            IF d = 0 - 2 THEN d = 1 END IF
+            cnt = cnt + 1
+            dg[cnt] = d
+            n = (n - d) / 3
+        END WHILE
+        LET s AS STRING = ""
+        LET i AS S64 = cnt
+        WHILE i >= 1
+            IF dg[i] = 1 THEN s = s | "+" END IF
+            IF dg[i] = 0 THEN s = s | "0" END IF
+            IF dg[i] = -1 THEN s = s | "-" END IF
+            i = i - 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION FromBt(s AS STRING) AS S64
+        LET v AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS STRING = MID$(s, i, 1)
+            v = v * 3
+            IF c = "+" THEN v = v + 1 END IF
+            IF c = "-" THEN v = v - 1 END IF
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        tv[1] = 5
+        tv[2] = 0 - 46
+        tv[3] = 436
+        tv[4] = 1
+        tv[5] = 0 - 1
+        FOR i = 1 TO 5
+            LET s AS STRING = ToBt(tv[i])
+            PRINT tv[i] | " -> " | s | " -> " | FromBt(s)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Bt
+BEGIN
+    Bt.Run()
+END

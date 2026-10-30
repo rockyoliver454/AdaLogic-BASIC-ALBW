@@ -1,0 +1,40 @@
+num RT-OK  12
+let RT-OK  x
+scr RT-OK  x^{2}
+sbs RT-OK  x_{1}
+mlx RT-OK  2x
+frc RT-OK  \frac{1}{x+1}
+nfr RT-OK  \frac{a}{\frac{b}{c}}
+sqr RT-OK  \sqrt{x}
+sq3 RT-OK  \sqrt[3]{x}
+eq RT-OK  x = 2
+grp RT-OK  (x+1)
+brk RT-OK  [x]
+flr RT-OK  \lfloor x \rfloor
+ang RT-OK  \langle x \rangle
+brc RT-OK  \{x\}
+bar RT-OK  |x|
+sum RT-OK  \sum_{i = 0}^{n} i
+int RT-OK  \int_{a}^{b} f(x)
+bin RT-OK  (\frac{n}{k})
+pm RT-OK  x \pm y
+grk RT-OK  \alpha + \beta
+caw RT-OK  ABC + x
+thr RT-OK  a \therefore b
+lim RT-OK  lim_{x \rightarrow 0} f(x)
+prm RT-OK  x'
+mix RT-OK  1\frac{1}{2}
+mtx RT-OK  \begin{pmatrix} a & b  \\ c & d  \end{pmatrix}
+bmt RT-OK  \begin{bmatrix} x  \\ y  \end{bmatrix}
+css RT-OK  \begin{cases} a & b  \\ c & d  \end{cases}
+vmt RT-OK  \begin{vmatrix} a  \\ b  \end{vmatrix}
+brf->x^{2} + y_{1}
+uni->x^{2} + y_{1}
+ub=x^{2}
+uu=x+1
+rsrc=x_{1}^{2}\n
+uncl '(a' errs=1 first=cells: unclosed construct
+stray 'a' errs=1 first=cells: unmatched )
+line '' errs=1 first=cells: stray frac line
+badc 'a' errs=1 first=FromBrf: bad char '~'
+clean 'a' errs=0 first=

@@ -1,0 +1,48 @@
+-- 953 | Canonicalize CIDR: apply the netmask to the IPv4
+-- address so host bits are cleared; print canonical forms.
+DECLARE MODULE Cd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cd
+    STRICT oct[5] AS S64
+
+    PROCEDURE Canon(s AS STRING, bits AS S64)
+        LET n AS S64 = LEN(s)
+        LET v AS S64 = 0
+        LET p AS S64 = 0
+        FOR i = 1 TO n + 1
+            LET c AS S64 = 46
+            IF i <= n THEN c = ASC(MID$(s, i, 1)) END IF
+            IF c = 46 THEN
+                p = p + 1
+                oct[p] = v
+                v = 0
+            ELSE
+                v = v * 10 + ASC(MID$(s, i, 1)) - ASC("0")
+            END IF
+        END FOR
+        -- mask host bits: octet j keeps (bits-8(j-1)) high bits
+        FOR j = 1 TO 4
+            LET keep AS S64 = bits - 8 * (j - 1)
+            IF keep < 0 THEN keep = 0 END IF
+            IF keep > 8 THEN keep = 8 END IF
+            LET mask AS S64 = (2 ^ keep - 1) * (2 ^ (8 - keep))
+            oct[j] = oct[j] AND mask
+        END FOR
+        PRINT s | "/" | bits | " -> " | oct[1] | "." | oct[2] | "." | oct[3] | "." | oct[4] | "/" | bits
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Canon("192.168.0.35", 24)
+        Canon("10.123.45.67", 8)
+        Canon("172.16.200.100", 12)
+        Canon("87.70.141.1", 22)
+        Canon("36.18.154.103", 12)
+    END PROCEDURE
+END MODULE
+
+IMPORT Cd
+BEGIN
+    Cd.Run()
+END

@@ -1,0 +1,60 @@
+-- 298 | Soundex: four-character phonetic codes for surnames.
+DECLARE MODULE Soundex
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Soundex
+    FUNCTION DigOf(c AS S32) AS S32
+        IF c = 98 ORELSE c = 102 ORELSE c = 112 ORELSE c = 118 THEN RETURN 1 END IF
+        IF c = 99 ORELSE c = 103 ORELSE c = 106 ORELSE c = 107 ORELSE c = 113 ORELSE c = 115 ORELSE c = 120 ORELSE c = 122 THEN RETURN 2 END IF
+        IF c = 100 ORELSE c = 116 THEN RETURN 3 END IF
+        IF c = 108 THEN RETURN 4 END IF
+        IF c = 109 ORELSE c = 110 THEN RETURN 5 END IF
+        IF c = 114 THEN RETURN 6 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(name AS STRING)
+        LET code AS STRING = ""
+        LET prev AS S32 = -1
+        FOR i = 1 TO LEN(name)
+            LET c AS S32 = ASC(MID$(name, i, 1))
+            IF c >= 65 ANDALSO c <= 90 THEN c = c + 32 END IF
+            IF i = 1 THEN
+                code = CHR(c - 32)
+                prev = DigOf(c)
+            ELSE
+                LET d AS S32 = DigOf(c)
+                IF c = 104 ORELSE c = 119 THEN
+                    d = -1
+                ELSEIF d = 0 THEN
+                    prev = 0
+                    d = -1
+                ELSEIF d = prev THEN
+                    d = -1
+                ELSE
+                    prev = d
+                END IF
+                IF d >= 1 ANDALSO d <= 6 THEN code = code | d END IF
+            END IF
+        END FOR
+        WHILE LEN(code) < 4
+            code = code | "0"
+        END WHILE
+        PRINT LEFT$(code, 4)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show("Robert")
+        Show("Rupert")
+        Show("Ashcraft")
+        Show("Ashcroft")
+        Show("Tymczak")
+        Show("Pfister")
+    END PROCEDURE
+END MODULE
+
+IMPORT Soundex
+BEGIN
+    Soundex.Run()
+END

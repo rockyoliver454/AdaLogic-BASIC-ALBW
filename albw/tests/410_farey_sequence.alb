@@ -1,0 +1,51 @@
+-- 410 | Farey sequence of order 5: all fractions a/b with a<b<=5, sorted.
+DECLARE MODULE Farey
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Farey
+    STRICT fa[64] AS S64
+    STRICT fb[64] AS S64
+    PROCEDURE Run()
+        LET cnt AS S32 = 0
+        FOR b = 1 TO 5
+            FOR a = 0 TO b
+                LET g AS S64 = a
+                LET h AS S64 = b
+                WHILE h <> 0
+                    LET t AS S64 = g MOD h
+                    g = h
+                    h = t
+                END WHILE
+                LET ok AS S32 = 0
+                IF g = 1 THEN ok = 1 END IF
+                IF a = 0 ANDALSO b = 1 THEN ok = 1 END IF
+                IF ok = 1 THEN
+                    fa[cnt] = a
+                    fb[cnt] = b
+                    cnt = cnt + 1
+                END IF
+            END FOR
+        END FOR
+        FOR i = 0 TO cnt - 1
+            FOR j = i + 1 TO cnt - 1
+                IF fa[j] * fb[i] < fa[i] * fb[j] THEN
+                    LET t AS S64 = fa[i]
+                    fa[i] = fa[j]
+                    fa[j] = t
+                    t = fb[i]
+                    fb[i] = fb[j]
+                    fb[j] = t
+                END IF
+            END FOR
+        END FOR
+        FOR i = 0 TO cnt - 1
+            PRINT fa[i] | "/" | fb[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Farey
+BEGIN
+    Farey.Run()
+END

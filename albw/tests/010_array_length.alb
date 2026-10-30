@@ -1,0 +1,6 @@
+-- 010 | Array length: STRICT arrays carry a declared bound.
+BEGIN
+    STRICT a[7] AS S32;
+    LET n AS S32 = 7;
+    PRINT$ "declared length: " | n;
+END

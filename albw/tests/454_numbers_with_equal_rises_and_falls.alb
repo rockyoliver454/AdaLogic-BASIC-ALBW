@@ -1,0 +1,46 @@
+-- 454 | Numbers with equal rises and falls: first 50 n whose decimal
+-- digits have equal counts of ascents and descents.
+DECLARE MODULE RiseFall
+    FUNCTION IsBal(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RiseFall
+    FUNCTION IsBal(n AS S64) AS S32
+        LET rises AS S64 = 0
+        LET falls AS S64 = 0
+        LET prev AS S64 = 10
+        LET first AS S32 = 1
+        WHILE n > 0
+            LET d AS S64 = n MOD 10
+            IF first = 0 THEN
+                IF d > prev THEN falls = falls + 1 END IF
+                IF d < prev THEN rises = rises + 1 END IF
+            END IF
+            prev = d
+            first = 0
+            n = n / 10
+        END WHILE
+        IF rises = falls THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 50
+            IF IsBal(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT RiseFall
+BEGIN
+    RiseFall.Run()
+END

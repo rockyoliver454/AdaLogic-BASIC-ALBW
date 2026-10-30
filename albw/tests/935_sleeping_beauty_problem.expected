@@ -1,0 +1,3 @@
+experiments=300000
+experimenter heads frac=499/1000
+subject heads frac=333/1000

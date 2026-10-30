@@ -1,0 +1,6 @@
+-- 216 | Quoting constructs: compose double-quoted text and apostrophes.
+BEGIN
+    LET quote_mark AS STRING = CHR(34)
+    PRINT quote_mark | "AdaLogic BASIC" | quote_mark
+    PRINT "It's a string."
+END

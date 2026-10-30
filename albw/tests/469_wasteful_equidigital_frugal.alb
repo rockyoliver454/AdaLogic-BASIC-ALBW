@@ -1,0 +1,53 @@
+-- 469 | Wasteful, equidigital and frugal numbers: classify n = 1..60.
+DECLARE MODULE WEF
+    FUNCTION Digits(n AS S64) AS S64
+    FUNCTION FacDigits(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE WEF
+    FUNCTION Digits(n AS S64) AS S64
+        LET c AS S64 = 0
+        WHILE n > 0
+            n = n / 10
+            c = c + 1
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    FUNCTION FacDigits(n AS S64) AS S64
+        LET m AS S64 = n
+        LET total AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            LET e AS S64 = 0
+            WHILE m MOD d = 0
+                m = m / d
+                e = e + 1
+            END WHILE
+            IF e > 0 THEN
+                total = total + Digits(d)
+                IF e > 1 THEN total = total + Digits(e) END IF
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN total = total + Digits(m) END IF
+        RETURN total
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 60
+            LET fdg AS S64 = FacDigits(n)
+            LET ndg AS S64 = Digits(n)
+            LET kind AS STRING = "equidigital"
+            IF fdg > ndg THEN kind = "wasteful" END IF
+            IF fdg < ndg THEN kind = "frugal" END IF
+            PRINT n | " " | kind
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT WEF
+BEGIN
+    WEF.Run()
+END

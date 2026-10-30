@@ -1,0 +1,26 @@
+-- 943 | Steffensen's method: Aitken-accelerated fixed-point
+-- iteration solving cos(x)-x=0 (root 0.7390851332).
+DECLARE MODULE St
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE St
+    PROCEDURE Run()
+        LET x AS F64 = 1.0
+        FOR i = 1 TO 12
+            LET x1 AS F64 = COS(x)
+            LET x2 AS F64 = COS(x1)
+            LET dn AS F64 = x2 - 2.0 * x1 + x
+            IF dn <> 0.0 THEN
+                x = x - (x1 - x) * (x1 - x) / dn
+            END IF
+        END FOR
+        PRINT "root=" | x
+        PRINT "check: cos(root)=" | COS(x)
+    END PROCEDURE
+END MODULE
+
+IMPORT St
+BEGIN
+    St.Run()
+END

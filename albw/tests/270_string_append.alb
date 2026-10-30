@@ -1,0 +1,6 @@
+-- 270 | String append: append one string to another in place.
+BEGIN
+    LET s AS STRING = "Hello"
+    s = s | ", world!"
+    PRINT s
+END

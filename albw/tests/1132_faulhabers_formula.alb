@@ -1,0 +1,21 @@
+VERSION 1.0
+
+BEGIN
+    LET n AS S64 = 10
+    LET s1 AS S64 = 0
+    LET s2 AS S64 = 0
+    LET s3 AS S64 = 0
+    LET s4 AS S64 = 0
+    LET k AS S64 = 1
+    WHILE k <= n
+        s1 = s1 + k
+        s2 = s2 + k * k
+        s3 = s3 + k * k * k
+        s4 = s4 + k * k * k * k
+        k = k + 1
+    END WHILE
+    PRINT "sum k  =" | s1 | " faulhaber=" | (n * (n + 1)) / 2
+    PRINT "sum k2 =" | s2 | " faulhaber=" | (n * (n + 1) * (2 * n + 1)) / 6
+    PRINT "sum k3 =" | s3 | " faulhaber=" | (n * n * (n + 1) * (n + 1)) / 4
+    PRINT "sum k4 =" | s4 | " faulhaber=" | (n * (n + 1) * (2 * n + 1) * (3 * n * n + 3 * n - 1)) / 30
+END

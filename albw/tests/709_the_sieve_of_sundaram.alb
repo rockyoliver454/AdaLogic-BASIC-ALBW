@@ -1,0 +1,29 @@
+-- 709 | The sieve of Sundaram: mark i+j+2ij for i<=j;
+-- unmarked n gives prime 2n+1. Primes below 500.
+DECLARE MODULE Su
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Su
+    STRICT mk[260] AS S32
+
+    PROCEDURE Run()
+        LET lim AS S64 = 250
+        FOR i = 1 TO lim
+            LET j AS S64 = i
+            WHILE i + j + 2 * i * j <= lim
+                mk[i + j + 2 * i * j] = 1
+                j = j + 1
+            END WHILE
+        END FOR
+        PRINT 2
+        FOR n = 1 TO lim
+            IF mk[n] = 0 THEN PRINT 2 * n + 1 END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Su
+BEGIN
+    Su.Run()
+END

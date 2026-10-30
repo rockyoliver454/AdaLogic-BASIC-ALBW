@@ -1,0 +1,56 @@
+-- 590 | 100 prisoners: cycle-following strategy. Two fixed
+-- permutations on 10 boxes (scaled): one where every cycle <=5
+-- (success) and one with a long cycle (failure).
+DECLARE MODULE Pris
+    FUNCTION Strategy() AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pris
+    STRICT box[11] AS S64
+
+    FUNCTION Strategy() AS S32
+        FOR p = 1 TO 10
+            LET v AS S64 = p
+            LET tries AS S64 = 0
+            WHILE box[v] <> p ANDALSO tries < 5
+                v = box[v]
+                tries = tries + 1
+            END WHILE
+            IF box[v] <> p THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- permutation with cycles (1 3)(2)(4 7)(5 8)(6)(9)(10): max len 2
+        box[1] = 3
+        box[2] = 2
+        box[3] = 1
+        box[4] = 7
+        box[5] = 8
+        box[6] = 6
+        box[7] = 4
+        box[8] = 5
+        box[9] = 9
+        box[10] = 10
+        PRINT "short cycles: " | Strategy()
+        -- one 7-cycle: 1->4->7->9->2->6->3->1, others fixed
+        box[1] = 4
+        box[2] = 6
+        box[3] = 1
+        box[4] = 7
+        box[5] = 5
+        box[6] = 3
+        box[7] = 9
+        box[8] = 8
+        box[9] = 2
+        box[10] = 10
+        PRINT "long cycle: " | Strategy()
+    END PROCEDURE
+END MODULE
+
+IMPORT Pris
+BEGIN
+    Pris.Run()
+END

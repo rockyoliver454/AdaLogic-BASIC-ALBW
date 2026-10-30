@@ -1,0 +1,30 @@
+-- 416 | McNuggets problem: largest number that cannot be expressed as
+-- 6a + 9b + 20c.
+DECLARE MODULE McN
+    FUNCTION CanMake(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE McN
+    FUNCTION CanMake(n AS S64) AS S32
+        FOR c = 0 TO n / 20
+            FOR b = 0 TO (n - 20 * c) / 9
+                IF (n - 20 * c - 9 * b) MOD 6 = 0 THEN RETURN 1 END IF
+            END FOR
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET largest AS S64 = 0
+        FOR n = 1 TO 100
+            IF CanMake(n) = 0 THEN largest = n END IF
+        END FOR
+        PRINT largest
+    END PROCEDURE
+END MODULE
+
+IMPORT McN
+BEGIN
+    McN.Run()
+END

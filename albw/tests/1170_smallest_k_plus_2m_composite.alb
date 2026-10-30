@@ -1,0 +1,534 @@
+VERSION 1.0
+
+STRICT prs[170] AS S64
+STRICT pows[170] AS S64
+STRICT sm[12] AS S64
+STRICT p2[31] AS S64
+LET npc AS S64 = 0
+
+STRICT NM[30] AS S64
+STRICT AA[30] AS S64
+STRICT BB[30] AS S64
+STRICT CC[30] AS S64
+STRICT TT[62] AS S64
+STRICT RR[30] AS S64
+STRICT R2[30] AS S64
+STRICT RES[30] AS S64
+STRICT CUR[30] AS S64
+STRICT EE[30] AS S64
+STRICT NR[30] AS S64
+LET np0 AS S64 = 0
+LET BBASE AS S64 = 1073741824
+
+
+FUNCTION MulMd(a AS S64, b AS S64, m AS S64) AS S64
+    LET res AS S64 = 0
+    LET bb AS S64 = b
+    WHILE bb > 0
+        IF bb MOD 2 = 1 THEN
+            res = res + a
+            IF res >= m THEN
+                res = res - m
+            END IF
+        END IF
+        a = a + a
+        IF a >= m THEN
+            a = a - m
+        END IF
+        bb = bb / 2
+    END WHILE
+    RETURN res
+END FUNCTION
+
+
+FUNCTION PwMd(bse AS S64, xp AS S64, m AS S64) AS S64
+    LET res AS S64 = 1
+    bse = bse MOD m
+    WHILE xp > 0
+        IF xp MOD 2 = 1 THEN
+            res = MulMd(res, bse, m)
+        END IF
+        bse = MulMd(bse, bse, m)
+        xp = xp / 2
+    END WHILE
+    RETURN res
+END FUNCTION
+
+
+FUNCTION IsPBig(v AS S64) AS S64
+    IF v < 2 THEN
+        RETURN 0
+    END IF
+    LET i AS S64 = 0
+    WHILE i < 12
+        IF v = sm[i] THEN
+            RETURN 1
+        END IF
+        IF v MOD sm[i] = 0 THEN
+            RETURN 0
+        END IF
+        i = i + 1
+    END WHILE
+    LET d AS S64 = v - 1
+    LET s AS S64 = 0
+    WHILE d MOD 2 = 0
+        d = d / 2
+        s = s + 1
+    END WHILE
+    i = 0
+    WHILE i < 12
+        LET x AS S64 = PwMd(sm[i], d, v)
+        IF x <> 1 ANDALSO x <> v - 1 THEN
+            LET comp AS S64 = 1
+            LET r AS S64 = 1
+            WHILE r < s
+                x = MulMd(x, x, v)
+                IF x = v - 1 THEN
+                    comp = 0
+                END IF
+                r = r + 1
+            END WHILE
+            IF comp = 1 THEN
+                RETURN 0
+            END IF
+        END IF
+        i = i + 1
+    END WHILE
+    RETURN 1
+END FUNCTION
+
+
+FUNCTION IsP(v AS S64) AS S64
+    IF v < 2 THEN
+        RETURN 0
+    END IF
+    LET d AS S64 = 2
+    WHILE d * d <= v
+        IF v MOD d = 0 THEN
+            RETURN 0
+        END IF
+        d = d + 1
+    END WHILE
+    RETURN 1
+END FUNCTION
+
+
+PROCEDURE MMul()
+    LET i AS S64 = 0
+    WHILE i < 62
+        TT[i] = 0
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < 30
+        LET c AS S64 = 0
+        LET av AS S64 = AA[i]
+        LET j AS S64 = 0
+        WHILE j < 30
+            LET ij AS S64 = i + j
+            LET t AS S64 = TT[ij] + av * BB[j] + c
+            TT[ij] = t - (t / BBASE) * BBASE
+            c = t / BBASE
+            j = j + 1
+        END WHILE
+        LET i30 AS S64 = i + 30
+        TT[i30] = TT[i30] + c
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < 30
+        LET mm AS S64 = TT[i] * np0
+        mm = mm - (mm / BBASE) * BBASE
+        LET c AS S64 = 0
+        LET j AS S64 = 0
+        WHILE j < 30
+            LET ij AS S64 = i + j
+            LET t AS S64 = TT[ij] + mm * NM[j] + c
+            TT[ij] = t - (t / BBASE) * BBASE
+            c = t / BBASE
+            j = j + 1
+        END WHILE
+        LET k AS S64 = i + 30
+        TT[k] = TT[k] + c
+        WHILE TT[k] >= BBASE
+            TT[k] = TT[k] - BBASE
+            k = k + 1
+            TT[k] = TT[k] + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < 30
+        CC[i] = TT[i + 30]
+        i = i + 1
+    END WHILE
+    LET ge AS S64 = 1
+    i = 29
+    WHILE i >= 0
+        IF CC[i] < NM[i] THEN
+            ge = 0
+            i = -1
+        ELSE
+            IF CC[i] > NM[i] THEN
+                i = -1
+            ELSE
+                i = i - 1
+            END IF
+        END IF
+    END WHILE
+    IF ge = 1 THEN
+        LET borrow AS S64 = 0
+        i = 0
+        WHILE i < 30
+            LET dv AS S64 = CC[i] - NM[i] - borrow
+            IF dv < 0 THEN
+                dv = dv + BBASE
+                borrow = 1
+            ELSE
+                borrow = 0
+            END IF
+            CC[i] = dv
+            i = i + 1
+        END WHILE
+    END IF
+END PROCEDURE
+
+
+PROCEDURE CopyAA()
+    LET i AS S64 = 0
+    WHILE i < 30
+        AA[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE CopyBB()
+    LET i AS S64 = 0
+    WHILE i < 30
+        BB[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE CopyRES()
+    LET i AS S64 = 0
+    WHILE i < 30
+        RES[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE CopyCUR()
+    LET i AS S64 = 0
+    WHILE i < 30
+        CUR[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE CopyRR()
+    LET i AS S64 = 0
+    WHILE i < 30
+        RR[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE CopyR2()
+    LET i AS S64 = 0
+    WHILE i < 30
+        R2[i] = CC[i]
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE SetupMont()
+    LET n0 AS S64 = NM[0]
+    LET x AS S64 = n0
+    LET i AS S64 = 0
+    WHILE i < 5
+        LET t AS S64 = n0 * x
+        t = t - (t / BBASE) * BBASE
+        t = 2 - t
+        IF t < 0 THEN
+            t = t + BBASE
+        END IF
+        x = x * t
+        x = x - (x / BBASE) * BBASE
+        i = i + 1
+    END WHILE
+    np0 = BBASE - x
+    IF np0 = BBASE THEN
+        np0 = 0
+    END IF
+
+    i = 0
+    WHILE i < 30
+        CC[i] = 0
+        i = i + 1
+    END WHILE
+    CC[0] = 1
+    LET steps AS S64 = 0
+    WHILE steps < 1800
+        LET carry AS S64 = 0
+        i = 0
+        WHILE i < 30
+            LET v2 AS S64 = CC[i] + CC[i] + carry
+            IF v2 >= BBASE THEN
+                v2 = v2 - BBASE
+                carry = 1
+            ELSE
+                carry = 0
+            END IF
+            CC[i] = v2
+            i = i + 1
+        END WHILE
+        LET ge AS S64 = 1
+        i = 29
+        WHILE i >= 0
+            IF CC[i] < NM[i] THEN
+                ge = 0
+                i = -1
+            ELSE
+                IF CC[i] > NM[i] THEN
+                    i = -1
+                ELSE
+                    i = i - 1
+                END IF
+            END IF
+        END WHILE
+        IF ge = 1 THEN
+            LET bw AS S64 = 0
+            i = 0
+            WHILE i < 30
+                LET dv AS S64 = CC[i] - NM[i] - bw
+                IF dv < 0 THEN
+                    dv = dv + BBASE
+                    bw = 1
+                ELSE
+                    bw = 0
+                END IF
+                CC[i] = dv
+                i = i + 1
+            END WHILE
+        END IF
+        steps = steps + 1
+        IF steps = 900 THEN
+            CopyRR()
+        END IF
+        IF steps = 1800 THEN
+            CopyR2()
+        END IF
+    END WHILE
+END PROCEDURE
+
+
+FUNCTION BigIsComposite(k AS S64, m AS S64) AS S64
+    LET i AS S64 = 0
+    WHILE i < 30
+        NM[i] = 0
+        i = i + 1
+    END WHILE
+    LET li AS S64 = m / 30
+    LET bp AS S64 = m - li * 30
+    NM[li] = p2[bp]
+    LET cv AS S64 = k
+    i = 0
+    WHILE cv > 0 ANDALSO i < 30
+        LET s2 AS S64 = NM[i] + cv
+        IF s2 >= BBASE THEN
+            NM[i] = s2 - BBASE
+            cv = 1
+        ELSE
+            NM[i] = s2
+            cv = 0
+        END IF
+        i = i + 1
+    END WHILE
+
+    SetupMont()
+
+    i = 0
+    WHILE i < 30
+        EE[i] = NM[i]
+        i = i + 1
+    END WHILE
+    EE[0] = EE[0] - 1
+
+    LET bw2 AS S64 = 0
+    i = 0
+    WHILE i < 30
+        LET dv AS S64 = NM[i] - RR[i] - bw2
+        IF dv < 0 THEN
+            dv = dv + BBASE
+            bw2 = 1
+        ELSE
+            bw2 = 0
+        END IF
+        NR[i] = dv
+        i = i + 1
+    END WHILE
+
+    LET bse AS S64 = 2
+    LET tries AS S64 = 0
+    WHILE tries < 6
+        AA[0] = bse
+        i = 1
+        WHILE i < 30
+            AA[i] = 0
+            i = i + 1
+        END WHILE
+        i = 0
+        WHILE i < 30
+            BB[i] = R2[i]
+            i = i + 1
+        END WHILE
+        MMul()
+        CopyCUR()
+
+        i = 0
+        WHILE i < 30
+            RES[i] = RR[i]
+            i = i + 1
+        END WHILE
+
+        LET bit AS S64 = 0
+        WHILE bit <= m
+            LET bl AS S64 = bit / 30
+            LET bo AS S64 = bit - bl * 30
+            LET ebit AS S64 = EE[bl] / p2[bo]
+            ebit = ebit - (ebit / 2) * 2
+            IF ebit = 1 THEN
+                i = 0
+                WHILE i < 30
+                    AA[i] = RES[i]
+                    BB[i] = CUR[i]
+                    i = i + 1
+                END WHILE
+                MMul()
+                CopyRES()
+            END IF
+            i = 0
+            WHILE i < 30
+                AA[i] = CUR[i]
+                BB[i] = CUR[i]
+                i = i + 1
+            END WHILE
+            MMul()
+            CopyCUR()
+            bit = bit + 1
+        END WHILE
+
+        LET eq1 AS S64 = 1
+        i = 0
+        WHILE i < 30
+            IF RES[i] <> RR[i] THEN
+                eq1 = 0
+            END IF
+            i = i + 1
+        END WHILE
+        IF eq1 = 0 THEN
+            RETURN 1
+        END IF
+        tries = tries + 1
+        bse = bse + 1
+    END WHILE
+    RETURN 0
+END FUNCTION
+
+
+BEGIN
+    sm[0] = 2 sm[1] = 3 sm[2] = 5 sm[3] = 7 sm[4] = 11 sm[5] = 13
+    sm[6] = 17 sm[7] = 19 sm[8] = 23 sm[9] = 29 sm[10] = 31 sm[11] = 37
+    p2[0] = 1
+    LET i AS S64 = 1
+    WHILE i < 31
+        p2[i] = p2[i - 1] * 2
+        i = i + 1
+    END WHILE
+    npc = 0
+    LET v AS S64 = 3
+    WHILE npc < 168
+        IF IsP(v) = 1 THEN
+            prs[npc] = v
+            npc = npc + 1
+        END IF
+        v = v + 2
+    END WHILE
+
+    LET found AS S64 = 0
+    LET k AS S64 = 3
+    WHILE found < 1
+        i = 0
+        WHILE i < npc
+            pows[i] = 2
+            i = i + 1
+        END WHILE
+        LET ok AS S64 = 1
+        LET m AS S64 = 1
+        WHILE m < k
+            LET hasfac AS S64 = 0
+            i = 0
+            WHILE i < npc
+                LET km AS S64 = k - (k / prs[i]) * prs[i]
+                LET r AS S64 = pows[i] + km
+                IF r >= prs[i] THEN
+                    r = r - prs[i]
+                END IF
+                IF r = 0 THEN
+                    LET cand AS S64 = prs[i]
+                    IF m < 10 THEN
+                        LET pw AS S64 = 1
+                        LET mi AS S64 = 0
+                        WHILE mi < m
+                            pw = pw + pw
+                            mi = mi + 1
+                        END WHILE
+                        IF k + pw <= cand THEN
+                            cand = 0
+                        END IF
+                    END IF
+                    IF cand > 0 ANDALSO hasfac = 0 THEN
+                        hasfac = cand
+                    END IF
+                END IF
+                pows[i] = pows[i] + pows[i]
+                IF pows[i] >= prs[i] THEN
+                    pows[i] = pows[i] - prs[i]
+                END IF
+                i = i + 1
+            END WHILE
+            IF hasfac = 0 THEN
+                IF m < 63 THEN
+                    LET pw2 AS S64 = 1
+                    LET mi2 AS S64 = 0
+                    WHILE mi2 < m
+                        pw2 = pw2 + pw2
+                        mi2 = mi2 + 1
+                    END WHILE
+                    IF IsPBig(k + pw2) = 1 THEN
+                        ok = 0
+                        m = k
+                    END IF
+                ELSE
+                    IF BigIsComposite(k, m) = 0 THEN
+                        ok = 0
+                        m = k
+                    END IF
+                END IF
+            END IF
+            m = m + 1
+        END WHILE
+        IF ok = 1 THEN
+            found = found + 1
+            PRINT "a(1) = " | k | " : k+2^m composite for all 0<m<k"
+        END IF
+        k = k + 2
+    END WHILE
+END

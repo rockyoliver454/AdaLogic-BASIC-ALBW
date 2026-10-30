@@ -1,0 +1,45 @@
+-- 981 | Voronoi diagram: ASCII render of nearest-site
+-- regions on a 50x20 grid with 6 sites (city-block metric).
+DECLARE MODULE Vd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vd
+    STRICT sx[7] AS S64
+    STRICT sy[7] AS S64
+
+    PROCEDURE Run()
+        sx[1] = 5; sy[1] = 4
+        sx[2] = 40; sy[2] = 3
+        sx[3] = 20; sy[3] = 10
+        sx[4] = 8; sy[4] = 16
+        sx[5] = 45; sy[5] = 16
+        sx[6] = 30; sy[6] = 17
+        LET gl AS STRING = ".123456"
+        FOR y = 0 TO 19
+            LET row AS STRING = ""
+            FOR x = 0 TO 49
+                LET bd AS S64 = 9999
+                LET bi AS S64 = 0
+                FOR s = 1 TO 6
+                    LET dx AS S64 = x - sx[s]
+                    LET dy AS S64 = y - sy[s]
+                    IF dx < 0 THEN dx = 0 - dx END IF
+                    IF dy < 0 THEN dy = 0 - dy END IF
+                    LET dd AS S64 = dx + dy
+                    IF dd < bd THEN
+                        bd = dd
+                        bi = s
+                    END IF
+                END FOR
+                row = row | MID$(gl, bi + 1, 1)
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Vd
+BEGIN
+    Vd.Run()
+END

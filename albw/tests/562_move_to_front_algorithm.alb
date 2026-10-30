@@ -1,0 +1,75 @@
+-- 562 | Move-to-front algorithm: encode "broood" and "hiphophiphop"
+-- over the lowercase alphabet, then decode.
+DECLARE MODULE MTF
+    PROCEDURE Reset()
+    FUNCTION Enc(s AS STRING) AS STRING
+    FUNCTION Dec(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MTF
+    STRICT sym[26] AS S64
+
+    PROCEDURE Reset()
+        FOR i = 0 TO 25
+            sym[i] = 97 + i
+        END FOR
+    END PROCEDURE
+
+    FUNCTION Enc(s AS STRING) AS STRING
+        Reset()
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            LET p AS S64 = 0
+            FOR k = 0 TO 25
+                IF sym[k] = c ANDALSO p = 0 THEN p = k END IF
+            END FOR
+            r = r | p | " "
+            LET w AS S64 = p
+            WHILE w > 0
+                sym[w] = sym[w - 1]
+                w = w - 1
+            END WHILE
+            sym[0] = c
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Dec(s AS STRING) AS STRING
+        Reset()
+        LET r AS STRING = ""
+        LET num AS S64 = -1
+        FOR i = 1 TO LEN(s)
+            LET ch AS S64 = ASC(MID$(s, i, 1))
+            IF ch = 32 THEN
+                LET c2 AS S64 = sym[num]
+                r = r | CHR(c2)
+                LET w2 AS S64 = num
+                WHILE w2 > 0
+                    sym[w2] = sym[w2 - 1]
+                    w2 = w2 - 1
+                END WHILE
+                sym[0] = c2
+                num = -1
+            ELSE
+                IF num < 0 THEN num = 0 END IF
+                num = num * 10 + ch - 48
+            END IF
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET e1 AS STRING = Enc("broood")
+        PRINT "broood: " | e1
+        LET e2 AS STRING = Enc("hiphophiphop")
+        PRINT "hiphophiphop: " | e2
+        PRINT "decode: " | Dec(e1) | " " | Dec(e2)
+    END PROCEDURE
+END MODULE
+
+IMPORT MTF
+BEGIN
+    MTF.Run()
+END

@@ -1,0 +1,13 @@
+computer +1 -> 1
+player   +1 -> 2
+computer +3 -> 5
+player   +1 -> 6
+computer +3 -> 9
+player   +1 -> 10
+computer +3 -> 13
+player   +1 -> 14
+computer +3 -> 17
+player   +1 -> 18
+computer +3 -> 21
+player said 21 and loses
+moves=11

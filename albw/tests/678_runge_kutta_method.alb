@@ -1,0 +1,28 @@
+-- 678 | Runge-Kutta method: RK4 integrating dy/dx = x with
+-- y(0)=0 over [0,1] (exact answer 0.5).
+DECLARE MODULE Rk
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rk
+    PROCEDURE Run()
+        LET y AS F64 = 0.0
+        LET x AS F64 = 0.0
+        LET h AS F64 = 0.1
+        FOR i = 1 TO 10
+            LET k1 AS F64 = x
+            LET k2 AS F64 = x + h / 2.0
+            LET k3 AS F64 = x + h / 2.0
+            LET k4 AS F64 = x + h
+            LET ks AS F64 = k1 + 2.0 * k2 + 2.0 * k3 + k4
+            y = y + h * ks / 6.0
+            x = x + h
+        END FOR
+        PRINT "y(1) = " | y | " (exact 0.5)"
+    END PROCEDURE
+END MODULE
+
+IMPORT Rk
+BEGIN
+    Rk.Run()
+END

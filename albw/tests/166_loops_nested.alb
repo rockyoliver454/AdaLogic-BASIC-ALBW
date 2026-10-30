@@ -1,0 +1,8 @@
+-- 166 | Loops/Nested: inner and outer counted loops.
+BEGIN
+    FOR i = 1 TO 3
+        FOR j = 1 TO 3
+            PRINT$ i | "x" | j | "=" | i * j;
+        END FOR
+    END FOR
+END

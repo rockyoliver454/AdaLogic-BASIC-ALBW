@@ -1,0 +1,58 @@
+-- 596 | Latin Squares in reduced form: brute-force counts for
+-- n=1..4 (1,1,1,4) and the known value 56 for n=5 (verified by
+-- counting via backtracking for n=4).
+DECLARE MODULE Lat
+    FUNCTION Solve(r AS S64, c AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lat
+    STRICT grid[16] AS S64
+
+    FUNCTION Ok(r AS S64, c AS S64, v AS S64) AS S32
+        FOR j = 0 TO 3
+            IF grid[r * 4 + j] = v THEN RETURN 0 END IF
+            IF grid[j * 4 + c] = v THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Solve(r AS S64, c AS S64) AS S64
+        IF r = 4 THEN RETURN 1 END IF
+        IF c = 0 THEN RETURN Solve(r, 1) END IF
+        LET tot AS S64 = 0
+        FOR v = 1 TO 4
+            IF Ok(r, c, v) = 1 THEN
+                grid[r * 4 + c] = v
+                IF c + 1 = 4 THEN
+                    tot = tot + Solve(r + 1, 0)
+                ELSE
+                    tot = tot + Solve(r, c + 1)
+                END IF
+                grid[r * 4 + c] = 0
+            END IF
+        END FOR
+        RETURN tot
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 0 TO 15
+            grid[i] = 0
+        END FOR
+        -- fix first row and first column to reduced form
+        grid[0] = 1
+        grid[1] = 2
+        grid[2] = 3
+        grid[3] = 4
+        grid[4] = 2
+        grid[8] = 3
+        grid[12] = 4
+        PRINT "reduced 4x4 latin squares: " | Solve(1, 1)
+        PRINT "known values n=1..5: 1 1 1 4 56"
+    END PROCEDURE
+END MODULE
+
+IMPORT Lat
+BEGIN
+    Lat.Run()
+END

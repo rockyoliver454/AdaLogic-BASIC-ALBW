@@ -1,0 +1,5 @@
+time len=8
+time sep=::
+date len=10
+date sep=--
+timer>=0=1

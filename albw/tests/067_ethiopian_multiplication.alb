@@ -1,0 +1,17 @@
+-- 067 | Ethiopian multiplication: halve, double, add the odd rows.
+BEGIN
+    LET a AS S32 = 17;
+    LET b AS S32 = 34;
+    LET acc AS S32 = 0;
+    WHILE a > 0
+        IF a MOD 2 = 1 THEN
+            acc = acc + b;
+            PRINT$ a | " " | b | " keep";
+        ELSE
+            PRINT$ a | " " | b | " strike";
+        END IF
+        a = a / 2;
+        b = b * 2;
+    END WHILE
+    PRINT$ "= " | acc;
+END

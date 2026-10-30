@@ -1,0 +1,60 @@
+-- 512 | Sorting algorithms/Permutation sort: try each permutation of
+-- a 5-element list until sorted.
+DECLARE MODULE Perm
+    FUNCTION Sorted() AS S32
+    PROCEDURE Gen(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Perm
+    STRICT a[6] AS S64
+    STRICT orig[6] AS S64
+    STRICT done[1] AS S32
+
+    FUNCTION Sorted() AS S32
+        FOR i = 1 TO 4
+            IF a[i] > a[i + 1] THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Gen(k AS S64)
+        IF done[1] = 1 THEN RETURN END IF
+        IF k = 1 THEN
+            IF Sorted() = 1 THEN done[1] = 1 END IF
+            RETURN
+        END IF
+        FOR i = 1 TO k
+            IF done[1] = 0 THEN
+                Gen(k - 1)
+                IF done[1] = 0 THEN
+                    LET p AS S64 = i
+                    IF k MOD 2 = 1 THEN p = 1 END IF
+                    LET t AS S64 = a[p]
+                    a[p] = a[k]
+                    a[k] = t
+                END IF
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        a[1] = 9
+        a[2] = 3
+        a[3] = 15
+        a[4] = 7
+        a[5] = 1
+        done[1] = 0
+        Gen(5)
+        LET s AS STRING = ""
+        FOR k = 1 TO 5
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Perm
+BEGIN
+    Perm.Run()
+END

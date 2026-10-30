@@ -1,0 +1,44 @@
+-- 236 | Queue/Usage: enqueue and dequeue in FIFO order with wraparound.
+DECLARE MODULE QueueUse
+    PROCEDURE Enqueue(value AS S32)
+    FUNCTION Dequeue() AS S32
+    FUNCTION Count() AS S32
+END DECLARE MODULE
+
+MODULE QueueUse
+    STRICT items[4] AS S32
+    LET head_pos AS S32 = 0
+    LET tail_pos AS S32 = 0
+    LET item_count AS S32 = 0
+
+    PROCEDURE Enqueue(value AS S32)
+        items[tail_pos] = value
+        tail_pos = (tail_pos + 1) MOD 4
+        item_count = item_count + 1
+    END PROCEDURE
+
+    FUNCTION Dequeue() AS S32
+        LET answer AS S32 = items[head_pos]
+        head_pos = (head_pos + 1) MOD 4
+        item_count = item_count - 1
+        RETURN answer
+    END FUNCTION
+
+    FUNCTION Count() AS S32
+        RETURN item_count
+    END FUNCTION
+END MODULE
+
+IMPORT QueueUse
+BEGIN
+    QueueUse.Enqueue(10)
+    QueueUse.Enqueue(20)
+    QueueUse.Enqueue(30)
+    PRINT QueueUse.Dequeue()
+    PRINT QueueUse.Dequeue()
+    QueueUse.Enqueue(40)
+    QueueUse.Enqueue(50)
+    WHILE QueueUse.Count() > 0
+        PRINT QueueUse.Dequeue()
+    END WHILE
+END

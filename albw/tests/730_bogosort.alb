@@ -1,0 +1,50 @@
+-- 730 | Bogosort: shuffle an array with an LCG until sorted;
+-- report the shuffled result and attempt count.
+DECLARE MODULE Bg
+    FUNCTION Issorted() AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bg
+    STRICT a[6] AS S64
+
+    FUNCTION Issorted() AS S32
+        FOR i = 1 TO 4
+            IF a[i] > a[i + 1] THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = 3
+        a[2] = 1
+        a[3] = 5
+        a[4] = 2
+        a[5] = 4
+        LET seed AS S64 = 12345
+        LET tries AS S64 = 0
+        WHILE Issorted() = 0
+            tries = tries + 1
+            -- Fisher-Yates with LCG
+            LET i AS S64 = 5
+            WHILE i >= 2
+                seed = (seed * 1103515245 + 12345) MOD 2147483648
+                IF seed < 0 THEN seed = seed + 2147483648 END IF
+                LET j AS S64 = seed MOD i + 1
+                LET t AS S64 = a[i]
+                a[i] = a[j]
+                a[j] = t
+                i = i - 1
+            END WHILE
+        END WHILE
+        FOR i = 1 TO 5
+            PRINT a[i]
+        END FOR
+        PRINT "tries=" | tries
+    END PROCEDURE
+END MODULE
+
+IMPORT Bg
+BEGIN
+    Bg.Run()
+END

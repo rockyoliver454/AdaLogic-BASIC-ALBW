@@ -1,0 +1,17 @@
+VERSION 1.0
+
+BEGIN
+    LET rc AS S64 = SHELL("mkdir walkroot 2>nul & mkdir walkroot\sub 2>nul & echo a > walkroot\f1.txt & echo b > walkroot\sub\f2.txt")
+    LET rc2 AS S64 = SHELL("dir /s /b walkroot > walklist.txt")
+    LET r AS S64 = OPEN("walklist.txt", "r")
+    LET s AS STRING = READ(r, FILELEN("walklist.txt"))
+    CLOSE r
+    LET n AS S64 = 0
+    LET i AS S64 = 1
+    WHILE i <= LEN(s)
+        IF ASC(MID$(s, i, 1)) = 10 THEN n = n + 1 END IF
+        i = i + 1
+    END WHILE
+    PRINT "entries=" | n
+    LET k AS S64 = SHELL("rmdir /s /q walkroot & del walklist.txt")
+END

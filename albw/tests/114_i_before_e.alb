@@ -1,0 +1,41 @@
+-- 114 | I before E except after C: flag plausible violations.
+DECLARE MODULE IbE
+    FUNCTION Check(w AS STRING) AS S32
+END DECLARE MODULE
+
+MODULE IbE
+    --  Returns -1 when the word follows the rule.
+    FUNCTION Check(w AS STRING) AS S32
+        FOR i = 1 TO LEN(w) - 1
+            LET pair AS STRING = MID$(w, i, 2);
+            IF pair = "ie" THEN
+                IF i > 1 ANDALSO MID$(w, i - 1, 1) = "c" THEN
+                    RETURN 0
+                END IF
+            END IF
+            IF pair = "ei" THEN
+                IF i = 1 THEN
+                    RETURN 0
+                END IF
+                IF MID$(w, i - 1, 1) <> "c" THEN
+                    RETURN 0
+                END IF
+            END IF
+        END FOR
+        RETURN -1
+    END FUNCTION
+END MODULE
+
+IMPORT IbE
+BEGIN
+    STRICT w[6] AS STRING;
+    w[0] = "believe"; w[1] = "receive"; w[2] = "weird";
+    w[3] = "science"; w[4] = "field"; w[5] = "ceiling";
+    FOR i = 0 TO 5
+        IF IbE.Check(w[i]) <> 0 THEN
+            PRINT$ w[i] | " ok";
+        ELSE
+            PRINT$ w[i] | " violates";
+        END IF
+    END FOR
+END

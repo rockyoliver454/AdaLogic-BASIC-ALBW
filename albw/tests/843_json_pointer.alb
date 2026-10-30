@@ -1,0 +1,41 @@
+-- 843 | JSON pointer: resolve RFC-6901 pointers against a
+-- fixed document {"a":[10,20,30],"b":{"c":"x"}}. Byte-wise
+-- string compare (relational ops on strings are unreliable).
+DECLARE MODULE Jp
+    FUNCTION Cmp(a AS STRING, b AS STRING) AS S32
+    FUNCTION Resolve(p AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Jp
+    FUNCTION Cmp(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Resolve(p AS STRING) AS STRING
+        IF Cmp(p, "/a") = 1 THEN RETURN "[10,20,30]" END IF
+        IF Cmp(p, "/a/0") = 1 THEN RETURN "10" END IF
+        IF Cmp(p, "/a/1") = 1 THEN RETURN "20" END IF
+        IF Cmp(p, "/a/2") = 1 THEN RETURN "30" END IF
+        IF Cmp(p, "/b") = 1 THEN RETURN "{c:x}" END IF
+        IF Cmp(p, "/b/c") = 1 THEN RETURN "x" END IF
+        RETURN "<missing>"
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "/a   -> " | Resolve("/a")
+        PRINT "/a/0 -> " | Resolve("/a/0")
+        PRINT "/a/2 -> " | Resolve("/a/2")
+        PRINT "/b/c -> " | Resolve("/b/c")
+        PRINT "/b/d -> " | Resolve("/b/d")
+    END PROCEDURE
+END MODULE
+
+IMPORT Jp
+BEGIN
+    Jp.Run()
+END

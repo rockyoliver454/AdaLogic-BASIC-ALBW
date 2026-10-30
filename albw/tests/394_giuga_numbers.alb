@@ -1,0 +1,55 @@
+-- 394 | Giuga numbers: composite n where every prime p|n divides n/p - 1.
+DECLARE MODULE Giuga
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION IsGiuga(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Giuga
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IsGiuga(n AS S64) AS S32
+        LET m AS S64 = n
+        LET comp AS S32 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                comp = 1
+                IF IsPrime(d) = 0 THEN RETURN 0 END IF
+                IF (n / d - 1) MOD d <> 0 THEN RETURN 0 END IF
+                WHILE m MOD d = 0
+                    m = m / d
+                END WHILE
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN
+            comp = 1
+            IF (n / m - 1) MOD m <> 0 THEN RETURN 0 END IF
+        END IF
+        RETURN comp
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 4 TO 9999
+            IF IsGiuga(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Giuga
+BEGIN
+    Giuga.Run()
+END

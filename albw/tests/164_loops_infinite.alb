@@ -1,0 +1,11 @@
+-- 164 | Loops/Infinite: unbounded loop with an explicit exit.
+BEGIN
+    LET n AS S32 = 0;
+    WHILE 1 = 1
+        n = n + 1;
+        IF n > 3 THEN
+            BREAK
+        END IF
+        PRINT$ "tick " | n;
+    END WHILE
+END

@@ -1,0 +1,65 @@
+-- 470 | Weird numbers: first 10 abundant numbers that are not
+-- semiperfect.
+DECLARE MODULE Weird
+    FUNCTION GetDivs(n AS S64) AS S64
+    FUNCTION IsWeird(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Weird
+    STRICT divs[256] AS S64
+    STRICT reach[50000] AS S32
+
+    FUNCTION GetDivs(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        FOR d = 1 TO n / 2
+            IF n MOD d = 0 THEN
+                cnt = cnt + 1
+                divs[cnt] = d
+            END IF
+        END FOR
+        RETURN cnt
+    END FUNCTION
+
+    FUNCTION IsWeird(n AS S64) AS S32
+        LET nd AS S64 = GetDivs(n)
+        LET total AS S64 = 0
+        FOR i = 1 TO nd
+            total = total + divs[i]
+        END FOR
+        IF total <= n THEN RETURN 0 END IF
+        FOR j = 0 TO n
+            reach[j] = 0
+        END FOR
+        reach[0] = 1
+        FOR i2 = 1 TO nd
+            LET dj AS S64 = divs[i2]
+            LET v AS S64 = n
+            WHILE v >= dj
+                IF reach[v - dj] = 1 THEN reach[v] = 1 END IF
+                v = v - 1
+            END WHILE
+        END FOR
+        IF reach[n] = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 2
+        LET got AS S64 = 0
+        WHILE got < 10
+            IF IsWeird(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Weird
+BEGIN
+    Weird.Run()
+END

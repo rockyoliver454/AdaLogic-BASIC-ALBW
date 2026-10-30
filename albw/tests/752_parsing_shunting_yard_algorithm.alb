@@ -1,0 +1,69 @@
+-- 752 | Parsing/Shunting-yard algorithm: convert infix to
+-- RPN for a few expressions.
+DECLARE MODULE Sy
+    FUNCTION Shunt(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sy
+    STRICT ops[20] AS STRING
+
+    FUNCTION Shunt(s AS STRING) AS STRING
+        LET buf AS STRING = ""
+        LET sp AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS STRING = MID$(s, i, 1)
+            IF ASC(c) >= 48 ANDALSO ASC(c) <= 57 THEN
+                WHILE i <= LEN(s) ANDALSO ASC(MID$(s, i, 1)) >= 48 ANDALSO ASC(MID$(s, i, 1)) <= 57
+                    buf = buf | MID$(s, i, 1)
+                    i = i + 1
+                END WHILE
+                i = i - 1
+                buf = buf | " "
+            END IF
+            IF c = "(" THEN
+                sp = sp + 1
+                ops[sp] = c
+            END IF
+            IF c = ")" THEN
+                WHILE ops[sp] <> "("
+                    buf = buf | ops[sp] | " "
+                    sp = sp - 1
+                END WHILE
+                sp = sp - 1
+            END IF
+            IF c = "+" ORELSE c = "-" ORELSE c = "*" ORELSE c = "/" THEN
+                LET pr AS S64 = 1
+                IF c = "*" ORELSE c = "/" THEN pr = 2 END IF
+                WHILE sp > 0 ANDALSO ops[sp] <> "("
+                    LET tp AS STRING = ops[sp]
+                    LET tpv AS S64 = 1
+                    IF tp = "*" ORELSE tp = "/" THEN tpv = 2 END IF
+                    IF tpv < pr THEN sp = 0 END IF
+                    IF sp > 0 THEN
+                        buf = buf | tp | " "
+                        sp = sp - 1
+                    END IF
+                END WHILE
+                sp = sp + 1
+                ops[sp] = c
+            END IF
+        END FOR
+        WHILE sp > 0
+            buf = buf | ops[sp] | " "
+            sp = sp - 1
+        END WHILE
+        RETURN buf
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Shunt("3+4*2")
+        PRINT Shunt("(1+2)*7")
+        PRINT Shunt("8*2-6/3")
+    END PROCEDURE
+END MODULE
+
+IMPORT Sy
+BEGIN
+    Sy.Run()
+END

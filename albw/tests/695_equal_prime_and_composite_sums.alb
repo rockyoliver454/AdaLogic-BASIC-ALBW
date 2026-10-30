@@ -1,0 +1,36 @@
+-- 695 | Equal prime and composite sums: n where the sum of
+-- primes <= n equals the sum of composites <= n.
+DECLARE MODULE Ep
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ep
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET ps AS S64 = 0
+        LET cs AS S64 = 0
+        FOR n = 2 TO 500000
+            IF Prime(n) = 1 THEN
+                ps = ps + n
+            ELSE
+                cs = cs + n
+            END IF
+            IF ps = cs THEN PRINT n END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ep
+BEGIN
+    Ep.Run()
+END

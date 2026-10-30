@@ -1,0 +1,28 @@
+-- Rosetta: insertion sort.
+BEGIN
+    STRICT a[8] AS S32
+    a[0] = 5
+    a[1] = 2
+    a[2] = 9
+    a[3] = 1
+    a[4] = 7
+    a[5] = 3
+    a[6] = 8
+    a[7] = 4
+    FOR i = 1 TO 7
+        LET v AS S32 = a[i]
+        LET j AS S32 = i - 1
+        WHILE j >= 0
+            IF a[j] > v THEN
+                a[j + 1] = a[j]
+                j = j - 1
+            ELSE
+                BREAK
+            END IF
+        END WHILE
+        a[j + 1] = v
+    END FOR
+    FOR i = 0 TO 7
+        PRINT a[i]
+    END FOR
+END

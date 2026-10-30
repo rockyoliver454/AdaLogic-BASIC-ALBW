@@ -1,0 +1,54 @@
+-- 832 | Nim game: optimal play via nim-sum. Fixed heaps
+-- {3,4,5}; print each optimal move until the game ends.
+DECLARE MODULE Nm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nm
+    STRICT hp[4] AS S64
+
+    PROCEDURE Run()
+        hp[1] = 3
+        hp[2] = 4
+        hp[3] = 5
+        LET mv AS S64 = 0
+        LET left AS S64 = 12
+        WHILE left > 0
+            LET xs AS S64 = hp[1] XOR hp[2] XOR hp[3]
+            LET i AS S64 = 1
+            LET took AS S32 = 0
+            WHILE i <= 3 ANDALSO took = 0
+                LET tgt AS S64 = hp[i] XOR xs
+                IF tgt < hp[i] THEN
+                    LET take AS S64 = hp[i] - tgt
+                    PRINT "take " | take | " from heap" | i
+                    left = left - take
+                    hp[i] = tgt
+                    took = 1
+                END IF
+                i = i + 1
+            END WHILE
+            IF took = 0 THEN
+                -- losing position (xs=0): take 1 from first nonempty
+                LET j AS S64 = 1
+                WHILE j <= 3 ANDALSO took = 0
+                    IF hp[j] > 0 THEN
+                        PRINT "take 1 from heap" | j | " (forced)"
+                        hp[j] = hp[j] - 1
+                        left = left - 1
+                        took = 1
+                    END IF
+                    j = j + 1
+                END WHILE
+            END IF
+            mv = mv + 1
+        END WHILE
+        PRINT "moves=" | mv
+        PRINT "optimal player takes last stone"
+    END PROCEDURE
+END MODULE
+
+IMPORT Nm
+BEGIN
+    Nm.Run()
+END

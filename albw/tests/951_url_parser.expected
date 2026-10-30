@@ -1,0 +1,16 @@
+url    : https://user@example.com:8080/a/b?x=1&y=2#sec
+scheme : https
+usr   : user
+hst   : example.com
+prt   : 8080
+path   : /a/b
+query  : x=1&y=2
+frag   : sec
+url    : ftp://files.org/pub/rel/notes.txt
+scheme : ftp
+usr   : 
+hst   : files.org
+prt   : 
+path   : /pub/rel/notes.txt
+query  : 
+frag   : 

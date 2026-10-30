@@ -1,0 +1,14 @@
+bubble comparisons=45
+insertion comparisons=29
+quicksort comparisons=36
+sorted:
+1
+7
+13
+21
+30
+42
+56
+64
+88
+99

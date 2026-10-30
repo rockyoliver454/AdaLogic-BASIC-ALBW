@@ -1,0 +1,49 @@
+-- 629 | Sort stability: stable insertion sort on (key,seq)
+-- records; equal keys keep input order.
+DECLARE MODULE Stab
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Stab
+    STRICT kk[8] AS S64
+    STRICT lbl[8] AS STRING
+
+    PROCEDURE Run()
+        kk[1] = 2
+        kk[2] = 1
+        kk[3] = 2
+        kk[4] = 1
+        kk[5] = 3
+        kk[6] = 1
+        kk[7] = 2
+        kk[8] = 3
+        lbl[1] = "a"
+        lbl[2] = "b"
+        lbl[3] = "c"
+        lbl[4] = "d"
+        lbl[5] = "e"
+        lbl[6] = "f"
+        lbl[7] = "g"
+        lbl[8] = "h"
+        FOR i = 2 TO 8
+            LET kv AS S64 = kk[i]
+            LET lv AS STRING = lbl[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO kk[j] > kv
+                kk[j + 1] = kk[j]
+                lbl[j + 1] = lbl[j]
+                j = j - 1
+            END WHILE
+            kk[j + 1] = kv
+            lbl[j + 1] = lv
+        END FOR
+        FOR k2 = 1 TO 8
+            PRINT kk[k2] | lbl[k2]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Stab
+BEGIN
+    Stab.Run()
+END

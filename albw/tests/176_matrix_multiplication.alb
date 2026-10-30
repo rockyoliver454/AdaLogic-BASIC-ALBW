@@ -1,0 +1,23 @@
+-- 176 | Matrix multiplication: 3x3 @ 3x3.
+BEGIN
+    STRICT a[3,3] AS S32;
+    STRICT b[3,3] AS S32;
+    STRICT c[3,3] AS S32;
+    a[0,0]=1; a[0,1]=2; a[0,2]=3;
+    a[1,0]=4; a[1,1]=5; a[1,2]=6;
+    a[2,0]=7; a[2,1]=8; a[2,2]=9;
+    b[0,0]=9; b[0,1]=8; b[0,2]=7;
+    b[1,0]=6; b[1,1]=5; b[1,2]=4;
+    b[2,0]=3; b[2,1]=2; b[2,2]=1;
+    FOR i = 0 TO 2
+        FOR j = 0 TO 2
+            c[i,j] = 0;
+            FOR k = 0 TO 2
+                c[i,j] = c[i,j] + a[i,k] * b[k,j];
+            END FOR
+        END FOR
+    END FOR
+    FOR i = 0 TO 2
+        PRINT$ c[i,0] | " " | c[i,1] | " " | c[i,2];
+    END FOR
+END

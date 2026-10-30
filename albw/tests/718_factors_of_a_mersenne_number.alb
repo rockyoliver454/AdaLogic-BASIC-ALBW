@@ -1,0 +1,63 @@
+-- 718 | Factors of a Mersenne number: factor M(p) = 2^p - 1
+-- for composite exponents p <= 43.
+DECLARE MODULE Fm
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fm
+    STRICT ps[9] AS S64
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        ps[1] = 11
+        ps[2] = 23
+        ps[3] = 29
+        ps[4] = 37
+        ps[5] = 41
+        ps[6] = 43
+        FOR i = 1 TO 6
+            LET p AS S64 = ps[i]
+            LET m AS S64 = 1
+            FOR e = 1 TO p
+                m = m * 2
+            END FOR
+            m = m - 1
+            LET s AS STRING = ""
+            LET v AS S64 = m
+            LET d AS S64 = 2
+            WHILE d * d <= v
+                WHILE v MOD d = 0
+                    v = v / d
+                    IF s = "" THEN
+                        s = d | ""
+                    ELSE
+                        s = s | " " | d
+                    END IF
+                END WHILE
+                d = d + 1
+            END WHILE
+            IF v > 1 THEN
+                IF s = "" THEN
+                    s = v | ""
+                ELSE
+                    s = s | " " | v
+                END IF
+            END IF
+            PRINT "M(" | p | ") = " | s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fm
+BEGIN
+    Fm.Run()
+END

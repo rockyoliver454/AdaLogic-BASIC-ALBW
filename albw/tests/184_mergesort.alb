@@ -1,0 +1,60 @@
+-- Rosetta: mergesort -- recursive halves plus a merge pass through a
+-- scratch STRICT array.
+DECLARE MODULE S
+    PROCEDURE Msort(lo AS S32, hi AS S32)
+END DECLARE MODULE
+
+STRICT a[8] AS S32
+STRICT tmp[8] AS S32
+
+MODULE S
+    PROCEDURE Msort(lo AS S32, hi AS S32)
+        IF lo >= hi THEN
+            RETURN
+        END IF
+        LET mid AS S32 = (lo + hi) / 2
+        Msort(lo, mid)
+        Msort(mid + 1, hi)
+        LET i AS S32 = lo
+        LET j AS S32 = mid + 1
+        LET k AS S32 = lo
+        WHILE i <= mid AND j <= hi
+            IF a[i] <= a[j] THEN
+                tmp[k] = a[i]
+                i = i + 1
+            ELSE
+                tmp[k] = a[j]
+                j = j + 1
+            END IF
+            k = k + 1
+        END WHILE
+        WHILE i <= mid
+            tmp[k] = a[i]
+            i = i + 1
+            k = k + 1
+        END WHILE
+        WHILE j <= hi
+            tmp[k] = a[j]
+            j = j + 1
+            k = k + 1
+        END WHILE
+        FOR p = lo TO hi
+            a[p] = tmp[p]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+BEGIN
+    a[0] = 5
+    a[1] = 2
+    a[2] = 9
+    a[3] = 1
+    a[4] = 7
+    a[5] = 3
+    a[6] = 8
+    a[7] = 4
+    S.Msort(0, 7)
+    FOR i = 0 TO 7
+        PRINT a[i]
+    END FOR
+END

@@ -1,0 +1,39 @@
+-- Standard library (.albi via ALB_LIB → stdlib/): module-owned buffers,
+-- routine-ref comparators, manual conversions. Dogfoods INCLUDE
+-- resolution, PRIVATE members, routine refs, and string arrays.
+
+INCLUDE "alb_sort"
+INCLUDE "alb_str"
+INCLUDE "alb_conv"
+
+FUNCTION Desc(a AS S64, b AS S64) AS S32
+    IF a < b THEN RETURN 1 END IF
+    IF a > b THEN RETURN -1 END IF
+    RETURN 0
+END FUNCTION
+
+BEGIN
+    AlbSort.Put(0, 5)
+    AlbSort.Put(1, 1)
+    AlbSort.Put(2, 4)
+    AlbSort.Put(3, 1)
+    AlbSort.Put(4, 3)
+    AlbSort.Sort(5, REF Desc)
+    FOR k = 0 TO 4
+        PRINT AlbSort.Get(k)
+    END FOR
+
+    PRINT AlbStr.PadLeft("42", 5)
+    PRINT AlbStr.StartsWith("ERR42", "ERR")
+    PRINT AlbStr.EndsWith("f.txt", ".txt")
+    LET n AS S32 = AlbStr.Split("a,bb,c", ",")
+    PRINT n
+    PRINT AlbStr.Piece(1)
+
+    PRINT AlbConv.ToHex(255)
+    PRINT AlbConv.ToBin(5)
+    PRINT AlbConv.ToOct(64)
+    PRINT AlbConv.ParseInt("-42")
+    PRINT AlbConv.LikeInt("123")
+    PRINT AlbConv.LikeInt("12a")
+END

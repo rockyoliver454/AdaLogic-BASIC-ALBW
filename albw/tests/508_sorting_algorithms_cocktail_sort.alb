@@ -1,0 +1,58 @@
+-- 508 | Sorting algorithms/Cocktail sort.
+DECLARE MODULE Cock
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cock
+    STRICT a[10] AS S64
+
+    PROCEDURE Run()
+        a[1] = 170
+        a[2] = 45
+        a[3] = 75
+        a[4] = 90
+        a[5] = 2
+        a[6] = 24
+        a[7] = 802
+        a[8] = 66
+        a[9] = 13
+        a[10] = 3
+        LET lo AS S64 = 1
+        LET hi AS S64 = 10
+        LET done AS S32 = 0
+        WHILE done = 0
+            LET swaps AS S32 = 0
+            FOR i = lo TO hi - 1
+                IF a[i] > a[i + 1] THEN
+                    LET t AS S64 = a[i]
+                    a[i] = a[i + 1]
+                    a[i + 1] = t
+                    swaps = 1
+                END IF
+            END FOR
+            hi = hi - 1
+            LET j AS S64 = hi
+            WHILE j > lo
+                IF a[j - 1] > a[j] THEN
+                    LET t2 AS S64 = a[j - 1]
+                    a[j - 1] = a[j]
+                    a[j] = t2
+                    swaps = 1
+                END IF
+                j = j - 1
+            END WHILE
+            lo = lo + 1
+            IF swaps = 0 THEN done = 1 END IF
+        END WHILE
+        LET s AS STRING = ""
+        FOR m = 1 TO 10
+            s = s | a[m] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Cock
+BEGIN
+    Cock.Run()
+END

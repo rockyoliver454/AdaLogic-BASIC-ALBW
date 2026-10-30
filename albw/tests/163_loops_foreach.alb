@@ -1,0 +1,8 @@
+-- 163 | Loops/Foreach: visit every element of a collection.
+BEGIN
+    STRICT items[4] AS S32;
+    items[0] = 7; items[1] = 11; items[2] = 13; items[3] = 17;
+    FOR i = 0 TO 3
+        PRINT items[i];
+    END FOR
+END

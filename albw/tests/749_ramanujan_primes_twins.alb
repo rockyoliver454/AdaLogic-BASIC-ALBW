@@ -1,0 +1,67 @@
+-- 749 | Ramanujan primes/twins: Ramanujan primes below 1000
+-- that form twin pairs (differ by 2).
+DECLARE MODULE Rp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rp
+    STRICT sv[1001] AS S32
+    STRICT ra[12] AS S64
+    STRICT cc[1001] AS S64
+    STRICT pc[1001] AS S64
+
+    PROCEDURE Run()
+        FOR i = 1 TO 1000
+            sv[i] = 1
+        END FOR
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= 1000
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m <= 1000
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        -- c(x) = pi(x) - pi(x/2); R_n = next prime after the
+        -- last x where c(x) < n.
+        LET pi AS S64 = 0
+        FOR x = 1 TO 1000
+            IF sv[x] = 1 THEN pi = pi + 1 END IF
+            pc[x] = pi
+        END FOR
+        FOR x = 1 TO 1000
+            LET h AS S64 = x / 2
+            cc[x] = pc[x] - pc[h]
+        END FOR
+        FOR need = 1 TO 11
+            LET mx AS S64 = 1
+            FOR x = 1 TO 1000
+                IF cc[x] < need THEN mx = x END IF
+            END FOR
+            LET pp AS S64 = mx + 1
+            WHILE pp <= 1000 ANDALSO sv[pp] = 0
+                pp = pp + 1
+            END WHILE
+            ra[need] = pp
+        END FOR
+        PRINT "ramanujan primes:"
+        FOR i = 1 TO 11
+            PRINT ra[i]
+        END FOR
+        PRINT "twin pairs:"
+        FOR i = 1 TO 10
+            IF ra[i + 1] - ra[i] = 2 THEN
+                PRINT ra[i] | " " | ra[i + 1]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rp
+BEGIN
+    Rp.Run()
+END

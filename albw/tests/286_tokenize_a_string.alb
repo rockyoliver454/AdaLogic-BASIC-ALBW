@@ -1,0 +1,14 @@
+-- 286 | Tokenize a string: split "Hello,How,Are,You,Today" on commas.
+BEGIN
+    LET s AS STRING = "Hello,How,Are,You,Today"
+    LET out_line AS STRING = ""
+    FOR i = 1 TO LEN(s)
+        LET c AS S32 = ASC(MID$(s, i, 1))
+        IF c = 44 THEN
+            out_line = out_line | "."
+        ELSE
+            out_line = out_line | CHR(c)
+        END IF
+    END FOR
+    PRINT out_line
+END

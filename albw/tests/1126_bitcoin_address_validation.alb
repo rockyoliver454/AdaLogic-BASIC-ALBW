@@ -1,0 +1,271 @@
+VERSION 1.0
+
+STRICT SK[64] AS S64
+STRICT SW[64] AS S64
+STRICT SH[8] AS S64
+STRICT SBUF[64] AS S64
+LET SBL AS S64 = 0
+
+FUNCTION RotL(x AS S64, r AS S64) AS S64
+    LET e AS S64 = 32 - r
+    LET v AS S64 = x SHL r
+    v = v AND $FFFFFFFF
+    LET w AS S64 = x SHR e
+    RETURN v + w
+END FUNCTION
+
+FUNCTION RotR(x AS S64, r AS S64) AS S64
+    LET e AS S64 = 32 - r
+    LET v AS S64 = x SHR r
+    LET w AS S64 = (x SHL e) AND $FFFFFFFF
+    RETURN v + w
+END FUNCTION
+
+PROCEDURE ShaBlock()
+    LET i AS S64 = 16
+    WHILE i < 64
+        LET w15 AS S64 = SW[i - 15]
+        LET w2 AS S64 = SW[i - 2]
+        LET s0 AS S64 = RotR(w15, 7) XOR RotR(w15, 18) XOR (w15 SHR 3)
+        LET s1 AS S64 = RotR(w2, 17) XOR RotR(w2, 19) XOR (w2 SHR 10)
+        SW[i] = (SW[i - 16] + s0 + SW[i - 7] + s1) AND $FFFFFFFF
+        i = i + 1
+    END WHILE
+    LET a AS S64 = SH[0]
+    LET b AS S64 = SH[1]
+    LET c AS S64 = SH[2]
+    LET d AS S64 = SH[3]
+    LET e AS S64 = SH[4]
+    LET f AS S64 = SH[5]
+    LET g AS S64 = SH[6]
+    LET h AS S64 = SH[7]
+    i = 0
+    WHILE i < 64
+        LET bs1 AS S64 = RotR(e, 6) XOR RotR(e, 11) XOR RotR(e, 25)
+        LET ch AS S64 = (e AND f) + ((NOT e) AND g)
+        LET t1 AS S64 = (h + bs1 + ch + SK[i] + SW[i]) AND $FFFFFFFF
+        LET bs0 AS S64 = RotR(a, 2) XOR RotR(a, 13) XOR RotR(a, 22)
+        LET mj AS S64 = (a AND b) XOR (a AND c) XOR (b AND c)
+        h = g
+        g = f
+        f = e
+        e = (d + t1) AND $FFFFFFFF
+        d = c
+        c = b
+        b = a
+        a = (t1 + bs0 + mj) AND $FFFFFFFF
+        i = i + 1
+    END WHILE
+    SH[0] = (SH[0] + a) AND $FFFFFFFF
+    SH[1] = (SH[1] + b) AND $FFFFFFFF
+    SH[2] = (SH[2] + c) AND $FFFFFFFF
+    SH[3] = (SH[3] + d) AND $FFFFFFFF
+    SH[4] = (SH[4] + e) AND $FFFFFFFF
+    SH[5] = (SH[5] + f) AND $FFFFFFFF
+    SH[6] = (SH[6] + g) AND $FFFFFFFF
+    SH[7] = (SH[7] + h) AND $FFFFFFFF
+END PROCEDURE
+
+PROCEDURE ShaInit()
+    SH[0] = $6A09E667
+    SH[1] = $BB67AE85
+    SH[2] = $3C6EF372
+    SH[3] = $A54FF53A
+    SH[4] = $510E527F
+    SH[5] = $9B05688C
+    SH[6] = $1F83D9AB
+    SH[7] = $5BE0CD19
+END PROCEDURE
+
+PROCEDURE ShaBytes(n AS S64)
+    LET i AS S64 = 0
+    WHILE i < 16
+        SW[i] = 0
+        i = i + 1
+    END WHILE
+    LET total AS S64 = n + 1
+    WHILE total MOD 64 <> 56
+        total = total + 1
+    END WHILE
+    total = total + 8
+    i = 0
+    WHILE i < n
+        SW[i / 4] = SW[i / 4] + SBUF[i] * (1 SHL ((3 - i MOD 4) * 8))
+        i = i + 1
+    END WHILE
+    SW[n / 4] = SW[n / 4] + 128 * (1 SHL ((3 - n MOD 4) * 8))
+    LET nblk AS S64 = total / 64
+    LET blk AS S64 = 0
+    WHILE blk < nblk
+        IF blk = nblk - 1 THEN
+            SW[15] = n * 8
+        END IF
+        ShaBlock()
+        i = 0
+        WHILE i < 16
+            SW[i] = 0
+            i = i + 1
+        END WHILE
+        blk = blk + 1
+    END WHILE
+END PROCEDURE
+
+FUNCTION HexB(b AS S64) AS STRING
+    LET s AS STRING = ""
+    LET n AS S64 = b / 16
+    IF n < 10 THEN s = s | CHR(48 + n) ELSE s = s | CHR(87 + n) END IF
+    n = b AND 15
+    IF n < 10 THEN s = s | CHR(48 + n) ELSE s = s | CHR(87 + n) END IF
+    RETURN s
+END FUNCTION
+
+STRICT BYTES[32] AS S64
+LET VALID AS S64 = 0
+
+
+FUNCTION B58Val(ch AS S64) AS S64
+    LET a AS STRING = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    LET i AS S64 = 1
+    WHILE i <= 58
+        IF ASC(MID$(a, i, 1)) = ch THEN
+            RETURN i - 1
+        END IF
+        i = i + 1
+    END WHILE
+    RETURN 0 - 1
+END FUNCTION
+
+PROCEDURE CheckAddr(addr AS STRING)
+    LET i AS S64 = 0
+    WHILE i < 32
+        BYTES[i] = 0
+        i = i + 1
+    END WHILE
+    LET bad AS S64 = 0
+    i = 1
+    WHILE i <= LEN(addr)
+        LET dv AS S64 = B58Val(ASC(MID$(addr, i, 1)))
+        IF dv < 0 THEN
+            bad = 1
+        ELSE
+            LET carry AS S64 = dv
+            LET j AS S64 = 31
+            WHILE j >= 0
+                carry = carry + BYTES[j] * 58
+                BYTES[j] = carry MOD 256
+                carry = carry / 256
+                j = j - 1
+            END WHILE
+        END IF
+        i = i + 1
+    END WHILE
+    IF bad = 1 THEN
+        VALID = 0
+        RETURN
+    END IF
+
+    LET i2 AS S64 = 0
+    WHILE i2 < 21
+        SBUF[i2] = BYTES[i2 + 7]
+        i2 = i2 + 1
+    END WHILE
+    ShaInit()
+    ShaBytes(21)
+    i2 = 0
+    WHILE i2 < 8
+        LET j2 AS S64 = 0
+        WHILE j2 < 4
+            SBUF[i2 * 4 + j2] = (SH[i2] SHR ((3 - j2) * 8)) AND 255
+            j2 = j2 + 1
+        END WHILE
+        i2 = i2 + 1
+    END WHILE
+    ShaInit()
+    ShaBytes(32)
+
+    LET c0 AS S64 = (SH[0] SHR 24) AND 255
+    LET c1 AS S64 = (SH[0] SHR 16) AND 255
+    LET c2 AS S64 = (SH[0] SHR 8) AND 255
+    LET c3 AS S64 = SH[0] AND 255
+    VALID = 0
+    IF c0 = BYTES[28] ANDALSO c1 = BYTES[29] ANDALSO c2 = BYTES[30] ANDALSO c3 = BYTES[31] THEN
+        VALID = 1
+    END IF
+END PROCEDURE
+
+
+BEGIN
+    SK[0] = 1116352408
+    SK[1] = 1899447441
+    SK[2] = 3049323471
+    SK[3] = 3921009573
+    SK[4] = 961987163
+    SK[5] = 1508970993
+    SK[6] = 2453635748
+    SK[7] = 2870763221
+    SK[8] = 3624381080
+    SK[9] = 310598401
+    SK[10] = 607225278
+    SK[11] = 1426881987
+    SK[12] = 1925078388
+    SK[13] = 2162078206
+    SK[14] = 2614888103
+    SK[15] = 3248222580
+    SK[16] = 3835390401
+    SK[17] = 4022224774
+    SK[18] = 264347078
+    SK[19] = 604807628
+    SK[20] = 770255983
+    SK[21] = 1249150122
+    SK[22] = 1555081692
+    SK[23] = 1996064986
+    SK[24] = 2554220882
+    SK[25] = 2821834349
+    SK[26] = 2952996808
+    SK[27] = 3210313671
+    SK[28] = 3336571891
+    SK[29] = 3584528711
+    SK[30] = 113926993
+    SK[31] = 338241895
+    SK[32] = 666307205
+    SK[33] = 773529912
+    SK[34] = 1294757372
+    SK[35] = 1396182291
+    SK[36] = 1695183700
+    SK[37] = 1986661051
+    SK[38] = 2177026350
+    SK[39] = 2456956037
+    SK[40] = 2730485921
+    SK[41] = 2820302411
+    SK[42] = 3259730800
+    SK[43] = 3345764771
+    SK[44] = 3516065817
+    SK[45] = 3600352804
+    SK[46] = 4094571909
+    SK[47] = 275423344
+    SK[48] = 430227734
+    SK[49] = 506948616
+    SK[50] = 659060556
+    SK[51] = 883997877
+    SK[52] = 958139571
+    SK[53] = 1322822218
+    SK[54] = 1537002063
+    SK[55] = 1747873779
+    SK[56] = 1955562222
+    SK[57] = 2024104815
+    SK[58] = 2227730452
+    SK[59] = 2361852424
+    SK[60] = 2428436474
+    SK[61] = 2756734187
+    SK[62] = 3204031479
+    SK[63] = 3329325298
+
+    CheckAddr("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i")
+    PRINT "addr1 valid=" | VALID
+    CheckAddr("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62j")
+    PRINT "addr2 valid=" | VALID
+    CheckAddr("1111111111111111111114oLvT2")
+    PRINT "addr3 valid=" | VALID
+    CheckAddr("not an address!")
+    PRINT "addr4 valid=" | VALID
+END

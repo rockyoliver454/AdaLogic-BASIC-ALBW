@@ -1,0 +1,32 @@
+-- 328 | Greedy algorithm for Egyptian fractions: split a rational into unit fractions.
+DECLARE MODULE Egyptian
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Egyptian
+    PROCEDURE Show(num AS S64, den AS S64)
+        LET out_line AS STRING = num | "/" | den | " ="
+        LET n AS S64 = num
+        LET d AS S64 = den
+        WHILE n <> 0
+            LET x AS S64 = d / n
+            IF d - x * n <> 0 THEN x = x + 1 END IF
+            out_line = out_line | " 1/" | x
+            n = n * x - d
+            d = d * x
+        END WHILE
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(43, 48)
+        Show(18, 23)
+        Show(7, 11)
+        Show(17, 18)
+    END PROCEDURE
+END MODULE
+
+IMPORT Egyptian
+BEGIN
+    Egyptian.Run()
+END

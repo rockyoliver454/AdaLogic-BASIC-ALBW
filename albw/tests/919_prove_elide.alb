@@ -1,0 +1,35 @@
+-- Contract prove-and-elide: checks provably true at compile time are
+-- skipped (a /* proved */ comment lands in the generated Rust and
+-- --map counts them). Provable sources: constant folding and FOR
+-- induction-variable bounds (const lo/hi, body never rebinds the var).
+-- Non-provable checks keep their runtime fault.
+
+PROCEDURE Count()
+    FOR k = 0 TO 9
+        ASSERT(k >= 0)   -- elided: bound [0,9]
+        ASSERT(k <= 9)   -- elided
+    END FOR
+    PRINT 1
+END PROCEDURE
+
+PROCEDURE Down()
+    FOR j = 10 TO 1 STEP -1
+        ASSERT(j >= 1)   -- elided: bound [1,10]
+        ASSERT(j <= 10)  -- elided
+    END FOR
+    PRINT 2
+END PROCEDURE
+
+PROCEDURE Check(x AS S32)
+    FOR k = 0 TO 4
+        ASSERT(x > 0)    -- NOT provable (param): real check, passes
+    END FOR
+    ASSERT(3 * 4 = 12)   -- elided: const fold
+    PRINT 3
+END PROCEDURE
+
+BEGIN
+    Count()
+    Down()
+    Check(5)
+END

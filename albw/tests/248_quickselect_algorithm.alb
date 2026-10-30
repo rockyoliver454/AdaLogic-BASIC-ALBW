@@ -1,0 +1,74 @@
+-- 248 | Quickselect algorithm: find the k-th smallest element.
+DECLARE MODULE QuickSelect
+    FUNCTION KthSmallest(k AS S32) AS S32
+END DECLARE MODULE
+
+MODULE QuickSelect
+    STRICT values[10] AS S32
+    LET count AS S32 = 10
+
+    PROCEDURE Swap(i AS S32, j AS S32)
+        LET temporary AS S32 = values[i]
+        values[i] = values[j]
+        values[j] = temporary
+    END PROCEDURE
+
+    FUNCTION Partition(left AS S32, right AS S32, pivot_index AS S32) AS S32
+        LET pivot_value AS S32 = values[pivot_index]
+        Swap(pivot_index, right)
+        LET store_index AS S32 = left
+        LET i AS S32 = left
+        WHILE i < right
+            IF values[i] < pivot_value THEN
+                Swap(store_index, i)
+                store_index = store_index + 1
+            END IF
+            i = i + 1
+        END WHILE
+        Swap(store_index, right)
+        RETURN store_index
+    END FUNCTION
+
+    FUNCTION KthSmallest(k AS S32) AS S32
+        LET left AS S32 = 0
+        LET right AS S32 = count - 1
+        WHILE 1
+            IF left = right THEN RETURN values[left] END IF
+            LET pivot_index AS S32 = (left + right) / 2
+            pivot_index = Partition(left, right, pivot_index)
+            LET pivot_dist AS S32 = pivot_index - left
+            IF pivot_dist = k THEN
+                RETURN values[pivot_index]
+            ELSEIF k < pivot_dist THEN
+                right = pivot_index - 1
+            ELSE
+                k = k - pivot_dist - 1
+                left = pivot_index + 1
+            END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Init()
+        values[0] = 9
+        values[1] = 8
+        values[2] = 7
+        values[3] = 6
+        values[4] = 5
+        values[5] = 0
+        values[6] = 1
+        values[7] = 2
+        values[8] = 3
+        values[9] = 4
+    END PROCEDURE
+END MODULE
+
+IMPORT QuickSelect
+BEGIN
+    QuickSelect.Init()
+    LET k AS S32 = 0
+    WHILE k < 10
+        PRINT QuickSelect.KthSmallest(k)
+        k = k + 1
+    END WHILE
+END

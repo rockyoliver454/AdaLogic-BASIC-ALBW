@@ -1,0 +1,81 @@
+-- 883 | Peaceful chess queen armies: place m white and m
+-- black queens on an n x n board so no queen attacks an
+-- opposite-colour queen. Backtracking search; n=5, m=4 is
+-- the classic answer for this board size.
+DECLARE MODULE Pq
+    FUNCTION Place(w AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pq
+    STRICT bd[26] AS S64
+    STRICT res[1] AS S64
+    STRICT tgt[1] AS S64
+
+    FUNCTION Att(r1 AS S64, c1 AS S64, r2 AS S64, c2 AS S64) AS S32
+        IF r1 = r2 ORELSE c1 = c2 THEN RETURN 1 END IF
+        LET dr AS S64 = r1 - r2
+        IF dr < 0 THEN dr = 0 - dr END IF
+        LET dc AS S64 = c1 - c2
+        IF dc < 0 THEN dc = 0 - dc END IF
+        IF dr = dc THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Safe(cell AS S64, mine AS S64, foe AS S64) AS S32
+        -- cell safe if no foe attacks it
+        LET r AS S64 = (cell - 1) / 5
+        LET c AS S64 = (cell - 1) MOD 5
+        FOR i = 1 TO 25
+            IF bd[i] = foe THEN
+                LET r2 AS S64 = (i - 1) / 5
+                LET c2 AS S64 = (i - 1) MOD 5
+                IF Att(r, c, r2, c2) = 1 THEN RETURN 0 END IF
+            END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Place(v AS S64) AS S32
+        -- place v: 1..4 = white queens, 5..8 = black queens
+        IF v > tgt[1] * 2 THEN RETURN 1 END IF
+        LET foe AS S64 = 2
+        IF v > tgt[1] THEN foe = 1 END IF
+        LET side AS S64 = 1
+        IF v > tgt[1] THEN side = 2 END IF
+        FOR cell = 1 TO 25
+            IF bd[cell] = 0 ANDALSO Safe(cell, side, foe) = 1 THEN
+                bd[cell] = side
+                IF Place(v + 1) = 1 THEN RETURN 1 END IF
+                bd[cell] = 0
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        tgt[1] = 4
+        FOR i = 1 TO 25
+            bd[i] = 0
+        END FOR
+        IF Place(1) = 1 THEN
+            FOR r = 0 TO 4
+                LET s AS STRING = ""
+                FOR c = 0 TO 4
+                    LET v AS S64 = bd[r * 5 + c + 1]
+                    IF v = 0 THEN s = s | "." END IF
+                    IF v = 1 THEN s = s | "W" END IF
+                    IF v = 2 THEN s = s | "B" END IF
+                END FOR
+                PRINT s
+            END FOR
+        ELSE
+            PRINT "no arrangement"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Pq
+BEGIN
+    Pq.Run()
+END

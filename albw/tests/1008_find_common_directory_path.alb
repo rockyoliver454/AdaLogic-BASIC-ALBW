@@ -1,0 +1,35 @@
+-- 1008 | Find common directory path: longest directory
+-- prefix shared by a set of paths (path-component aware).
+DECLARE MODULE Cp
+    PROCEDURE Run()
+END DECLARE MODULE
+MODULE Cp
+    STRICT ps[4] AS STRING
+    PROCEDURE Run()
+        ps[1] = "/home/user/docs/reports/a.txt"
+        ps[2] = "/home/user/docs/code/b.alb"
+        ps[3] = "/home/user/docs/notes/c.md"
+        ps[4] = "/home/user/docs/d.txt"
+        -- longest common string prefix
+        LET n AS S64 = LEN(ps[1])
+        FOR k = 2 TO 4
+            LET m AS S64 = LEN(ps[k])
+            IF m < n THEN n = m END IF
+            LET i AS S64 = 1
+            WHILE i <= n ANDALSO ASC(MID$(ps[1], i, 1)) = ASC(MID$(ps[k], i, 1))
+                i = i + 1
+            END WHILE
+            n = i - 1
+        END FOR
+        -- back off to the last path separator
+        WHILE n > 0 ANDALSO ASC(MID$(ps[1], n, 1)) <> 47
+            n = n - 1
+        END WHILE
+        PRINT "common dir: " | MID$(ps[1], 1, n - 1)
+        PRINT "remaining:  " | MID$(ps[2], n + 1, LEN(ps[2]) - n)
+    END PROCEDURE
+END MODULE
+IMPORT Cp
+BEGIN
+    Cp.Run()
+END

@@ -1,0 +1,34 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("utf8.txt", "w")
+    WRITE h, "A" | CHR(226) | CHR(130) | CHR(172) | "Z" | CHR(195) | CHR(169)
+    CLOSE h
+
+    LET r AS S64 = OPEN("utf8.txt", "r")
+    LET s AS STRING = READ(r, FILELEN("utf8.txt"))
+    CLOSE r
+
+    LET i AS S64 = 1
+    LET cps AS S64 = 0
+    WHILE i <= LEN(s)
+        LET b AS S64 = ASC(MID$(s, i, 1))
+        LET cp AS S64 = 0
+        LET adv AS S64 = 1
+        IF b < 128 THEN
+            cp = b
+        ELSE
+            IF b >= 224 THEN
+                cp = (b AND 15) * 4096 + (ASC(MID$(s, i + 1, 1)) AND 63) * 64 + (ASC(MID$(s, i + 2, 1)) AND 63)
+                adv = 3
+            ELSE
+                cp = (b AND 31) * 64 + (ASC(MID$(s, i + 1, 1)) AND 63)
+                adv = 2
+            END IF
+        END IF
+        PRINT "cp=" | cp
+        cps = cps + 1
+        i = i + adv
+    END WHILE
+    PRINT "codepoints=" | cps
+END

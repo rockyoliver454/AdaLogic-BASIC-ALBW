@@ -1,0 +1,7 @@
+-- 296 | String interpolation (included): build a sentence embedding values.
+BEGIN
+    LET extra AS STRING = "little"
+    LET count AS S32 = 3
+    LET msg AS STRING = "Mary had a " | extra | " lamb with " | count | " legs."
+    PRINT msg
+END

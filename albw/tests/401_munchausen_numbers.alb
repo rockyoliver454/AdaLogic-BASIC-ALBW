@@ -1,0 +1,38 @@
+-- 401 | Munchausen numbers: n = sum of digit^digit (0^0 = 0); all below 100000.
+DECLARE MODULE Munchausen
+    FUNCTION IsMunch(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Munchausen
+    STRICT pw[10] AS S64
+    FUNCTION IsMunch(n AS S64) AS S32
+        LET m AS S64 = n
+        LET s AS S64 = 0
+        WHILE m > 0
+            s = s + pw[m MOD 10]
+            IF s > n THEN RETURN 0 END IF
+            m = m / 10
+        END WHILE
+        IF n = 0 THEN RETURN 0 END IF
+        IF s = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        pw[0] = 0
+        FOR i = 1 TO 9
+            pw[i] = i ^ i
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 1 TO 99999
+            IF IsMunch(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Munchausen
+BEGIN
+    Munchausen.Run()
+END

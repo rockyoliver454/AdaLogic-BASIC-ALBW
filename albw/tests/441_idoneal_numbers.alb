@@ -1,0 +1,44 @@
+-- 441 | Idoneal numbers: print all 65 idoneal numbers.
+-- n is idoneal iff n = x*y + y*z + z*x has no solution with 0<x<y<z.
+DECLARE MODULE Idon
+    FUNCTION IsIdoneal(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Idon
+    FUNCTION IsIdoneal(n AS S64) AS S32
+        LET x AS S64 = 1
+        WHILE 3 * x * x < n
+            LET y AS S64 = x + 1
+            WHILE x * y + y * y + y * x < n + 1
+                LET num AS S64 = n - x * y
+                LET den AS S64 = x + y
+                IF num MOD den = 0 THEN
+                    LET z AS S64 = num / den
+                    IF z > y THEN RETURN 0 END IF
+                END IF
+                y = y + 1
+            END WHILE
+            x = x + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET cnt AS S64 = 0
+        FOR n = 1 TO 1848
+            IF IsIdoneal(n) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Idon
+BEGIN
+    Idon.Run()
+END

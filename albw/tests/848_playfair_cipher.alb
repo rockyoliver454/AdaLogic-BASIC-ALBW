@@ -1,0 +1,98 @@
+-- 848 | Playfair cipher: encrypt "HIDE THE GOLD IN THE TREE
+-- STUMP" with ky "PLAYFAIR EXAMPLE" -> BMODZBXDNABEKUDMUIXMMOUVIF
+DECLARE MODULE Pf
+    FUNCTION Lk(c AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pf
+    STRICT sq[26] AS S64
+    STRICT used[26] AS S64
+
+    FUNCTION Lk(c AS S64) AS S64
+        FOR i = 1 TO 25
+            IF sq[i] = c THEN RETURN i END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- build square from ky "PLAYFAIR EXAMPLE" (no J, dedup)
+        LET ky AS STRING = "PLAYFAIREXAMPL"
+        LET alph AS STRING = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
+        LET n AS S64 = 0
+        FOR i = 1 TO 26
+            used[i] = 0
+        END FOR
+        FOR i = 1 TO LEN(ky)
+            LET c AS S64 = ASC(MID$(ky, i, 1)) - 64
+            IF c = 10 THEN c = 9 END IF
+            IF used[c] = 0 THEN
+                used[c] = 1
+                n = n + 1
+                sq[n] = c
+            END IF
+        END FOR
+        FOR i = 1 TO LEN(alph)
+            LET c AS S64 = ASC(MID$(alph, i, 1)) - 64
+            IF used[c] = 0 THEN
+                used[c] = 1
+                n = n + 1
+                sq[n] = c
+            END IF
+        END FOR
+        -- prepare digraphs from message (letters only, I=J)
+        LET msg AS STRING = "HIDETHEGOLDINTHETREESTUMP"
+        LET dig AS STRING = ""
+        LET i AS S64 = 1
+        WHILE i <= LEN(msg)
+            LET a AS S64 = ASC(MID$(msg, i, 1))
+            LET b AS S64 = 0
+            IF i + 1 <= LEN(msg) THEN b = ASC(MID$(msg, i + 1, 1)) END IF
+            IF b = 0 THEN
+                dig = dig | CHR(a) | "X"
+                i = i + 1
+            ELSEIF a = b THEN
+                dig = dig | CHR(a) | "X"
+                i = i + 1
+            ELSE
+                dig = dig | CHR(a) | CHR(b)
+                i = i + 2
+            END IF
+        END WHILE
+        -- encrypt pairs
+        LET rs AS STRING = ""
+        FOR k = 1 TO LEN(dig) / 2
+            LET i AS S64 = k * 2 - 1
+            LET a AS S64 = ASC(MID$(dig, i, 1)) - 64
+            LET b AS S64 = ASC(MID$(dig, i + 1, 1)) - 64
+            IF a = 10 THEN a = 9 END IF
+            IF b = 10 THEN b = 9 END IF
+            LET pa AS S64 = Lk(a)
+            LET pb AS S64 = Lk(b)
+            LET ra AS S64 = (pa - 1) / 5
+            LET ca AS S64 = (pa - 1) MOD 5
+            LET rb AS S64 = (pb - 1) / 5
+            LET cb AS S64 = (pb - 1) MOD 5
+            LET na AS S64 = 0
+            LET nb AS S64 = 0
+            IF ra = rb THEN
+                na = ra * 5 + (ca + 1) MOD 5 + 1
+                nb = rb * 5 + (cb + 1) MOD 5 + 1
+            ELSEIF ca = cb THEN
+                na = ((ra + 1) MOD 5) * 5 + ca + 1
+                nb = ((rb + 1) MOD 5) * 5 + cb + 1
+            ELSE
+                na = ra * 5 + cb + 1
+                nb = rb * 5 + ca + 1
+            END IF
+            rs = rs | CHR(sq[na] + 64) | CHR(sq[nb] + 64)
+        END FOR
+        PRINT rs
+    END PROCEDURE
+END MODULE
+
+IMPORT Pf
+BEGIN
+    Pf.Run()
+END

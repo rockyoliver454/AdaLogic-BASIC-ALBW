@@ -1,0 +1,185 @@
+-- 250 | Topological sort: Kahn's algorithm on the VHDL library dependencies.
+DECLARE MODULE TopoSort
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE TopoSort
+    LET name_count AS S32 = 15
+    STRICT names[15] AS STRING
+    STRICT deps[225] AS S32
+    STRICT indeg[15] AS S32
+    STRICT done[15] AS S32
+    STRICT ready[15] AS S32
+    LET ready_count AS S32 = 0
+
+    FUNCTION StringsEqual(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IndexOfName(target AS STRING) AS S32
+        FOR i = 0 TO name_count - 1
+            IF StringsEqual(names[i], target) THEN RETURN i END IF
+        END FOR
+        RETURN -1
+    END FUNCTION
+
+    PROCEDURE AddName(i AS S32, n AS STRING)
+        names[i] = n
+    END PROCEDURE
+
+    PROCEDURE AddEdge(lib_name AS STRING, dep_name AS STRING)
+        LET lib_idx AS S32 = IndexOfName(lib_name)
+        LET dep_idx AS S32 = IndexOfName(dep_name)
+        IF lib_idx < 0 OR dep_idx < 0 THEN RETURN END IF
+        IF lib_idx = dep_idx THEN RETURN END IF
+        IF deps[lib_idx * name_count + dep_idx] = 0 THEN
+            deps[lib_idx * name_count + dep_idx] = 1
+            indeg[lib_idx] = indeg[lib_idx] + 1
+        END IF
+    END PROCEDURE
+
+    FUNCTION StringLess(a AS STRING, b AS STRING) AS S32
+        LET len_a AS S32 = LEN(a)
+        LET len_b AS S32 = LEN(b)
+        LET min_len AS S32 = len_a
+        IF len_b < min_len THEN min_len = len_b END IF
+        FOR i = 1 TO min_len
+            LET ca AS S32 = ASC(MID$(a, i, 1))
+            LET cb AS S32 = ASC(MID$(b, i, 1))
+            IF ca < cb THEN RETURN 1 END IF
+            IF ca > cb THEN RETURN 0 END IF
+        END FOR
+        IF len_a < len_b THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE SortReady()
+        IF ready_count <= 1 THEN RETURN END IF
+        FOR i = 0 TO ready_count - 2
+            FOR j = i + 1 TO ready_count - 1
+                IF StringLess(names[ready[j]], names[ready[i]]) THEN
+                    LET temporary AS S32 = ready[i]
+                    ready[i] = ready[j]
+                    ready[j] = temporary
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Init()
+        FOR i = 0 TO name_count - 1
+            names[i] = ""
+            indeg[i] = 0
+            done[i] = 0
+            FOR j = 0 TO name_count - 1
+                deps[i * name_count + j] = 0
+            END FOR
+        END FOR
+
+        AddName(0, "ieee")
+        AddName(1, "std")
+        AddName(2, "synopsys")
+        AddName(3, "std_cell_lib")
+        AddName(4, "dware")
+        AddName(5, "gtech")
+        AddName(6, "ramlib")
+        AddName(7, "dw01")
+        AddName(8, "dw02")
+        AddName(9, "dw03")
+        AddName(10, "dw04")
+        AddName(11, "dw05")
+        AddName(12, "dw06")
+        AddName(13, "dw07")
+        AddName(14, "des_system_lib")
+
+        AddEdge("des_system_lib", "std")
+        AddEdge("des_system_lib", "synopsys")
+        AddEdge("des_system_lib", "std_cell_lib")
+        AddEdge("des_system_lib", "dw02")
+        AddEdge("des_system_lib", "dw01")
+        AddEdge("des_system_lib", "ramlib")
+        AddEdge("des_system_lib", "ieee")
+
+        AddEdge("dw01", "ieee")
+        AddEdge("dw01", "dware")
+        AddEdge("dw01", "gtech")
+
+        AddEdge("dw02", "ieee")
+        AddEdge("dw02", "dware")
+
+        AddEdge("dw03", "std")
+        AddEdge("dw03", "synopsys")
+        AddEdge("dw03", "dware")
+        AddEdge("dw03", "dw02")
+        AddEdge("dw03", "dw01")
+        AddEdge("dw03", "ieee")
+        AddEdge("dw03", "gtech")
+
+        AddEdge("dw04", "ieee")
+        AddEdge("dw04", "dw01")
+        AddEdge("dw04", "dware")
+        AddEdge("dw04", "gtech")
+
+        AddEdge("dw05", "ieee")
+        AddEdge("dw05", "dware")
+
+        AddEdge("dw06", "ieee")
+        AddEdge("dw06", "dware")
+
+        AddEdge("dw07", "ieee")
+        AddEdge("dw07", "dware")
+
+        AddEdge("dware", "ieee")
+        AddEdge("gtech", "ieee")
+
+        AddEdge("ramlib", "std")
+        AddEdge("ramlib", "ieee")
+
+        AddEdge("std_cell_lib", "ieee")
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Init()
+        LET remaining AS S32 = name_count
+        WHILE remaining > 0
+            ready_count = 0
+            FOR i = 0 TO name_count - 1
+                IF done[i] = 0 ANDALSO indeg[i] = 0 THEN
+                    ready[ready_count] = i
+                    ready_count = ready_count + 1
+                END IF
+            END FOR
+            IF ready_count = 0 THEN
+                PRINT "CYCLE"
+                RETURN
+            END IF
+            SortReady()
+            LET out_line AS STRING = ""
+            FOR i = 0 TO ready_count - 1
+                IF i > 0 THEN out_line = out_line | " " END IF
+                out_line = out_line | names[ready[i]]
+            END FOR
+            PRINT out_line
+            FOR i = 0 TO ready_count - 1
+                LET lib AS S32 = ready[i]
+                done[lib] = 1
+                remaining = remaining - 1
+                FOR other = 0 TO name_count - 1
+                    IF done[other] = 0 ANDALSO deps[other * name_count + lib] = 1 THEN
+                        deps[other * name_count + lib] = 0
+                        indeg[other] = indeg[other] - 1
+                    END IF
+                END FOR
+            END FOR
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT TopoSort
+BEGIN
+    TopoSort.Run()
+END

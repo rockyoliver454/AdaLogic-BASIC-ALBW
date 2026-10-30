@@ -1,0 +1,44 @@
+-- 656 | Chinese zodiac: year -> animal and element.
+DECLARE MODULE Zod
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Zod
+    STRICT an[12] AS STRING
+    STRICT el[5] AS STRING
+    STRICT y[5] AS S64
+
+    PROCEDURE Run()
+        an[0] = "rat"
+        an[1] = "ox"
+        an[2] = "tiger"
+        an[3] = "rabbit"
+        an[4] = "dragon"
+        an[5] = "snake"
+        an[6] = "horse"
+        an[7] = "goat"
+        an[8] = "monkey"
+        an[9] = "rooster"
+        an[10] = "dog"
+        an[11] = "pig"
+        el[0] = "wood"
+        el[1] = "fire"
+        el[2] = "earth"
+        el[3] = "metal"
+        el[4] = "water"
+        y[1] = 1984
+        y[2] = 2024
+        y[3] = 2025
+        y[4] = 1990
+        FOR i = 1 TO 4
+            LET a AS S64 = (y[i] - 4) MOD 12
+            LET e AS S64 = ((y[i] - 4) MOD 10) / 2
+            PRINT y[i] | ": " | an[a] | " (" | el[e] | ")"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Zod
+BEGIN
+    Zod.Run()
+END

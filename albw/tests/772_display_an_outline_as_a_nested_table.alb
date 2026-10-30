@@ -1,0 +1,53 @@
+-- 772 | Display an outline as a nested table: render an
+-- indented outline showing each node's label + child count.
+DECLARE MODULE Ot
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ot
+    STRICT dp[9] AS S64
+    STRICT lb[9] AS STRING
+
+    PROCEDURE Run()
+        dp[1] = 1
+        lb[1] = "Animals"
+        dp[2] = 2
+        lb[2] = "Mammals"
+        dp[3] = 3
+        lb[3] = "Dog"
+        dp[4] = 3
+        lb[4] = "Cat"
+        dp[5] = 2
+        lb[5] = "Birds"
+        dp[6] = 3
+        lb[6] = "Eagle"
+        dp[7] = 3
+        lb[7] = "Sparrow"
+        dp[8] = 1
+        lb[8] = "Plants"
+        dp[9] = 2
+        lb[9] = "Tree"
+        FOR i = 1 TO 9
+            LET pad AS STRING = ""
+            IF dp[i] >= 2 THEN
+                FOR k = 2 TO dp[i]
+                    pad = pad | "  "
+                END FOR
+            END IF
+            LET kids AS S64 = 0
+            LET j AS S64 = i + 1
+            LET go AS S32 = 1
+            WHILE j <= 9 ANDALSO go = 1
+                IF dp[j] = dp[i] + 1 THEN kids = kids + 1 END IF
+                IF dp[j] <= dp[i] THEN go = 0 END IF
+                j = j + 1
+            END WHILE
+            PRINT pad | lb[i] | " (" | kids | ")"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ot
+BEGIN
+    Ot.Run()
+END

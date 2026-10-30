@@ -1,0 +1,28 @@
+-- 362 | Bell numbers: first 15 via the Bell triangle.
+DECLARE MODULE Bell
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bell
+    STRICT tri[256] AS S64
+
+    PROCEDURE Run()
+        tri[0] = 1
+        FOR n = 1 TO 14
+            tri[n * 16] = tri[(n - 1) * 16 + n - 1]
+            FOR k = 1 TO n
+                tri[n * 16 + k] = tri[n * 16 + k - 1] + tri[(n - 1) * 16 + k - 1]
+            END FOR
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 0 TO 14
+            s = s | tri[n * 16] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Bell
+BEGIN
+    Bell.Run()
+END

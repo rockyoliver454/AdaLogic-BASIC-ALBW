@@ -1,0 +1,7 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT CHR(27) | "[7m" | "INVERSED" | CHR(27) | "[0m"
+    PRINT "normal again"
+END

@@ -1,0 +1,44 @@
+-- 704 | Wagstaff primes: (2^p + 1)/3 prime for prime p.
+-- First p values and the Wagstaff numbers.
+DECLARE MODULE Wg
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wg
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET p AS S64 = 3
+        WHILE cnt < 8
+            LET w AS S64 = 1
+            FOR i = 1 TO p
+                w = w * 2
+            END FOR
+            w = (w + 1) / 3
+            IF Prime(w) = 1 THEN
+                PRINT "p=" | p | " -> " | w
+                cnt = cnt + 1
+            END IF
+            p = p + 2
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Wg
+BEGIN
+    Wg.Run()
+END

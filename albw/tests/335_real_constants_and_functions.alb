@@ -1,0 +1,22 @@
+-- 335 | Real constants and functions: derive pi, e, sqrt(2) and use core real functions.
+DECLARE MODULE RealConsts
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RealConsts
+    PROCEDURE Run()
+        LET pi AS F64 = 4.0 * ATAN(1.0)
+        LET e AS F64 = EXP(1.0)
+        PRINT "pi = " | pi
+        PRINT "e = " | e
+        PRINT "sqrt(2) = " | SQRT(2.0)
+        PRINT "ln(e) = " | LN(e)
+        PRINT "floor(9.75) = " | FLOOR(9.75)
+        PRINT "abs(-3.5) = " | ABS(-3.5)
+    END PROCEDURE
+END MODULE
+
+IMPORT RealConsts
+BEGIN
+    RealConsts.Run()
+END

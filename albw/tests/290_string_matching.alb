@@ -1,0 +1,51 @@
+-- 290 | String matching: prefix/suffix/contains checks and match positions.
+DECLARE MODULE StrMatch
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE StrMatch
+    FUNCTION FindFrom(s AS STRING, pat AS STRING, start_pos AS S32) AS S32
+        LET ns AS S32 = LEN(s)
+        LET np AS S32 = LEN(pat)
+        FOR i = start_pos TO ns - np + 1
+            LET ok AS S32 = 1
+            FOR j = 1 TO np
+                IF ASC(MID$(s, i + j - 1, 1)) <> ASC(MID$(pat, j, 1)) THEN ok = 0 END IF
+            END FOR
+            IF ok = 1 THEN RETURN i END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION StartsWith(s AS STRING, pat AS STRING) AS S32
+        IF FindFrom(s, pat, 1) = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Contains(s AS STRING, pat AS STRING) AS S32
+        LET found AS S32 = FindFrom(s, pat, 1)
+        IF found > 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION EndsWith(s AS STRING, pat AS STRING) AS S32
+        LET pos AS S32 = LEN(s) - LEN(pat) + 1
+        IF pos < 1 THEN RETURN 0 END IF
+        IF FindFrom(s, pat, pos) = pos THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT StartsWith("abcd", "ab")
+        PRINT EndsWith("abcd", "zn")
+        PRINT Contains("abab", "bb")
+        PRINT Contains("abab", "ab")
+        PRINT FindFrom("abab", "ab", 1)
+        PRINT FindFrom("abab", "ab", 2)
+    END PROCEDURE
+END MODULE
+
+IMPORT StrMatch
+BEGIN
+    StrMatch.Run()
+END

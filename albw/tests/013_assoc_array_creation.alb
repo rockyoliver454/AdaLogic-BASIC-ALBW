@@ -1,0 +1,45 @@
+-- 013 | Associative array/Creation: key->value map via parallel arrays.
+DECLARE MODULE M
+    FUNCTION Lookup(k AS STRING) AS S32
+    PROCEDURE Put(k AS STRING, v AS S32)
+END DECLARE MODULE
+
+MODULE M
+    STRICT keys[16] AS STRING;
+    STRICT vals[16] AS S32;
+    LET n AS S32 = 0;
+    PROCEDURE Put(k AS STRING, v AS S32)
+        LET hit AS S32 = 0;
+        FOR i = 0 TO n - 1 THEN
+            IF keys[i] = k THEN
+                vals[i] = v;
+                hit = 1;
+            END IF
+        END FOR
+        IF hit = 0 THEN
+            keys[n] = k;
+            vals[n] = v;
+            n = n + 1;
+        END IF
+    END PROCEDURE
+    FUNCTION Lookup(k AS STRING) AS S32
+        FOR i = 0 TO n - 1 THEN
+            IF keys[i] = k THEN
+                RETURN vals[i]
+            END IF
+        END FOR
+        RETURN 0 - 1
+    END FUNCTION
+END MODULE
+
+IMPORT M
+BEGIN
+    M.Put("one", 1);
+    M.Put("two", 2);
+    M.Put("three", 3);
+    M.Put("two", 22);
+    PRINT M.Lookup("one");
+    PRINT M.Lookup("two");
+    PRINT M.Lookup("three");
+    PRINT M.Lookup("four");
+END

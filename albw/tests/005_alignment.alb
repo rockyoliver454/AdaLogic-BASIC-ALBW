@@ -1,0 +1,33 @@
+-- 005 | Alignment: column formatting left/right/center.
+DECLARE MODULE Fmt
+    FUNCTION PadL(s AS STRING, w AS S32) AS STRING
+    FUNCTION PadR(s AS STRING, w AS S32) AS STRING
+END DECLARE MODULE
+
+MODULE Fmt
+    FUNCTION PadL(s AS STRING, w AS S32) AS STRING
+        WHILE LEN(s) < w
+            s = s | " "
+        END WHILE
+        RETURN s
+    END FUNCTION
+    FUNCTION PadR(s AS STRING, w AS S32) AS STRING
+        WHILE LEN(s) < w
+            s = " " | s
+        END WHILE
+        RETURN s
+    END FUNCTION
+END MODULE
+
+IMPORT Fmt
+BEGIN
+    STRICT w[5] AS STRING;
+    w[0] = "alpha"; w[1] = "be"; w[2] = "gamma";
+    w[3] = "d"; w[4] = "epsilon";
+    FOR i = 0 TO 4
+        PRINT$ "[" | Fmt.PadL(w[i], 10) | "]";
+    END FOR
+    FOR i = 0 TO 4
+        PRINT$ "[" | Fmt.PadR(w[i], 10) | "]";
+    END FOR
+END

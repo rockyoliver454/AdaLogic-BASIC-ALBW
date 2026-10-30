@@ -1,0 +1,131 @@
+-- 309 | Spelling of ordinal numbers: English ordinals for integers.
+DECLARE MODULE OrdNames
+    FUNCTION Ordinal(v AS S32) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE OrdNames
+    STRICT small[20] AS STRING
+    STRICT ord20[20] AS STRING
+    STRICT tens[10] AS STRING
+    STRICT otens[10] AS STRING
+
+    PROCEDURE Init()
+        small[1] = "one"
+        small[2] = "two"
+        small[3] = "three"
+        small[4] = "four"
+        small[5] = "five"
+        small[6] = "six"
+        small[7] = "seven"
+        small[8] = "eight"
+        small[9] = "nine"
+        small[10] = "ten"
+        small[11] = "eleven"
+        small[12] = "twelve"
+        small[13] = "thirteen"
+        small[14] = "fourteen"
+        small[15] = "fifteen"
+        small[16] = "sixteen"
+        small[17] = "seventeen"
+        small[18] = "eighteen"
+        small[19] = "nineteen"
+        ord20[1] = "first"
+        ord20[2] = "second"
+        ord20[3] = "third"
+        ord20[4] = "fourth"
+        ord20[5] = "fifth"
+        ord20[6] = "sixth"
+        ord20[7] = "seventh"
+        ord20[8] = "eighth"
+        ord20[9] = "ninth"
+        ord20[10] = "tenth"
+        ord20[11] = "eleventh"
+        ord20[12] = "twelfth"
+        ord20[13] = "thirteenth"
+        ord20[14] = "fourteenth"
+        ord20[15] = "fifteenth"
+        ord20[16] = "sixteenth"
+        ord20[17] = "seventeenth"
+        ord20[18] = "eighteenth"
+        ord20[19] = "nineteenth"
+        tens[2] = "twenty"
+        tens[3] = "thirty"
+        tens[4] = "forty"
+        tens[5] = "fifty"
+        tens[6] = "sixty"
+        tens[7] = "seventy"
+        tens[8] = "eighty"
+        tens[9] = "ninety"
+        otens[2] = "twentieth"
+        otens[3] = "thirtieth"
+        otens[4] = "fortieth"
+        otens[5] = "fiftieth"
+        otens[6] = "sixtieth"
+        otens[7] = "seventieth"
+        otens[8] = "eightieth"
+        otens[9] = "ninetieth"
+    END PROCEDURE
+
+    FUNCTION Under100(v AS S32) AS STRING
+        IF v < 20 THEN RETURN small[v] END IF
+        LET t AS S32 = v / 10
+        LET r AS S32 = v - t * 10
+        IF r = 0 THEN RETURN tens[t] END IF
+        RETURN tens[t] | "-" | small[r]
+    END FUNCTION
+
+    FUNCTION Ordinal(v AS S32) AS STRING
+        IF v < 20 THEN RETURN ord20[v] END IF
+        IF v < 100 THEN
+            LET t AS S32 = v / 10
+            LET r AS S32 = v - t * 10
+            IF r = 0 THEN RETURN otens[t] END IF
+            RETURN tens[t] | "-" | ord20[r]
+        END IF
+        IF v < 1000 THEN
+            LET h AS S32 = v / 100
+            LET r AS S32 = v - h * 100
+            IF r = 0 THEN RETURN small[h] | " hundredth" END IF
+            RETURN small[h] | " hundred " | Ordinal(r)
+        END IF
+        LET th AS S32 = v / 1000
+        LET r AS S32 = v - th * 1000
+        LET prefix AS STRING = ""
+        IF th < 100 THEN
+            prefix = Under100(th)
+        ELSE
+            LET h2 AS S32 = th / 100
+            LET r2 AS S32 = th - h2 * 100
+            prefix = small[h2] | " hundred"
+            IF r2 > 0 THEN prefix = prefix | " " | Under100(r2) END IF
+        END IF
+        IF r = 0 THEN RETURN prefix | " thousandth" END IF
+        RETURN prefix | " thousand " | Ordinal(r)
+    END FUNCTION
+
+    PROCEDURE Run()
+        Init()
+        STRICT nums[12] AS S32
+        nums[0] = 1
+        nums[1] = 2
+        nums[2] = 3
+        nums[3] = 4
+        nums[4] = 5
+        nums[5] = 11
+        nums[6] = 21
+        nums[7] = 42
+        nums[8] = 100
+        nums[9] = 101
+        nums[10] = 999
+        nums[11] = 1000
+        FOR i = 0 TO 11
+            PRINT nums[i] | " -> " | Ordinal(nums[i])
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT OrdNames
+BEGIN
+    OrdNames.Run()
+END

@@ -1,0 +1,4509 @@
+-- ============================================================================
+-- Nemeth - Nemeth Braille Code for Mathematics and Science Notation
+--
+-- Transcribes mathematical notation into 6-dot braille cells per the
+-- Nemeth Code (BANA 2022 edition).  Three output layers
+--   cell bitmasks (dot 1 = bit 0 .. dot 6 = bit 5, value 0..63)
+--   BRF  (North American Braille ASCII - embosser/braille-display ready)
+--   Unicode braille patterns (U+2800+)
+--
+-- Two modes: pure Nemeth, or Nemeth-in-UEB (literary runs wrapped in the
+-- switch indicators _% / _: ).  Strict transcription: anything outside
+-- the implemented spec lands in the error ledger, never wrong output.
+--
+-- Layer 1 (this file): cell model, tables, emit buffer, encoders,
+--   linear builder API, error ledger.
+-- Later layers: expression parser, spatial arrangements, UEB bridge,
+--   stitchforge french-knot export, MCP tools.
+--
+-- USE
+INCLUDE "nemeth.albi"
+IMPORT Nemeth
+--       Nemeth.Reset()
+--       Nemeth.Num("3"): Nemeth.Plus(): Nemeth.Num("4")
+--       Nemeth.Space(): Nemeth.Equals(): Nemeth.Space()
+--       Nemeth.Num("7")
+--       PRINT Nemeth.ToBrf()     =>   #3+4 .K #7
+-- ============================================================================
+
+VERSION 1.0
+
+DECLARE MODULE Nemeth
+    -- lifecycle / raw emit
+    PROCEDURE Reset()
+    PROCEDURE Put(c AS S64)
+    PROCEDURE Space()
+    PROCEDURE Newline()
+
+    -- buffer access / encoders
+    FUNCTION Count() AS S64
+    FUNCTION Cell(i AS S64) AS S64
+    FUNCTION ToBrf() AS STRING
+    FUNCTION ToUni() AS STRING
+
+    -- row readback (cells split on the -1 line-break sentinel)
+    FUNCTION RowCount() AS S64
+    FUNCTION RowBrf(r AS S64) AS STRING
+    FUNCTION RowUni(r AS S64) AS STRING
+
+    -- error ledger (strict transcription)
+    FUNCTION ErrCount() AS S64
+    FUNCTION ErrText(i AS S64) AS STRING
+
+    -- mode flags (numeric-mode suppresses the indicator, levels mark
+    -- superscript/subscript position where numerals take no indicator)
+    PROCEDURE Num(s AS STRING)
+    PROCEDURE Letters(s AS STRING)
+
+    -- signs of operation
+    PROCEDURE Plus()
+    PROCEDURE Minus()
+    PROCEDURE TimesCross()        -- x multiplication
+    PROCEDURE DotOp()        -- . multiplication dot
+    PROCEDURE Obelus()       -- division
+    PROCEDURE Slash()        -- / between expressions
+    PROCEDURE PlusMinus()
+
+    -- signs of comparison (caller supplies surrounding spaces)
+    PROCEDURE Equals()
+    PROCEDURE Lt()
+    PROCEDURE Gt()
+    PROCEDURE Le()
+    PROCEDURE Ge()
+    PROCEDURE Ne()
+
+    -- grouping
+    PROCEDURE ParenL()
+    PROCEDURE ParenR()
+    PROCEDURE BracketL()     -- [
+    PROCEDURE BracketR()     -- ]
+    PROCEDURE BraceL()       -- {
+    PROCEDURE BraceR()       -- }
+    PROCEDURE BarSym()       -- |  (abs value / such-that)
+    PROCEDURE FloorL()       -- |_
+    PROCEDURE FloorR()       -- _|
+    PROCEDURE CeilL()        -- |
+    PROCEDURE CeilR()        -- |
+    PROCEDURE AngL()         -- <
+    PROCEDURE AngR()         -- >
+
+    -- fractions:  k = 0 simple, 1 complex, 2 hypercomplex
+    PROCEDURE FracOpen(k AS S64)
+    PROCEDURE FracLine(k AS S64)
+    PROCEDURE FracClose(k AS S64)
+    PROCEDURE MFracOpen()    -- fractional part of a mixed number
+    PROCEDURE MFracClose()
+
+    -- levels: each emits its indicator; content follows until the next
+    -- level/baseline call or a space
+    PROCEDURE Sup()
+    PROCEDURE Sub()
+    PROCEDURE Base()
+
+    -- radicals: Rad() opens, RadIdx() marks the index, Term() closes
+    PROCEDURE Rad()
+    PROCEDURE RadIdx()
+    PROCEDURE Term()
+
+    -- indicators and misc
+    PROCEDURE Punct(ch AS STRING)   -- punctuation in math context
+    PROCEDURE Shape()               -- shape indicator (geometry)
+    PROCEDURE Omission()            -- blank/dash in a problem
+    PROCEDURE Prime()               -- '
+    PROCEDURE Ellipsis()            -- ...
+
+    -- named symbols: packed-table lookup + emit (latex + asciimath
+    -- names share one dictionary); Parse() walks the whole grammar
+    FUNCTION SymFind(nm AS STRING) AS S64
+    PROCEDURE SymPut(i AS S64)
+    PROCEDURE SymEmit(nm AS STRING)
+    PROCEDURE Parse(s AS STRING)
+    PROCEDURE Transcribe(s AS STRING)   -- Reset + Parse, one-shot
+
+    -- spatial engine:  matrices (enlarged grouping, left-justified
+    -- columns) and stacked arithmetic (+ - x, separation lines).
+    -- encl:  0 none  1 paren  2 bracket  3 brace  4 bar  5 cases
+    -- (open brace only).  Parse() also accepts \begin{pmatrix|
+    -- bmatrix|Bmatrix|vmatrix|matrix|cases} with & and \\, and
+    -- \binom{n}{k}.  Spatial numerals take no # indicator.
+    PROCEDURE MatBegin(encl AS S64)
+    PROCEDURE MatEntry(s AS STRING)
+    PROCEDURE MatRow()
+    PROCEDURE MatEnd()
+    -- stacked arithmetic;  op: 0 none 1 '+' 2 '-' 3 'x'
+    PROCEDURE StackBegin()
+    PROCEDURE StackRow(txt AS STRING, op AS S64)
+    PROCEDURE StackLine()
+    PROCEDURE StackEnd()
+    -- long division:  quotient over sep-line over divisor+dividend
+    PROCEDURE LDiv(dend AS STRING, dsor AS STRING, quot AS STRING)
+
+    -- ---------------------------------------------------------------
+    --  markup bridge:  source -> LaTeX / MathML.  Shares Tok() + the
+    --  symbol table but renders instead of transcribing.  Iterative
+    --  frame-stack machine (ALB bans recursion): open constructs push
+    --  frames; \frac / \sqrt / envs are operand-hungry frames that
+    --  complete on delivered units; ^ _ buffer sub/sup slots.
+    -- ---------------------------------------------------------------
+    FUNCTION ToLatex(s AS STRING) AS STRING
+    FUNCTION ToMathML(s AS STRING) AS STRING
+    FUNCTION LxEsc(s AS STRING) AS STRING
+    FUNCTION LxSymL(w AS STRING) AS STRING
+    FUNCTION LxSymM(w AS STRING) AS STRING
+    FUNCTION LxBig(w AS STRING) AS S64
+    FUNCTION LxMat(base AS STRING, sub AS STRING, sup AS STRING,
+                   op AS S64) AS STRING
+    PROCEDURE LxFlush()
+    PROCEDURE LxPush(k AS S64, env AS STRING)
+    PROCEDURE LxRestore()
+    FUNCTION LxWrap(k AS S64, inner AS STRING) AS STRING
+    PROCEDURE LxDeliver(txt AS STRING, inner AS STRING, grp AS S64,
+                        op AS S64)
+    PROCEDURE LxGroupEnd(k AS S64, rgt AS STRING)
+    PROCEDURE LxCellCommit()
+    PROCEDURE LxRowCommit()
+    FUNCTION LxRun(s AS STRING, m AS S64) AS STRING
+
+    -- ---------------------------------------------------------------
+    --  back-translation:  cell stream -> canonical math source (B1b).
+    --  Contract: Transcribe(From*(x)) reproduces x's cell stream; the
+    --  returned SOURCE is canonical (fracs all \frac, scripts braced,
+    --  ambiguous forms pick one spelling).  Iterative nb_* frame
+    --  stack, same shape as Lx*.
+    -- ---------------------------------------------------------------
+    FUNCTION FromCells(n AS S64) AS STRING
+    FUNCTION ToSource() AS STRING
+    FUNCTION FromBrf(b AS STRING) AS STRING
+    FUNCTION FromUni(u AS STRING) AS STRING
+    FUNCTION NbPackAt(pos AS S64) AS S64
+    FUNCTION NbIsLet(c AS S64) AS S64
+    FUNCTION NbIsDig(c AS S64) AS S64
+    FUNCTION NbDigVal(c AS S64) AS S64
+    PROCEDURE NbFlush()
+    PROCEDURE NbUnit(t AS STRING)
+    PROCEDURE NbOp(t AS STRING)
+    PROCEDURE NbPush(k AS S64)
+    PROCEDURE NbPop()
+    PROCEDURE NbEndScr()
+    PROCEDURE NbScrPush(k AS S64)
+    PROCEDURE NbNum()
+    PROCEDURE NbWord()
+    FUNCTION NbSymOut(i AS S64) AS STRING
+    FUNCTION NbGrpL(k AS S64) AS STRING
+    FUNCTION NbGrpR(k AS S64) AS STRING
+    FUNCTION NbEnvName(k AS S64) AS STRING
+    PROCEDURE NbDots()
+    FUNCTION NbSpaced(pos AS S64) AS S64
+    FUNCTION NbSpaced1(pos AS S64) AS S64
+    PROCEDURE NbEnvEnd()
+    PROCEDURE NbFour()
+    PROCEDURE NbOpInd()
+    PROCEDURE NbPunc()
+    PROCEDURE NbRun()
+    FUNCTION NbInit(n AS S64) AS STRING
+END DECLARE MODULE
+
+MODULE Nemeth
+
+    -- ---------------------------------------------------------------
+    --  cell model:  value = bitmask, dot n = 2^(n-1)
+    -- ---------------------------------------------------------------
+    --  verified against BANA Nemeth 2022 indicator table + NFB symbol
+    --  library (dots listed for each entry)
+
+    #NEM_MAX   = 8192        -- max cells in one transcription stream
+    #NEM_ERR   = 64          -- bounded error ledger
+    #NEM_LF    = -1          -- line-break sentinel in the cell stream
+
+    STRICT ncell[#NEM_MAX] AS S64
+    STRICT nerr[#NEM_ERR]  AS STRING
+    --  positions of real fraction markers (open/line/close first
+    --  cell).  cell VALUES collide:  # numeric indicator is 60 like
+    --  the frac-close cell, so markers are tracked by position.
+    STRICT nmk[#NEM_MAX]   AS S64
+    LET nmk_n  AS S64 = 0
+    LET ncnt   AS S64 = 0
+    LET nen    AS S64 = 0
+    LET nnum   AS S64 = 0    -- numeric mode:  1 = inside a numeral
+    LET nlev   AS S64 = 0    -- level:  0 baseline, + sup, - sub
+    LET ncapw  AS S64 = 0    -- inside a double-cap word
+
+    --  spatial engine state:  entries transcribe into the scratch
+    --  tail of ncell, copy to the grid buffer, and rewind
+    #GE_BUF  = 8192
+    #GE_MAX  = 256
+    #GE_ROWS = 64
+    STRICT ge_buf[#GE_BUF]  AS S64
+    STRICT ge_off[#GE_MAX]  AS S64
+    STRICT ge_len[#GE_MAX]  AS S64
+    STRICT gr_start[#GE_ROWS] AS S64
+    STRICT gr_op[#GE_ROWS]  AS S64      --  stacked-arith op per row
+    STRICT gcw[#GE_ROWS]    AS S64      --  scratch: column widths
+    LET ge_n  AS S64 = 0
+    LET gr_n  AS S64 = 0
+    LET ge_p  AS S64 = 0                --  ge_buf write cursor
+    LET gm_encl AS S64 = 0
+    LET gm_cols AS S64 = 0
+    LET nsp_flag AS S64 = 0             --  1 = spatial (no # indicator)
+    LET nsp0  AS S64 = 0                --  scratch base inside ncell
+    LET nmk0  AS S64 = 0                --  marker base for rewind
+
+    -- ---------------------------------------------------------------
+    --  lookup tables (filled by FillTabs, run by Reset)
+    -- ---------------------------------------------------------------
+    STRICT nlet[26]  AS S64      -- a-z literary cells
+    STRICT ndig[10]  AS S64      -- nemeth digits (lower cells)
+    STRICT brfa[64]  AS S64      -- cell -> BRF ascii code
+
+    PROCEDURE FillTabs()
+        -- literary letters (standard braille)
+        nlet[0]  = 1     --  a  dots 1
+        nlet[1]  = 3     --  b  dots 1,2
+        nlet[2]  = 9     --  c  dots 1,4
+        nlet[3]  = 25    --  d  dots 1,4,5
+        nlet[4]  = 17    --  e  dots 1,5
+        nlet[5]  = 11    --  f  dots 1,2,4
+        nlet[6]  = 27    --  g  dots 1,2,4,5
+        nlet[7]  = 19    --  h  dots 1,2,5
+        nlet[8]  = 10    --  i  dots 2,4
+        nlet[9]  = 26    --  j  dots 2,4,5
+        nlet[10] = 5     --  k  dots 1,3
+        nlet[11] = 7     --  l  dots 1,2,3
+        nlet[12] = 13    --  m  dots 1,3,4
+        nlet[13] = 29    --  n  dots 1,3,4,5
+        nlet[14] = 21    --  o  dots 1,3,5
+        nlet[15] = 15    --  p  dots 1,2,3,4
+        nlet[16] = 31    --  q  dots 1,2,3,4,5
+        nlet[17] = 23    --  r  dots 1,2,3,5
+        nlet[18] = 14    --  s  dots 2,3,4
+        nlet[19] = 30    --  t  dots 2,3,4,5
+        nlet[20] = 37    --  u  dots 1,3,6
+        nlet[21] = 39    --  v  dots 1,2,3,6
+        nlet[22] = 58    --  w  dots 2,4,5,6
+        nlet[23] = 45    --  x  dots 1,3,4,6
+        nlet[24] = 61    --  y  dots 1,3,4,5,6
+        nlet[25] = 53    --  z  dots 1,3,5,6
+        -- nemeth digits: lower-cell forms of a-j
+        ndig[0] = 52     --  0  dots 3,5,6
+        ndig[1] = 2      --  1  dot 2
+        ndig[2] = 6      --  2  dots 2,3
+        ndig[3] = 18     --  3  dots 2,5
+        ndig[4] = 50     --  4  dots 2,5,6
+        ndig[5] = 34     --  5  dots 2,6
+        ndig[6] = 22     --  6  dots 2,3,5
+        ndig[7] = 54     --  7  dots 2,3,5,6
+        ndig[8] = 38     --  8  dots 2,3,6
+        ndig[9] = 20     --  9  dots 3,5
+        -- North American Braille ASCII (NABCC): cell -> char code
+        brfa[0]  = 32    --  space
+        brfa[1]  = 65    --  A
+        brfa[2]  = 49    --  1
+        brfa[3]  = 66    --  B
+        brfa[4]  = 39    --  '
+        brfa[5]  = 75    --  K
+        brfa[6]  = 50    --  2
+        brfa[7]  = 76    --  L
+        brfa[8]  = 64    --  @
+        brfa[9]  = 67    --  C
+        brfa[10] = 73    --  I
+        brfa[11] = 70    --  F
+        brfa[12] = 47    --  /
+        brfa[13] = 77    --  M
+        brfa[14] = 83    --  S
+        brfa[15] = 80    --  P
+        brfa[16] = 34    --  "
+        brfa[17] = 69    --  E
+        brfa[18] = 51    --  3
+        brfa[19] = 72    --  H
+        brfa[20] = 57    --  9
+        brfa[21] = 79    --  O
+        brfa[22] = 54    --  6
+        brfa[23] = 82    --  R
+        brfa[24] = 94    --  ^
+        brfa[25] = 68    --  D
+        brfa[26] = 74    --  J
+        brfa[27] = 71    --  G
+        brfa[28] = 62    --  >
+        brfa[29] = 78    --  N
+        brfa[30] = 84    --  T
+        brfa[31] = 81    --  Q
+        brfa[32] = 44    --  ,
+        brfa[33] = 42    --  *
+        brfa[34] = 53    --  5
+        brfa[35] = 60    --  <
+        brfa[36] = 45    --  -
+        brfa[37] = 85    --  U
+        brfa[38] = 56    --  8
+        brfa[39] = 86    --  V
+        brfa[40] = 46    --  .
+        brfa[41] = 37    --  %
+        brfa[42] = 91    --  [
+        brfa[43] = 36    --  $
+        brfa[44] = 43    --  +
+        brfa[45] = 88    --  X
+        brfa[46] = 33    --  !
+        brfa[47] = 38    --  &
+        brfa[48] = 59    --  ;
+        brfa[49] = 58    --
+brfa[50] = 52    --  4
+        brfa[51] = 92    --  \
+        brfa[52] = 48    --  0
+        brfa[53] = 90    --  Z
+        brfa[54] = 55    --  7
+        brfa[55] = 40    --  (
+        brfa[56] = 95    --  _
+        brfa[57] = 63    --  ?
+        brfa[58] = 87    --  W
+        brfa[59] = 93    --  ]
+        brfa[60] = 35    --  #
+        brfa[61] = 89    --  Y
+        brfa[62] = 41    --  )
+        brfa[63] = 61    --  =
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  errors: strict ledger, never wrong output
+    -- ---------------------------------------------------------------
+    PROCEDURE NErr(s AS STRING)
+        IF nen < #NEM_ERR THEN
+            nerr[nen] = s
+            nen = nen + 1
+        END IF
+    END PROCEDURE
+
+    FUNCTION ErrCount() AS S64
+        RETURN nen
+    END FUNCTION
+
+    FUNCTION ErrText(i AS S64) AS STRING
+        IF i < 0 ORELSE i >= nen THEN RETURN "" END IF
+        RETURN nerr[i]
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  emit
+    -- ---------------------------------------------------------------
+    PROCEDURE Put(c AS S64)
+        IF ncnt >= #NEM_MAX THEN
+CALL NErr("cell buffer full (" | #NEM_MAX | ")")
+            RETURN
+        END IF
+        IF c < 0 ORELSE c > 63 THEN
+            IF c <> #NEM_LF THEN
+CALL NErr("bad cell value " | c)
+                RETURN
+            END IF
+        END IF
+        ncell[ncnt] = c
+        ncnt = ncnt + 1
+    END PROCEDURE
+
+    PROCEDURE Space()
+        --  collapse adjacent blanks:  input spaces and the spaces
+        --  transcription adds around relations must not double up
+        IF ncnt = 0 ORELSE ncell[ncnt - 1] <> 0 THEN
+            CALL Put(0)
+        END IF
+        nnum = 0
+        ncapw = 0
+        --  spaces inside a levelled group are content and keep the
+        --  level;  a space at base level does return to baseline
+        IF InLevGroup() = 0 THEN nlev = 0 END IF
+    END PROCEDURE
+
+    PROCEDURE Newline()
+CALL Put(#NEM_LF)
+        nnum = 0
+        ncapw = 0
+    END PROCEDURE
+
+    PROCEDURE Reset()
+        ncnt = 0
+        nen = 0
+        nnum = 0
+        nlev = 0
+        ncapw = 0
+        nmk_n = 0
+        nsp_flag = 0
+        ge_n = 0
+        gr_n = 0
+        ge_p = 0
+CALL FillTabs()
+CALL FillSym()
+    END PROCEDURE
+
+    FUNCTION Count() AS S64
+        RETURN ncnt
+    END FUNCTION
+
+    FUNCTION Cell(i AS S64) AS S64
+        IF i < 0 ORELSE i >= ncnt THEN RETURN -2 END IF
+        RETURN ncell[i]
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  encoders
+    -- ---------------------------------------------------------------
+    FUNCTION ToBrf() AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ncnt
+            c = ncell[i]
+            IF c = #NEM_LF THEN
+                s = s | CHR(10)
+            ELSE
+                s = s | CHR(brfa[c])
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION ToUni() AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ncnt
+            c = ncell[i]
+            IF c = #NEM_LF THEN
+                s = s | CHR(10)
+            ELSE
+                s = s | CHR(10240 + c)
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  row readback — the cell stream is flat with -1 line-break
+    --  sentinels; row r is the text between sentinels r-1 and r.
+    --  A trailing newline yields a final empty row (RowCount counts
+    --  it).  Out-of-range r returns "".
+    -- ---------------------------------------------------------------
+    FUNCTION RowCount() AS S64
+        LET n AS S64 = 0
+        LET i AS S64 = 0
+        LET c AS S64 = 0
+        IF ncnt = 0 THEN RETURN 0 END IF
+        n = 1
+        i = 0
+        WHILE i < ncnt
+            c = ncell[i]
+            IF c = #NEM_LF THEN n = n + 1 END IF
+            i = i + 1
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    FUNCTION RowBrf(r AS S64) AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET cur AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ncnt
+            c = ncell[i]
+            IF c = #NEM_LF THEN
+                IF cur = r THEN RETURN s END IF
+                cur = cur + 1
+            ELSE
+                IF cur = r THEN s = s | CHR(brfa[c]) END IF
+            END IF
+            i = i + 1
+        END WHILE
+        IF cur = r THEN RETURN s END IF
+        RETURN ""
+    END FUNCTION
+
+    FUNCTION RowUni(r AS S64) AS STRING
+        LET s AS STRING = ""
+        LET i AS S64 = 0
+        LET cur AS S64 = 0
+        LET c AS S64 = 0
+        i = 0
+        WHILE i < ncnt
+            c = ncell[i]
+            IF c = #NEM_LF THEN
+                IF cur = r THEN RETURN s END IF
+                cur = cur + 1
+            ELSE
+                IF cur = r THEN s = s | CHR(10240 + c) END IF
+            END IF
+            i = i + 1
+        END WHILE
+        IF cur = r THEN RETURN s END IF
+        RETURN ""
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  builder: numerals and letters
+    -- ---------------------------------------------------------------
+    --  numerals take the numeric indicator unless numeric mode is on
+    --  or they sit in super/subscript position (spec: no indicator in
+    --  raised/lowered position).  "." decimal point, "," numeric comma.
+    PROCEDURE Num(s AS STRING)
+        LET i AS S64 = 0
+        LET a AS S64 = 0
+        LET ch AS STRING = ""
+        IF LEN(s) < 1 THEN
+CALL NErr("Num: empty string")
+            RETURN
+        END IF
+        IF nnum = 0 AND nlev = 0 AND nsp_flag = 0 THEN
+CALL Put(60)            --  numeric indicator  dots 3,4,5,6
+        END IF
+        i = 1
+        WHILE i <= LEN(s)
+            ch = MID(s, i, 1)
+            a = ASC(ch)
+            IF a >= 48 AND a <= 57 THEN
+CALL Put(ndig[a - 48])
+            ELSEIF ch = "." THEN
+CALL Put(40)        --  decimal point      dots 4,6
+            ELSEIF ch = "," THEN
+CALL Put(32)        --  numeric comma      dot 6
+            ELSE
+CALL NErr("Num: bad char '" | ch | "'")
+            END IF
+            i = i + 1
+        END WHILE
+        nnum = 1
+    END PROCEDURE
+
+    --  letters: single lowercase letter standing alone gets the
+    --  English-letter indicator (dots 5,6).  a single capital gets dot 6;
+    --  an all-caps word gets double-dot-6 once; mixed case caps each
+    --  uppercase letter.  caller passes one word/variable per call.
+    PROCEDURE Letters(s AS STRING)
+        LET i AS S64 = 0
+        LET a AS S64 = 0
+        LET n AS S64 = 0
+        LET ch AS STRING = ""
+        LET allup AS S64 = 1
+        n = LEN(s)
+        IF n < 1 THEN
+CALL NErr("Let: empty string")
+            RETURN
+        END IF
+        i = 1
+        WHILE i <= n
+            ch = MID(s, i, 1)
+            a = ASC(ch)
+            IF a < 65 ORELSE a > 122 ORELSE (a > 90 AND a < 97) THEN
+CALL NErr("Let: bad char '" | ch | "'")
+                RETURN
+            END IF
+            IF a >= 97 THEN allup = 0 END IF
+            i = i + 1
+        END WHILE
+        IF n = 1 THEN
+            ch = MID(s, 1, 1)
+            a = ASC(ch)
+            IF a >= 97 THEN
+CALL Put(48)        --  ELI                dots 5,6
+CALL Put(nlet[a - 97])
+            ELSE
+CALL Put(32)        --  single cap         dot 6
+CALL Put(nlet[a - 65])
+            END IF
+        ELSE
+            IF allup = 1 THEN
+CALL Put(32)        --  double cap word
+CALL Put(32)
+            END IF
+            i = 1
+            WHILE i <= n
+                ch = MID(s, i, 1)
+                a = ASC(ch)
+                IF a >= 97 THEN
+CALL Put(nlet[a - 97])
+                ELSE
+                    IF allup = 0 THEN CALL Put(32) END IF
+CALL Put(nlet[a - 65])
+                END IF
+                i = i + 1
+            END WHILE
+        END IF
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  signs of operation
+    -- ---------------------------------------------------------------
+    PROCEDURE Plus()                     --  +    dots 3,4,6
+CALL Put(44)
+    END PROCEDURE
+
+    PROCEDURE Minus()                    --  -    dots 3,6
+CALL Put(36)
+    END PROCEDURE
+
+    PROCEDURE TimesCross()                    --  x    dot4 , dots 1,6
+CALL Put(8)
+CALL Put(33)
+    END PROCEDURE
+
+    PROCEDURE DotOp()                    --  .    dots 1,6
+CALL Put(33)
+    END PROCEDURE
+
+    PROCEDURE Obelus()                   --  div  dots 4,6 , dots 3,4
+CALL Put(40)
+CALL Put(12)
+    END PROCEDURE
+
+    PROCEDURE Slash()                    --  /    dots 4,5,6 , dots 3,4
+CALL Put(56)
+CALL Put(12)
+    END PROCEDURE
+
+    PROCEDURE PlusMinus()                --  +-   plus then minus cells
+CALL Put(44)
+CALL Put(36)
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  signs of comparison (caller must Space() around them)
+    -- ---------------------------------------------------------------
+    PROCEDURE Equals()                   --  =    dots 4,6 , dots 1,3
+CALL Put(40)
+CALL Put(5)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Lt()                       --  <    dot 5 , dots 1,3
+CALL Put(16)
+CALL Put(5)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Gt()                       --  >    dots 4,6 , dot 2
+CALL Put(40)
+CALL Put(2)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Le()                       --  <=   lt + bar  dots 1,5,6
+CALL Put(16)
+CALL Put(5)
+CALL Put(49)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Ge()                       --  >=   gt + bar
+CALL Put(40)
+CALL Put(2)
+CALL Put(49)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Ne()                       --  /=   slash-negation + equals
+CALL Put(12)
+CALL Put(40)
+CALL Put(5)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  grouping
+    -- ---------------------------------------------------------------
+    PROCEDURE ParenL()                   --  (    dots 1,2,3,5,6
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE ParenR()                   --  )    dots 2,3,4,5,6
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  fractions  (k: 0 simple, 1 complex, 2 hypercomplex = dot6 x k)
+    -- ---------------------------------------------------------------
+    PROCEDURE FracOpen(k AS S64)
+        LET i AS S64 = 0
+        IF k < 0 ORELSE k > 2 THEN
+CALL NErr("FracOpen: bad level " | k)
+            RETURN
+        END IF
+        i = 0
+        WHILE i < k
+CALL Put(32)            --  dot 6 prefix
+            i = i + 1
+        END WHILE
+CALL Put(57)                --  opening fraction  dots 1,4,5,6
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE FracLine(k AS S64)
+        LET i AS S64 = 0
+        IF k < 0 ORELSE k > 2 THEN
+CALL NErr("FracLine: bad level " | k)
+            RETURN
+        END IF
+        i = 0
+        WHILE i < k
+CALL Put(32)
+            i = i + 1
+        END WHILE
+CALL Put(12)                --  fraction line     dots 3,4
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE FracClose(k AS S64)
+        LET i AS S64 = 0
+        IF k < 0 ORELSE k > 2 THEN
+CALL NErr("FracClose: bad level " | k)
+            RETURN
+        END IF
+        i = 0
+        WHILE i < k
+CALL Put(32)
+            i = i + 1
+        END WHILE
+CALL Put(60)                --  closing fraction  dots 3,4,5,6
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE MFracOpen()           --  mixed-number frac  _?
+CALL Put(56)
+CALL Put(57)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE MFracClose()          --                     _#
+CALL Put(56)
+CALL Put(60)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  levels
+    -- ---------------------------------------------------------------
+    PROCEDURE Sup()                     --  superscript   dots 4,5
+CALL Put(24)
+        nlev = nlev + 1
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Sub()                     --  subscript     dots 5,6
+CALL Put(48)
+        nlev = nlev - 1
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Base()                    --  baseline      dot 5
+CALL Put(16)
+        nlev = 0
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  radicals
+    -- ---------------------------------------------------------------
+    PROCEDURE Rad()                     --  radical       dots 1,4,6
+CALL Put(41)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE RadIdx()                  --  index mark    dots 1,2,6
+CALL Put(35)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Term()                    --  termination   dots 1,2,4,5,6
+CALL Put(59)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  indicators and misc
+    -- ---------------------------------------------------------------
+    PROCEDURE Punct(ch AS STRING)
+        --  nemeth punctuation: , and ' are bare cells; the rest take
+        --  the punctuation indicator (dots 4,5,6) + literary cell
+        IF LEN(ch) <> 1 THEN
+CALL NErr("Punct: want 1 char")
+            RETURN
+        END IF
+        IF ch = "," THEN
+CALL Put(32)            --  comma          dot 6
+        ELSEIF ch = "'" THEN
+CALL Put(4)             --  apostrophe     dot 3
+        ELSEIF ch = ";" THEN
+CALL Put(56)
+CALL Put(6)
+        ELSEIF ch = ":" THEN
+CALL Put(56)
+CALL Put(18)
+        ELSEIF ch = "." THEN
+CALL Put(56)
+CALL Put(50)
+        ELSEIF ch = "!" THEN
+CALL Put(56)
+CALL Put(22)
+        ELSEIF ch = "?" THEN
+CALL Put(56)
+CALL Put(38)
+        ELSEIF ch = "-" THEN
+CALL Put(56)
+CALL Put(36)
+        ELSE
+CALL NErr("Punct: unmapped '" | ch | "'")
+            RETURN
+        END IF
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Shape()                   --  shape indicator  dots 1,2,4,6
+CALL Put(43)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Omission()                --  blank/dash  dots 3,6 x 4
+CALL Put(36)                    --  TODO spec-verify count/form
+CALL Put(36)
+CALL Put(36)
+CALL Put(36)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  grouping variants
+    -- ---------------------------------------------------------------
+    PROCEDURE BracketL()                --  [   dot 4 , parenL
+CALL Put(8)
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE BracketR()                --  ]   dot 4 , parenR
+CALL Put(8)
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE BraceL()                  --  {   dots 4,6 , parenL
+CALL Put(40)
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE BraceR()                  --  }   dots 4,6 , parenR
+CALL Put(40)
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE BarSym()                  --  |   dots 1,6 (abs / such-that)
+CALL Put(33)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE FloorL()                  --  |_  dot 4 , sub , parenL
+CALL Put(8)
+CALL Put(48)
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE FloorR()                  --  _|  dot 4 , sub , parenR
+CALL Put(8)
+CALL Put(48)
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE CeilL()                   --  |   dot 4 , sup , parenL
+CALL Put(8)
+CALL Put(24)
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE CeilR()                   --  |   dot 4 , sup , parenR
+CALL Put(8)
+CALL Put(24)
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE AngL()                    --  <   dots 4,6 x 2 , parenL
+CALL Put(40)
+CALL Put(40)
+CALL Put(55)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE AngR()                    --  >   dots 4,6 x 2 , parenR
+CALL Put(40)
+CALL Put(40)
+CALL Put(62)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Prime()                   --  '   dot 3
+CALL Put(4)
+        nnum = 0
+    END PROCEDURE
+
+    PROCEDURE Ellipsis()                --  ...  dot 3 x 3
+CALL Put(4)
+CALL Put(4)
+CALL Put(4)
+        nnum = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  cell insertion: shift [pos,ncnt) right, drop c at pos.
+    --  used by fraction wrapping: the open/line/close markers and
+    --  their dot-6 level prefixes go around already-emitted factors.
+    -- ---------------------------------------------------------------
+    PROCEDURE InsCell(pos AS S64, c AS S64)
+        LET j AS S64 = 0
+        IF pos < 0 ORELSE pos >= ncnt THEN
+CALL NErr("InsCell: bad pos")
+            RETURN
+        END IF
+        IF ncnt >= #NEM_MAX THEN
+CALL NErr("cell buffer full")
+            RETURN
+        END IF
+        j = ncnt
+        WHILE j > pos
+            ncell[j] = ncell[j - 1]
+            j = j - 1
+        END WHILE
+        ncell[pos] = c
+        ncnt = ncnt + 1
+        --  every marker at or right of pos slides one cell
+        j = 0
+        WHILE j < nmk_n
+            IF nmk[j] >= pos THEN nmk[j] = nmk[j] + 1 END IF
+            j = j + 1
+        END WHILE
+    END PROCEDURE
+
+    --  record a fraction marker position for ScanFrac
+    PROCEDURE MkAt(pos AS S64)
+        IF pos < 0 ORELSE pos >= ncnt THEN RETURN END IF
+        IF nmk_n >= #NEM_MAX THEN
+            CALL NErr("marker table full")
+            RETURN
+        END IF
+        nmk[nmk_n] = pos
+        nmk_n = nmk_n + 1
+    END PROCEDURE
+
+    --  scan [a,b): deepest dot-6 prefix run ahead of a REAL fraction
+    --  marker (positions tracked in nmk; cell values alone lie:
+    --  # numeric indicator is also cell 60).  returns the max inner
+    --  fraction level, or -1 when the range holds no markers.
+    FUNCTION ScanFrac(a AS S64, b AS S64) AS S64
+        LET i AS S64 = 0
+        LET j AS S64 = 0
+        LET k AS S64 = 0
+        LET m AS S64 = 0
+        LET mx AS S64 = -1
+        i = 0
+        WHILE i < nmk_n
+            m = nmk[i]
+            IF m >= a AND m < b THEN
+                k = 0
+                j = m - 1
+                WHILE j >= a AND ncell[j] = 32
+                    k = k + 1
+                    j = j - 1
+                END WHILE
+                IF k > mx THEN mx = k END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN mx
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  named-symbol dictionary: name -> packed cells
+    --  pack = n * 2^48 | c0 | c1*64 | ...  (<= 8 cells = 48 bits,
+    --  count fits above;  whole value stays < 2^53 for f64-exact
+    --  arithmetic)
+    -- ---------------------------------------------------------------
+    #NEM_NSYM = 200
+    STRICT ns_name[#NEM_NSYM] AS STRING
+    STRICT ns_pack[#NEM_NSYM] AS S64
+    STRICT ns_rel[#NEM_NSYM]  AS S64     --  1 = spaced relation
+    LET ns_n AS S64 = 0
+
+    PROCEDURE SymReg(nm AS STRING, p AS S64, r AS S64)
+        IF ns_n >= #NEM_NSYM THEN
+CALL NErr("symbol table full")
+            RETURN
+        END IF
+        ns_name[ns_n] = nm
+        ns_pack[ns_n] = p
+        ns_rel[ns_n] = r
+        ns_n = ns_n + 1
+    END PROCEDURE
+
+    FUNCTION Pack1(c0 AS S64) AS S64
+        RETURN 281474976710656 + c0
+    END FUNCTION
+
+    FUNCTION Pack2(c0 AS S64, c1 AS S64) AS S64
+        RETURN 562949953421312 + c0 + c1 * 64
+    END FUNCTION
+
+    FUNCTION Pack3(c0 AS S64, c1 AS S64, c2 AS S64) AS S64
+        RETURN 844424930131968 + c0 + c1 * 64 + c2 * 4096
+    END FUNCTION
+
+    FUNCTION Pack4(c0 AS S64, c1 AS S64, c2 AS S64, c3 AS S64) AS S64
+        RETURN 1125899906842624 + c0 + c1 * 64 + c2 * 4096 +
+               c3 * 262144
+    END FUNCTION
+
+    FUNCTION Pack5(c0 AS S64, c1 AS S64, c2 AS S64, c3 AS S64,
+                   c4 AS S64) AS S64
+        RETURN 1407374883553280 + c0 + c1 * 64 + c2 * 4096 +
+               c3 * 262144 + c4 * 16777216
+    END FUNCTION
+
+    FUNCTION Pack6(c0 AS S64, c1 AS S64, c2 AS S64, c3 AS S64,
+                   c4 AS S64, c5 AS S64) AS S64
+        RETURN 1688849860263936 + c0 + c1 * 64 + c2 * 4096 +
+               c3 * 262144 + c4 * 16777216 + c5 * 1073741824
+    END FUNCTION
+
+    FUNCTION Pack7(c0 AS S64, c1 AS S64, c2 AS S64, c3 AS S64,
+                   c4 AS S64, c5 AS S64, c6 AS S64) AS S64
+        RETURN 1970324836974592 + c0 + c1 * 64 + c2 * 4096 +
+               c3 * 262144 + c4 * 16777216 + c5 * 1073741824 +
+               c6 * 68719476736
+    END FUNCTION
+
+    PROCEDURE FillSym()
+        ns_n = 0
+        --  constants and misc          name       cells              rel
+CALL SymReg("infty",       Pack2(32, 63),              0)
+CALL SymReg("oo",          Pack2(32, 63),              0)
+CALL SymReg("aleph",       Pack3(32, 32, 1),           0)
+CALL SymReg("emptyset",    Pack2(56, 52),              0)
+CALL SymReg("O/",          Pack2(56, 52),              0)
+CALL SymReg("varnothing",  Pack2(56, 52),              0)
+CALL SymReg("percent",     Pack2(8, 52),               0)
+CALL SymReg("%",           Pack2(8, 52),               0)
+CALL SymReg("dollar",      Pack2(8, 14),               0)
+CALL SymReg("hash",        Pack2(40, 60),              0)
+CALL SymReg("amp",         Pack2(56, 47),              0)
+CALL SymReg("degree",      Pack3(24, 40, 33),          0)
+CALL SymReg("deg",         Pack3(24, 40, 33),          0)
+        --  operations
+CALL SymReg("pm",          Pack2(44, 36),              0)
+CALL SymReg("+-",          Pack2(44, 36),              0)
+CALL SymReg("mp",          Pack2(36, 44),              0)
+CALL SymReg("-+",          Pack2(36, 44),              0)
+CALL SymReg("times",       Pack2(8, 33),               0)
+CALL SymReg("xx",          Pack2(8, 33),               0)
+CALL SymReg("cdot",        Pack1(33),                  0)
+CALL SymReg("ast",         Pack2(8, 60),               0)
+CALL SymReg("div",         Pack2(40, 12),              0)
+CALL SymReg("circ",        Pack2(40, 33),              0)
+CALL SymReg("cap",         Pack2(40, 41),              0)
+CALL SymReg("nn",          Pack2(40, 41),              0)
+CALL SymReg("cup",         Pack2(40, 44),              0)
+CALL SymReg("uu",          Pack2(40, 44),              0)
+CALL SymReg("setminus",    Pack2(56, 33),              0)
+CALL SymReg("wedge",       Pack2(8, 41),               0)
+CALL SymReg("vee",         Pack2(8, 44),               0)
+CALL SymReg("oplus",       Pack6(43, 9, 56, 43, 44, 59),   0)
+CALL SymReg("o+",          Pack6(43, 9, 56, 43, 44, 59),   0)
+CALL SymReg("ominus",      Pack6(43, 9, 56, 43, 36, 59),   0)
+CALL SymReg("o-",          Pack6(43, 9, 56, 43, 36, 59),   0)
+CALL SymReg("otimes",      Pack7(43, 9, 56, 43, 8, 33, 59),0)
+CALL SymReg("ox",          Pack7(43, 9, 56, 43, 8, 33, 59),0)
+CALL SymReg("odot",        Pack6(43, 9, 56, 43, 33, 59),   0)
+CALL SymReg("o.",          Pack6(43, 9, 56, 43, 33, 59),   0)
+CALL SymReg("oslash",      Pack7(43, 9, 56, 43, 56, 12, 59),0)
+        --  comparisons and relations (rel = 1: caller wraps spaces)
+CALL SymReg("~",           Pack2(8, 49),               1)
+CALL SymReg("neq",         Pack3(12, 40, 5),           1)
+CALL SymReg("ne",          Pack3(12, 40, 5),           1)
+CALL SymReg("!=",          Pack3(12, 40, 5),           1)
+CALL SymReg("leq",         Pack3(16, 5, 49),           1)
+CALL SymReg("le",          Pack3(16, 5, 49),           1)
+CALL SymReg("<=",          Pack3(16, 5, 49),           1)
+CALL SymReg("geq",         Pack3(40, 2, 49),           1)
+CALL SymReg("ge",          Pack3(40, 2, 49),           1)
+CALL SymReg(">=",          Pack3(40, 2, 49),           1)
+CALL SymReg("equiv",       Pack2(56, 7),               1)
+CALL SymReg("==",          Pack2(56, 7),               1)
+CALL SymReg("approx",      Pack4(8, 49, 8, 49),        1)
+CALL SymReg("~~",          Pack4(8, 49, 8, 49),        1)
+CALL SymReg("simeq",       Pack4(8, 49, 40, 5),        1)
+CALL SymReg("~=",          Pack4(8, 49, 40, 5),        1)
+CALL SymReg("cong",        Pack4(8, 49, 40, 5),        1)
+CALL SymReg("propto",      Pack2(56, 63),              1)
+CALL SymReg("prop",        Pack2(56, 63),              1)
+CALL SymReg("ll",          Pack6(16, 5, 8, 16, 5, 59), 1)
+CALL SymReg("gg",          Pack6(40, 2, 8, 40, 2, 59), 1)
+CALL SymReg("prec",        Pack3(40, 16, 5),           1)
+CALL SymReg("succ",        Pack3(40, 40, 2),           1)
+        --  sets / logic
+CALL SymReg("in",          Pack2(8, 17),               1)
+CALL SymReg("notin",       Pack3(12, 8, 17),           1)
+CALL SymReg("nin",         Pack3(12, 8, 17),           1)
+CALL SymReg("ni",          Pack2(8, 34),               1)
+CALL SymReg("subset",      Pack3(56, 16, 5),           1)
+CALL SymReg("sub",         Pack3(56, 16, 5),           1)
+CALL SymReg("supset",      Pack3(56, 40, 2),           1)
+CALL SymReg("sup",         Pack3(56, 40, 2),           1)
+CALL SymReg("subseteq",    Pack4(56, 16, 5, 49),       1)
+CALL SymReg("sube",        Pack4(56, 16, 5, 49),       1)
+CALL SymReg("supseteq",    Pack4(56, 40, 2, 49),       1)
+CALL SymReg("supe",        Pack4(56, 40, 2, 49),       1)
+CALL SymReg("forall",      Pack2(8, 47),               0)
+CALL SymReg("AA",          Pack2(8, 47),               0)
+CALL SymReg("exists",      Pack2(8, 63),               0)
+CALL SymReg("EE",          Pack2(8, 63),               0)
+CALL SymReg("nexists",     Pack3(12, 8, 63),           0)
+CALL SymReg("therefore",   Pack2(32, 33),              1)
+CALL SymReg(":.",          Pack2(32, 33),              1)
+CALL SymReg("because",     Pack2(8, 12),               1)
+CALL SymReg(":'",          Pack2(8, 12),               1)
+        --  calculus / shapes
+CALL SymReg("int",         Pack1(46),                  0)
+CALL SymReg("iint",        Pack2(46, 46),              0)
+CALL SymReg("iiint",       Pack3(46, 46, 46),          0)
+CALL SymReg("oint",        Pack6(43, 9, 56, 43, 46, 59),   0)
+CALL SymReg("sum",         Pack3(40, 32, 14),          0)
+CALL SymReg("prod",        Pack3(40, 32, 15),          0)
+CALL SymReg("partial",     Pack2(8, 25),               0)
+CALL SymReg("del",         Pack2(8, 25),               0)
+CALL SymReg("nabla",       Pack2(40, 43),              0)
+CALL SymReg("grad",        Pack2(40, 43),              0)
+CALL SymReg("angle",       Pack2(43, 42),              0)
+CALL SymReg("/_",          Pack2(43, 42),              0)
+CALL SymReg("perp",        Pack2(43, 15),              1)
+CALL SymReg("_|_",         Pack2(43, 15),              1)
+CALL SymReg("bot",         Pack2(43, 15),              0)
+CALL SymReg("top",         Pack4(43, 41, 51, 18),      0)
+CALL SymReg("TT",          Pack4(43, 41, 51, 18),      0)
+CALL SymReg("vdash",       Pack3(43, 51, 18),          1)
+CALL SymReg("|-",          Pack3(43, 51, 18),          1)
+CALL SymReg("dashv",       Pack3(43, 18, 51),          1)
+CALL SymReg("-|",          Pack3(43, 18, 51),          1)
+CALL SymReg("parallel",    Pack2(43, 7),               1)
+CALL SymReg("nparallel",   Pack3(12, 43, 7),           1)
+        --  arrows (right arrow uses the contracted form shape+head)
+CALL SymReg("rightarrow",  Pack2(43, 21),              1)
+CALL SymReg("to",          Pack2(43, 21),              1)
+CALL SymReg("->",          Pack2(43, 21),              1)
+CALL SymReg("leftarrow",   Pack4(43, 42, 18, 18),      1)
+CALL SymReg("<-",          Pack4(43, 42, 18, 18),      1)
+CALL SymReg("leftrightarrow", Pack5(43, 42, 18, 18, 21), 1)
+CALL SymReg("<->",         Pack5(43, 42, 18, 18, 21),  1)
+CALL SymReg("Rightarrow",  Pack4(43, 54, 54, 21),      1)
+CALL SymReg("=>",          Pack4(43, 54, 54, 21),      1)
+CALL SymReg("Leftarrow",   Pack4(43, 42, 54, 54),      1)
+CALL SymReg("Leftrightarrow", Pack5(43, 42, 54, 54, 21), 1)
+CALL SymReg("<=>",         Pack5(43, 42, 54, 54, 21),  1)
+CALL SymReg("mapsto",      Pack5(43, 51, 18, 18, 21),  1)
+CALL SymReg("|->",         Pack5(43, 51, 18, 18, 21),  1)
+CALL SymReg("uparrow",     Pack5(43, 35, 18, 18, 21),  1)
+CALL SymReg("downarrow",   Pack5(43, 41, 18, 18, 21),  1)
+        --  ellipses
+CALL SymReg("ldots",       Pack3(4, 4, 4),             0)
+CALL SymReg("...",         Pack3(4, 4, 4),             0)
+CALL SymReg("cdots",       Pack3(18, 18, 18),          0)
+CALL SymReg("vdots",       Pack4(41, 18, 18, 18),      0)
+CALL SymReg("ddots",       Pack4(48, 18, 18, 18),      0)
+        --  greek lowercase: greek indicator 40 (+ alt 8) + letter
+CALL SymReg("alpha",       Pack2(40, 1),               0)
+CALL SymReg("beta",        Pack2(40, 3),               0)
+CALL SymReg("gamma",       Pack2(40, 27),              0)
+CALL SymReg("delta",       Pack2(40, 25),              0)
+CALL SymReg("epsilon",     Pack3(40, 8, 17),           0)
+CALL SymReg("varepsilon",  Pack3(40, 8, 17),           0)
+CALL SymReg("zeta",        Pack2(40, 53),              0)
+CALL SymReg("eta",         Pack2(40, 49),              0)
+CALL SymReg("theta",       Pack2(40, 57),              0)
+CALL SymReg("vartheta",    Pack3(40, 8, 57),           0)
+CALL SymReg("iota",        Pack2(40, 10),              0)
+CALL SymReg("kappa",       Pack2(40, 5),               0)
+CALL SymReg("lambda",      Pack2(40, 7),               0)
+CALL SymReg("mu",          Pack2(40, 13),              0)
+CALL SymReg("nu",          Pack2(40, 29),              0)
+CALL SymReg("xi",          Pack2(40, 45),              0)
+CALL SymReg("omicron",     Pack2(40, 21),              0)
+CALL SymReg("pi",          Pack2(40, 15),              0)
+CALL SymReg("rho",         Pack2(40, 23),              0)
+CALL SymReg("varrho",      Pack3(40, 8, 23),           0)
+CALL SymReg("varsigma",    Pack3(40, 8, 14),           0)
+CALL SymReg("sigma",       Pack2(40, 14),              0)
+CALL SymReg("sigmaf",      Pack2(40, 18),              0)
+CALL SymReg("tau",         Pack2(40, 30),              0)
+CALL SymReg("upsilon",     Pack2(40, 37),              0)
+CALL SymReg("phi",         Pack3(40, 8, 11),           0)
+CALL SymReg("varphi",      Pack3(40, 8, 11),           0)
+CALL SymReg("chi",         Pack2(40, 47),              0)
+CALL SymReg("psi",         Pack2(40, 61),              0)
+CALL SymReg("omega",       Pack2(40, 58),              0)
+        --  greek capitals: greek + cap + letter cell
+CALL SymReg("Gamma",       Pack3(40, 32, 27),          0)
+CALL SymReg("Delta",       Pack3(40, 32, 25),          0)
+CALL SymReg("Theta",       Pack3(40, 32, 57),          0)
+CALL SymReg("Lambda",      Pack3(40, 32, 7),           0)
+CALL SymReg("Xi",          Pack3(40, 32, 45),          0)
+CALL SymReg("Pi",          Pack3(40, 32, 15),          0)
+CALL SymReg("Sigma",       Pack3(40, 32, 14),          0)
+CALL SymReg("Upsilon",     Pack3(40, 32, 37),          0)
+CALL SymReg("Phi",         Pack3(40, 32, 11),          0)
+CALL SymReg("Chi",         Pack3(40, 32, 47),          0)
+CALL SymReg("Psi",         Pack3(40, 32, 61),          0)
+CALL SymReg("Omega",       Pack3(40, 32, 58),          0)
+        --  script / fraktur
+CALL SymReg("ell",         Pack3(8, 48, 7),            0)
+CALL SymReg("Re",          Pack3(56, 32, 23),          0)
+CALL SymReg("Im",          Pack3(56, 32, 10),          0)
+CALL SymReg("wp",          Pack3(56, 32, 15),          0)
+    END PROCEDURE
+
+    FUNCTION StrEq(a AS STRING, b AS STRING) AS S64
+        LET i AS S64 = 0
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        i = 1
+        WHILE i <= LEN(a)
+            IF MID(a, i, 1) <> MID(b, i, 1) THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION SymFind(nm AS STRING) AS S64
+        LET i AS S64 = 0
+        i = 0
+        WHILE i < ns_n
+            IF StrEq(ns_name[i], nm) = 1 THEN RETURN i END IF
+            i = i + 1
+        END WHILE
+        RETURN -1
+    END FUNCTION
+
+    PROCEDURE SymPut(i AS S64)
+        LET p AS S64 = 0
+        LET n AS S64 = 0
+        LET j AS S64 = 0
+        LET sh AS S64 = 0
+        IF i < 0 ORELSE i >= ns_n THEN
+CALL NErr("SymPut: bad index")
+            RETURN
+        END IF
+        p = ns_pack[i]
+        n = p / 281474976710656
+        j = 0
+        WHILE j < n
+            sh = p MOD 64
+CALL Put(sh)
+            p = (p - sh) / 64
+            j = j + 1
+        END WHILE
+        nnum = 0
+    END PROCEDURE
+
+    --  emit a symbol by name;  relations get surrounding spaces
+    PROCEDURE SymEmit(nm AS STRING)
+        LET i AS S64 = 0
+        i = SymFind(nm)
+        IF i < 0 THEN
+CALL NErr("unknown symbol '" | nm | "'")
+            RETURN
+        END IF
+        IF ns_rel[i] = 1 THEN
+CALL Space()
+CALL SymPut(i)
+CALL Space()
+        ELSE
+CALL SymPut(i)
+        END IF
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  tokenizer: input -> bounded token stream
+    --  kinds: 0 end   1 num     2 word   3 cmd    4 lparen ( or [
+    --         5 rparen ) or ]   6 caret  7 under  8 op     9 {
+    --        10 }    11 space  12 &    13 punct 14 prime  15 midop
+    --        16 bar |
+    -- ---------------------------------------------------------------
+    #NEM_NTOK = 512
+    STRICT tk_kind[#NEM_NTOK] AS S64
+    STRICT tk_txt[#NEM_NTOK]  AS STRING
+    LET tk_n  AS S64 = 0
+    LET tk_i  AS S64 = 0
+
+    PROCEDURE TPush(k AS S64, t AS STRING)
+        IF tk_n >= #NEM_NTOK THEN
+CALL NErr("token buffer full")
+            RETURN
+        END IF
+        tk_kind[tk_n] = k
+        tk_txt[tk_n] = t
+        tk_n = tk_n + 1
+    END PROCEDURE
+
+    PROCEDURE Tok(s AS STRING)
+        LET i AS S64 = 0
+        LET n AS S64 = 0
+        LET a AS S64 = 0
+        LET rd AS S64 = 0
+        LET ch AS STRING = ""
+        LET acc AS STRING = ""
+        tk_n = 0
+        tk_i = 0
+        i = 1
+        n = LEN(s)
+        WHILE i <= n
+            ch = MID(s, i, 1)
+            a = ASC(ch)
+            IF a >= 48 AND a <= 57 THEN
+                --  numeral: digits + embedded . and ,
+                acc = ""
+                rd = 1
+                WHILE i <= n AND rd = 1
+                    ch = MID(s, i, 1)
+                    a = ASC(ch)
+                    IF (a >= 48 AND a <= 57) ORELSE ch = "." ORELSE
+                       ch = "," THEN
+                        acc = acc | ch
+                        i = i + 1
+                    ELSE
+                        rd = 0
+                    END IF
+                END WHILE
+CALL TPush(1, acc)
+            ELSEIF (a >= 65 AND a <= 90) ORELSE
+                   (a >= 97 AND a <= 122) THEN
+                acc = ""
+                rd = 1
+                WHILE i <= n AND rd = 1
+                    ch = MID(s, i, 1)
+                    a = ASC(ch)
+                    IF (a >= 65 AND a <= 90) ORELSE
+                       (a >= 97 AND a <= 122) THEN
+                        acc = acc | ch
+                        i = i + 1
+                    ELSE
+                        rd = 0
+                    END IF
+                END WHILE
+CALL TPush(2, acc)
+            ELSEIF ch = "\" THEN
+                --  \name  or  \x  (single nonletter)
+                acc = ""
+                i = i + 1
+                rd = 1
+                IF i <= n THEN
+                    ch = MID(s, i, 1)
+                    a = ASC(ch)
+                    IF (a >= 65 AND a <= 90) ORELSE
+                       (a >= 97 AND a <= 122) THEN
+                        WHILE i <= n AND rd = 1
+                            ch = MID(s, i, 1)
+                            a = ASC(ch)
+                            IF (a >= 65 AND a <= 90) ORELSE
+                               (a >= 97 AND a <= 122) THEN
+                                acc = acc | ch
+                                i = i + 1
+                            ELSE
+                                rd = 0
+                            END IF
+                        END WHILE
+                    ELSE
+                        acc = acc | ch
+                        i = i + 1
+                    END IF
+                END IF
+CALL TPush(3, acc)
+            ELSEIF ch = "(" OR ch = "[" THEN
+CALL TPush(4, ch)
+                i = i + 1
+            ELSEIF ch = ")" OR ch = "]" THEN
+CALL TPush(5, ch)
+                i = i + 1
+            ELSEIF ch = "|" THEN
+                IF i + 2 <= n AND MID(s, i + 1, 2) = "->" THEN
+CALL TPush(15, "|->")
+                    i = i + 3
+                ELSE
+CALL TPush(16, "|")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "^" THEN
+CALL TPush(6, "^")
+                i = i + 1
+            ELSEIF ch = "_" THEN
+CALL TPush(7, "_")
+                i = i + 1
+            ELSEIF ch = "{" THEN
+CALL TPush(9, "{")
+                i = i + 1
+            ELSEIF ch = "}" THEN
+CALL TPush(10, "}")
+                i = i + 1
+            ELSEIF ch = " " OR ch = CHR(9) THEN
+CALL TPush(11, " ")
+                i = i + 1
+            ELSEIF ch = CHR(10) THEN
+CALL TPush(17, " ")
+                i = i + 1
+            ELSEIF ch = CHR(13) THEN
+                --  CR is layout noise; LF owns the line break so CRLF
+                --  emits exactly one newline token
+                i = i + 1
+            ELSEIF ch = "&" THEN
+CALL TPush(12, "&")
+                i = i + 1
+            ELSEIF ch = "'" THEN
+CALL TPush(14, "'")
+                i = i + 1
+            ELSEIF ch = "," OR ch = ";" OR ch = ":" THEN
+CALL TPush(13, ch)
+                i = i + 1
+            ELSEIF ch = "<" THEN
+                IF i + 2 <= n AND MID(s, i + 1, 2) = "->" THEN
+CALL TPush(15, "<->")
+                    i = i + 3
+                ELSEIF i + 1 <= n AND MID(s, i + 1, 1) = "-" THEN
+CALL TPush(15, "<-")
+                    i = i + 2
+                ELSEIF i + 2 <= n AND MID(s, i + 1, 2) = "=>" THEN
+CALL TPush(15, "<=>")
+                    i = i + 3
+                ELSEIF i + 1 <= n AND MID(s, i + 1, 1) = "=" THEN
+CALL TPush(15, "<=")
+                    i = i + 2
+                ELSE
+CALL TPush(8, "<")
+                    i = i + 1
+                END IF
+            ELSEIF ch = ">" THEN
+                IF i + 1 <= n AND MID(s, i + 1, 1) = "=" THEN
+CALL TPush(15, ">=")
+                    i = i + 2
+                ELSE
+CALL TPush(8, ">")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "=" THEN
+                IF i + 1 <= n AND MID(s, i + 1, 1) = ">" THEN
+CALL TPush(15, "=>")
+                    i = i + 2
+                ELSEIF i + 1 <= n AND MID(s, i + 1, 1) = "=" THEN
+CALL TPush(15, "==")
+                    i = i + 2
+                ELSE
+CALL TPush(8, "=")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "!" THEN
+                IF i + 1 <= n AND MID(s, i + 1, 1) = "=" THEN
+CALL TPush(15, "!=")
+                    i = i + 2
+                ELSE
+CALL TPush(13, "!")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "~" THEN
+                IF i + 1 <= n AND MID(s, i + 1, 1) = "~" THEN
+CALL TPush(15, "~~")
+                    i = i + 2
+                ELSEIF i + 1 <= n AND MID(s, i + 1, 1) = "=" THEN
+CALL TPush(15, "~=")
+                    i = i + 2
+                ELSE
+CALL TPush(8, "~")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "." THEN
+                IF i + 2 <= n AND MID(s, i + 1, 2) = ".." THEN
+CALL TPush(15, "...")
+                    i = i + 3
+                ELSE
+CALL TPush(13, ".")
+                    i = i + 1
+                END IF
+            ELSEIF ch = "+" OR ch = "*" OR ch = "/" THEN
+CALL TPush(8, ch)
+                i = i + 1
+            ELSEIF ch = "-" THEN
+                IF i + 1 <= n AND MID(s, i + 1, 1) = ">" THEN
+CALL TPush(15, "->")
+                    i = i + 2
+                ELSE
+CALL TPush(8, "-")
+                    i = i + 1
+                END IF
+            ELSE
+CALL NErr("Tok: bad char '" | ch | "'")
+                i = i + 1
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  parser: flat loop + explicit frame stack (no recursion)
+    --
+    --  frame kinds: 0 root        1 paren ( )    2 bracket [ ]
+    --                 3 lit-brace   4 abs | |     5 floor       6 ceil
+    --                 7 angle       8 group { }   9 radicand    10 idx
+    --                11 frac-num   12 frac-den
+    --
+    --  frames 9-12 are "one-factor" frames: they complete when the
+    --  next full item finishes.  an item completes when an atom emits
+    --  (num/word/symbol) or a frame pops (group, sqrt, frac...).  a
+    --  completed item then feeds the one-factor frame beneath it, so
+    --  \frac{1}{\sqrt{2}} and 2/\sqrt{x} cascade correctly.
+    --
+    --  pf_a/pf_b record the cell positions of a fraction's open and
+    --  line markers;  when the close lands, ScanFrac finds the
+    --  deepest inner level and InsCell plants the dot-6 prefixes
+    --  right-to-left.
+    --
+    --  level machinery: ^ _ set popnd;  the next item is the operand.
+    --  group frames opened under popnd carry pf_op = 1 so LevEnd runs
+    --  when they close.  LevEnd emits the baseline dot 5 only when
+    --  real baseline content follows (a space ends the level quietly).
+    -- ---------------------------------------------------------------
+    #NEM_NFR = 64
+    STRICT pf_kind[#NEM_NFR] AS S64
+    STRICT pf_op[#NEM_NFR]   AS S64
+    STRICT pf_a[#NEM_NFR]    AS S64
+    STRICT pf_b[#NEM_NFR]    AS S64
+    STRICT pf_mix[#NEM_NFR]  AS S64
+    LET pf_n  AS S64 = 0
+    LET popnd AS S64 = 0
+    LET nlastnum AS S64 = 0
+    LET nfadj AS S64 = 0
+    LET nfact AS S64 = 0
+
+    PROCEDURE FrPush(k AS S64, op AS S64)
+        IF pf_n >= #NEM_NFR THEN
+CALL NErr("frame stack full")
+            RETURN
+        END IF
+        pf_kind[pf_n] = k
+        pf_op[pf_n] = op
+        pf_a[pf_n] = 0
+        pf_b[pf_n] = 0
+        pf_mix[pf_n] = 0
+        pf_n = pf_n + 1
+    END PROCEDURE
+
+    FUNCTION FrTop() AS S64
+        IF pf_n <= 0 THEN RETURN -1 END IF
+        RETURN pf_kind[pf_n - 1]
+    END FUNCTION
+
+    --  does token kind t begin baseline content (vs. end, closer,
+    --  space, another level indicator)
+    FUNCTION IsBaseNext(t AS S64) AS S64
+        IF t = 0 ORELSE t = 5 ORELSE t = 10 ORELSE t = 11 ORELSE
+           t = 6 ORELSE t = 7 THEN
+            RETURN 0
+        END IF
+        RETURN 1
+    END FUNCTION
+
+    --  inside a group opened as a level operand, spaces are content:
+    --  they do not return to baseline
+    FUNCTION InLevGroup() AS S64
+        LET i AS S64 = 0
+        i = 0
+        WHILE i < pf_n
+            IF pf_op[i] = 1 THEN RETURN 1 END IF
+            i = i + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    --  level-operand finished: chain continues on ^ _, baseline dot 5
+    --  when baseline content follows, silent otherwise
+    PROCEDURE LevEnd()
+        LET t AS S64 = 0
+        IF tk_i + 1 < tk_n THEN t = tk_kind[tk_i + 1] END IF
+        IF t = 6 ORELSE t = 7 THEN RETURN END IF
+        IF IsBaseNext(t) = 1 THEN CALL Base() END IF
+    END PROCEDURE
+
+    --  is this word a function name (sin, cos, lim, ...)
+    FUNCTION IsFunc(w AS STRING) AS S64
+        IF StrEq(w, "sin") = 1 ORELSE StrEq(w, "cos") = 1 ORELSE
+           StrEq(w, "tan") = 1 ORELSE StrEq(w, "cot") = 1 ORELSE
+           StrEq(w, "sec") = 1 ORELSE StrEq(w, "csc") = 1 ORELSE
+           StrEq(w, "sinh") = 1 ORELSE StrEq(w, "cosh") = 1 ORELSE
+           StrEq(w, "tanh") = 1 ORELSE StrEq(w, "coth") = 1 ORELSE
+           StrEq(w, "sech") = 1 ORELSE StrEq(w, "csch") = 1 ORELSE
+           StrEq(w, "log") = 1 ORELSE StrEq(w, "lg") = 1 ORELSE
+           StrEq(w, "ln") = 1 ORELSE StrEq(w, "lim") = 1 ORELSE
+           StrEq(w, "det") = 1 ORELSE StrEq(w, "gcd") = 1 ORELSE
+           StrEq(w, "min") = 1 ORELSE StrEq(w, "max") = 1 ORELSE
+           StrEq(w, "inf") = 1 ORELSE StrEq(w, "arg") = 1 ORELSE
+           StrEq(w, "dim") = 1 ORELSE StrEq(w, "exp") = 1 ORELSE
+           StrEq(w, "mod") = 1 ORELSE StrEq(w, "ker") = 1 ORELSE
+           StrEq(w, "hom") = 1 THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    -- ---------------------------------------------------------------
+    --  Parse: transcribe one expression, appended to the stream.
+    --  Transcribe() = Reset + Parse for one-shot use.
+    -- ---------------------------------------------------------------
+    PROCEDURE Parse(s AS STRING)
+        LET t AS S64 = 0
+        LET w AS STRING = ""
+        LET k AS S64 = 0
+        LET j AS S64 = 0
+        LET itd AS S64 = 0
+        LET p0 AS S64 = 0
+        LET p1 AS S64 = 0
+        LET p2 AS S64 = 0
+        LET ik AS S64 = 0
+        LET jk AS S64 = 0
+        LET oop AS S64 = 0
+        LET encl AS S64 = 0
+        LET ename AS STRING = ""
+CALL Tok(s)
+        IF nen > 0 THEN RETURN END IF
+        pf_n = 0
+        popnd = 0
+        nlastnum = 0
+        nfadj = 0
+        tk_i = 0
+CALL FrPush(0, 0)
+        WHILE tk_i < tk_n AND nen = 0
+            t = tk_kind[tk_i]
+            w = tk_txt[tk_i]
+            itd = 0
+            --  factor start position for / wrapping
+            IF t = 1 ORELSE t = 2 ORELSE t = 4 ORELSE t = 9 ORELSE
+               t = 16 THEN
+                nfact = ncnt
+            END IF
+            --  adjacency flag for mixed numbers: this numeral
+            --  directly follows another numeral
+            IF t = 1 THEN nfadj = nlastnum END IF
+            IF t = 11 THEN
+CALL Space()
+            ELSEIF t = 17 THEN
+CALL Newline()
+                nlastnum = 0
+                nfadj = 0
+            ELSEIF t = 1 THEN
+CALL Num(w)
+                nlastnum = 1
+                itd = 1
+            ELSEIF t = 2 THEN
+                IF SymFind(w) >= 0 THEN
+CALL SymEmit(w)
+                ELSEIF IsFunc(w) = 1 THEN
+CALL Letters(w)
+                    IF tk_i + 1 < tk_n THEN
+                        IF tk_kind[tk_i + 1] <> 4 AND
+                           tk_kind[tk_i + 1] <> 9 AND
+                           tk_kind[tk_i + 1] <> 6 AND
+                           tk_kind[tk_i + 1] <> 7 THEN
+CALL Space()
+                        END IF
+                    END IF
+                ELSE
+CALL Letters(w)
+                END IF
+                nlastnum = 0
+                itd = 1
+            ELSEIF t = 3 THEN
+                --  latex-ish command
+                IF StrEq(w, "frac") = 1 ORELSE StrEq(w, "dfrac") = 1 ORELSE
+                   StrEq(w, "tfrac") = 1 ORELSE StrEq(w, "cfrac") = 1 THEN
+CALL FrPush(11, popnd)
+                    popnd = 0
+                    IF nlastnum = 1 AND nfadj = 1 THEN
+                        --  mixed number: _? before the fraction part
+                        pf_a[pf_n - 1] = ncnt
+                        pf_mix[pf_n - 1] = 1
+CALL Put(56)
+CALL Put(57)
+CALL MkAt(pf_a[pf_n - 1])
+                    ELSE
+                        pf_a[pf_n - 1] = ncnt
+CALL Put(57)
+CALL MkAt(pf_a[pf_n - 1])
+                    END IF
+                    nfact = ncnt
+                ELSEIF StrEq(w, "sqrt") = 1 THEN
+CALL Rad()
+                    IF tk_i + 1 < tk_n AND
+                       tk_kind[tk_i + 1] = 4 AND
+                       StrEq(tk_txt[tk_i + 1], "[") = 1 THEN
+CALL RadIdx()
+                        tk_i = tk_i + 1
+CALL FrPush(10, popnd)
+                        popnd = 0
+                        nlev = -1     --  index sits lowered
+                    ELSE
+CALL FrPush(9, popnd)
+                        popnd = 0
+                    END IF
+                    nfact = ncnt
+                ELSEIF StrEq(w, "left") = 1 ORELSE StrEq(w, "right") = 1 THEN
+                    --  \left( \right): next token is the delimiter;
+                    --  \left. / \right. pair with an invisible one
+                    IF tk_i + 1 < tk_n AND tk_kind[tk_i + 1] = 13 AND
+                       StrEq(tk_txt[tk_i + 1], ".") = 1 THEN
+                        tk_i = tk_i + 1
+                    END IF
+                ELSEIF StrEq(w, "text") = 1 ORELSE
+                       StrEq(w, "mathrm") = 1 ORELSE
+                       StrEq(w, "operatorname") = 1 ORELSE
+                       StrEq(w, "textbf") = 1 ORELSE
+                       StrEq(w, "mathit") = 1 THEN
+                    --  literal words: emit each word's letters
+                    tk_i = tk_i + 1
+                    IF tk_i < tk_n AND tk_kind[tk_i] = 9 THEN
+                        tk_i = tk_i + 1
+                        WHILE tk_i < tk_n AND tk_kind[tk_i] <> 10
+                            IF tk_kind[tk_i] = 2 THEN
+CALL Letters(tk_txt[tk_i])
+                            ELSEIF tk_kind[tk_i] = 11 THEN
+CALL Space()
+                            ELSEIF tk_kind[tk_i] = 13 THEN
+CALL Punct(tk_txt[tk_i])
+                            ELSEIF tk_kind[tk_i] = 1 THEN
+CALL Num(tk_txt[tk_i])
+                            ELSE
+CALL NErr("text: bad item")
+                            END IF
+                            tk_i = tk_i + 1
+                        END WHILE
+                    ELSE
+CALL NErr("text: want {word}")
+                    END IF
+                    itd = 1
+                ELSEIF StrEq(w, "langle") = 1 THEN
+CALL AngL()
+CALL FrPush(7, popnd)
+                    popnd = 0
+                ELSEIF StrEq(w, "lfloor") = 1 THEN
+CALL FloorL()
+CALL FrPush(5, popnd)
+                    popnd = 0
+                ELSEIF StrEq(w, "lceil") = 1 THEN
+CALL CeilL()
+CALL FrPush(6, popnd)
+                    popnd = 0
+                ELSEIF StrEq(w, "rangle") = 1 THEN
+CALL AngR()
+                    IF FrTop() = 7 THEN
+                        oop = pf_op[pf_n - 1]
+                        pf_n = pf_n - 1
+                        IF oop = 1 THEN CALL LevEnd() END IF
+                        itd = 1
+                    ELSE
+CALL NErr("rangle without langle")
+                    END IF
+                ELSEIF StrEq(w, "rfloor") = 1 THEN
+CALL FloorR()
+                    IF FrTop() = 5 THEN
+                        oop = pf_op[pf_n - 1]
+                        pf_n = pf_n - 1
+                        IF oop = 1 THEN CALL LevEnd() END IF
+                        itd = 1
+                    ELSE
+CALL NErr("rfloor without lfloor")
+                    END IF
+                ELSEIF StrEq(w, "rceil") = 1 THEN
+CALL CeilR()
+                    IF FrTop() = 6 THEN
+                        oop = pf_op[pf_n - 1]
+                        pf_n = pf_n - 1
+                        IF oop = 1 THEN CALL LevEnd() END IF
+                        itd = 1
+                    ELSE
+CALL NErr("rceil without lceil")
+                    END IF
+                ELSEIF StrEq(w, "{") = 1 THEN
+CALL BraceL()
+CALL FrPush(3, popnd)
+                    popnd = 0
+                ELSEIF StrEq(w, "}") = 1 THEN
+CALL BraceR()
+                    IF FrTop() = 3 THEN
+                        oop = pf_op[pf_n - 1]
+                        pf_n = pf_n - 1
+                        IF oop = 1 THEN CALL LevEnd() END IF
+                        itd = 1
+                    END IF
+                ELSEIF StrEq(w, "|") = 1 THEN
+CALL BarSym()
+                ELSEIF StrEq(w, ",") = 1 ORELSE StrEq(w, ";") = 1 ORELSE
+                       StrEq(w, ":") = 1 ORELSE StrEq(w, " ") = 1 THEN
+CALL Space()
+                ELSEIF StrEq(w, "!") = 1 THEN
+                    --  negative thin space: emit nothing
+                ELSEIF StrEq(w, "\") = 1 THEN
+                    --  \\ row separator:  only inside an env frame
+                    IF pf_n > 1 AND pf_kind[pf_n - 1] = 13 THEN
+CALL MEFlush()
+CALL MERow()
+                    ELSE
+CALL NErr("\\ outside environment")
+                    END IF
+                ELSEIF StrEq(w, "begin") = 1 THEN
+                    --  \begin{env}:  consume the {name} group
+                    j = tk_i + 1
+                    ename = ""
+                    IF j < tk_n AND tk_kind[j] = 9 THEN
+                        j = j + 1
+                        WHILE j < tk_n AND tk_kind[j] <> 10
+                            IF tk_kind[j] = 2 THEN
+                                ename = tk_txt[j]
+                            END IF
+                            j = j + 1
+                        END WHILE
+                    END IF
+                    IF j >= tk_n THEN
+CALL NErr("begin: want {env}")
+                    ELSE
+                        tk_i = j
+                        encl = -1
+                        IF StrEq(ename, "pmatrix") = 1 THEN
+                            encl = 1
+                        ELSEIF StrEq(ename, "bmatrix") = 1 THEN
+                            encl = 2
+                        ELSEIF StrEq(ename, "Bmatrix") = 1 THEN
+                            encl = 3
+                        ELSEIF StrEq(ename, "vmatrix") = 1 ORELSE
+                               StrEq(ename, "Vmatrix") = 1 THEN
+                            encl = 4
+                        ELSEIF StrEq(ename, "matrix") = 1 THEN
+                            encl = 0
+                        ELSEIF StrEq(ename, "cases") = 1 THEN
+                            encl = 5
+                        ELSEIF StrEq(ename, "array") = 1 THEN
+CALL NErr("array needs column specifiers")
+                        ELSEIF StrEq(ename, "aligned") = 1 ORELSE
+                               StrEq(ename, "align") = 1 ORELSE
+                               StrEq(ename, "gathered") = 1 ORELSE
+                               StrEq(ename, "equation") = 1 THEN
+CALL NErr("display environments not implemented: " | ename)
+                        ELSE
+CALL NErr("unsupported environment: " | ename)
+                        END IF
+                        IF encl >= 0 THEN
+CALL MEBegin(encl)
+CALL FrPush(13, popnd)
+                            popnd = 0
+                        END IF
+                    END IF
+                ELSEIF StrEq(w, "end") = 1 THEN
+                    --  \end{env}:  consume the {name} group
+                    j = tk_i + 1
+                    ename = ""
+                    IF j < tk_n AND tk_kind[j] = 9 THEN
+                        j = j + 1
+                        WHILE j < tk_n AND tk_kind[j] <> 10
+                            IF tk_kind[j] = 2 THEN
+                                ename = tk_txt[j]
+                            END IF
+                            j = j + 1
+                        END WHILE
+                    END IF
+                    IF j >= tk_n THEN
+CALL NErr("end: want {env}")
+                    ELSE
+                        tk_i = j
+                        IF pf_n > 1 AND pf_kind[pf_n - 1] = 13 THEN
+CALL MEFlush()
+CALL MEEmit()
+                            oop = pf_op[pf_n - 1]
+                            pf_n = pf_n - 1
+                            IF oop = 1 THEN CALL LevEnd() END IF
+                            itd = 1
+                        ELSE
+CALL NErr("end without begin")
+                        END IF
+                    END IF
+                ELSEIF StrEq(w, "bar") = 1 ORELSE StrEq(w, "hat") = 1 ORELSE
+                       StrEq(w, "vec") = 1 ORELSE StrEq(w, "dot") = 1 ORELSE
+                       StrEq(w, "ddot") = 1 ORELSE StrEq(w, "tilde") = 1 ORELSE
+                       StrEq(w, "overline") = 1 ORELSE
+                       StrEq(w, "underline") = 1 ORELSE
+                       StrEq(w, "widehat") = 1 ORELSE
+                       StrEq(w, "widetilde") = 1 THEN
+CALL NErr("modifiers not implemented: \" | w)
+                ELSEIF StrEq(w, "binom") = 1 THEN
+                    --  binomial:  frac-structure inside parens
+CALL ParenL()
+CALL FrPush(11, popnd)
+                    popnd = 0
+                    pf_a[pf_n - 1] = ncnt
+CALL Put(57)
+CALL MkAt(pf_a[pf_n - 1])
+                    pf_mix[pf_n - 1] = 2
+                    nfact = ncnt
+                ELSEIF IsFunc(w) = 1 THEN
+CALL Letters(w)
+                    IF tk_i + 1 < tk_n THEN
+                        IF tk_kind[tk_i + 1] <> 4 AND
+                           tk_kind[tk_i + 1] <> 9 AND
+                           tk_kind[tk_i + 1] <> 6 AND
+                           tk_kind[tk_i + 1] <> 7 THEN
+CALL Space()
+                        END IF
+                    END IF
+                ELSEIF SymFind(w) >= 0 THEN
+CALL SymEmit(w)
+                ELSE
+CALL NErr("unknown command \" | w)
+                END IF
+                nlastnum = 0
+            ELSEIF t = 4 THEN
+                IF StrEq(w, "(") = 1 THEN
+CALL ParenL()
+CALL FrPush(1, popnd)
+                ELSE
+CALL BracketL()
+CALL FrPush(2, popnd)
+                END IF
+                popnd = 0
+                nlastnum = 0
+            ELSEIF t = 5 THEN
+                --  ) or ]: ] may close a sqrt-index (frame 10) which
+                --  prints no bracket of its own
+                IF FrTop() = 10 AND StrEq(w, "]") = 1 THEN
+                    pf_n = pf_n - 1
+CALL Put(56)            --  end of radical index
+                    nlev = 0
+                    nnum = 0          --  radicand is its own context
+CALL FrPush(9, pf_op[pf_n])
+                ELSE
+                    IF StrEq(w, ")") = 1 THEN
+CALL ParenR()
+                        IF FrTop() <> 1 THEN
+CALL NErr("unbalanced )")
+                        END IF
+                    ELSE
+CALL BracketR()
+                        IF FrTop() <> 2 THEN
+CALL NErr("unbalanced ]")
+                        END IF
+                    END IF
+                    IF pf_n > 1 THEN
+                        oop = pf_op[pf_n - 1]
+                        pf_n = pf_n - 1
+                        IF oop = 1 THEN CALL LevEnd() END IF
+                    END IF
+                    itd = 1
+                END IF
+                nlastnum = 0
+            ELSEIF t = 16 THEN
+CALL BarSym()
+                IF FrTop() = 4 THEN
+                    oop = pf_op[pf_n - 1]
+                    pf_n = pf_n - 1
+                    IF oop = 1 THEN CALL LevEnd() END IF
+                    itd = 1
+                ELSE
+CALL FrPush(4, popnd)
+                    popnd = 0
+                END IF
+                nlastnum = 0
+            ELSEIF t = 9 THEN
+CALL FrPush(8, popnd)
+                popnd = 0
+                nlastnum = 0
+            ELSEIF t = 10 THEN
+                IF FrTop() = 8 THEN
+                    oop = pf_op[pf_n - 1]
+                    pf_n = pf_n - 1
+                    IF oop = 1 THEN CALL LevEnd() END IF
+                    itd = 1
+                ELSE
+CALL NErr("unbalanced }")
+                END IF
+                nlastnum = 0
+            ELSEIF t = 6 ORELSE t = 7 THEN
+                --  opposite-direction level change passes through
+                --  baseline first:  x_1^2 -> X;1"^2
+                IF t = 6 THEN
+                    IF nlev < 0 THEN CALL Base() END IF
+CALL Sup()
+                ELSE
+                    IF nlev > 0 THEN CALL Base() END IF
+CALL Sub()
+                END IF
+                popnd = 1
+                nlastnum = 0
+            ELSEIF t = 8 THEN
+                IF StrEq(w, "+") = 1 THEN
+CALL Plus()
+                ELSEIF StrEq(w, "-") = 1 THEN
+CALL Minus()
+                ELSEIF StrEq(w, "*") = 1 THEN
+CALL DotOp()
+                ELSEIF StrEq(w, "=") = 1 THEN
+CALL Space()
+CALL Equals()
+CALL Space()
+                ELSEIF StrEq(w, "<") = 1 THEN
+CALL Space()
+CALL Lt()
+CALL Space()
+                ELSEIF StrEq(w, ">") = 1 THEN
+CALL Space()
+CALL Gt()
+CALL Space()
+                ELSEIF StrEq(w, "~") = 1 THEN
+CALL SymEmit("~")
+                ELSEIF StrEq(w, "/") = 1 THEN
+                    --  asciimath fraction: wrap the previous factor.
+                    --  numeral directly after a numeral = mixed number
+                    IF nlastnum = 1 AND nfadj = 1 THEN
+CALL InsCell(nfact, 57)
+CALL InsCell(nfact, 56)
+CALL FrPush(12, popnd)
+                        pf_a[pf_n - 1] = nfact
+                        pf_mix[pf_n - 1] = 1
+                    ELSE
+CALL InsCell(nfact, 57)
+CALL FrPush(12, popnd)
+                        pf_a[pf_n - 1] = nfact
+                    END IF
+CALL MkAt(pf_a[pf_n - 1])
+CALL Put(12)
+                    pf_b[pf_n - 1] = ncnt - 1
+CALL MkAt(pf_b[pf_n - 1])
+                    popnd = 0
+                ELSE
+CALL NErr("bad operator '" | w | "'")
+                END IF
+                nlastnum = 0
+            ELSEIF t = 15 THEN
+                --  multi-char ops: mostly spaced relations
+                IF StrEq(w, "<=") = 1 THEN
+CALL Space()
+CALL Le()
+CALL Space()
+                ELSEIF StrEq(w, ">=") = 1 THEN
+CALL Space()
+CALL Ge()
+CALL Space()
+                ELSEIF StrEq(w, "!=") = 1 THEN
+CALL Space()
+CALL Ne()
+CALL Space()
+                ELSEIF StrEq(w, "...") = 1 THEN
+CALL Ellipsis()
+                ELSEIF SymFind(w) >= 0 THEN
+CALL SymEmit(w)
+                ELSE
+CALL NErr("bad operator '" | w | "'")
+                END IF
+                nlastnum = 0
+            ELSEIF t = 13 THEN
+CALL Punct(w)
+                nlastnum = 0
+            ELSEIF t = 14 THEN
+CALL Prime()
+                nlastnum = 0
+                itd = 1
+            ELSEIF t = 12 THEN
+                --  & column separator:  only inside an env frame
+                IF pf_n > 1 AND pf_kind[pf_n - 1] = 13 THEN
+CALL MEFlush()
+                ELSE
+CALL NErr("'&' outside environment")
+                END IF
+            ELSE
+CALL NErr("bad token " | t)
+            END IF
+            --  level-operand resolution: an atom operand ends the
+            --  pending level (group/cmd operands already own pf_op)
+            IF popnd = 1 AND itd = 1 THEN
+CALL LevEnd()
+                popnd = 0
+            END IF
+            --  one-factor frame cascade
+            WHILE itd = 1 AND pf_n > 1
+                k = pf_kind[pf_n - 1]
+                IF k = 11 THEN
+CALL Put(12)
+                    pf_b[pf_n - 1] = ncnt - 1
+CALL MkAt(pf_b[pf_n - 1])
+                    pf_kind[pf_n - 1] = 12
+                    itd = 0
+                ELSEIF k = 12 THEN
+                    p0 = pf_a[pf_n - 1]
+                    p1 = pf_b[pf_n - 1]
+                    p2 = ncnt
+                    IF pf_mix[pf_n - 1] = 1 THEN
+CALL Put(56)
+CALL Put(60)
+                    ELSE
+CALL Put(60)
+                    END IF
+CALL MkAt(p2)
+                    ik = ScanFrac(p0 + 1, p1)
+                    jk = ScanFrac(p1 + 1, p2)
+                    IF jk > ik THEN ik = jk END IF
+                    j = 0
+                    WHILE j <= ik
+CALL InsCell(p2, 32)
+CALL InsCell(p1, 32)
+CALL InsCell(p0, 32)
+                        j = j + 1
+                    END WHILE
+                    IF pf_mix[pf_n - 1] = 2 THEN
+CALL ParenR()           --  \binom closes its paren
+                    END IF
+                    oop = pf_op[pf_n - 1]
+                    pf_n = pf_n - 1
+                    IF oop = 1 THEN CALL LevEnd() END IF
+                ELSEIF k = 9 THEN
+CALL Term()
+                    oop = pf_op[pf_n - 1]
+                    pf_n = pf_n - 1
+                    IF oop = 1 THEN CALL LevEnd() END IF
+                ELSEIF k = 10 THEN
+                    --  sqrt index is bracketed:  it ends on ], not
+                    --  on item completion
+                    itd = 0
+                ELSE
+                    itd = 0
+                END IF
+            END WHILE
+            tk_i = tk_i + 1
+        END WHILE
+        IF pf_n > 1 THEN
+            --  an unclosed environment leaks scratch entry cells;
+            --  rewind to the grid base before diagnosing
+            k = 0
+            WHILE k < pf_n
+                IF pf_kind[k] = 13 THEN
+                    ncnt = nsp0
+                    nmk_n = nmk0
+                    nsp_flag = 0
+                END IF
+                k = k + 1
+            END WHILE
+CALL NErr("unclosed groups: " | (pf_n - 1))
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Transcribe(s AS STRING)
+CALL Reset()
+CALL Parse(s)
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  spatial engine:  entries are transcribed into the scratch tail
+    --  of ncell, copied to a bounded grid buffer, and rewound - the
+    --  full parser (fracs, levels, symbols) works inside entries.
+    --
+    --  spatial numerals take no # indicator (nsp_flag).
+    -- ---------------------------------------------------------------
+
+    PROCEDURE MEBegin(encl AS S64)
+        ge_n = 0
+        gr_n = 1
+        ge_p = 0
+        gm_encl = encl
+        gm_cols = 0
+        nsp0 = ncnt
+        nmk0 = nmk_n
+        nsp_flag = 1
+        gr_start[0] = 0               --  row 0 already open
+    END PROCEDURE
+
+    --  copy pending scratch cells into the grid; rewind stream+marks
+    PROCEDURE MEFlush()
+        LET i AS S64 = 0
+        IF ge_n >= #GE_MAX THEN
+            CALL NErr("grid full")
+            RETURN
+        END IF
+        ge_off[ge_n] = ge_p
+        ge_len[ge_n] = ncnt - nsp0
+        i = nsp0
+        WHILE i < ncnt
+            IF ge_p >= #GE_BUF THEN
+                CALL NErr("grid buffer full")
+                ncnt = nsp0
+                RETURN
+            END IF
+            ge_buf[ge_p] = ncell[i]
+            ge_p = ge_p + 1
+            i = i + 1
+        END WHILE
+        ge_n = ge_n + 1
+        ncnt = nsp0
+        nmk_n = nmk0
+        nnum = 0
+        nlev = 0
+    END PROCEDURE
+
+    --  close the current row and open the next:  gr_start[r] is
+    --  the FIRST entry index of row r, so the boundary lands here
+    PROCEDURE MERow()
+        IF gr_n >= #GE_ROWS THEN
+            CALL NErr("grid rows full")
+            RETURN
+        END IF
+        gr_start[gr_n] = ge_n
+        gr_op[gr_n] = 0
+        gr_n = gr_n + 1
+    END PROCEDURE
+
+    --  one row's entry span:  entries [gr_start[r], rbound)
+    FUNCTION RBound(r AS S64) AS S64
+        IF r + 1 < gr_n THEN RETURN gr_start[r + 1] END IF
+        RETURN ge_n
+    END FUNCTION
+
+    --  enlarged grouping sequence.  side: 0 = open, 1 = close
+    --  encl: 0 none 1 paren 2 bracket 3 brace 4 bar 5 brace-open-only
+    PROCEDURE EmitEncl(side AS S64)
+        IF gm_encl = 1 THEN
+            CALL Put(32)
+            IF side = 0 THEN CALL Put(55) ELSE CALL Put(62) END IF
+        ELSEIF gm_encl = 2 THEN
+            CALL Put(8)
+            CALL Put(32)
+            IF side = 0 THEN CALL Put(55) ELSE CALL Put(62) END IF
+        ELSEIF gm_encl = 3 ORELSE gm_encl = 5 THEN
+            IF side = 1 AND gm_encl = 5 THEN
+                --  cases:  open brace only, no closing sign
+            ELSE
+                CALL Put(40)
+                CALL Put(32)
+                IF side = 0 THEN CALL Put(55) ELSE CALL Put(62) END IF
+            END IF
+        ELSEIF gm_encl = 4 THEN
+            CALL Put(32)
+            CALL Put(51)
+        END IF
+    END PROCEDURE
+
+    PROCEDURE EmitCells(src AS S64, n AS S64)
+        LET i AS S64 = 0
+        LET b AS S64 = 0
+        b = src
+        i = 0
+        WHILE i < n
+            CALL Put(ge_buf[b + i])
+            i = i + 1
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Blanks(n AS S64)
+        LET i AS S64 = 0
+        i = 0
+        WHILE i < n
+            CALL Put(0)
+            i = i + 1
+        END WHILE
+    END PROCEDURE
+
+    --  emit a blank line if the stream has pending content
+    PROCEDURE BlankLn()
+        IF ncnt = 0 THEN RETURN END IF
+        IF ncell[ncnt - 1] <> #NEM_LF THEN
+            CALL Newline()
+        END IF
+        CALL Newline()
+    END PROCEDURE
+
+    --  matrix emit:  every row carries its enlarged group signs,
+    --  columns left-justified with one blank column between them
+    PROCEDURE MEEmit()
+        LET r AS S64 = 0
+        LET c AS S64 = 0
+        LET e AS S64 = 0
+        LET w AS S64 = 0
+        LET nc AS S64 = 0
+        LET rb AS S64 = 0
+        --  column count = widest row
+        r = 0
+        WHILE r < gr_n
+            rb = RBound(r)
+            nc = rb - gr_start[r]
+            IF nc > gm_cols THEN gm_cols = nc END IF
+            r = r + 1
+        END WHILE
+        --  per-column widths (+1 separator)
+        c = 0
+        WHILE c < gm_cols
+            w = 0
+            r = 0
+            WHILE r < gr_n
+                rb = RBound(r)
+                nc = rb - gr_start[r]
+                IF c < nc THEN
+                    e = ge_len[gr_start[r] + c]
+                    IF e > w THEN w = e END IF
+                END IF
+                r = r + 1
+            END WHILE
+            gcw[c] = w + 1
+            c = c + 1
+        END WHILE
+        CALL BlankLn()
+        r = 0
+        WHILE r < gr_n
+            rb = RBound(r)
+            nc = rb - gr_start[r]
+            CALL EmitEncl(0)
+            c = 0
+            WHILE c < gm_cols
+                IF c < nc THEN
+                    e = gr_start[r] + c
+                    CALL EmitCells(ge_off[e], ge_len[e])
+                    CALL Blanks(gcw[c] - ge_len[e])
+                ELSE
+                    CALL Blanks(gcw[c])
+                END IF
+                c = c + 1
+            END WHILE
+            CALL EmitEncl(1)
+            CALL Newline()
+            r = r + 1
+        END WHILE
+        CALL Newline()
+        nsp_flag = 0
+    END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  stacked arithmetic (vertical + - x with separation lines)
+    -- ---------------------------------------------------------------
+    PROCEDURE StackBegin()
+        ge_n = 0
+        gr_n = 0
+        ge_p = 0
+        nsp0 = ncnt
+        nmk0 = nmk_n
+        nsp_flag = 1
+    END PROCEDURE
+
+    PROCEDURE StackRow(txt AS STRING, op AS S64)
+        CALL Parse(txt)
+        CALL MEFlush()
+        IF gr_n >= #GE_ROWS THEN
+            CALL NErr("stack rows full")
+            RETURN
+        END IF
+        gr_start[gr_n] = ge_n - 1
+        gr_op[gr_n] = op
+        gr_n = gr_n + 1
+    END PROCEDURE
+
+    PROCEDURE StackLine()
+        IF gr_n >= #GE_ROWS THEN
+            CALL NErr("stack rows full")
+            RETURN
+        END IF
+        gr_start[gr_n] = ge_n
+        gr_op[gr_n] = 9                 --  separation-line row
+        gr_n = gr_n + 1
+    END PROCEDURE
+
+    --  emit the stack:  numbers right-justified, +- one cell left of
+    --  the widest number, x immediately left of the multiplier,
+    --  separation lines span widest+2
+    PROCEDURE StackEnd()
+        LET r AS S64 = 0
+        LET e AS S64 = 0
+        LET w AS S64 = 0
+        LET rr AS S64 = 0
+        LET sc AS S64 = 0
+        r = 0
+        w = 0
+        WHILE r < gr_n
+            IF gr_op[r] <> 9 THEN
+                e = ge_len[gr_start[r]]
+                IF e > w THEN w = e END IF
+            END IF
+            r = r + 1
+        END WHILE
+        rr = w + 1                      --  right edge col of numerals
+        CALL BlankLn()
+        r = 0
+        WHILE r < gr_n
+            IF gr_op[r] = 9 THEN
+                e = 0
+                WHILE e < w + 3
+                    CALL Put(18)        --  separation line cells
+                    e = e + 1
+                END WHILE
+            ELSE
+                e = gr_start[r]
+                --  op sign placement:  +- sit one cell left of the
+                --  widest number's start; x sits immediately left of
+                --  its own row's number (the multiplier)
+                IF gr_op[r] = 1 THEN
+                    CALL Blanks(rr - w)
+                    CALL Put(44)        --  +
+                    CALL Blanks(w - ge_len[e])
+                ELSEIF gr_op[r] = 2 THEN
+                    CALL Blanks(rr - w)
+                    CALL Put(36)        --  -
+                    CALL Blanks(w - ge_len[e])
+                ELSEIF gr_op[r] = 3 THEN
+                    --  x (2 cells) ending at numstart - 1
+                    CALL Blanks(rr - ge_len[e] - 1)
+                    CALL Put(8)
+                    CALL Put(33)
+                ELSE
+                    CALL Blanks(rr - ge_len[e] + 1)
+                END IF
+                CALL EmitCells(ge_off[e], ge_len[e])
+            END IF
+            CALL Newline()
+            r = r + 1
+        END WHILE
+        CALL Newline()
+        nsp_flag = 0
+    END PROCEDURE
+
+    --  park the pending scratch cells in the grid buffer;  returns
+    --  the ge_buf offset (or -1 on overflow) and rewinds the stream
+    FUNCTION GEPark() AS S64
+        LET o AS S64 = 0
+        LET i AS S64 = 0
+        o = ge_p
+        i = nsp0
+        WHILE i < ncnt
+            IF ge_p >= #GE_BUF THEN
+                CALL NErr("grid buffer full")
+                ncnt = nsp0
+                RETURN -1
+            END IF
+            ge_buf[ge_p] = ncell[i]
+            ge_p = ge_p + 1
+            i = i + 1
+        END WHILE
+        ncnt = nsp0
+        RETURN o
+    END FUNCTION
+
+    --  long division:  quotient above a separation line that starts
+    --  over the division sign and extends one cell past the widest
+    PROCEDURE LDiv(dend AS STRING, dsor AS STRING, quot AS STRING)
+        LET qo AS S64 = 0
+        LET do2 AS S64 = 0
+        LET so2 AS S64 = 0
+        LET ql AS S64 = 0
+        LET dl AS S64 = 0
+        LET sl AS S64 = 0
+        LET i AS S64 = 0
+        nsp0 = ncnt
+        nmk0 = nmk_n
+        nsp_flag = 1
+        ge_p = 0
+        --  park the three pieces in the grid buffer
+        CALL Parse(quot)
+        qo = GEPark()
+        CALL Parse(dend)
+        do2 = GEPark()
+        CALL Parse(dsor)
+        so2 = GEPark()
+        IF qo < 0 ORELSE do2 < 0 ORELSE so2 < 0 THEN
+            nsp_flag = 0
+            RETURN
+        END IF
+        ql = do2 - qo
+        dl = so2 - do2
+        sl = ge_p - so2
+        nmk_n = nmk0
+        CALL BlankLn()
+        --  quotient row: right-aligned over the dividend
+        CALL Blanks(sl + 1 + dl - ql)
+CALL EmitCells(qo, ql)
+        CALL Newline()
+        --  separation line:  starts in the column above the div
+        --  sign, extends one cell past the right edge
+CALL Blanks(sl)
+        i = 0
+        WHILE i < dl + 2
+            CALL Put(18)
+            i = i + 1
+        END WHILE
+        CALL Newline()
+        --  divisor / curved-sign dividend
+CALL EmitCells(so2, sl)
+        CALL Put(27)                    --  curved division sign
+CALL EmitCells(do2, dl)
+        CALL Newline()
+        CALL Newline()
+        nsp_flag = 0
+    END PROCEDURE
+
+    --  public matrix API:  entry-by-entry driver over the grid
+    PROCEDURE MatBegin(encl AS S64)
+CALL MEBegin(encl)
+    END PROCEDURE
+
+    PROCEDURE MatEntry(s AS STRING)
+CALL Parse(s)
+CALL MEFlush()
+    END PROCEDURE
+
+    PROCEDURE MatRow()
+CALL MERow()
+    END PROCEDURE
+
+    PROCEDURE MatEnd()
+CALL MEEmit()
+    END PROCEDURE
+
+    -- ===============================================================
+    --  markup bridge:  LaTeX / MathML renderers
+    -- ===============================================================
+    --  frame kinds: 1 '(' 2 '[' 3 '\{' 4 '|' 5 lfloor 6 lceil
+    --               7 langle 8 '{' (invisible group) 9 sqrt-radicand
+    --               10 sqrt-index 11 frac-wants-num 12 frac-wants-den
+    --               13 environment
+    #NLX_FR = 64
+    STRICT lf_kind[#NLX_FR] AS S64
+    STRICT lf_cur[#NLX_FR]  AS STRING   -- parent's committed text
+    STRICT lf_lst[#NLX_FR]  AS STRING   -- parent's last piece
+    STRICT lf_sup[#NLX_FR]  AS STRING
+    STRICT lf_sub[#NLX_FR]  AS STRING
+    STRICT lf_aux[#NLX_FR]  AS STRING   -- frac num / sqrt idx / env rows
+    STRICT lf_aux2[#NLX_FR] AS STRING   -- env current-row cells
+    STRICT lf_env[#NLX_FR]  AS STRING   -- env name / \left prefix
+    STRICT lf_sv[#NLX_FR]   AS S64      -- saved lx_pend
+    STRICT lf_sv2[#NLX_FR]  AS S64      -- saved lx_have
+    STRICT lf_sv3[#NLX_FR]  AS S64      -- saved lx_op
+    STRICT lf_flag[#NLX_FR] AS S64      -- binom flag / env cell count
+    LET lf_n  AS S64 = 0
+    LET lx_mode AS S64 = 0              -- 0 latex, 1 mathml
+    LET lx_cur  AS STRING = ""          -- committed output text
+    LET lx_last AS STRING = ""          -- last unit, unscripted base
+    LET lx_sup  AS STRING = ""
+    LET lx_sub  AS STRING = ""
+    LET lx_pend AS S64 = 0              -- 0 none / 1 sup / 2 sub
+    LET lx_have AS S64 = 0
+    LET lx_op   AS S64 = 0              -- last unit is a big-op
+    LET lx_lr   AS STRING = ""          -- pending \left / \right
+
+    FUNCTION LxEsc(s AS STRING) AS STRING
+        LET o AS STRING = ""
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(s)
+        LET ch AS STRING = ""
+        WHILE i <= n
+            ch = MID(s, i, 1)
+            IF ch = "&" THEN
+                o = o | "&amp;"
+            ELSEIF ch = "<" THEN
+                o = o | "&lt;"
+            ELSEIF ch = ">" THEN
+                o = o | "&gt;"
+            ELSE
+                o = o | ch
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN o
+    END FUNCTION
+
+    --  symbol name -> LaTeX;  names that ARE latex commands pass
+    --  through verbatim, alias forms map explicitly.
+    FUNCTION LxSymL(w AS STRING) AS STRING
+        IF StrEq(w, "xx") = 1 THEN RETURN "\times " END IF
+        IF StrEq(w, "oo") = 1 THEN RETURN "\infty " END IF
+        IF StrEq(w, "infty") = 1 THEN RETURN "\infty " END IF
+        IF StrEq(w, "O/") = 1 THEN RETURN "\emptyset " END IF
+        IF StrEq(w, "percent") = 1 THEN RETURN "\% " END IF
+        IF StrEq(w, "%") = 1 THEN RETURN "\% " END IF
+        IF StrEq(w, "dollar") = 1 THEN RETURN "\$ " END IF
+        IF StrEq(w, "hash") = 1 THEN RETURN "\# " END IF
+        IF StrEq(w, "amp") = 1 THEN RETURN "\& " END IF
+        IF StrEq(w, "deg") = 1 THEN RETURN "{}^{\circ} " END IF
+        IF StrEq(w, "degree") = 1 THEN RETURN "{}^{\circ} " END IF
+        IF StrEq(w, "+-") = 1 THEN RETURN "\pm " END IF
+        IF StrEq(w, "-+") = 1 THEN RETURN "\mp " END IF
+        IF StrEq(w, "nn") = 1 THEN RETURN "\cap " END IF
+        IF StrEq(w, "uu") = 1 THEN RETURN "\cup " END IF
+        IF StrEq(w, "o+") = 1 THEN RETURN "\oplus " END IF
+        IF StrEq(w, "o-") = 1 THEN RETURN "\ominus " END IF
+        IF StrEq(w, "ox") = 1 THEN RETURN "\otimes " END IF
+        IF StrEq(w, "o.") = 1 THEN RETURN "\odot " END IF
+        IF StrEq(w, "~") = 1 THEN RETURN "\sim " END IF
+        IF StrEq(w, "neq") = 1 THEN RETURN "\neq " END IF
+        IF StrEq(w, "ne") = 1 THEN RETURN "\neq " END IF
+        IF StrEq(w, "!=") = 1 THEN RETURN "\neq " END IF
+        IF StrEq(w, "leq") = 1 THEN RETURN "\leq " END IF
+        IF StrEq(w, "le") = 1 THEN RETURN "\leq " END IF
+        IF StrEq(w, "<=") = 1 THEN RETURN "\leq " END IF
+        IF StrEq(w, "geq") = 1 THEN RETURN "\geq " END IF
+        IF StrEq(w, "ge") = 1 THEN RETURN "\geq " END IF
+        IF StrEq(w, ">=") = 1 THEN RETURN "\geq " END IF
+        IF StrEq(w, "==") = 1 THEN RETURN "\equiv " END IF
+        IF StrEq(w, "~~") = 1 THEN RETURN "\approx " END IF
+        IF StrEq(w, "~=") = 1 THEN RETURN "\simeq " END IF
+        IF StrEq(w, "prop") = 1 THEN RETURN "\propto " END IF
+        IF StrEq(w, "sub") = 1 THEN RETURN "\subset " END IF
+        IF StrEq(w, "sup") = 1 THEN RETURN "\supset " END IF
+        IF StrEq(w, "sube") = 1 THEN RETURN "\subseteq " END IF
+        IF StrEq(w, "supe") = 1 THEN RETURN "\supseteq " END IF
+        IF StrEq(w, "nin") = 1 THEN RETURN "\notin " END IF
+        IF StrEq(w, "AA") = 1 THEN RETURN "\forall " END IF
+        IF StrEq(w, "EE") = 1 THEN RETURN "\exists " END IF
+        IF StrEq(w, ":.") = 1 THEN RETURN "\therefore " END IF
+        IF StrEq(w, ":'") = 1 THEN RETURN "\because " END IF
+        IF StrEq(w, "del") = 1 THEN RETURN "\partial " END IF
+        IF StrEq(w, "grad") = 1 THEN RETURN "\nabla " END IF
+        IF StrEq(w, "/_") = 1 THEN RETURN "\angle " END IF
+        IF StrEq(w, "_|_") = 1 THEN RETURN "\perp " END IF
+        IF StrEq(w, "TT") = 1 THEN RETURN "\top " END IF
+        IF StrEq(w, "|-") = 1 THEN RETURN "\vdash " END IF
+        IF StrEq(w, "-|") = 1 THEN RETURN "\dashv " END IF
+        IF StrEq(w, "to") = 1 THEN RETURN "\to " END IF
+        IF StrEq(w, "->") = 1 THEN RETURN "\to " END IF
+        IF StrEq(w, "<-") = 1 THEN RETURN "\leftarrow " END IF
+        IF StrEq(w, "<->") = 1 THEN RETURN "\leftrightarrow " END IF
+        IF StrEq(w, "=>") = 1 THEN RETURN "\Rightarrow " END IF
+        IF StrEq(w, "<=>") = 1 THEN RETURN "\Leftrightarrow " END IF
+        IF StrEq(w, "|->") = 1 THEN RETURN "\mapsto " END IF
+        IF StrEq(w, "...") = 1 THEN RETURN "\ldots " END IF
+        IF StrEq(w, "sigmaf") = 1 THEN RETURN "\varsigma " END IF
+        RETURN "\" | w | " "
+    END FUNCTION
+
+    --  symbol name -> MathML;  word names default to &name; entities,
+    --  aliases + punctuation forms map explicitly.
+    FUNCTION LxSymM(w AS STRING) AS STRING
+        IF StrEq(w, "oo") = 1 THEN RETURN "&infin;" END IF
+        IF StrEq(w, "infty") = 1 THEN RETURN "&infin;" END IF
+        IF StrEq(w, "O/") = 1 THEN RETURN "&emptyset;" END IF
+        IF StrEq(w, "percent") = 1 THEN RETURN "%" END IF
+        IF StrEq(w, "%") = 1 THEN RETURN "%" END IF
+        IF StrEq(w, "dollar") = 1 THEN RETURN "$" END IF
+        IF StrEq(w, "hash") = 1 THEN RETURN "#" END IF
+        IF StrEq(w, "amp") = 1 THEN RETURN "&amp;" END IF
+        IF StrEq(w, "deg") = 1 THEN RETURN "&deg;" END IF
+        IF StrEq(w, "degree") = 1 THEN RETURN "&deg;" END IF
+        IF StrEq(w, "+-") = 1 THEN RETURN "&pm;" END IF
+        IF StrEq(w, "-+") = 1 THEN RETURN "&mp;" END IF
+        IF StrEq(w, "xx") = 1 THEN RETURN "&times;" END IF
+        IF StrEq(w, "cdot") = 1 THEN RETURN "&sdot;" END IF
+        IF StrEq(w, "nn") = 1 THEN RETURN "&cap;" END IF
+        IF StrEq(w, "uu") = 1 THEN RETURN "&cup;" END IF
+        IF StrEq(w, "o+") = 1 THEN RETURN "&oplus;" END IF
+        IF StrEq(w, "o-") = 1 THEN RETURN "&ominus;" END IF
+        IF StrEq(w, "ox") = 1 THEN RETURN "&otimes;" END IF
+        IF StrEq(w, "o.") = 1 THEN RETURN "&odot;" END IF
+        IF StrEq(w, "~") = 1 THEN RETURN "&sim;" END IF
+        IF StrEq(w, "neq") = 1 THEN RETURN "&ne;" END IF
+        IF StrEq(w, "ne") = 1 THEN RETURN "&ne;" END IF
+        IF StrEq(w, "!=") = 1 THEN RETURN "&ne;" END IF
+        IF StrEq(w, "leq") = 1 THEN RETURN "&le;" END IF
+        IF StrEq(w, "le") = 1 THEN RETURN "&le;" END IF
+        IF StrEq(w, "<=") = 1 THEN RETURN "&le;" END IF
+        IF StrEq(w, "geq") = 1 THEN RETURN "&ge;" END IF
+        IF StrEq(w, "ge") = 1 THEN RETURN "&ge;" END IF
+        IF StrEq(w, ">=") = 1 THEN RETURN "&ge;" END IF
+        IF StrEq(w, "==") = 1 THEN RETURN "&equiv;" END IF
+        IF StrEq(w, "~~") = 1 THEN RETURN "&approx;" END IF
+        IF StrEq(w, "~=") = 1 THEN RETURN "&simeq;" END IF
+        IF StrEq(w, "prop") = 1 THEN RETURN "&prop;" END IF
+        IF StrEq(w, "nin") = 1 THEN RETURN "&notin;" END IF
+        IF StrEq(w, "AA") = 1 THEN RETURN "&forall;" END IF
+        IF StrEq(w, "EE") = 1 THEN RETURN "&exists;" END IF
+        IF StrEq(w, ":.") = 1 THEN RETURN "&therefore;" END IF
+        IF StrEq(w, ":'") = 1 THEN RETURN "&because;" END IF
+        IF StrEq(w, "iint") = 1 THEN RETURN "&Int;" END IF
+        IF StrEq(w, "iiint") = 1 THEN RETURN "&tint;" END IF
+        IF StrEq(w, "oint") = 1 THEN RETURN "&conint;" END IF
+        IF StrEq(w, "del") = 1 THEN RETURN "&part;" END IF
+        IF StrEq(w, "partial") = 1 THEN RETURN "&part;" END IF
+        IF StrEq(w, "grad") = 1 THEN RETURN "&Del;" END IF
+        IF StrEq(w, "nabla") = 1 THEN RETURN "&Del;" END IF
+        IF StrEq(w, "/_") = 1 THEN RETURN "&angle;" END IF
+        IF StrEq(w, "_|_") = 1 THEN RETURN "&perp;" END IF
+        IF StrEq(w, "TT") = 1 THEN RETURN "&top;" END IF
+        IF StrEq(w, "|-") = 1 THEN RETURN "&vdash;" END IF
+        IF StrEq(w, "-|") = 1 THEN RETURN "&dashv;" END IF
+        IF StrEq(w, "to") = 1 THEN RETURN "&rarr;" END IF
+        IF StrEq(w, "->") = 1 THEN RETURN "&rarr;" END IF
+        IF StrEq(w, "rightarrow") = 1 THEN RETURN "&rarr;" END IF
+        IF StrEq(w, "<-") = 1 THEN RETURN "&larr;" END IF
+        IF StrEq(w, "leftarrow") = 1 THEN RETURN "&larr;" END IF
+        IF StrEq(w, "<->") = 1 THEN RETURN "&harr;" END IF
+        IF StrEq(w, "leftrightarrow") = 1 THEN RETURN "&harr;" END IF
+        IF StrEq(w, "=>") = 1 THEN RETURN "&rArr;" END IF
+        IF StrEq(w, "<=") = 1 THEN RETURN "&lArr;" END IF
+        IF StrEq(w, "Rightarrow") = 1 THEN RETURN "&rArr;" END IF
+        IF StrEq(w, "Leftarrow") = 1 THEN RETURN "&lArr;" END IF
+        IF StrEq(w, "<=>") = 1 THEN RETURN "&hArr;" END IF
+        IF StrEq(w, "Leftrightarrow") = 1 THEN RETURN "&hArr;" END IF
+        IF StrEq(w, "|->") = 1 THEN RETURN "&map;" END IF
+        IF StrEq(w, "mapsto") = 1 THEN RETURN "&map;" END IF
+        IF StrEq(w, "uparrow") = 1 THEN RETURN "&uarr;" END IF
+        IF StrEq(w, "downarrow") = 1 THEN RETURN "&darr;" END IF
+        IF StrEq(w, "...") = 1 THEN RETURN "&hellip;" END IF
+        IF StrEq(w, "ldots") = 1 THEN RETURN "&hellip;" END IF
+        IF StrEq(w, "cdots") = 1 THEN RETURN "&ctdot;" END IF
+        IF StrEq(w, "vdots") = 1 THEN RETURN "&vellip;" END IF
+        IF StrEq(w, "ddots") = 1 THEN RETURN "&dtdot;" END IF
+        IF StrEq(w, "ell") = 1 THEN RETURN "&ell;" END IF
+        IF StrEq(w, "Re") = 1 THEN RETURN "&real;" END IF
+        IF StrEq(w, "Im") = 1 THEN RETURN "&image;" END IF
+        IF StrEq(w, "wp") = 1 THEN RETURN "&weierp;" END IF
+        IF StrEq(w, "sigmaf") = 1 THEN RETURN "&varsigma;" END IF
+        IF StrEq(w, "partial") = 1 THEN RETURN "&part;" END IF
+        IF StrEq(w, "emptyset") = 1 THEN RETURN "&emptyset;" END IF
+        IF StrEq(w, "varnothing") = 1 THEN RETURN "&varnothing;" END IF
+        IF StrEq(w, "ast") = 1 THEN RETURN "&ast;" END IF
+        IF StrEq(w, "circ") = 1 THEN RETURN "&compfn;" END IF
+        IF StrEq(w, "setminus") = 1 THEN RETURN "&setminus;" END IF
+        RETURN "&" | w | ";"
+    END FUNCTION
+
+    --  operators that conventionally take limits under/over in
+    --  MathML (munder/mover/munderover) instead of msub/msup.
+    FUNCTION LxBig(w AS STRING) AS S64
+        IF StrEq(w, "sum") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "prod") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "int") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "iint") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "iiint") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "oint") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "lim") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "det") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "gcd") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "min") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "max") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "inf") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "arg") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "dim") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "ker") = 1 THEN RETURN 1 END IF
+        IF StrEq(w, "hom") = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    --  combine a base with its collected scripts.  Operand strings
+    --  arrive already single-element-safe (group operands carry
+    --  <mrow> from the delivery path).
+    FUNCTION LxMat(base AS STRING, sub AS STRING, sup AS STRING,
+                   op AS S64) AS STRING
+        LET o AS STRING = base
+        IF lx_mode = 0 THEN
+            IF LEN(sub) > 0 THEN
+                o = o | "_{" | sub | "}"
+            END IF
+            IF LEN(sup) > 0 THEN
+                o = o | "^{" | sup | "}"
+            END IF
+            RETURN o
+        END IF
+        IF LEN(sub) = 0 AND LEN(sup) = 0 THEN
+            RETURN o
+        END IF
+        IF LEN(sub) > 0 AND LEN(sup) > 0 THEN
+            IF op = 1 THEN
+                RETURN "<munderover>" | o | sub | sup |
+                       "</munderover>"
+            END IF
+            RETURN "<msubsup>" | o | sub | sup | "</msubsup>"
+        END IF
+        IF LEN(sub) > 0 THEN
+            IF op = 1 THEN
+                RETURN "<munder>" | o | sub | "</munder>"
+            END IF
+            RETURN "<msub>" | o | sub | "</msub>"
+        END IF
+        IF op = 1 THEN
+            RETURN "<mover>" | o | sup | "</mover>"
+        END IF
+        RETURN "<msup>" | o | sup | "</msup>"
+    END FUNCTION
+
+    --  materialize the pending base+scripts into lx_cur;  lx_last
+    --  keeps the materialized form so '/' can still wrap it.
+    PROCEDURE LxFlush()
+        IF lx_have = 0 THEN
+            RETURN
+        END IF
+        lx_last = LxMat(lx_last, lx_sub, lx_sup, lx_op)
+        lx_cur = lx_cur | lx_last
+        lx_sup = ""
+        lx_sub = ""
+        lx_op = 0
+        lx_have = 0
+    END PROCEDURE
+
+    PROCEDURE LxPush(k AS S64, env AS STRING)
+        IF lf_n >= #NLX_FR THEN
+CALL NErr("latex: nesting too deep")
+            RETURN
+        END IF
+        lf_kind[lf_n] = k
+        lf_cur[lf_n] = lx_cur
+        lf_lst[lf_n] = lx_last
+        lf_sup[lf_n] = lx_sup
+        lf_sub[lf_n] = lx_sub
+        lf_aux[lf_n] = ""
+        lf_aux2[lf_n] = ""
+        lf_env[lf_n] = env
+        lf_sv[lf_n] = lx_pend
+        lf_sv2[lf_n] = lx_have
+        lf_sv3[lf_n] = lx_op
+        lf_flag[lf_n] = 0
+        lf_n = lf_n + 1
+        lx_cur = ""
+        lx_last = ""
+        lx_sup = ""
+        lx_sub = ""
+        lx_pend = 0
+        lx_have = 0
+        lx_op = 0
+    END PROCEDURE
+
+    --  pop the top frame, restoring the parent's text context.
+    PROCEDURE LxRestore()
+        IF lf_n < 2 THEN
+            RETURN
+        END IF
+        lf_n = lf_n - 1
+        lx_cur = lf_cur[lf_n]
+        lx_last = lf_lst[lf_n]
+        lx_sup = lf_sup[lf_n]
+        lx_sub = lf_sub[lf_n]
+        lx_pend = lf_sv[lf_n]
+        lx_have = lf_sv2[lf_n]
+        lx_op = lf_sv3[lf_n]
+    END PROCEDURE
+
+    --  render a closed group's full text;  the delivered inner stays
+    --  available separately for script/frac operand use.
+    FUNCTION LxWrap(k AS S64, inner AS STRING) AS STRING
+        IF lx_mode = 0 THEN
+            IF k = 1 THEN RETURN "(" | inner | ")" END IF
+            IF k = 2 THEN RETURN "[" | inner | "]" END IF
+            IF k = 3 THEN RETURN "\{" | inner | "\}" END IF
+            IF k = 4 THEN RETURN "|" | inner | "|" END IF
+            IF k = 5 THEN RETURN "\lfloor " | inner | "\rfloor " END IF
+            IF k = 6 THEN RETURN "\lceil " | inner | "\rceil " END IF
+            IF k = 7 THEN RETURN "\langle " | inner | "\rangle " END IF
+            RETURN "{" | inner | "}"
+        END IF
+        IF k = 1 THEN
+            RETURN "<mrow><mo>(</mo>" | inner | "<mo>)</mo></mrow>"
+        END IF
+        IF k = 2 THEN
+            RETURN "<mrow><mo>[</mo>" | inner | "<mo>]</mo></mrow>"
+        END IF
+        IF k = 3 THEN
+            RETURN "<mrow><mo>{</mo>" | inner | "<mo>}</mo></mrow>"
+        END IF
+        IF k = 4 THEN
+            RETURN "<mrow><mo>|</mo>" | inner | "<mo>|</mo></mrow>"
+        END IF
+        IF k = 5 THEN
+            RETURN "<mrow><mo>&#x230A;</mo>" | inner |
+                   "<mo>&#x230B;</mo></mrow>"
+        END IF
+        IF k = 6 THEN
+            RETURN "<mrow><mo>&#x2308;</mo>" | inner |
+                   "<mo>&#x2309;</mo></mrow>"
+        END IF
+        IF k = 7 THEN
+            RETURN "<mrow><mo>&#x27E8;</mo>" | inner |
+                   "<mo>&#x27E9;</mo></mrow>"
+        END IF
+        RETURN "<mrow>" | inner | "</mrow>"
+    END FUNCTION
+
+    PROCEDURE LxDeliver(txt AS STRING, inner AS STRING, grp AS S64,
+                        op AS S64)
+        LET done AS S64 = 0
+        LET k AS S64 = 0
+        LET ct AS STRING = txt
+        LET ci AS STRING = inner
+        LET cgrp AS S64 = grp
+        LET opnd AS STRING = ""
+        LET num AS STRING = ""
+        LET idx AS STRING = ""
+        LET mix AS S64 = 0
+        WHILE done = 0
+            IF lx_pend <> 0 THEN
+                IF lx_have = 0 THEN
+CALL NErr("latex: script with no base")
+                    lx_pend = 0
+                ELSE
+                    opnd = ci
+                    IF lx_mode = 1 AND cgrp = 1 THEN
+                        opnd = "<mrow>" | opnd | "</mrow>"
+                    END IF
+                    IF lx_pend = 1 THEN
+                        lx_sup = lx_sup | opnd
+                    ELSE
+                        lx_sub = lx_sub | opnd
+                    END IF
+                    lx_pend = 0
+                    done = 1
+                END IF
+            ELSIF lf_n > 1 AND
+              (lf_kind[lf_n - 1] = 9 ORELSE lf_kind[lf_n - 1] = 11
+               ORELSE lf_kind[lf_n - 1] = 12) THEN
+                k = lf_kind[lf_n - 1]
+                opnd = ci
+                IF lx_mode = 1 AND cgrp = 1 THEN
+                    opnd = "<mrow>" | opnd | "</mrow>"
+                END IF
+                IF k = 11 THEN
+                    --  frac's numerator: hold in lf_aux, wait for den
+                    lf_aux[lf_n - 1] = opnd
+                    lf_kind[lf_n - 1] = 12
+                    done = 1
+                ELSE
+                    IF k = 9 THEN
+                        --  sqrt radicand;  lf_aux holds [idx] or ""
+                        idx = lf_aux[lf_n - 1]
+                        IF lx_mode = 0 THEN
+                            IF LEN(idx) > 0 THEN
+                                ct = "\sqrt[" | idx | "]{" | opnd |
+                                     "}"
+                            ELSE
+                                ct = "\sqrt{" | opnd | "}"
+                            END IF
+                        ELSE
+                            IF LEN(idx) > 0 THEN
+                                ct = "<mroot>" | opnd | "<mrow>" |
+                                     idx | "</mrow></mroot>"
+                            ELSE
+                                ct = "<msqrt>" | opnd | "</msqrt>"
+                            END IF
+                        END IF
+                    ELSE
+                        --  k = 12:  frac completes on the denominator
+                        num = lf_aux[lf_n - 1]
+                        mix = lf_flag[lf_n - 1]
+                        IF lx_mode = 0 THEN
+                            IF mix = 2 THEN
+                                ct = "\binom{" | num | "}{" | opnd |
+                                     "}"
+                            ELSE
+                                ct = "\frac{" | num | "}{" | opnd |
+                                     "}"
+                            END IF
+                        ELSE
+                            IF mix = 2 THEN
+                                ct = "<mrow><mo>(</mo><mfrac" |
+                                     " linethickness='0'>" |
+                                     "<mrow>" | num | "</mrow>" |
+                                     "<mrow>" | opnd | "</mrow>" |
+                                     "</mfrac><mo>)</mo></mrow>"
+                            ELSE
+                                ct = "<mfrac>" | num | opnd |
+                                     "</mfrac>"
+                            END IF
+                        END IF
+                    END IF
+CALL LxRestore()
+                    ci = ct
+                    cgrp = 0
+                    op = 0
+                END IF
+            ELSE
+                IF lx_have = 1 THEN
+CALL LxFlush()
+                END IF
+                lx_last = ct
+                lx_op = op
+                lx_have = 1
+                done = 1
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    --  generic group close:  flush inner text, restore the parent's
+    --  context, deliver the wrapped unit (script/frac operand ready).
+    PROCEDURE LxGroupEnd(k AS S64, rgt AS STRING)
+        LET inner AS STRING = ""
+        LET whole AS STRING = ""
+        LET env AS STRING = ""
+        IF lf_n < 2 ORELSE lf_kind[lf_n - 1] <> k THEN
+CALL NErr("latex: unbalanced close")
+            RETURN
+        END IF
+CALL LxFlush()
+        inner = lx_cur
+        env = lf_env[lf_n - 1]
+CALL LxRestore()
+        IF lx_mode = 0 AND (LEN(env) > 0 ORELSE LEN(rgt) > 0) THEN
+            --  \left/\right:  prefixes sit on the delimiters
+            IF k = 1 THEN
+                whole = env | "(" | inner | rgt | ")"
+            ELSEIF k = 2 THEN
+                whole = env | "[" | inner | rgt | "]"
+            ELSEIF k = 3 THEN
+                whole = env | "\{" | inner | rgt | "\}"
+            ELSEIF k = 4 THEN
+                whole = env | "|" | inner | rgt | "|"
+            ELSEIF k = 5 THEN
+                whole = env | "\lfloor " | inner | rgt | "\rfloor "
+            ELSEIF k = 6 THEN
+                whole = env | "\lceil " | inner | rgt | "\rceil "
+            ELSEIF k = 7 THEN
+                whole = env | "\langle " | inner | rgt | "\rangle "
+            ELSE
+                whole = env | "{" | inner | rgt | "}"
+            END IF
+        ELSE
+            whole = LxWrap(k, inner)
+        END IF
+CALL LxDeliver(whole, inner, 1, 0)
+    END PROCEDURE
+
+    --  matrix cell commit:  current lx_cur becomes one rendered cell
+    --  appended to the row's cell text (kind-13 frame only).
+    PROCEDURE LxCellCommit()
+        LET cell AS STRING = ""
+CALL LxFlush()
+        cell = lx_cur
+        lx_cur = ""
+        lx_last = ""
+        lx_sup = ""
+        lx_sub = ""
+        lx_pend = 0
+        lx_have = 0
+        lx_op = 0
+        IF lx_mode = 1 THEN
+            cell = "<mtd>" | cell | "</mtd>"
+        ELSE
+            IF lf_flag[lf_n - 1] > 0 THEN
+                lf_aux2[lf_n - 1] = lf_aux2[lf_n - 1] | " & "
+            END IF
+        END IF
+        lf_aux2[lf_n - 1] = lf_aux2[lf_n - 1] | cell
+        lf_flag[lf_n - 1] = lf_flag[lf_n - 1] + 1
+    END PROCEDURE
+
+    --  matrix row commit:  close the pending cell, wrap the row's
+    --  cells per mode, append to the finished-rows text.
+    PROCEDURE LxRowCommit()
+CALL LxCellCommit()
+        IF lx_mode = 1 THEN
+            lf_aux[lf_n - 1] = lf_aux[lf_n - 1] | "<mtr>" |
+                               lf_aux2[lf_n - 1] | "</mtr>"
+        ELSE
+            IF LEN(lf_aux[lf_n - 1]) > 0 THEN
+                lf_aux[lf_n - 1] = lf_aux[lf_n - 1] | " \\ "
+            END IF
+            lf_aux[lf_n - 1] = lf_aux[lf_n - 1] | lf_aux2[lf_n - 1]
+        END IF
+        lf_aux2[lf_n - 1] = ""
+        lf_flag[lf_n - 1] = 0
+    END PROCEDURE
+
+    --  one pass over Tok()'s token stream;  returns the rendered
+    --  markup.  m:  0 latex, 1 mathml.
+    FUNCTION LxRun(s AS STRING, m AS S64) AS STRING
+        LET i AS S64 = 0
+        LET t AS S64 = 0
+        LET j AS S64 = 0
+        LET k AS S64 = 0
+        LET w AS STRING = ""
+        LET num AS STRING = ""
+        LET ename AS STRING = ""
+        LET raw AS STRING = ""
+        LET inner0 AS STRING = ""
+        LET first AS S64 = 0
+        lx_mode = m
+        lf_n = 1
+        lx_cur = ""
+        lx_last = ""
+        lx_sup = ""
+        lx_sub = ""
+        lx_pend = 0
+        lx_have = 0
+        lx_op = 0
+        lx_lr = ""
+CALL FillSym()
+CALL Tok(s)
+        tk_i = 0
+        WHILE tk_i < tk_n
+            t = tk_kind[tk_i]
+            w = tk_txt[tk_i]
+            IF t = 1 THEN
+                --  numeral
+                IF lx_mode = 0 THEN
+CALL LxDeliver(w, w, 0, 0)
+                ELSE
+CALL LxDeliver("<mn>" | w | "</mn>", "<mn>" | w | "</mn>", 0, 0)
+                END IF
+            ELSEIF t = 2 THEN
+                --  letter word:  function names stay whole, other
+                --  words split into single <mi> letters
+                IF IsFunc(w) = 1 THEN
+                    IF lx_mode = 0 THEN
+CALL LxDeliver("\" | w | " ", "\" | w | " ", 0, LxBig(w))
+                    ELSE
+CALL LxDeliver("<mi>" | w | "</mi>", "<mi>" | w | "</mi>", 0,
+                               LxBig(w))
+                    END IF
+                ELSE
+                    IF lx_mode = 0 THEN
+CALL LxDeliver(w, w, 0, 0)
+                    ELSE
+                        num = ""
+                        i = 1
+                        WHILE i <= LEN(w)
+                            num = num | "<mi>" | MID(w, i, 1) |
+                                  "</mi>"
+                            i = i + 1
+                        END WHILE
+CALL LxDeliver(num, num, 0, 0)
+                    END IF
+                END IF
+            ELSEIF t = 3 THEN
+                --  latex-ish command
+                IF StrEq(w, "frac") = 1 ORELSE StrEq(w, "dfrac") = 1
+                   ORELSE StrEq(w, "tfrac") = 1 ORELSE
+                   StrEq(w, "cfrac") = 1 THEN
+CALL LxPush(11, "")
+                ELSEIF StrEq(w, "binom") = 1 THEN
+CALL LxPush(11, "")
+                    lf_flag[lf_n - 1] = 2
+                ELSEIF StrEq(w, "sqrt") = 1 THEN
+CALL LxPush(9, "")
+                    IF tk_i + 1 < tk_n AND tk_kind[tk_i + 1] = 4 AND
+                       StrEq(tk_txt[tk_i + 1], "[") = 1 THEN
+                        tk_i = tk_i + 1
+CALL LxPush(10, "")
+                    END IF
+                ELSEIF StrEq(w, "left") = 1 ORELSE
+                       StrEq(w, "right") = 1 THEN
+                    lx_lr = "\" | w
+                ELSEIF StrEq(w, "text") = 1 ORELSE
+                       StrEq(w, "mathrm") = 1 ORELSE
+                       StrEq(w, "operatorname") = 1 ORELSE
+                       StrEq(w, "textbf") = 1 ORELSE
+                       StrEq(w, "mathit") = 1 THEN
+                    j = tk_i + 1
+                    raw = ""
+                    IF j < tk_n AND tk_kind[j] = 9 THEN
+                        j = j + 1
+                        WHILE j < tk_n AND tk_kind[j] <> 10
+                            IF tk_kind[j] = 11 THEN
+                                raw = raw | " "
+                            ELSE
+                                raw = raw | tk_txt[j]
+                            END IF
+                            j = j + 1
+                        END WHILE
+                        tk_i = j
+                    END IF
+                    IF lx_mode = 0 THEN
+CALL LxDeliver("\text{" | raw | "}", "\text{" | raw | "}", 0, 0)
+                    ELSE
+CALL LxDeliver("<mtext>" | LxEsc(raw) | "</mtext>",
+                               "<mtext>" | LxEsc(raw) | "</mtext>", 0, 0)
+                    END IF
+                ELSEIF StrEq(w, "langle") = 1 THEN
+CALL LxPush(7, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "lfloor") = 1 THEN
+CALL LxPush(5, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "lceil") = 1 THEN
+CALL LxPush(6, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "rangle") = 1 THEN
+CALL LxGroupEnd(7, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "rfloor") = 1 THEN
+CALL LxGroupEnd(5, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "rceil") = 1 THEN
+CALL LxGroupEnd(6, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "{") = 1 THEN
+CALL LxPush(3, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "}") = 1 THEN
+CALL LxGroupEnd(3, lx_lr)
+                    lx_lr = ""
+                ELSEIF StrEq(w, "|") = 1 THEN
+                    IF lx_mode = 0 THEN
+CALL LxDeliver("|", "|", 0, 0)
+                    ELSE
+CALL LxDeliver("<mo>|</mo>", "<mo>|</mo>", 0, 0)
+                    END IF
+                ELSEIF StrEq(w, ",") = 1 ORELSE StrEq(w, ";") = 1
+                   ORELSE StrEq(w, ":") = 1 ORELSE
+                   StrEq(w, " ") = 1 THEN
+CALL LxDeliver(" ", " ", 0, 0)
+                ELSEIF StrEq(w, "!") = 1 THEN
+                    --  negative thin space: emit nothing
+                ELSEIF StrEq(w, "\") = 1 THEN
+                    IF lf_n > 1 AND lf_kind[lf_n - 1] = 13 THEN
+CALL LxRowCommit()
+                    ELSE
+CALL NErr("latex: \\ outside environment")
+                    END IF
+                ELSEIF StrEq(w, "begin") = 1 THEN
+                    j = tk_i + 1
+                    ename = ""
+                    IF j < tk_n AND tk_kind[j] = 9 THEN
+                        j = j + 1
+                        WHILE j < tk_n AND tk_kind[j] <> 10
+                            IF tk_kind[j] = 2 THEN
+                                ename = tk_txt[j]
+                            END IF
+                            j = j + 1
+                        END WHILE
+                        tk_i = j
+                    END IF
+                    IF LEN(ename) = 0 THEN
+CALL NErr("latex: begin wants {env}")
+                    ELSE
+CALL LxPush(13, ename)
+                    END IF
+                ELSEIF StrEq(w, "end") = 1 THEN
+                    j = tk_i + 1
+                    ename = ""
+                    IF j < tk_n AND tk_kind[j] = 9 THEN
+                        j = j + 1
+                        WHILE j < tk_n AND tk_kind[j] <> 10
+                            IF tk_kind[j] = 2 THEN
+                                ename = tk_txt[j]
+                            END IF
+                            j = j + 1
+                        END WHILE
+                        tk_i = j
+                    END IF
+                    IF lf_n < 2 ORELSE lf_kind[lf_n - 1] <> 13 THEN
+CALL NErr("latex: end without begin")
+                    ELSE
+CALL LxRowCommit()
+                        ename = lf_env[lf_n - 1]
+                        IF lx_mode = 0 THEN
+                            w = "\begin{" | ename | "}" |
+                                lf_aux[lf_n - 1] | "\end{" | ename |
+                                "}"
+                        ELSE
+                            num = "<mtable"
+                            IF StrEq(ename, "cases") = 1 THEN
+                                num = num |
+                                      " columnalign='left'"
+                            END IF
+                            num = num | ">" | lf_aux[lf_n - 1] |
+                                  "</mtable>"
+                            w = "<mrow>"
+                            IF StrEq(ename, "pmatrix") = 1 THEN
+                                w = w | "<mo>(</mo>" | num |
+                                    "<mo>)</mo>"
+                            ELSEIF StrEq(ename, "bmatrix") = 1 THEN
+                                w = w | "<mo>[</mo>" | num |
+                                    "<mo>]</mo>"
+                            ELSEIF StrEq(ename, "Bmatrix") = 1 THEN
+                                w = w | "<mo>{</mo>" | num |
+                                    "<mo>}</mo>"
+                            ELSEIF StrEq(ename, "vmatrix") = 1 THEN
+                                w = w | "<mo>|</mo>" | num |
+                                    "<mo>|</mo>"
+                            ELSEIF StrEq(ename, "Vmatrix") = 1 THEN
+                                w = w | "<mo>&#x2016;</mo>" | num |
+                                    "<mo>&#x2016;</mo>"
+                            ELSEIF StrEq(ename, "cases") = 1 THEN
+                                w = w | "<mo>{</mo>" | num
+                            ELSE
+                                w = w | num
+                            END IF
+                            w = w | "</mrow>"
+                        END IF
+                        inner0 = w
+CALL LxRestore()
+CALL LxDeliver(inner0, inner0, 1, 0)
+                    END IF
+                ELSEIF StrEq(w, "bar") = 1 ORELSE StrEq(w, "hat") = 1
+                   ORELSE StrEq(w, "vec") = 1 ORELSE
+                   StrEq(w, "dot") = 1 ORELSE StrEq(w, "ddot") = 1
+                   ORELSE StrEq(w, "tilde") = 1 ORELSE
+                   StrEq(w, "overline") = 1 ORELSE
+                   StrEq(w, "underline") = 1 ORELSE
+                   StrEq(w, "widehat") = 1 ORELSE
+                   StrEq(w, "widetilde") = 1 THEN
+CALL NErr("latex: modifiers not implemented: \" | w)
+                ELSEIF IsFunc(w) = 1 THEN
+                    IF lx_mode = 0 THEN
+CALL LxDeliver("\" | w | " ", "\" | w | " ", 0, LxBig(w))
+                    ELSE
+CALL LxDeliver("<mi>" | w | "</mi>", "<mi>" | w | "</mi>", 0,
+                               LxBig(w))
+                    END IF
+                ELSEIF SymFind(w) >= 0 THEN
+                    IF lx_mode = 0 THEN
+CALL LxDeliver(LxSymL(w), LxSymL(w), 0, LxBig(w))
+                    ELSE
+CALL LxDeliver("<mo>" | LxSymM(w) | "</mo>",
+                               "<mo>" | LxSymM(w) | "</mo>", 0, LxBig(w))
+                    END IF
+                ELSE
+CALL NErr("latex: unknown command \" | w)
+                END IF
+            ELSEIF t = 4 THEN
+                IF StrEq(w, "(") = 1 THEN
+CALL LxPush(1, lx_lr)
+                ELSE
+CALL LxPush(2, lx_lr)
+                END IF
+                lx_lr = ""
+            ELSEIF t = 5 THEN
+                IF lf_n > 1 AND lf_kind[lf_n - 1] = 10 AND
+                   StrEq(w, "]") = 1 THEN
+                    --  sqrt index:  content goes to frame 9's aux
+CALL LxFlush()
+                    num = lx_cur
+CALL LxRestore()
+                    lf_aux[lf_n - 1] = num
+                ELSEIF StrEq(w, ")") = 1 THEN
+CALL LxGroupEnd(1, lx_lr)
+                    lx_lr = ""
+                ELSE
+CALL LxGroupEnd(2, lx_lr)
+                    lx_lr = ""
+                END IF
+            ELSEIF t = 16 THEN
+                --  | toggles a bar group
+                IF lf_n > 1 AND lf_kind[lf_n - 1] = 4 THEN
+CALL LxGroupEnd(4, lx_lr)
+                    lx_lr = ""
+                ELSE
+CALL LxPush(4, lx_lr)
+                    lx_lr = ""
+                END IF
+            ELSEIF t = 9 THEN
+CALL LxPush(8, "")
+            ELSEIF t = 10 THEN
+CALL LxGroupEnd(8, "")
+            ELSEIF t = 6 THEN
+                lx_pend = 1
+            ELSEIF t = 7 THEN
+                lx_pend = 2
+            ELSEIF t = 8 THEN
+                IF lx_mode = 0 THEN
+                    IF StrEq(w, "*") = 1 THEN
+CALL LxDeliver("\cdot ", "\cdot ", 0, 0)
+                    ELSEIF StrEq(w, "~") = 1 THEN
+CALL LxDeliver("\sim ", "\sim ", 0, 0)
+                    ELSEIF StrEq(w, "=") = 1 ORELSE StrEq(w, "<") = 1
+                       ORELSE StrEq(w, ">") = 1 THEN
+CALL LxDeliver(" " | w | " ", " " | w | " ", 0, 0)
+                    ELSEIF StrEq(w, "+") = 1 ORELSE StrEq(w, "-") = 1
+                       THEN
+CALL LxDeliver(w, w, 0, 0)
+                    ELSEIF StrEq(w, "/") = 1 THEN
+                        --  previous factor wraps as the numerator;
+                        --  consume it so the restored context
+                        --  doesn't re-emit it ahead of the fraction
+                        num = LxMat(lx_last, lx_sub, lx_sup, lx_op)
+CALL LxPush(12, "")
+                        lf_aux[lf_n - 1] = num
+                        lf_lst[lf_n - 1] = ""
+                        lf_sup[lf_n - 1] = ""
+                        lf_sub[lf_n - 1] = ""
+                        lf_sv[lf_n - 1] = 0
+                        lf_sv2[lf_n - 1] = 0
+                        lf_sv3[lf_n - 1] = 0
+                    ELSE
+CALL NErr("latex: bad operator '" | w | "'")
+                    END IF
+                ELSE
+                    IF StrEq(w, "+") = 1 THEN
+CALL LxDeliver("<mo>+</mo>", "<mo>+</mo>", 0, 0)
+                    ELSEIF StrEq(w, "-") = 1 THEN
+CALL LxDeliver("<mo>&minus;</mo>", "<mo>&minus;</mo>", 0, 0)
+                    ELSEIF StrEq(w, "*") = 1 THEN
+CALL LxDeliver("<mo>&sdot;</mo>", "<mo>&sdot;</mo>", 0, 0)
+                    ELSEIF StrEq(w, "~") = 1 THEN
+CALL LxDeliver("<mo>&sim;</mo>", "<mo>&sim;</mo>", 0, 0)
+                    ELSEIF StrEq(w, "=") = 1 THEN
+CALL LxDeliver("<mo>=</mo>", "<mo>=</mo>", 0, 0)
+                    ELSEIF StrEq(w, "<") = 1 THEN
+CALL LxDeliver("<mo>&lt;</mo>", "<mo>&lt;</mo>", 0, 0)
+                    ELSEIF StrEq(w, ">") = 1 THEN
+CALL LxDeliver("<mo>&gt;</mo>", "<mo>&gt;</mo>", 0, 0)
+                    ELSEIF StrEq(w, "/") = 1 THEN
+                        num = LxMat(lx_last, lx_sub, lx_sup, lx_op)
+CALL LxPush(12, "")
+                        lf_aux[lf_n - 1] = num
+                        lf_lst[lf_n - 1] = ""
+                        lf_sup[lf_n - 1] = ""
+                        lf_sub[lf_n - 1] = ""
+                        lf_sv[lf_n - 1] = 0
+                        lf_sv2[lf_n - 1] = 0
+                        lf_sv3[lf_n - 1] = 0
+                    ELSE
+CALL NErr("latex: bad operator '" | w | "'")
+                    END IF
+                END IF
+            ELSEIF t = 15 THEN
+                IF lx_mode = 0 THEN
+CALL LxDeliver(LxSymL(w), LxSymL(w), 0, 0)
+                ELSE
+CALL LxDeliver("<mo>" | LxSymM(w) | "</mo>",
+                               "<mo>" | LxSymM(w) | "</mo>", 0, 0)
+                END IF
+            ELSEIF t = 13 THEN
+                IF StrEq(w, ".") = 1 AND LEN(lx_lr) > 0 THEN
+                    --  \left. / \right.:  invisible delimiter
+                    IF lx_mode = 0 THEN
+CALL LxDeliver(lx_lr | ".", lx_lr | ".", 0, 0)
+                    END IF
+                    lx_lr = ""
+                ELSE
+                    IF lx_mode = 0 THEN
+CALL LxDeliver(w, w, 0, 0)
+                    ELSE
+CALL LxDeliver("<mo>" | LxEsc(w) | "</mo>",
+                               "<mo>" | LxEsc(w) | "</mo>", 0, 0)
+                    END IF
+                END IF
+            ELSEIF t = 14 THEN
+                --  prime:  postfix on the current base
+                IF lx_have = 1 THEN
+                    IF lx_mode = 0 THEN
+                        lx_last = lx_last | "'"
+                    ELSE
+                        lx_last = "<msup>" | lx_last |
+                                  "<mo>&prime;</mo></msup>"
+                    END IF
+                ELSE
+CALL NErr("latex: prime with no base")
+                END IF
+            ELSEIF t = 12 THEN
+                IF lf_n > 1 AND lf_kind[lf_n - 1] = 13 THEN
+CALL LxCellCommit()
+                ELSE
+CALL NErr("latex: '&' outside environment")
+                END IF
+            ELSEIF t = 17 THEN
+CALL LxFlush()
+                IF lx_mode = 0 THEN
+                    lx_cur = lx_cur | "\\" | CHR(10)
+                ELSE
+                    lx_cur = lx_cur | "<mspace linebreak='newline'/>"
+                END IF
+            ELSEIF t = 11 THEN
+                --  spacing is cosmetic:  keep it in latex only
+                IF lx_mode = 0 THEN
+CALL LxDeliver(" ", " ", 0, 0)
+                END IF
+            END IF
+            tk_i = tk_i + 1
+        END WHILE
+CALL LxFlush()
+        RETURN lx_cur
+    END FUNCTION
+
+    FUNCTION ToLatex(s AS STRING) AS STRING
+        RETURN LxRun(s, 0)
+    END FUNCTION
+
+    FUNCTION ToMathML(s AS STRING) AS STRING
+        RETURN "<math>" | LxRun(s, 1) | "</math>"
+    END FUNCTION
+
+    -- ================================================================
+    --  B1b back-translation:  Nemeth cells -> canonical source.
+    --  Transcribe(From*(x)) reproduces x's cells;  the emitted SOURCE
+    --  is canonical (see BRAILLE_NEMETH_BLOCKS.md "B1b reader notes").
+    --  Same bounded frame-stack machinery as Lx*, no recursion.
+    -- ================================================================
+    --  frame kinds: 1 frac    2 rad      3 sup opnd   4 sub opnd
+    --               5 group   6 env      7 | | bar
+    --  group lvl:   1 ()   2 []   3 {}   4 floor   5 ceil   6 angle
+    --  env lvl:     1 pmatrix  2 bmatrix  3 Bmatrix-or-cases
+    --               4 vmatrix
+    #NNB_FR = 64
+    STRICT nb_kind[#NNB_FR] AS S64
+    STRICT nb_pcur[#NNB_FR] AS STRING  -- parent committed text
+    STRICT nb_pbas[#NNB_FR] AS STRING  -- parent pending base
+    STRICT nb_aux [#NNB_FR] AS STRING  -- frac num / rad idx / scr base
+    STRICT nb_flag[#NNB_FR] AS S64     -- saved parent pending-base flag
+    STRICT nb_pd  [#NNB_FR] AS S64     -- saved parent dangling-op flag
+    STRICT nb_ph  [#NNB_FR] AS S64     -- frac phase / rad phase /
+                                     -- env Bmatrix-close-seen
+    STRICT nb_lvl [#NNB_FR] AS S64     -- frac dot6 lvl / group+env code
+    STRICT nb_cell[#NEM_MAX] AS S64
+    LET nb_n    AS S64 = 0
+    LET nb_i    AS S64 = 0
+    LET nb_nc   AS S64 = 0
+    LET nb_cur  AS STRING = ""   -- accumulating source text
+    LET nb_bas  AS STRING = ""   -- pending scriptable base
+    LET nb_have AS S64 = 0
+    LET nb_txt  AS STRING = ""   -- pop results
+    LET nb_aux0 AS STRING = ""
+    LET nb_lvl0 AS S64 = 0
+    LET nb_kind0 AS S64 = 0
+    LET nb_plen AS S64 = 0
+    LET nb_dang AS S64 = 0       -- operand ends in a dangling op
+
+    FUNCTION NbIsLet(c AS S64) AS S64
+        LET i AS S64 = 0
+        i = 0
+        WHILE i < 26
+            IF nlet[i] = c THEN RETURN i + 1 END IF
+            i = i + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION NbIsDig(c AS S64) AS S64
+        LET i AS S64 = 0
+        i = 0
+        WHILE i < 10
+            IF ndig[i] = c THEN RETURN i + 1 END IF
+            i = i + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION NbDigVal(c AS S64) AS S64
+        RETURN NbIsDig(c) - 1
+    END FUNCTION
+
+    --  longest symbol-pack match at cell pos;  sets nb_plen, returns
+    --  the ns_* index or -1.
+    FUNCTION NbPackAt(pos AS S64) AS S64
+        LET i AS S64 = 0
+        LET p AS S64 = 0
+        LET n AS S64 = 0
+        LET j AS S64 = 0
+        LET sh AS S64 = 0
+        LET best AS S64 = -1
+        LET bn AS S64 = 0
+        LET ok AS S64 = 0
+        i = 0
+        WHILE i < ns_n
+            p = ns_pack[i]
+            n = p / 281474976710656
+            IF n > bn AND pos + n <= nb_nc THEN
+                ok = 1
+                j = 0
+                WHILE j < n
+                    sh = p MOD 64
+                    p = (p - sh) / 64
+                    IF nb_cell[pos + j] <> sh THEN ok = 0 END IF
+                    j = j + 1
+                END WHILE
+                IF ok = 1 THEN
+                    best = i
+                    bn = n
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        nb_plen = bn
+        RETURN best
+    END FUNCTION
+
+    PROCEDURE NbFlush()
+        IF nb_have = 1 THEN
+            nb_cur = nb_cur | nb_bas
+            nb_bas = ""
+            nb_have = 0
+        END IF
+    END PROCEDURE
+
+    --  a scriptable unit lands:  letters, numerals, symbols, groups
+    PROCEDURE NbUnit(t AS STRING)
+CALL NbFlush()
+        nb_bas = t
+        nb_have = 1
+        nb_dang = 0
+    END PROCEDURE
+
+    --  committed text that can't take scripts:  ops, spaces
+    PROCEDURE NbOp(t AS STRING)
+CALL NbFlush()
+        nb_cur = nb_cur | t
+    END PROCEDURE
+
+    PROCEDURE NbPush(k AS S64)
+        IF nb_n >= #NNB_FR THEN
+CALL NErr("cells: nesting too deep")
+            RETURN
+        END IF
+        nb_kind[nb_n] = k
+        nb_pcur[nb_n] = nb_cur
+        nb_pbas[nb_n] = nb_bas
+        nb_aux[nb_n] = ""
+        nb_flag[nb_n] = nb_have
+        nb_pd[nb_n] = nb_dang
+        nb_ph[nb_n] = 0
+        nb_lvl[nb_n] = 0
+        nb_n = nb_n + 1
+        nb_cur = ""
+        nb_bas = ""
+        nb_have = 0
+        nb_dang = 0
+    END PROCEDURE
+
+    --  pop:  nb_txt = collected text, nb_aux0 = aux slot,
+    --  nb_lvl0/nb_kind0 = frame attrs, parent context restored.
+    PROCEDURE NbPop()
+        nb_n = nb_n - 1
+        nb_txt = nb_cur | nb_bas
+        nb_aux0 = nb_aux[nb_n]
+        nb_lvl0 = nb_lvl[nb_n]
+        nb_kind0 = nb_kind[nb_n]
+        nb_cur = nb_pcur[nb_n]
+        nb_bas = nb_pbas[nb_n]
+        nb_have = nb_flag[nb_n]
+        nb_dang = nb_pd[nb_n]
+    END PROCEDURE
+
+    --  ^ / _ :  attach a script-collecting frame to the pending base
+    PROCEDURE NbScrPush(k AS S64)
+        LET b0 AS STRING = ""
+        IF nb_have = 0 THEN
+CALL NErr("cells: script with no base")
+            RETURN
+        END IF
+        b0 = nb_bas
+CALL NbPush(k)
+        nb_aux[nb_n - 1] = b0
+        nb_pbas[nb_n - 1] = ""
+        nb_flag[nb_n - 1] = 0
+    END PROCEDURE
+
+    --  pop every open script frame, folding opnd into its base
+    PROCEDURE NbEndScr()
+        LET k AS S64 = 0
+        WHILE nb_n > 1 AND (nb_kind[nb_n - 1] = 3 ORELSE
+              nb_kind[nb_n - 1] = 4)
+            k = nb_kind[nb_n - 1]
+CALL NbPop()
+            IF k = 3 THEN
+                nb_txt = nb_aux0 | "^{" | nb_txt | "}"
+            ELSE
+                nb_txt = nb_aux0 | "_{" | nb_txt | "}"
+            END IF
+CALL NbUnit(nb_txt)
+        END WHILE
+    END PROCEDURE
+
+    --  numeral run:  digits + decimal 40 + comma 32 (inside the run);
+    --  nb_i sits on the indicator (60) or first digit cell on entry.
+    PROCEDURE NbNum()
+        LET t AS STRING = ""
+        LET c AS S64 = 0
+        LET nx AS S64 = 0
+        LET done AS S64 = 0
+        IF nb_cell[nb_i] = 60 THEN nb_i = nb_i + 1 END IF
+        WHILE done = 0 AND nb_i < nb_nc
+            c = nb_cell[nb_i]
+            nx = 0
+            IF nb_i + 1 < nb_nc THEN nx = nb_cell[nb_i + 1] END IF
+            IF NbIsDig(c) <> 0 THEN
+                t = t | CHR(48 + NbDigVal(c))
+                nb_i = nb_i + 1
+            ELSEIF c = 40 AND NbIsDig(nx) <> 0 THEN
+                t = t | "."
+                nb_i = nb_i + 1
+            ELSEIF c = 32 AND NbIsDig(nx) <> 0 THEN
+                t = t | ","
+                nb_i = nb_i + 1
+            ELSE
+                done = 1
+            END IF
+        END WHILE
+        IF t = "" THEN
+CALL NErr("cells: lone numeric indicator")
+        END IF
+CALL NbUnit(t)
+    END PROCEDURE
+
+    --  word run:  consecutive literary letter cells -> one word;
+    --  function names keep their backslash form.
+    PROCEDURE NbWord()
+        LET t AS STRING = ""
+        LET done AS S64 = 0
+        WHILE done = 0 AND nb_i < nb_nc
+            IF NbIsLet(nb_cell[nb_i]) <> 0 THEN
+                t = t | CHR(96 + NbIsLet(nb_cell[nb_i]))
+                nb_i = nb_i + 1
+            ELSE
+                done = 1
+            END IF
+        END WHILE
+CALL NbUnit(t)
+    END PROCEDURE
+
+    --  canonical source spelling for a table symbol;  LxSymL maps
+    --  aliases to canonical latex, then strip its trailing space.
+    FUNCTION NbSymOut(i AS S64) AS STRING
+        LET t AS STRING = ""
+        LET n AS S64 = 0
+        t = LxSymL(ns_name[i])
+        n = LEN(t)
+        WHILE n > 0 AND MID(t, n, 1) = " "
+            n = n - 1
+        END WHILE
+        IF n < LEN(t) THEN t = LEFT(t, n) END IF
+        RETURN t
+    END FUNCTION
+
+    --  group open-wrap spelling for kind code (see NbRun lvl table)
+    --  wraps carry no spaces:  floor/ceil/angle interiors hold real
+    --  0-cells that the content decode already turned into " ".
+    FUNCTION NbGrpL(k AS S64) AS STRING
+        IF k = 1 THEN RETURN "(" END IF
+        IF k = 2 THEN RETURN "[" END IF
+        IF k = 3 THEN RETURN "\{" END IF
+        IF k = 4 THEN RETURN "\lfloor" END IF
+        IF k = 5 THEN RETURN "\lceil" END IF
+        IF k = 6 THEN RETURN "\langle" END IF
+        RETURN "|"
+    END FUNCTION
+
+    FUNCTION NbGrpR(k AS S64) AS STRING
+        IF k = 1 THEN RETURN ")" END IF
+        IF k = 2 THEN RETURN "]" END IF
+        IF k = 3 THEN RETURN "\}" END IF
+        IF k = 4 THEN RETURN "\rfloor" END IF
+        IF k = 5 THEN RETURN "\rceil" END IF
+        IF k = 6 THEN RETURN "\rangle" END IF
+        RETURN "|"
+    END FUNCTION
+
+    FUNCTION NbEnvName(k AS S64) AS STRING
+        IF k = 1 THEN RETURN "pmatrix" END IF
+        IF k = 2 THEN RETURN "bmatrix" END IF
+        IF k = 3 THEN RETURN "Bmatrix" END IF
+        IF k = 4 THEN RETURN "vmatrix" END IF
+        RETURN "cases"
+    END FUNCTION
+
+    --  dispatch helpers -------------------------------------------------
+    --  a dot-6 run starting at nb_i:  frac markers, env brackets,
+    --  capitals, commas.  Consumes everything it reads.
+    PROCEDURE NbDots()
+        LET k AS S64 = 0
+        LET pk AS S64 = 0
+        LET top AS S64 = 0
+        LET t AS STRING = ""
+        LET si AS S64 = 0
+        k = 0
+        WHILE nb_i < nb_nc AND nb_cell[nb_i] = 32
+            k = k + 1
+            nb_i = nb_i + 1
+        END WHILE
+        IF nb_i >= nb_nc THEN
+            --  run consumed the input tail:  emit commas and RETURN
+            --  with nb_i left past the end.  Rewinding here leaves the
+            --  outer walk staring at the same cells forever.
+            WHILE k > 0
+CALL NbOp(",")
+                            nb_dang = 1
+                k = k - 1
+            END WHILE
+            RETURN
+        END IF
+        pk = nb_cell[nb_i]
+        top = 0
+        IF nb_n > 1 THEN top = nb_kind[nb_n - 1] END IF
+        IF pk = 57 THEN
+            nb_i = nb_i + 1
+CALL NbPush(1)
+            nb_lvl[nb_n - 1] = k
+        ELSEIF pk = 12 THEN
+            nb_i = nb_i + 1
+            IF top = 1 AND nb_lvl[nb_n - 1] = k AND
+               nb_ph[nb_n - 1] = 0 THEN
+                nb_aux[nb_n - 1] = nb_cur | nb_bas
+                nb_cur = ""
+                nb_bas = ""
+                nb_have = 0
+                nb_ph[nb_n - 1] = 1
+            ELSE
+CALL NErr("cells: frac line level mismatch")
+            END IF
+        ELSEIF pk = 60 THEN
+            nb_i = nb_i + 1
+            IF top = 1 AND nb_lvl[nb_n - 1] = k AND
+               nb_ph[nb_n - 1] = 1 THEN
+CALL NbPop()
+CALL NbUnit("\frac{" | nb_aux0 | "}{" | nb_txt | "}")
+            ELSE
+CALL NErr("cells: frac close level mismatch")
+            END IF
+        ELSEIF pk = 55 ORELSE pk = 62 ORELSE pk = 51 THEN
+            nb_i = nb_i + 1
+            IF top = 6 THEN
+                IF pk = 62 AND nb_lvl[nb_n - 1] = 3 THEN
+                    nb_ph[nb_n - 1] = 1
+                END IF
+            ELSEIF pk = 51 THEN
+CALL NbPush(6)
+                nb_lvl[nb_n - 1] = 4
+            ELSEIF pk = 55 THEN
+CALL NbPush(6)
+                nb_lvl[nb_n - 1] = 1
+            ELSE
+CALL NErr("cells: stray env close")
+            END IF
+        ELSEIF NbIsLet(pk) <> 0 AND k = 1 THEN
+            nb_i = nb_i + 1
+CALL NbUnit(CHR(64 + NbIsLet(pk)))
+        ELSEIF NbIsLet(pk) <> 0 AND k = 2 THEN
+            t = ""
+            WHILE nb_i < nb_nc AND NbIsLet(nb_cell[nb_i]) <> 0
+                t = t | CHR(64 + NbIsLet(nb_cell[nb_i]))
+                nb_i = nb_i + 1
+            END WHILE
+CALL NbUnit(t)
+        ELSE
+            --  not structural:  a dot-6-led symbol pack (\therefore,
+            --  \infty, ...) may start here;  else literal commas.
+            nb_i = nb_i - k
+            si = NbPackAt(nb_i)
+            IF si >= 0 THEN
+CALL NbUnit(NbSymOut(si))
+                IF ns_rel[si] = 1 THEN nb_dang = 1 END IF
+                nb_i = nb_i + nb_plen
+            ELSE
+                --  no pack matched:  nb_i sits rewound at the run
+                --  start;  push it back past the dot-6 cells or the
+                --  outer walk rereads them forever.
+                nb_i = nb_i + k
+                WHILE k > 0
+CALL NbOp(",")
+                            nb_dang = 1
+                    k = k - 1
+                END WHILE
+            END IF
+        END IF
+    END PROCEDURE
+
+    --  does a 2-cell seq at pos sit in whitespace?  splits the
+    --  40,5 collision:  spaced = "=",  unspaced = \kappa.
+    FUNCTION NbSpaced(pos AS S64) AS S64
+        IF pos = 0 THEN RETURN 0 END IF
+        IF pos + 2 > nb_nc - 1 THEN RETURN 0 END IF
+        IF nb_cell[pos - 1] = 0 AND nb_cell[pos + 2] = 0 THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    --  same for a single cell:  splits \cdot (spaced) vs | toggle
+    FUNCTION NbSpaced1(pos AS S64) AS S64
+        IF pos = 0 THEN RETURN 0 END IF
+        IF pos + 1 > nb_nc - 1 THEN RETURN 0 END IF
+        IF nb_cell[pos - 1] = 0 AND nb_cell[pos + 1] = 0 THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    --  env frame end on LF LF:  rows are the frame's collected text
+    PROCEDURE NbEnvEnd()
+        LET nm AS STRING = ""
+        LET flag AS S64 = 0
+        flag = nb_ph[nb_n - 1]
+        IF nb_lvl[nb_n - 1] = 3 AND flag = 0 THEN
+            nm = "cases"
+        ELSE
+            nm = NbEnvName(nb_lvl[nb_n - 1])
+        END IF
+CALL NbPop()
+CALL NbUnit("\begin{" | nm | "}" | nb_txt | "\end{" | nm | "}")
+    END PROCEDURE
+
+    --  dot-4 indicator:  [ ]  floor ceil  bmatrix
+    PROCEDURE NbFour()
+        LET pk AS S64 = 0
+        LET p2 AS S64 = 0
+        LET top AS S64 = 0
+        nb_i = nb_i + 1
+        IF nb_i >= nb_nc THEN
+CALL NErr("cells: stray dot-4")
+            RETURN
+        END IF
+        pk = nb_cell[nb_i]
+        p2 = -2
+        IF nb_i + 1 < nb_nc THEN p2 = nb_cell[nb_i + 1] END IF
+        top = 0
+        IF nb_n > 1 THEN top = nb_kind[nb_n - 1] END IF
+        IF pk = 55 THEN
+            nb_i = nb_i + 1
+CALL NbPush(5)
+            nb_lvl[nb_n - 1] = 2
+        ELSEIF pk = 62 THEN
+            nb_i = nb_i + 1
+            IF top = 5 AND nb_lvl[nb_n - 1] = 2 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(2) | nb_txt | NbGrpR(2))
+            ELSE
+CALL NErr("cells: unmatched ]")
+            END IF
+        ELSEIF pk = 48 AND p2 = 55 THEN
+            nb_i = nb_i + 2
+CALL NbPush(5)
+            nb_lvl[nb_n - 1] = 4
+        ELSEIF pk = 48 AND p2 = 62 THEN
+            nb_i = nb_i + 2
+            IF top = 5 AND nb_lvl[nb_n - 1] = 4 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(4) | nb_txt | NbGrpR(4))
+            ELSE
+CALL NErr("cells: unmatched \rfloor")
+            END IF
+        ELSEIF pk = 24 AND p2 = 55 THEN
+            nb_i = nb_i + 2
+CALL NbPush(5)
+            nb_lvl[nb_n - 1] = 5
+        ELSEIF pk = 24 AND p2 = 62 THEN
+            nb_i = nb_i + 2
+            IF top = 5 AND nb_lvl[nb_n - 1] = 5 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(5) | nb_txt | NbGrpR(5))
+            ELSE
+CALL NErr("cells: unmatched \rceil")
+            END IF
+        ELSEIF pk = 32 AND p2 = 55 THEN
+            nb_i = nb_i + 2
+            IF top = 6 THEN
+                --  bmatrix row-open furniture
+            ELSE
+CALL NbPush(6)
+                nb_lvl[nb_n - 1] = 2
+            END IF
+        ELSEIF pk = 32 AND p2 = 62 THEN
+            nb_i = nb_i + 2
+            IF top <> 6 THEN
+CALL NErr("cells: stray bmatrix close")
+            END IF
+        ELSE
+CALL NErr("cells: bad dot-4 sequence")
+        END IF
+    END PROCEDURE
+
+    --  dots-3,4,5,6:  braces angle Bmatrix/cases > and strays
+    PROCEDURE NbOpInd()
+        LET pk AS S64 = 0
+        LET p2 AS S64 = 0
+        LET top AS S64 = 0
+        nb_i = nb_i + 1
+        IF nb_i >= nb_nc THEN
+CALL NErr("cells: stray op indicator")
+            RETURN
+        END IF
+        pk = nb_cell[nb_i]
+        p2 = -2
+        IF nb_i + 1 < nb_nc THEN p2 = nb_cell[nb_i + 1] END IF
+        top = 0
+        IF nb_n > 1 THEN top = nb_kind[nb_n - 1] END IF
+        IF pk = 55 THEN
+            nb_i = nb_i + 1
+CALL NbPush(5)
+            nb_lvl[nb_n - 1] = 3
+        ELSEIF pk = 62 THEN
+            nb_i = nb_i + 1
+            IF top = 5 AND nb_lvl[nb_n - 1] = 3 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(3) | nb_txt | NbGrpR(3))
+            ELSE
+CALL NErr("cells: unmatched \}")
+            END IF
+        ELSEIF pk = 40 AND p2 = 55 THEN
+            nb_i = nb_i + 2
+CALL NbPush(5)
+            nb_lvl[nb_n - 1] = 6
+        ELSEIF pk = 40 AND p2 = 62 THEN
+            nb_i = nb_i + 2
+            IF top = 5 AND nb_lvl[nb_n - 1] = 6 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(6) | nb_txt | NbGrpR(6))
+            ELSE
+CALL NErr("cells: unmatched \rangle")
+            END IF
+        ELSEIF pk = 32 AND p2 = 55 THEN
+            nb_i = nb_i + 2
+            IF top = 6 THEN
+                --  Bmatrix/cases row-open furniture
+            ELSE
+CALL NbPush(6)
+                nb_lvl[nb_n - 1] = 3
+            END IF
+        ELSEIF pk = 32 AND p2 = 62 THEN
+            nb_i = nb_i + 2
+            IF top = 6 THEN
+                nb_ph[nb_n - 1] = 1
+            ELSE
+CALL NErr("cells: stray Bmatrix close")
+            END IF
+        ELSEIF pk = 2 THEN
+            nb_i = nb_i + 1
+CALL NbOp(">")
+                            nb_dang = 1
+        ELSE
+CALL NErr("cells: bad op-indicator sequence")
+        END IF
+    END PROCEDURE
+
+    --  punctuation indicator:  mixed fracs, / ; : . ! ? -
+    PROCEDURE NbPunc()
+        LET pk AS S64 = 0
+        nb_i = nb_i + 1
+        IF nb_i >= nb_nc THEN
+CALL NErr("cells: stray punct indicator")
+            RETURN
+        END IF
+        pk = nb_cell[nb_i]
+        nb_i = nb_i + 1
+        IF pk = 57 THEN
+CALL NbPush(1)
+            nb_lvl[nb_n - 1] = 0 - 1
+        ELSEIF pk = 60 THEN
+            IF nb_n > 1 AND nb_kind[nb_n - 1] = 1 AND
+               nb_lvl[nb_n - 1] = 0 - 1 AND nb_ph[nb_n - 1] = 1 THEN
+CALL NbPop()
+CALL NbUnit("\frac{" | nb_aux0 | "}{" | nb_txt | "}")
+            ELSE
+CALL NErr("cells: unmatched mixed-frac close")
+            END IF
+        ELSEIF pk = 12 THEN
+CALL NbOp("/")
+                            nb_dang = 1
+        ELSEIF pk = 6 THEN
+CALL NbOp(";")
+                            nb_dang = 1
+        ELSEIF pk = 18 THEN
+CALL NbOp(":")
+                            nb_dang = 1
+        ELSEIF pk = 50 THEN
+CALL NbOp(".")
+                            nb_dang = 1
+        ELSEIF pk = 22 THEN
+CALL NbOp("!")
+                            nb_dang = 1
+        ELSEIF pk = 38 THEN
+CALL NbOp("?")
+                            nb_dang = 1
+        ELSEIF pk = 36 THEN
+CALL NbOp("-")
+                            nb_dang = 1
+        ELSE
+CALL NErr("cells: bad punct-indicator sequence")
+        END IF
+    END PROCEDURE
+
+    -- ============================================================
+    --  main cell walk
+    -- ============================================================
+    PROCEDURE NbRun()
+        LET c AS S64 = 0
+        LET top AS S64 = 0
+        LET k AS S64 = 0
+        LET si AS S64 = 0
+        LET nx AS S64 = -2
+        LET nn AS S64 = -2
+        LET ins AS S64 = 0
+        LET j AS S64 = 0
+        LET pad AS S64 = 0
+        nb_i = 0
+        WHILE nb_i < nb_nc
+            c = nb_cell[nb_i]
+            top = 0
+            IF nb_n > 1 THEN top = nb_kind[nb_n - 1] END IF
+            nx = -2
+            IF nb_i + 1 < nb_nc THEN nx = nb_cell[nb_i + 1] END IF
+            nn = -2
+            IF nb_i + 2 < nb_nc THEN nn = nb_cell[nb_i + 2] END IF
+            IF c < 0 THEN
+                --  row sentinel:  env row / env end / plain newline
+CALL NbEndScr()
+                IF top = 6 THEN
+                    IF nx = -1 THEN
+                        nb_i = nb_i + 2
+CALL NbEnvEnd()
+                    ELSE
+CALL NbOp("\\")
+                        nb_i = nb_i + 1
+                    END IF
+                ELSE
+                    IF nb_n > 1 THEN
+CALL NErr("cells: newline inside construct")
+                    END IF
+CALL NbOp("\n")
+                    nb_i = nb_i + 1
+                END IF
+            ELSEIF c = 0 THEN
+                --  blank run:  >=2 inside an env is a cell boundary.
+                --  Inside a script operand:  if the operand ends in a
+                --  dangling operator the space is content ("i = y").
+                --  A complete operand ends at a new atom (24/48, ELI
+                --  letters, + - ', numerals, fracs, rads, groups,
+                --  closers, rows);  a relation/shape continues it
+                --  ("i = 0", "x \to 0").
+                k = 0
+                WHILE nb_i < nb_nc AND nb_cell[nb_i] = 0
+                    k = k + 1
+                    nb_i = nb_i + 1
+                END WHILE
+                ins = 0
+                IF top = 3 ORELSE top = 4 THEN
+                    IF nb_dang = 1 THEN
+                        ins = 1
+                    ELSEIF nb_i >= nb_nc THEN
+                        ins = 0
+                    ELSE
+                        nx = nb_cell[nb_i]
+                        ins = 1
+                        IF nx = 24 ORELSE nx = 48 ORELSE nx = -1 ORELSE
+                           nx = 44 ORELSE nx = 36 ORELSE nx = 4 ORELSE
+                           nx = 60 ORELSE nx = 57 ORELSE nx = 41 ORELSE
+                           nx = 55 ORELSE nx = 8 ORELSE nx = 32 ORELSE
+                           nx = 59 ORELSE nx = 62 THEN
+                            ins = 0
+                        ELSEIF NbIsLet(nx) <> 0 ORELSE NbIsDig(nx) <> 0 THEN
+                            ins = 0
+                        END IF
+                    END IF
+                END IF
+                IF ins = 0 THEN
+CALL NbEndScr()
+                    top = 0
+                    IF nb_n > 1 THEN top = nb_kind[nb_n - 1] END IF
+                END IF
+                --  env row padding:  a blank run before a prefixed row
+                --  bracket or row sentinel is alignment, not "&".
+                pad = 0
+                IF top = 6 THEN
+                    IF nb_i >= nb_nc ORELSE nb_cell[nb_i] = -1 THEN
+                        pad = 1
+                    ELSEIF nb_cell[nb_i] = 32 THEN
+                        nn = -2
+                        IF nb_i + 1 < nb_nc THEN
+                            nn = nb_cell[nb_i + 1]
+                        END IF
+                        IF nn = 55 ORELSE nn = 62 ORELSE nn = 51 THEN
+                            pad = 1
+                        END IF
+                    ELSEIF nb_cell[nb_i] = 8 ORELSE nb_cell[nb_i] = 40 THEN
+                        nn = -2
+                        IF nb_i + 2 < nb_nc THEN
+                            nn = nb_cell[nb_i + 2]
+                        END IF
+                        IF nb_i + 1 < nb_nc AND
+                           nb_cell[nb_i + 1] = 32 AND
+                           (nn = 55 ORELSE nn = 62) THEN
+                            pad = 1
+                        END IF
+                    END IF
+                END IF
+                IF top = 6 AND k >= 2 AND pad = 0 THEN
+CALL NbOp(" & ")
+                ELSE
+                    WHILE k > 0
+CALL NbOp(" ")
+                        k = k - 1
+                    END WHILE
+                END IF
+            ELSEIF top = 2 AND c = 35 AND nb_ph[nb_n - 1] = 0 THEN
+                --  radical index begins
+                nb_i = nb_i + 1
+                nb_ph[nb_n - 1] = 1
+            ELSEIF top = 2 AND c = 56 AND nb_ph[nb_n - 1] = 1 THEN
+                --  radical index ends;  radicand follows
+                nb_i = nb_i + 1
+                nb_aux[nb_n - 1] = nb_cur | nb_bas
+                nb_cur = ""
+                nb_bas = ""
+                nb_have = 0
+                nb_ph[nb_n - 1] = 2
+            ELSEIF top = 2 AND c = 59 THEN
+                nb_i = nb_i + 1
+CALL NbPop()
+                IF LEN(nb_aux0) > 0 THEN
+CALL NbUnit("\sqrt[" | nb_aux0 | "]{" | nb_txt | "}")
+                ELSE
+CALL NbUnit("\sqrt{" | nb_txt | "}")
+                END IF
+            ELSEIF c = 40 AND nx = 5 AND NbSpaced(nb_i) = 1 THEN
+                nb_i = nb_i + 2
+CALL NbOp("=")
+                    nb_dang = 1
+            ELSEIF c = 33 THEN
+                --  33 collides with the \cdot pack:  decide on
+                --  whitespace BEFORE the pack match runs.
+                nb_i = nb_i + 1
+                IF NbSpaced1(nb_i - 1) = 1 THEN
+CALL NbOp("\cdot")
+                    nb_dang = 1
+                ELSEIF top = 7 THEN
+CALL NbPop()
+CALL NbUnit("|" | nb_txt | "|")
+                ELSE
+CALL NbPush(7)
+                END IF
+            ELSEIF c = 32 THEN
+                --  dot-6 runs are structural (frac levels, env
+                --  brackets, caps, commas);  packs live in the
+                --  fallback (\therefore, \infty, \aleph).
+CALL NbDots()
+            ELSE
+                si = NbPackAt(nb_i)
+                IF si >= 0 THEN
+CALL NbUnit(NbSymOut(si))
+                    IF ns_rel[si] = 1 THEN nb_dang = 1 END IF
+                    nb_i = nb_i + nb_plen
+                ELSEIF c = 40 THEN
+CALL NbOpInd()
+                ELSEIF c = 8 THEN
+CALL NbFour()
+                ELSEIF c = 56 THEN
+CALL NbPunc()
+                ELSEIF c = 57 THEN
+                    nb_i = nb_i + 1
+CALL NbPush(1)
+                    nb_lvl[nb_n - 1] = 0
+                ELSEIF c = 12 THEN
+                    nb_i = nb_i + 1
+                    IF top = 1 AND nb_lvl[nb_n - 1] = 0 AND
+                       nb_ph[nb_n - 1] = 0 THEN
+                        nb_aux[nb_n - 1] = nb_cur | nb_bas
+                        nb_cur = ""
+                        nb_bas = ""
+                        nb_have = 0
+                        nb_ph[nb_n - 1] = 1
+                    ELSE
+CALL NErr("cells: stray frac line")
+                    END IF
+                ELSEIF c = 60 THEN
+                    --  60 + digit cell is always a numeral, even mid-
+                    --  denominator;  60 + anything else is frac-close.
+                    IF NbIsDig(nx) <> 0 THEN
+CALL NbNum()
+                    ELSEIF top = 1 AND nb_lvl[nb_n - 1] = 0 AND
+                       nb_ph[nb_n - 1] = 1 THEN
+                        nb_i = nb_i + 1
+CALL NbPop()
+CALL NbUnit("\frac{" | nb_aux0 | "}{" | nb_txt | "}")
+                    ELSE
+CALL NbNum()
+                    END IF
+                ELSEIF c = 24 THEN
+                    nb_i = nb_i + 1
+CALL NbScrPush(3)
+                ELSEIF c = 48 THEN
+                    IF NbIsLet(nx) <> 0 AND NbIsLet(nn) <> 0 THEN
+                        --  48 before a letter run:  script marker
+                        nb_i = nb_i + 1
+CALL NbScrPush(4)
+                    ELSEIF NbIsLet(nx) <> 0 THEN
+                        --  48 + lone letter:  ELI single letter
+                        nb_i = nb_i + 2
+CALL NbUnit(CHR(96 + NbIsLet(nx)))
+                    ELSE
+                        nb_i = nb_i + 1
+CALL NbScrPush(4)
+                    END IF
+                ELSEIF c = 16 THEN
+                    nb_i = nb_i + 1
+                    IF nx = 5 THEN
+                        nb_i = nb_i + 1
+CALL NbOp("<")
+                        nb_dang = 1
+                    ELSE
+CALL NbEndScr()
+                    END IF
+                ELSEIF c = 41 THEN
+                    nb_i = nb_i + 1
+CALL NbPush(2)
+                ELSEIF c = 35 ORELSE c = 59 THEN
+                    nb_i = nb_i + 1
+CALL NErr("cells: stray radical marker")
+                ELSEIF c = 55 THEN
+                    nb_i = nb_i + 1
+CALL NbPush(5)
+                    nb_lvl[nb_n - 1] = 1
+                ELSEIF c = 62 THEN
+                    nb_i = nb_i + 1
+                    IF top = 5 AND nb_lvl[nb_n - 1] = 1 THEN
+CALL NbPop()
+CALL NbUnit(NbGrpL(1) | nb_txt | NbGrpR(1))
+                    ELSE
+CALL NErr("cells: unmatched )")
+                    END IF
+                ELSEIF c = 44 THEN
+                    nb_i = nb_i + 1
+CALL NbOp("+")
+                        nb_dang = 1
+                ELSEIF c = 36 THEN
+                    nb_i = nb_i + 1
+CALL NbOp("-")
+                        nb_dang = 1
+                ELSEIF c = 4 THEN
+                    nb_i = nb_i + 1
+                    IF nb_have = 1 THEN
+                        nb_bas = nb_bas | "'"
+                    ELSE
+CALL NbOp("'")
+                    END IF
+                    nb_dang = 0
+                ELSEIF NbIsDig(c) <> 0 THEN
+CALL NbNum()
+                ELSEIF NbIsLet(c) <> 0 THEN
+CALL NbWord()
+                ELSE
+CALL NErr("cells: unknown cell " | c)
+                    nb_i = nb_i + 1
+                END IF
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    -- ============================================================
+    --  public entry points
+    -- ============================================================
+    --  run the reader on prefilled nb_cell[0..n-1]
+    FUNCTION NbInit(n AS S64) AS STRING
+CALL FillTabs()
+CALL FillSym()
+        nb_nc = n
+        IF nb_nc > #NEM_MAX THEN nb_nc = #NEM_MAX END IF
+        nb_n = 1
+        nb_kind[0] = 0
+        nb_cur = ""
+        nb_bas = ""
+        nb_have = 0
+        nb_dang = 0
+CALL NbRun()
+CALL NbEndScr()
+        WHILE nb_n > 1
+CALL NErr("cells: unclosed construct")
+CALL NbPop()
+            IF nb_kind0 = 5 THEN
+CALL NbUnit(NbGrpL(nb_lvl0) | nb_txt)
+            ELSE
+CALL NbUnit(nb_txt)
+            END IF
+        END WHILE
+CALL NbFlush()
+        RETURN nb_cur
+    END FUNCTION
+
+    --  cells -> canonical source.  Reads ncell[0..n-1].
+    FUNCTION FromCells(n AS S64) AS STRING
+        LET i AS S64 = 0
+        nen = 0
+        i = 0
+        WHILE i < n AND i < #NEM_MAX
+            nb_cell[i] = ncell[i]
+            i = i + 1
+        END WHILE
+        RETURN NbInit(i)
+    END FUNCTION
+
+    --  current engine transcript -> source
+    FUNCTION ToSource() AS STRING
+        RETURN FromCells(ncnt)
+    END FUNCTION
+
+    --  BRF ASCII -> source:  reverse lookup through brfa[].
+    FUNCTION FromBrf(b AS STRING) AS STRING
+        LET i AS S64 = 0
+        LET n AS S64 = 0
+        LET ch AS STRING = ""
+        LET v AS S64 = 0
+        LET c AS S64 = 0
+        LET hit AS S64 = 0
+CALL FillTabs()
+        n = LEN(b)
+        nb_nc = 0
+        nen = 0
+        i = 1
+        WHILE i <= n
+            ch = MID(b, i, 1)
+            v = ASC(ch)
+            IF v = 10 THEN
+                IF nb_nc < #NEM_MAX THEN
+                    nb_cell[nb_nc] = -1
+                    nb_nc = nb_nc + 1
+                END IF
+            ELSE
+                hit = 0 - 1
+                c = 0
+                WHILE c < 64
+                    IF brfa[c] = v THEN hit = c END IF
+                    c = c + 1
+                END WHILE
+                IF hit >= 0 THEN
+                    IF nb_nc < #NEM_MAX THEN
+                        nb_cell[nb_nc] = hit
+                        nb_nc = nb_nc + 1
+                    END IF
+                ELSE
+CALL NErr("FromBrf: bad char '" | ch | "'")
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN NbInit(nb_nc)
+    END FUNCTION
+
+    --  Unicode braille (U+2800 block, as ToUni emits) -> source.
+    --  ASC masks to a byte so each char is compared against CHR()
+    --  of the 64 cell values instead.
+    FUNCTION FromUni(u AS STRING) AS STRING
+        LET i AS S64 = 0
+        LET n AS S64 = 0
+        LET ch AS STRING = ""
+        LET c AS S64 = 0
+        LET hit AS S64 = 0
+        n = LEN(u)
+        nb_nc = 0
+        nen = 0
+        i = 1
+        WHILE i <= n
+            ch = MID(u, i, 1)
+            IF ch = CHR(10) THEN
+                IF nb_nc < #NEM_MAX THEN
+                    nb_cell[nb_nc] = -1
+                    nb_nc = nb_nc + 1
+                END IF
+            ELSE
+                hit = 0 - 1
+                c = 0
+                WHILE c < 64
+                    IF ch = CHR(10240 + c) THEN hit = c END IF
+                    c = c + 1
+                END WHILE
+                IF hit >= 0 THEN
+                    IF nb_nc < #NEM_MAX THEN
+                        nb_cell[nb_nc] = hit
+                        nb_nc = nb_nc + 1
+                    END IF
+                ELSE
+CALL NErr("FromUni: non-braille char")
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN NbInit(nb_nc)
+    END FUNCTION
+
+END MODULE

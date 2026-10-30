@@ -1,0 +1,25 @@
+-- 598 | Non-continuous subsequences: count subsequences of
+-- {1..n} that are not a contiguous run. Values n=1..6:
+-- 0 0 0 1 5 16 (A000295 - ... actually 2^n - n(n+1)/2).
+DECLARE MODULE NCS
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NCS
+    PROCEDURE Run()
+        FOR n = 1 TO 6
+            LET tot AS S64 = 1
+            FOR i = 1 TO n
+                tot = tot * 2
+            END FOR
+            -- subtract empty set and contiguous runs (n(n+1)/2)
+            LET c AS S64 = tot - 1 - n * (n + 1) / 2
+            PRINT "n=" | n | " non-contiguous: " | c
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT NCS
+BEGIN
+    NCS.Run()
+END

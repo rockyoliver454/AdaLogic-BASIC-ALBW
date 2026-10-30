@@ -1,0 +1,26 @@
+BEGIN
+    LET count = 0
+    LET n = 1
+    WHILE count < 5
+        LET x = n
+        LET seen = 0
+        WHILE x <> 1 AND seen = 0
+            LET sum = 0
+            LET t = x
+            WHILE t > 0
+                LET d = t MOD 10
+                sum = sum + d * d
+                t = t / 10
+            END WHILE
+            IF x = 4 THEN
+                seen = 1
+            END IF
+            x = sum
+        END WHILE
+        IF x = 1 THEN
+            PRINT$ n
+            count = count + 1
+        END IF
+        n = n + 1
+    END WHILE
+END

@@ -1,0 +1,15 @@
+lns=189
+fatal=1
+stdout=1
+shutdown=1
+fw=1
+open=1
+instr=1
+sniff=0
+music=0
+sprite=0
+window=0
+tick=0
+raf=0
+wasm=0
+arena=0

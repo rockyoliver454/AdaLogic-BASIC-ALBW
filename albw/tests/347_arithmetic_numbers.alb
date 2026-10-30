@@ -1,0 +1,46 @@
+-- 347 | Arithmetic numbers: mean of divisors is an integer; first 40.
+DECLARE MODULE ArithNum
+    FUNCTION IsArith(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ArithNum
+    FUNCTION IsArith(n AS S64) AS S32
+        LET s AS S64 = 0
+        LET c AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                c = c + 1
+                LET o AS S64 = n / d
+                IF o <> d THEN
+                    s = s + o
+                    c = c + 1
+                END IF
+            END IF
+            d = d + 1
+        END WHILE
+        IF s MOD c = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 40
+            IF IsArith(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT ArithNum
+BEGIN
+    ArithNum.Run()
+END

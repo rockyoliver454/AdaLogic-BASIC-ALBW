@@ -1,0 +1,10 @@
+-- 315 | Exponentiation order: associativity of chained exponentiation.
+BEGIN
+    PRINT 5 ** 3 ** 2
+    LET left AS S64 = 5 ** 3
+    left = left ** 2
+    PRINT left
+    LET right AS S64 = 3 ** 2
+    right = 5 ** right
+    PRINT right
+END

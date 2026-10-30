@@ -1,0 +1,35 @@
+-- 318 | Fraction reduction: reduce fractions to lowest terms via GCD.
+DECLARE MODULE FracRed
+    PROCEDURE Show(n AS S32, d AS S32)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE FracRed
+    FUNCTION GcdOf(a AS S32, b AS S32) AS S32
+        IF a < 0 THEN a = 0 - a END IF
+        IF b < 0 THEN b = 0 - b END IF
+        WHILE b <> 0
+            LET temporary AS S32 = b
+            b = a - (a / b) * b
+            a = temporary
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    PROCEDURE Show(n AS S32, d AS S32)
+        LET g AS S32 = GcdOf(n, d)
+        PRINT n | "/" | d | " -> " | (n / g) | "/" | (d / g)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(24, 30)
+        Show(100, 100)
+        Show(-6, 9)
+        Show(17, 42)
+    END PROCEDURE
+END MODULE
+
+IMPORT FracRed
+BEGIN
+    FracRed.Run()
+END

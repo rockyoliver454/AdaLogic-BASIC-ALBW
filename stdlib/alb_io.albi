@@ -1,0 +1,46 @@
+-- ============================================================================
+-- alb_io — file/stdio helpers over the host tier (memfs or --hostfs).
+--
+-- Slurp reads a whole file to a string, Spill/Append write one,
+-- Exists probes via OPEN "r" (0 handle = miss). All thin wrappers —
+-- the point is one obvious name for each common operation.
+--
+--   LET t AS STRING = AlbIO.Slurp("cfg.txt")
+--   AlbIO.Spill("out.txt", t)
+--   IF AlbIO.Exists("out.txt") = 1 THEN ...
+-- ============================================================================
+
+MODULE AlbIO
+    FUNCTION Slurp(path AS STRING) AS STRING
+        LET h AS S32 = OPEN(path, "r")
+        LET t AS STRING = ""
+        IF h <> 0 THEN
+            t = READ(h, 0)
+            CLOSE h
+        END IF
+        RETURN t
+    END FUNCTION
+
+    FUNCTION Exists(path AS STRING) AS S32
+        LET h AS S32 = OPEN(path, "r")
+        IF h = 0 THEN RETURN 0 END IF
+        CLOSE h
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Spill(path AS STRING, s AS STRING)
+        LET h AS S32 = OPEN(path, "w")
+        IF h <> 0 THEN
+            WRITE h, s
+            CLOSE h
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Append(path AS STRING, s AS STRING)
+        LET h AS S32 = OPEN(path, "a")
+        IF h <> 0 THEN
+            WRITE h, s
+            CLOSE h
+        END IF
+    END PROCEDURE
+END MODULE

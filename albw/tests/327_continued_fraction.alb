@@ -1,0 +1,42 @@
+-- 327 | Continued fraction: expand rationals into continued fraction form.
+DECLARE MODULE ContFrac
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ContFrac
+    PROCEDURE Show(num AS S32, den AS S32)
+        STRICT terms[32] AS S32
+        LET nterms AS S32 = 0
+        LET a AS S32 = num
+        LET b AS S32 = den
+        WHILE b <> 0
+            LET q AS S32 = a / b
+            LET r AS S32 = a - q * b
+            terms[nterms] = q
+            nterms = nterms + 1
+            a = b
+            b = r
+        END WHILE
+        LET out_line AS STRING = num | "/" | den | " = [" | terms[0]
+        FOR i = 1 TO nterms - 1
+            IF i = 1 THEN
+                out_line = out_line | "; " | terms[i]
+            ELSE
+                out_line = out_line | ", " | terms[i]
+            END IF
+        END FOR
+        out_line = out_line | "]"
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(415, 93)
+        Show(649, 200)
+        Show(11, 4)
+    END PROCEDURE
+END MODULE
+
+IMPORT ContFrac
+BEGIN
+    ContFrac.Run()
+END

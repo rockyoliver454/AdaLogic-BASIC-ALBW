@@ -1,0 +1,22 @@
+-- 581 | Euler's constant 0.5772...: gamma = lim(H_n - ln n),
+-- computed at n=1000000 via harmonic loop-free formula estimate
+-- plus a direct partial sum for n=10000.
+DECLARE MODULE EulerC
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE EulerC
+    PROCEDURE Run()
+        LET h AS F64 = 0.0
+        FOR i = 1 TO 10000
+            h = h + 1.0 / i
+        END FOR
+        LET g AS F64 = h - LN(10000.0)
+        PRINT "gamma ~= " | g
+    END PROCEDURE
+END MODULE
+
+IMPORT EulerC
+BEGIN
+    EulerC.Run()
+END

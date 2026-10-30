@@ -1,0 +1,59 @@
+-- 359 | Smith numbers: composites whose digit sum equals digit sum of prime factors.
+DECLARE MODULE Smith
+    FUNCTION DigitSum(n AS S64) AS S64
+    FUNCTION IsSmith(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Smith
+    FUNCTION DigitSum(n AS S64) AS S64
+        LET s AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            s = s + m MOD 10
+            m = m / 10
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION IsSmith(n AS S64) AS S64
+        LET m AS S64 = n
+        LET fs AS S64 = 0
+        LET nf AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                fs = fs + DigitSum(d)
+                nf = nf + 1
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN
+            fs = fs + DigitSum(m)
+            nf = nf + 1
+        END IF
+        IF nf < 2 THEN RETURN 0 END IF
+        IF fs = DigitSum(n) THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 4
+        WHILE found < 10
+            IF IsSmith(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Smith
+BEGIN
+    Smith.Run()
+END

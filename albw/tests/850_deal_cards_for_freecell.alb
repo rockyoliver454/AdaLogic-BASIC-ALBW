@@ -1,0 +1,60 @@
+-- 850 | Deal cards for FreeCell: Microsoft-style deal using
+-- the standard LCG; print deal #1's eight columns.
+DECLARE MODULE Fc
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fc
+    STRICT dk[53] AS S64
+    STRICT st[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        st[1] = (st[1] * 214013 + 2531011) MOD 2147483648
+        RETURN (st[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        st[1] = 1
+        FOR i = 0 TO 51
+            dk[i + 1] = i
+        END FOR
+        -- swap loop: for i = 51 downto 1, j = rnd mod (i+1)
+        FOR k = 1 TO 51
+            LET i AS S64 = 52 - k
+            LET j AS S64 = Nxt() MOD (i + 1)
+            LET t AS S64 = dk[i + 1]
+            dk[i + 1] = dk[j + 1]
+            dk[j + 1] = t
+        END FOR
+        -- deal to 8 columns in order
+        FOR c = 1 TO 8
+            LET s AS STRING = "col" | c | ":"
+            LET i AS S64 = c
+            WHILE i <= 52
+                LET card AS S64 = dk[i + 1 - 1]
+                LET r AS S64 = card MOD 13
+                LET su AS S64 = card / 13
+                LET rs AS STRING = ""
+                IF r = 0 THEN rs = "A" END IF
+                IF r >= 1 ANDALSO r <= 8 THEN rs = rs | (r + 1) END IF
+                IF r = 9 THEN rs = "10" END IF
+                IF r = 10 THEN rs = "J" END IF
+                IF r = 11 THEN rs = "Q" END IF
+                IF r = 12 THEN rs = "K" END IF
+                IF su = 0 THEN rs = rs | "C" END IF
+                IF su = 1 THEN rs = rs | "D" END IF
+                IF su = 2 THEN rs = rs | "H" END IF
+                IF su = 3 THEN rs = rs | "S" END IF
+                s = s | " " | rs
+                i = i + 8
+            END WHILE
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fc
+BEGIN
+    Fc.Run()
+END

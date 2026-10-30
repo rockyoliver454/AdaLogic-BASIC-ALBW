@@ -1,0 +1,96 @@
+-- 654 | Pancake numbers: maximum flips needed to sort a stack
+-- of n pancakes, n = 1..6 (BFS over permutations, factoradic
+-- ranking).
+DECLARE MODULE Pan
+    FUNCTION Rank() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pan
+    STRICT q[720] AS S64
+    STRICT qr[720] AS S64
+    STRICT dist[721] AS S64
+    STRICT st3[7] AS S64
+
+    FUNCTION Rank() AS S64
+        LET r AS S64 = 0
+        FOR i = 1 TO 6
+            LET c AS S64 = 0
+            FOR j = i + 1 TO 6
+                IF st3[j] < st3[i] THEN c = c + 1 END IF
+            END FOR
+            r = r * (7 - i) + c
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 0 TO 720
+            dist[i] = -1
+        END FOR
+        FOR j = 1 TO 6
+            st3[j] = j
+        END FOR
+        LET head AS S64 = 1
+        LET tail AS S64 = 1
+        q[1] = 42798
+        qr[1] = 0
+        dist[0] = 0
+        WHILE head <= tail
+            LET cd AS S64 = q[head]
+            FOR k = 1 TO 6
+                st3[7 - k] = cd MOD 8
+                cd = cd / 8
+            END FOR
+            FOR f = 2 TO 6
+                FOR i2 = 1 TO f / 2
+                    LET t2 AS S64 = st3[i2]
+                    st3[i2] = st3[f - i2 + 1]
+                    st3[f - i2 + 1] = t2
+                END FOR
+                LET nr AS S64 = Rank()
+                IF dist[nr] < 0 THEN
+                    tail = tail + 1
+                    LET nc AS S64 = 0
+                    FOR j2 = 1 TO 6
+                        nc = nc * 8 + st3[j2]
+                    END FOR
+                    q[tail] = nc
+                    qr[tail] = nr
+                    dist[nr] = dist[qr[head]] + 1
+                END IF
+                FOR i3 = 1 TO f / 2
+                    LET t3 AS S64 = st3[i3]
+                    st3[i3] = st3[f - i3 + 1]
+                    st3[f - i3 + 1] = t3
+                END FOR
+            END FOR
+            head = head + 1
+        END WHILE
+        FOR n = 1 TO 6
+            LET mx AS S64 = 0
+            FOR s = 1 TO tail
+                LET ok AS S32 = 1
+                LET cd2 AS S64 = q[s]
+                FOR k2 = 1 TO 6
+                    st3[7 - k2] = cd2 MOD 8
+                    cd2 = cd2 / 8
+                END FOR
+                FOR p = 1 TO n
+                    IF st3[p] > n THEN ok = 0 END IF
+                END FOR
+                FOR p2 = n + 1 TO 6
+                    IF st3[p2] <> p2 THEN ok = 0 END IF
+                END FOR
+                LET sr AS S64 = Rank()
+                IF ok = 1 ANDALSO dist[sr] > mx THEN mx = dist[sr] END IF
+            END FOR
+            PRINT "n=" | n | ": " | mx
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pan
+BEGIN
+    Pan.Run()
+END

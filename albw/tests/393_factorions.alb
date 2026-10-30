@@ -1,0 +1,37 @@
+-- 393 | Factorions: n = sum of factorials of its digits; all below 50000.
+DECLARE MODULE Factorion
+    FUNCTION IsFactorion(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Factorion
+    STRICT fact[10] AS S64
+    FUNCTION IsFactorion(n AS S64) AS S32
+        LET m AS S64 = n
+        LET s AS S64 = 0
+        IF n = 0 THEN RETURN 0 END IF
+        WHILE m > 0
+            s = s + fact[m MOD 10]
+            m = m / 10
+        END WHILE
+        IF s = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        fact[0] = 1
+        FOR i = 1 TO 9
+            fact[i] = fact[i - 1] * i
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 1 TO 49999
+            IF IsFactorion(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Factorion
+BEGIN
+    Factorion.Run()
+END

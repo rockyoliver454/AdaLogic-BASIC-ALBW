@@ -1,0 +1,48 @@
+-- 523 | Sort disjoint sublist: sort only the elements at indices
+-- 2,5,8 (1-based) of the list; others stay put.
+DECLARE MODULE Disjoint
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Disjoint
+    STRICT a[10] AS S64
+    STRICT sub[3] AS S64
+
+    PROCEDURE Run()
+        a[1] = 7
+        a[2] = 6
+        a[3] = 5
+        a[4] = 4
+        a[5] = 3
+        a[6] = 2
+        a[7] = 1
+        a[8] = 0
+        a[9] = 9
+        a[10] = 8
+        sub[1] = a[2]
+        sub[2] = a[5]
+        sub[3] = a[8]
+        FOR i = 2 TO 3
+            LET v AS S64 = sub[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO sub[j] > v
+                sub[j + 1] = sub[j]
+                j = j - 1
+            END WHILE
+            sub[j + 1] = v
+        END FOR
+        a[2] = sub[1]
+        a[5] = sub[2]
+        a[8] = sub[3]
+        LET s AS STRING = ""
+        FOR k = 1 TO 10
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Disjoint
+BEGIN
+    Disjoint.Run()
+END

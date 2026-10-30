@@ -1,0 +1,64 @@
+-- 392 | Eban numbers: n in 1..200 whose English spelling contains no 'e';
+--        tested on digit names plus tens/hundred words without 'e'.
+DECLARE MODULE Eban
+    FUNCTION IsEban(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Eban
+    FUNCTION BadOnes(d AS S64) AS S32
+        -- ones digits containing 'e': one three five seven eight nine -> 1,3,5,7,8,9
+        IF d = 1 ORELSE d = 3 ORELSE d = 5 ORELSE d = 7 ORELSE d = 8 ORELSE d = 9 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION BadTeens(d AS S64) AS S32
+        -- teens/twos: ten eleven twelve thirteen fourteen fifteen sixteen
+        -- seventeen eighteen nineteen all contain 'e'
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION BadTens(d AS S64) AS S32
+        -- twenty thirty forty fifty sixty seventy eighty ninety:
+        -- 'e' present in twenty? no; thirty? no; forty? no; fifty? no;
+        -- sixty? no; seventy YES; eighty YES; ninety YES -> 7,8,9
+        IF d = 7 ORELSE d = 8 ORELSE d = 9 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION IsEban(n AS S64) AS S32
+        IF n = 0 THEN RETURN 0 END IF
+        LET m AS S64 = n
+        IF m >= 100 THEN
+            IF BadOnes(m / 100) = 1 THEN RETURN 0 END IF
+            m = m MOD 100
+        END IF
+        IF m >= 20 THEN
+            IF BadTens(m / 10) = 1 THEN RETURN 0 END IF
+            m = m MOD 10
+            IF m > 0 ANDALSO BadOnes(m) = 1 THEN RETURN 0 END IF
+            RETURN 1
+        END IF
+        IF m >= 10 THEN RETURN 0 END IF
+        IF BadOnes(m) = 1 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET cnt AS S32 = 0
+        FOR n = 1 TO 200
+            IF IsEban(n) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Eban
+BEGIN
+    Eban.Run()
+END

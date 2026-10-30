@@ -1,0 +1,90 @@
+VERSION 1.0
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET nseg AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET endx AS S64 = 0
+LET endy AS S64 = 0
+
+FUNCTION Sn(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN SIN(df * 0.017453292519943295)
+END FUNCTION
+
+FUNCTION Cs(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN COS(df * 0.017453292519943295)
+END FUNCTION
+
+BEGIN
+    LET tx AS F64 = 32.0
+    LET ty AS F64 = 32.0
+    LET th AS S64 = 0
+    LET blen AS F64 = 1.0
+    LET i AS S64 = 0
+    LET nx AS F64 = 0.0
+    LET ny AS F64 = 0.0
+    LET sx AS S64 = 0
+    LET sy AS S64 = 0
+    WHILE i < 180
+        nx = tx + Cs(th) * blen
+        ny = ty - Sn(th) * blen
+        sx = ROUND(tx)
+        sy = ROUND(ty)
+        IF sx >= 0 ANDALSO sx < 64 ANDALSO sy >= 0 ANDALSO sy < 64 THEN
+            img[sy * 64 + sx] = 16711935
+        END IF
+        tx = nx
+        ty = ny
+        nseg = nseg + 1
+        th = (th + 89) MOD 360
+        blen = blen + 0.22
+        i = i + 1
+    END WHILE
+    endx = ROUND(tx)
+    endy = ROUND(ty)
+
+    CREATE_WINDOW "Polyspiral", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET k2 AS S64 = 0
+        CLEAR $000000
+        k2 = 0
+        ink = 0
+        chk = 0
+        WHILE k2 < 4096
+            IF img[k2] <> 0 THEN
+                COLOR img[k2]
+                PLOT k2 MOD 64, k2 / 64
+                ink = ink + 1
+                chk = chk + k2
+            END IF
+            k2 = k2 + 1
+        END WHILE
+        k2 = 0
+        WHILE img[k2] = 0 ANDALSO k2 < 4095
+            k2 = k2 + 1
+        END WHILE
+        fpx = READ_PIXEL(k2 MOD 64, k2 / 64)
+    END
+
+    LISTEN
+
+    PRINT "segments=" | nseg
+    PRINT "angle=89 len_step=0.35"
+    PRINT "end=(" | endx | "," | endy | ")"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "px=" | fpx
+END

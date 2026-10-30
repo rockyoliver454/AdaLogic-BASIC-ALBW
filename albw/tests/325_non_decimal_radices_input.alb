@@ -1,0 +1,37 @@
+-- 325 | Non-decimal radices/Input: parse integer strings in bases 2, 8, 10, 16, 36.
+DECLARE MODULE RadixIn
+    FUNCTION FromBase(s AS STRING, base AS S32) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RadixIn
+    FUNCTION DigitVal(c AS S32) AS S32
+        IF c >= 48 ANDALSO c <= 57 THEN RETURN c - 48 END IF
+        IF c >= 65 ANDALSO c <= 90 THEN RETURN c - 55 END IF
+        IF c >= 97 ANDALSO c <= 122 THEN RETURN c - 87 END IF
+        RETURN 99
+    END FUNCTION
+
+    FUNCTION FromBase(s AS STRING, base AS S32) AS S32
+        LET v AS S32 = 0
+        FOR i = 1 TO LEN(s)
+            LET d AS S32 = DigitVal(ASC(MID$(s, i, 1)))
+            IF d >= base THEN RETURN -1 END IF
+            v = v * base + d
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT FromBase("FF", 16)
+        PRINT FromBase("101010", 2)
+        PRINT FromBase("777", 8)
+        PRINT FromBase("2047", 10)
+        PRINT FromBase("Z", 36)
+    END PROCEDURE
+END MODULE
+
+IMPORT RadixIn
+BEGIN
+    RadixIn.Run()
+END

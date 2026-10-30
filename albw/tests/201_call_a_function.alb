@@ -1,0 +1,15 @@
+-- 201 | Call a function: invoke a user-defined function and use its result.
+DECLARE MODULE Calls
+    FUNCTION Double_Value(value AS S32) AS S32
+END DECLARE MODULE
+
+MODULE Calls
+    FUNCTION Double_Value(value AS S32) AS S32
+        RETURN value * 2
+    END FUNCTION
+END MODULE
+
+IMPORT Calls
+BEGIN
+    PRINT Calls.Double_Value(21)
+END

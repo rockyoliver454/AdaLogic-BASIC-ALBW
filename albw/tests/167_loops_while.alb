@@ -1,0 +1,8 @@
+-- 167 | Loops/While: condition-checked iteration.
+BEGIN
+    LET i AS S32 = 0;
+    WHILE i < 5
+        PRINT i;
+        i = i + 1;
+    END WHILE
+END

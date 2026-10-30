@@ -1,0 +1,31 @@
+-- 382 | Recaman's sequence: first 15 terms (a(n)=a(n-1)-n if positive and new, else +n).
+DECLARE MODULE Recaman
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Recaman
+    STRICT seen[4096] AS S32
+    PROCEDURE Run()
+        FOR i = 0 TO 4095
+            seen[i] = 0
+        END FOR
+        LET a AS S64 = 0
+        seen[0] = 1
+        LET s AS STRING = "0 "
+        FOR n = 1 TO 14
+            LET cand AS S64 = a - n
+            IF cand <= 0 ORELSE seen[cand] = 1 THEN
+                cand = a + n
+            END IF
+            a = cand
+            seen[a] = 1
+            s = s | a | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Recaman
+BEGIN
+    Recaman.Run()
+END

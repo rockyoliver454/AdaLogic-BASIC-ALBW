@@ -1,0 +1,34 @@
+-- 1006 | Rename a file: MoveFileA old -> new, verify the new
+-- name exists and the old is gone.
+IMPORTDLL FUNCTION MoveFileA(a AS S64, b AS S64) AS S32 FROM "kernel32"
+IMPORTDLL FUNCTION DeleteFileA(p AS S64) AS S32 FROM "kernel32"
+STRICT PA[128] AS U8
+STRICT PD[128] AS U8
+FUNCTION Spa(s AS STRING) AS S64
+    FOR i = 1 TO LEN(s)
+        POKE @PA + i - 1, ASC(MID$(s, i, 1))
+    END FOR
+    POKE @PA + LEN(s), 0
+    RETURN @PA
+END FUNCTION
+FUNCTION Spd(s AS STRING) AS S64
+    FOR i = 1 TO LEN(s)
+        POKE @PD + i - 1, ASC(MID$(s, i, 1))
+    END FOR
+    POKE @PD + LEN(s), 0
+    RETURN @PD
+END FUNCTION
+BEGIN
+LET h = OPEN("rosetta_old.dat", "w")
+WRITE h, "payload"
+CLOSE h
+LET dd AS S32 = DeleteFileA(Spd("rosetta_new.dat"))
+LET rc AS S32 = MoveFileA(Spa("rosetta_old.dat"), Spd("rosetta_new.dat"))
+PRINT "rename rc=" | rc
+LET ro = OPEN("rosetta_old.dat", "r")
+PRINT "old exists=" | (ro <> 0)
+LET rn = OPEN("rosetta_new.dat", "r")
+PRINT "new exists=" | (rn <> 0)
+PRINT "new size=" | FILELEN("rosetta_new.dat")
+CLOSE rn
+END

@@ -1,0 +1,145 @@
+-- 777 | Multi-base primes: for digit strings of length 1..4,
+-- find the strings that evaluate to a prime in the MOST bases
+-- (bases 2..36). Prints the max count, string, and base list.
+DECLARE MODULE Mb
+    FUNCTION IsP(n AS S64) AS S32
+    FUNCTION Dig(c AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mb
+    -- bit-packed sieve over odd n < 36^4 (1679616):
+    -- bit for odd n lives at word (n>>1)/64, bit (n>>1)%64
+    STRICT sv[13122] AS S64
+    STRICT ws[32] AS S64      -- winner digits: 4 winners x 8 slots
+    STRICT wb[280] AS S64     -- winner bases: 4 winners x 70 slots
+    STRICT wcnt[8] AS S64
+    STRICT dg[8] AS S64
+    STRICT bl[70] AS S64
+
+    FUNCTION IsP(n AS S64) AS S32
+        IF n = 2 THEN RETURN 1 END IF
+        IF n < 2 ORELSE n MOD 2 = 0 THEN RETURN 0 END IF
+        LET w AS S64 = n / 2
+        LET wi AS S64 = w / 64 + 1
+        LET bt AS S64 = w MOD 64
+        LET m AS S64 = 2 ^ bt
+        IF (sv[wi] AND m) <> 0 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Dig(c AS S64) AS S64
+        IF c < 10 THEN RETURN 48 + c END IF
+        RETURN 87 + c
+    END FUNCTION
+
+    PROCEDURE Sieve()
+        LET lim AS S64 = 1679616
+        FOR i = 1 TO 13122
+            sv[i] = 0
+        END FOR
+        LET p AS S64 = 3
+        WHILE p * p < lim
+            IF IsP(p) = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m < lim
+                    LET w AS S64 = m / 2
+                    LET wi AS S64 = w / 64 + 1
+                    sv[wi] = sv[wi] OR (2 ^ (w MOD 64))
+                    m = m + p + p
+                END WHILE
+            END IF
+            p = p + 2
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Scan(lnn AS S64)
+        -- enumerate strings of 'lnn' digits, leading digit >= 1
+        FOR i = 1 TO 8
+            dg[i] = 0
+        END FOR
+        dg[1] = 1
+        LET most AS S64 = 0
+        LET nwin AS S64 = 0
+        LET done AS S32 = 0
+        WHILE done = 0
+            -- min base = max digit + 1
+            LET md AS S64 = 0
+            FOR i = 1 TO lnn
+                IF dg[i] > md THEN md = dg[i] END IF
+            END FOR
+            LET minb AS S64 = md + 1
+            IF minb < 2 THEN minb = 2 END IF
+            -- prune: cannot reach most
+            IF most = 0 ORELSE 37 - minb >= most THEN
+                LET nb AS S64 = 0
+                LET b AS S64 = minb
+                WHILE b <= 36
+                    IF 37 - b + nb < most THEN b = 37 END IF
+                    LET n AS S64 = 0
+                    FOR i = 1 TO lnn
+                        n = n * b + dg[i]
+                    END FOR
+                    IF IsP(n) = 1 THEN
+                        nb = nb + 1
+                        bl[nb] = b
+                    END IF
+                    b = b + 1
+                END WHILE
+                IF nb > most THEN
+                    most = nb
+                    nwin = 0
+                END IF
+                IF nb = most ANDALSO nb > 0 THEN
+                    nwin = nwin + 1
+                    wcnt[nwin] = nb
+                    FOR i = 1 TO lnn
+                        ws[(nwin - 1) * 8 + i] = dg[i]
+                    END FOR
+                    FOR i = 1 TO nb
+                        wb[(nwin - 1) * 70 + i] = bl[i]
+                    END FOR
+                END IF
+            END IF
+            -- increment digit string (odometer, rightmost fastest)
+            LET p AS S64 = lnn
+            LET carry AS S32 = 1
+            WHILE p >= 1 ANDALSO carry = 1
+                dg[p] = dg[p] + 1
+                IF dg[p] > 35 THEN
+                    dg[p] = 0
+                    p = p - 1
+                ELSE
+                    carry = 0
+                END IF
+            END WHILE
+            IF carry = 1 THEN done = 1 END IF
+        END WHILE
+        -- print results
+        PRINT lnn | "-char max=" | most
+        FOR w = 1 TO nwin
+            LET s AS STRING = ""
+            FOR i = 1 TO lnn
+                s = s | CHR(Dig(ws[(w - 1) * 8 + i]))
+            END FOR
+            LET bs AS STRING = ""
+            FOR i = 1 TO wcnt[w]
+                IF i > 1 THEN bs = bs | "," END IF
+                bs = bs | wb[(w - 1) * 70 + i]
+            END FOR
+            PRINT "  " | s | " -> [" | bs | "]"
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Sieve()
+        FOR lnn = 1 TO 4
+            Scan(lnn)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Mb
+BEGIN
+    Mb.Run()
+END

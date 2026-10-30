@@ -1,0 +1,5 @@
+BEGIN
+    LET a = 7
+    LET b = 5
+    PRINT$ "A+B=" | (a + b)
+END

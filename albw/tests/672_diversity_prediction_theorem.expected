@@ -1,0 +1,4 @@
+individual err: 190.000000
+collective err: 4.000000
+diversity: 186.000000
+indiv = coll + div: 190.000000

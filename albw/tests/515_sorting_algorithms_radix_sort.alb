@@ -1,0 +1,56 @@
+-- 515 | Sorting algorithms/Radix sort (LSD, base 10).
+DECLARE MODULE Radix
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Radix
+    STRICT a[12] AS S64
+    STRICT b[12] AS S64
+    STRICT cnt[10] AS S64
+
+    PROCEDURE Run()
+        a[1] = 170
+        a[2] = 45
+        a[3] = 75
+        a[4] = 90
+        a[5] = 802
+        a[6] = 24
+        a[7] = 2
+        a[8] = 66
+        a[9] = 100
+        a[10] = 4
+        a[11] = 831
+        a[12] = 7
+        LET exp AS S64 = 1
+        WHILE exp <= 1000
+            FOR i = 0 TO 9
+                cnt[i] = 0
+            END FOR
+            FOR j = 1 TO 12
+                cnt[(a[j] / exp) MOD 10] = cnt[(a[j] / exp) MOD 10] + 1
+            END FOR
+            FOR k = 1 TO 9
+                cnt[k] = cnt[k] + cnt[k - 1]
+            END FOR
+            FOR m = 12 TO 1 STEP -1
+                LET d AS S64 = (a[m] / exp) MOD 10
+                b[cnt[d]] = a[m]
+                cnt[d] = cnt[d] - 1
+            END FOR
+            FOR n = 1 TO 12
+                a[n] = b[n]
+            END FOR
+            exp = exp * 10
+        END WHILE
+        LET s AS STRING = ""
+        FOR p = 1 TO 12
+            s = s | a[p] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Radix
+BEGIN
+    Radix.Run()
+END

@@ -1,0 +1,115 @@
+-- 262 | Range consolidation: merge overlapping/touching ranges, bounds scaled x10.
+DECLARE MODULE RangeConsol
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RangeConsol
+    STRICT lo[8] AS S32
+    STRICT hi[8] AS S32
+    LET count AS S32 = 0
+    LET out_line AS STRING = ""
+
+    PROCEDURE AppendBound(v AS S32)
+        LET sign AS S32 = 1
+        LET av AS S32 = v
+        IF v < 0 THEN
+            sign = -1
+            av = -v
+        END IF
+        LET q AS S32 = av / 10
+        LET r AS S32 = av - q * 10
+        LET s AS STRING = ""
+        IF sign < 0 THEN s = "-" END IF
+        IF r = 0 THEN
+            s = s | q
+        ELSE
+            s = s | q | "." | r
+        END IF
+        out_line = out_line | s
+    END PROCEDURE
+
+    PROCEDURE AddRange(l AS S32, r AS S32)
+        IF l > r THEN
+            LET temporary AS S32 = l
+            l = r
+            r = temporary
+        END IF
+        lo[count] = l
+        hi[count] = r
+        count = count + 1
+    END PROCEDURE
+
+    PROCEDURE SortRanges()
+        FOR i = 0 TO count - 2
+            FOR j = i + 1 TO count - 1
+                IF lo[j] < lo[i] ORELSE (lo[j] = lo[i] ANDALSO hi[j] < hi[i]) THEN
+                    LET tmp_l AS S32 = lo[i]
+                    LET tmp_h AS S32 = hi[i]
+                    lo[i] = lo[j]
+                    hi[i] = hi[j]
+                    lo[j] = tmp_l
+                    hi[j] = tmp_h
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE EmitRange(l AS S32, r AS S32)
+        IF LEN(out_line) > 0 THEN out_line = out_line | " " END IF
+        out_line = out_line | "["
+        AppendBound(l)
+        out_line = out_line | ", "
+        AppendBound(r)
+        out_line = out_line | "]"
+    END PROCEDURE
+
+    PROCEDURE ConsolidatePrint()
+        SortRanges()
+        LET cur_l AS S32 = lo[0]
+        LET cur_h AS S32 = hi[0]
+        FOR i = 1 TO count - 1
+            IF lo[i] <= cur_h THEN
+                IF hi[i] > cur_h THEN cur_h = hi[i] END IF
+            ELSE
+                EmitRange(cur_l, cur_h)
+                cur_l = lo[i]
+                cur_h = hi[i]
+            END IF
+        END FOR
+        EmitRange(cur_l, cur_h)
+        PRINT out_line
+        out_line = ""
+        count = 0
+    END PROCEDURE
+
+    PROCEDURE Run()
+        AddRange(11, 22)
+        ConsolidatePrint()
+
+        AddRange(61, 72)
+        AddRange(72, 83)
+        ConsolidatePrint()
+
+        AddRange(40, 30)
+        AddRange(20, 10)
+        ConsolidatePrint()
+
+        AddRange(40, 30)
+        AddRange(20, 10)
+        AddRange(-10, -20)
+        AddRange(39, 100)
+        ConsolidatePrint()
+
+        AddRange(10, 30)
+        AddRange(-60, -10)
+        AddRange(-40, -50)
+        AddRange(80, 20)
+        AddRange(-60, -60)
+        ConsolidatePrint()
+    END PROCEDURE
+END MODULE
+
+IMPORT RangeConsol
+BEGIN
+    RangeConsol.Run()
+END

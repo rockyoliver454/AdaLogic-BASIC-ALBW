@@ -1,0 +1,50 @@
+-- 412 | Mian-Chowla sequence: a(n) smallest > a(n-1) keeping pairwise sums unique.
+DECLARE MODULE MianChowla
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MianChowla
+    STRICT a[16] AS S64
+    STRICT sums[512] AS S64
+    PROCEDURE Run()
+        a[0] = 1
+        LET ns AS S32 = 0
+        sums[0] = 2
+        ns = 1
+        LET s AS STRING = "1 "
+        FOR n = 1 TO 9
+            LET cand AS S64 = a[n - 1] + 1
+            LET ok AS S32 = 0
+            WHILE ok = 0
+                ok = 1
+                FOR i = 0 TO n - 1
+                    LET need AS S64 = cand + a[i]
+                    FOR j = 0 TO ns - 1
+                        IF sums[j] = need THEN ok = 0 END IF
+                    END FOR
+                END FOR
+                IF ok = 1 THEN
+                    LET self AS S64 = cand + cand
+                    FOR j = 0 TO ns - 1
+                        IF sums[j] = self THEN ok = 0 END IF
+                    END FOR
+                END IF
+                IF ok = 0 THEN cand = cand + 1 END IF
+            END WHILE
+            FOR i = 0 TO n - 1
+                sums[ns] = cand + a[i]
+                ns = ns + 1
+            END FOR
+            sums[ns] = cand + cand
+            ns = ns + 1
+            a[n] = cand
+            s = s | cand | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT MianChowla
+BEGIN
+    MianChowla.Run()
+END

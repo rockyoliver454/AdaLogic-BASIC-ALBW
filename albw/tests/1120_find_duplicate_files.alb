@@ -1,0 +1,34 @@
+VERSION 1.0
+
+FUNCTION HashOf(p AS STRING) AS S64
+    LET r AS S64 = OPEN(p, "r")
+    LET s AS STRING = READ(r, FILELEN(p))
+    CLOSE r
+    LET h AS S64 = 1469598103934665603
+    LET i AS S64 = 1
+    WHILE i <= LEN(s)
+        h = (h XOR ASC(MID$(s, i, 1))) * 1099511628211
+        i = i + 1
+    END WHILE
+    RETURN h
+END FUNCTION
+
+BEGIN
+    LET a AS S64 = OPEN("dup_a.txt", "w")
+    WRITE a, "same payload 123"
+    CLOSE a
+    LET b AS S64 = OPEN("dup_b.txt", "w")
+    WRITE b, "same payload 123"
+    CLOSE b
+    LET c AS S64 = OPEN("dup_c.txt", "w")
+    WRITE c, "different content!!"
+    CLOSE c
+
+    LET ha AS S64 = HashOf("dup_a.txt")
+    LET hb AS S64 = HashOf("dup_b.txt")
+    LET hc AS S64 = HashOf("dup_c.txt")
+    PRINT "la=" | FILELEN("dup_a.txt") | " lb=" | FILELEN("dup_b.txt") | " lc=" | FILELEN("dup_c.txt")
+    PRINT "a==b " | (ha = hb)
+    PRINT "a==c " | (ha = hc)
+    PRINT "dup found: a,b"
+END

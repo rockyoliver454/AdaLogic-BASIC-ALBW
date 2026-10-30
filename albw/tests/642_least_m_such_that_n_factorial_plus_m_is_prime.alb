@@ -1,0 +1,34 @@
+-- 642 | Least m such that n! + m is prime, for n = 1..10.
+DECLARE MODULE Lm
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lm
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET f AS S64 = 1
+        FOR n = 1 TO 10
+            f = f * n
+            LET m AS S64 = 1
+            WHILE IsPrime(f + m) = 0
+                m = m + 1
+            END WHILE
+            PRINT n | "! + " | m
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lm
+BEGIN
+    Lm.Run()
+END

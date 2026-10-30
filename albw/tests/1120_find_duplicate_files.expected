@@ -1,0 +1,4 @@
+la=16 lb=16 lc=19
+a==b 1
+a==c 0
+dup found: a,b

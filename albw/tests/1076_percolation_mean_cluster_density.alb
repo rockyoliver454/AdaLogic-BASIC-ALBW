@@ -1,0 +1,120 @@
+VERSION 1.0
+
+STRICT gr[256] AS S32
+STRICT seen[256] AS S32
+STRICT stk[512] AS S64
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+LET sp AS S64 = 0
+LET ncl AS S64 = 0
+LET csz AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 2718
+    LET i AS S64 = 0
+    WHILE i < 256
+        IF Nxt() MOD 100 < 50 THEN gr[i] = 1 ELSE gr[i] = 0 END IF
+        i = i + 1
+    END WHILE
+
+    ncl = 0
+    csz = 0
+    i = 0
+    WHILE i < 256
+        IF gr[i] = 1 ANDALSO seen[i] = 0 THEN
+            ncl = ncl + 1
+            sp = 0
+            stk[sp] = i
+            sp = sp + 1
+            WHILE sp > 0
+                sp = sp - 1
+                LET c AS S64 = stk[sp]
+                IF seen[c] = 0 THEN
+                    seen[c] = 1
+                    csz = csz + 1
+                    LET x AS S64 = c MOD 16
+                    LET y AS S64 = c / 16
+                    IF x > 0 ANDALSO gr[c - 1] = 1 ANDALSO seen[c - 1] = 0 THEN stk[sp] = c - 1 sp = sp + 1 END IF
+                    IF x < 15 ANDALSO gr[c + 1] = 1 ANDALSO seen[c + 1] = 0 THEN stk[sp] = c + 1 sp = sp + 1 END IF
+                    IF y > 0 ANDALSO gr[c - 16] = 1 ANDALSO seen[c - 16] = 0 THEN stk[sp] = c - 16 sp = sp + 1 END IF
+                    IF y < 15 ANDALSO gr[c + 16] = 1 ANDALSO seen[c + 16] = 0 THEN stk[sp] = c + 16 sp = sp + 1 END IF
+                END IF
+            END WHILE
+        END IF
+        i = i + 1
+    END WHILE
+
+    LET y2 AS S64 = 0
+    WHILE y2 < 16
+        LET x2 AS S64 = 0
+        WHILE x2 < 16
+            LET cc AS S64 = y2 * 16 + x2
+            IF gr[cc] = 1 THEN
+                LET px AS S64 = x2 * 4
+                LET py AS S64 = y2 * 4
+                LET yy AS S64 = 0
+                WHILE yy < 4
+                    LET xx AS S64 = 0
+                    WHILE xx < 4
+                        img[(py + yy) * 64 + px + xx] = 16776960
+                        xx = xx + 1
+                    END WHILE
+                    yy = yy + 1
+                END WHILE
+            END IF
+            x2 = x2 + 1
+        END WHILE
+        y2 = y2 + 1
+    END WHILE
+
+    CREATE_WINDOW "Mean cluster density", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "p=0.50 16x16"
+    PRINT "clusters=" | ncl
+    PRINT "occupied=" | csz
+    PRINT "mean=" | csz / ncl
+    PRINT "ink=" | ink
+    PRINT "hitpx=" | fpx
+END

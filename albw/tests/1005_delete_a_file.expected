@@ -1,0 +1,3 @@
+before: exists=1
+delete rc=1
+after: exists=0

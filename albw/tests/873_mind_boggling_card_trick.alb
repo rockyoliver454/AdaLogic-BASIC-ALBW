@@ -1,0 +1,81 @@
+-- 873 | Mind-boggling card trick: construct the deck order
+-- that makes the "spell each card" deal work, then verify by
+-- simulating it. Spell ACE,TWO,...,KING: for each name deal
+-- len(name) cards top-to-bottom, reveal the next card.
+DECLARE MODULE Ct
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ct
+    STRICT dk[80] AS S64
+    STRICT nm[14] AS S64
+    STRICT nmch[40] AS STRING
+
+    PROCEDURE Run()
+        -- spell lengths for ace..king
+        nm[1] = 3; nm[2] = 3; nm[3] = 5; nm[4] = 4; nm[5] = 4
+        nm[6] = 3; nm[7] = 5; nm[8] = 5; nm[9] = 4; nm[10] = 3
+        nm[11] = 4; nm[12] = 5; nm[13] = 4
+        nmch[1] = "ace"; nmch[2] = "two"; nmch[3] = "three"
+        nmch[4] = "four"; nmch[5] = "five"; nmch[6] = "six"
+        nmch[7] = "seven"; nmch[8] = "eight"; nmch[9] = "nine"
+        nmch[10] = "ten"; nmch[11] = "jack"; nmch[12] = "queen"
+        nmch[13] = "king"
+        -- build deck backwards: deck as list, front = top
+        -- reverse step for card v (from king down to ace):
+        --   put v on top, then for len(name) times move bottom->top
+        FOR i = 1 TO 80
+            dk[i] = 0
+        END FOR
+        LET sz AS S64 = 0
+        LET k AS S64 = 0
+        WHILE k < 13
+            LET v AS S64 = 13 - k
+            -- push v on top (shift right)
+            LET i2 AS S64 = sz + 1
+            WHILE i2 > 1
+                dk[i2] = dk[i2 - 1]
+                i2 = i2 - 1
+            END WHILE
+            dk[1] = v
+            sz = sz + 1
+            -- rotate bottom->top nm[v] times
+            FOR t = 1 TO nm[v]
+                LET bot AS S64 = dk[sz]
+                LET j AS S64 = sz
+                WHILE j > 1
+                    dk[j] = dk[j - 1]
+                    j = j - 1
+                END WHILE
+                dk[1] = bot
+            END FOR
+            k = k + 1
+        END WHILE
+        LET s AS STRING = "deck:"
+        FOR i = 1 TO 13
+            s = s | " " | dk[i]
+        END FOR
+        PRINT s
+        -- forward simulate
+        LET hd AS S64 = 1
+        LET tl AS S64 = 14
+        LET res AS STRING = ""
+        FOR v = 1 TO 13
+            FOR t = 1 TO nm[v]
+                LET c AS S64 = dk[hd]
+                hd = hd + 1
+                dk[tl] = c
+                tl = tl + 1
+            END FOR
+            LET rv AS S64 = dk[hd]
+            hd = hd + 1
+            res = res | nmch[rv] | " "
+        END FOR
+        PRINT res
+    END PROCEDURE
+END MODULE
+
+IMPORT Ct
+BEGIN
+    Ct.Run()
+END

@@ -1,0 +1,48 @@
+-- 618 | Ordered words: longest words whose letters are in
+-- alphabetical order.
+DECLARE MODULE Ord
+    FUNCTION Ordered(s AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ord
+    STRICT w[9] AS STRING
+
+    FUNCTION Ordered(s AS STRING) AS S32
+        LET prev AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c < prev THEN RETURN 0 END IF
+            prev = c
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "almost"
+        w[2] = "billowy"
+        w[3] = "biopsy"
+        w[4] = "chintz"
+        w[5] = "spooned"
+        w[6] = "beefily"
+        w[7] = "abhors"
+        w[8] = "ghosty"
+        w[9] = "knotty"
+        LET best AS S64 = 0
+        FOR i = 1 TO 9
+            IF Ordered(w[i]) = 1 ANDALSO LEN(w[i]) > best THEN
+                best = LEN(w[i])
+            END IF
+        END FOR
+        FOR j = 1 TO 9
+            IF Ordered(w[j]) = 1 ANDALSO LEN(w[j]) = best THEN
+                PRINT w[j]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ord
+BEGIN
+    Ord.Run()
+END

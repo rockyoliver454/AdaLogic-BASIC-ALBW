@@ -1,0 +1,13 @@
+VERSION 1.0
+
+
+BEGIN
+    LET rc AS S64 = SHELL("echo ALB_ONE_LINER_OK > shell_out.txt")
+    LET fh AS S64 = OPEN("shell_out.txt", "r")
+    LET ln AS S64 = FILELEN("shell_out.txt")
+    LET txt AS STRING = READ(fh, ln)
+    CLOSE(fh)
+    PRINT "shell rc=" | rc
+    PRINT "captured: " | txt
+    KILL("shell_out.txt")
+END

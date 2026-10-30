@@ -1,0 +1,60 @@
+-- 239 | Singly-linked list: node definition, insertion, and traversal by stable indices.
+DECLARE MODULE SinglyList
+    PROCEDURE Initialize()
+    PROCEDURE PushFront(value AS S32)
+    PROCEDURE PushBack(value AS S32)
+    PROCEDURE Show()
+END DECLARE MODULE
+
+MODULE SinglyList
+    STRICT node_values[16] AS S32
+    STRICT node_next[16] AS S32
+    LET node_count AS S32 = 0
+    LET head_node AS S32 = -1
+
+    PROCEDURE Initialize()
+        node_count = 0
+        head_node = -1
+    END PROCEDURE
+
+    PROCEDURE PushFront(value AS S32)
+        node_values[node_count] = value
+        node_next[node_count] = head_node
+        head_node = node_count
+        node_count = node_count + 1
+    END PROCEDURE
+
+    PROCEDURE PushBack(value AS S32)
+        LET new_node AS S32 = node_count
+        node_values[new_node] = value
+        node_next[new_node] = -1
+        node_count = node_count + 1
+        IF head_node < 0 THEN
+            head_node = new_node
+        ELSE
+            LET cursor AS S32 = head_node
+            WHILE node_next[cursor] >= 0
+                cursor = node_next[cursor]
+            END WHILE
+            node_next[cursor] = new_node
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Show()
+        LET cursor AS S32 = head_node
+        WHILE cursor >= 0
+            PRINT node_values[cursor]
+            cursor = node_next[cursor]
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT SinglyList
+BEGIN
+    SinglyList.Initialize()
+    SinglyList.PushBack(20)
+    SinglyList.PushBack(30)
+    SinglyList.PushFront(10)
+    SinglyList.PushBack(40)
+    SinglyList.Show()
+END

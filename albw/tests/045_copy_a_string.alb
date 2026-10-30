@@ -1,0 +1,8 @@
+-- 045 | Copy a string: independent value, not an alias.
+BEGIN
+    LET src AS STRING = "Rosetta";
+    LET dst AS STRING = "" | src;
+    dst = dst | "!";
+    PRINT$ src;
+    PRINT$ dst;
+END

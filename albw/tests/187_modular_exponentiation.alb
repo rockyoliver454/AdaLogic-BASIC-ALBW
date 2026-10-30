@@ -1,0 +1,12 @@
+BEGIN
+    LET b = 2
+    LET e = 10
+    LET m = 1000
+    LET r = 1
+    LET i = 0
+    WHILE i < e
+        r = (r * b) MOD m
+        i = i + 1
+    END WHILE
+    PRINT$ r
+END

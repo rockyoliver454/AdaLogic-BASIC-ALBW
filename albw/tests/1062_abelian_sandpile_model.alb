@@ -1,0 +1,96 @@
+VERSION 1.0
+
+STRICT pile[441] AS S64
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET tops AS S64 = 0
+
+
+BEGIN
+    pile[220] = 500
+    LET again AS S64 = 1
+    WHILE again = 1
+        again = 0
+        LET i AS S64 = 0
+        WHILE i < 441
+            IF pile[i] >= 4 THEN
+                LET x AS S64 = i MOD 21
+                LET y AS S64 = i / 21
+                pile[i] = pile[i] - 4
+                IF x > 0 THEN pile[i - 1] = pile[i - 1] + 1 END IF
+                IF x < 20 THEN pile[i + 1] = pile[i + 1] + 1 END IF
+                IF y > 0 THEN pile[i - 21] = pile[i - 21] + 1 END IF
+                IF y < 20 THEN pile[i + 21] = pile[i + 21] + 1 END IF
+                tops = tops + 1
+                again = 1
+            END IF
+            i = i + 1
+        END WHILE
+    END WHILE
+
+    LET y2 AS S64 = 0
+    WHILE y2 < 21
+        LET x2 AS S64 = 0
+        WHILE x2 < 21
+            LET v AS S64 = pile[y2 * 21 + x2]
+            LET c AS S64 = 0
+            IF v = 1 THEN c = 16711680 END IF
+            IF v = 2 THEN c = 16776960 END IF
+            IF v = 3 THEN c = 65280 END IF
+            LET yy AS S64 = 0
+            WHILE yy < 3
+                LET xx AS S64 = 0
+                WHILE xx < 3
+                    img[(y2 * 3 + yy + 1) * 64 + x2 * 3 + xx + 1] = c
+                    xx = xx + 1
+                END WHILE
+                yy = yy + 1
+            END WHILE
+            x2 = x2 + 1
+        END WHILE
+        y2 = y2 + 1
+    END WHILE
+
+    CREATE_WINDOW "Abelian sandpile", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "topples=" | tops
+    PRINT "center=" | pile[220]
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

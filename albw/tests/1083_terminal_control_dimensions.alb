@@ -1,0 +1,7 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT "query size: " | CHR(27) | "[18t"
+    PRINT "assumed 80x24"
+END

@@ -1,0 +1,11 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("lpt_spool.out", "w")
+    WRITE h, "Hello world" | CHR(10)
+    CLOSE h
+    PRINT "sent to line printer"
+    LET r AS S64 = OPEN("lpt_spool.out", "r")
+    PRINT "lpr got=" | READ(r, FILELEN("lpt_spool.out"))
+    CLOSE r
+END

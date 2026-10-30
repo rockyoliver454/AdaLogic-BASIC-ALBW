@@ -1,0 +1,53 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET npx AS S64 = 0
+
+
+BEGIN
+    LET h AS S64 = OPEN("1049.ppm", "w")
+    WRITE h, "P3 4 4 255"
+    WRITE h, "255 0 0 0 255 0 0 0 255 255 255 0"
+    WRITE h, "0 255 255 255 0 255 128 128 128 0 0 0"
+    WRITE h, "64 64 64 192 192 192 32 96 160 255 255 255"
+    WRITE h, "10 20 30 40 50 60 70 80 90 100 110 120"
+    CLOSE h
+
+    LET r AS S64 = OPEN("1049.ppm", "r")
+    LET whole AS STRING = READ(r, FILELEN("1049.ppm"))
+    CLOSE r
+    LET hdr AS STRING = MID$(whole, 1, 10)
+
+    CREATE_WINDOW "Read PPM", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        CLEAR $000000
+        COLOR $FFFFFF
+        DRAW TEXT 4, 8, hdr
+        COLOR $FF0000
+        PLOT 4, 40
+        COLOR $00FF00
+        PLOT 6, 40
+        COLOR $0000FF
+        PLOT 8, 40
+        fpx = READ_PIXEL(4, 40)
+    END
+
+    LISTEN
+
+    PRINT "header=" | hdr
+    PRINT "len=" | LEN(whole)
+    PRINT "px(4,40)=" | fpx
+END

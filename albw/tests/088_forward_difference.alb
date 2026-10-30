@@ -1,0 +1,16 @@
+-- 088 | Forward difference of a sequence, iterated to constants.
+BEGIN
+    STRICT a[5] AS S32;
+    a[0] = 1; a[1] = 4; a[2] = 9; a[3] = 16; a[4] = 25;
+    LET n AS S32 = 5;
+    WHILE n > 1
+        FOR i = 0 TO n - 2
+            a[i] = a[i + 1] - a[i];
+        END FOR
+        n = n - 1;
+        FOR i = 0 TO n - 1
+            PRINT$ a[i] | "";
+        END FOR
+        PRINT$ "";
+    END WHILE
+END

@@ -1,0 +1,11 @@
+BEGIN
+    LET a = 17
+    LET b = 5
+    LET m = 7
+    LET s = a + b
+    LET d = a - b
+    LET p = a * b
+    PRINT$ s MOD m
+    PRINT$ d MOD m
+    PRINT$ p MOD m
+END

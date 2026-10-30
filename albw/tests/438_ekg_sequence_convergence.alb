@@ -1,0 +1,69 @@
+-- 438 | EKG sequence: first 20 terms of EKG(2) and the index where
+-- EKG(5) and EKG(7) first share a term.
+DECLARE MODULE Ekg
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+    FUNCTION NextEkg(prev AS S64, lim AS S64, which AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ekg
+    STRICT seen[300] AS S32
+    STRICT seen7[300] AS S32
+
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        WHILE b <> 0
+            LET t AS S64 = b
+            b = a MOD b
+            a = t
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    FUNCTION NextEkg(prev AS S64, lim AS S64, which AS S64) AS S64
+        LET best AS S64 = 0
+        FOR c = 1 TO lim
+            LET seenit AS S32 = 0
+            IF which = 5 THEN seenit = seen[c] END IF
+            IF which = 7 THEN seenit = seen7[c] END IF
+            IF seenit = 0 ANDALSO Gcd(prev, c) > 1 THEN
+                IF best = 0 ORELSE c < best THEN best = c END IF
+            END IF
+        END FOR
+        RETURN best
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 299
+            seen[i] = 0
+            seen7[i] = 0
+        END FOR
+        seen[1] = 1
+        seen[5] = 1
+        seen7[1] = 1
+        seen7[7] = 1
+        LET a5 AS S64 = 5
+        LET a7 AS S64 = 7
+        LET s AS STRING = "1 5 "
+        FOR n = 3 TO 20
+            a5 = NextEkg(a5, 299, 5)
+            seen[a5] = 1
+            s = s | a5 | " "
+        END FOR
+        PRINT s
+        a5 = 5
+        LET conv AS S64 = 0
+        FOR n2 = 3 TO 300
+            a5 = NextEkg(a5, 299, 5)
+            seen[a5] = 1
+            a7 = NextEkg(a7, 299, 7)
+            seen7[a7] = 1
+            IF conv = 0 ANDALSO seen7[a5] = 1 THEN conv = n2 END IF
+        END FOR
+        PRINT "converge=" | conv
+    END PROCEDURE
+END MODULE
+
+IMPORT Ekg
+BEGIN
+    Ekg.Run()
+END

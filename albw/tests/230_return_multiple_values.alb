@@ -1,0 +1,25 @@
+-- 230 | Return multiple values: package a sum and difference in a struct.
+STRUCT AddSubResult
+    total AS S32
+    difference AS S32
+END STRUCT
+
+DECLARE MODULE MultipleValues
+    FUNCTION AddSub(x AS S32, y AS S32) AS AddSubResult
+END DECLARE MODULE
+
+MODULE MultipleValues
+    FUNCTION AddSub(x AS S32, y AS S32) AS AddSubResult
+        LET answer AS AddSubResult
+        answer.total = x + y
+        answer.difference = x - y
+        RETURN answer
+    END FUNCTION
+END MODULE
+
+IMPORT MultipleValues
+BEGIN
+    LET result_pair AS AddSubResult = MultipleValues.AddSub(33, 12)
+    PRINT "33 + 12 = " | result_pair.total
+    PRINT "33 - 12 = " | result_pair.difference
+END

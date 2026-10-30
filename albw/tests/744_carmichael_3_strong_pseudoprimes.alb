@@ -1,0 +1,72 @@
+-- 744 | Carmichael 3 strong pseudoprimes: Carmichael numbers
+-- that are products of exactly 3 primes, first few.
+DECLARE MODULE C3
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE C3
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN r = r * bb MOD m END IF
+            bb = bb * bb MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 3
+        WHILE cnt < 4
+            -- factor n; require squarefree, 3 factors, p-1|n-1
+            LET v AS S64 = n
+            LET nf AS S64 = 0
+            LET sq AS S32 = 1
+            LET kor AS S32 = 1
+            LET d AS S64 = 2
+            WHILE d * d <= v
+                IF v MOD d = 0 THEN
+                    v = v / d
+                    nf = nf + 1
+                    IF v MOD d = 0 THEN sq = 0 END IF
+                    IF (n - 1) MOD (d - 1) <> 0 THEN kor = 0 END IF
+                END IF
+                d = d + 1
+            END WHILE
+            IF v > 1 THEN
+                nf = nf + 1
+                IF (n - 1) MOD (v - 1) <> 0 THEN kor = 0 END IF
+            END IF
+            IF sq = 1 ANDALSO kor = 1 ANDALSO nf = 3 THEN
+                -- verify strong pseudoprime base 2
+                LET dd AS S64 = n - 1
+                LET s AS S64 = 0
+                WHILE dd MOD 2 = 0
+                    dd = dd / 2
+                    s = s + 1
+                END WHILE
+                LET x AS S64 = Powm(2, dd, n)
+                LET spsp AS S32 = 0
+                IF x = 1 ORELSE x = n - 1 THEN spsp = 1 END IF
+                FOR i = 1 TO s - 1
+                    x = x * x MOD n
+                    IF x = n - 1 THEN spsp = 1 END IF
+                END FOR
+                IF spsp = 1 THEN
+                    PRINT n
+                    cnt = cnt + 1
+                END IF
+            END IF
+            n = n + 2
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT C3
+BEGIN
+    C3.Run()
+END

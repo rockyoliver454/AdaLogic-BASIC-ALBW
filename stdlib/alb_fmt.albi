@@ -1,0 +1,44 @@
+-- ============================================================================
+-- alb_fmt — fixed-width formatting: hex/bin with zero padding,
+-- char-param padding (alb_str's PadLeft is space-only), and a simple
+-- column helper. Includes alb_conv for the radix core — nested INCLUDE
+-- weaves fine and Is_Already_Included dedupes it.
+--
+--   PRINT AlbFmt.HexW(255, 4)      -- "00FF"
+--   PRINT AlbFmt.BinW(5, 8)        -- "00000101"
+--   PRINT AlbFmt.ZPad("42", 5)     -- "00042"
+-- ============================================================================
+
+INCLUDE "alb_conv"
+
+MODULE AlbFmt
+    -- Left-pad s to width w with character ch (no-op when already wide).
+    FUNCTION PadL(s AS STRING, w AS S32, ch AS STRING) AS STRING
+        LET r AS STRING = s
+        WHILE LEN(r) < w
+            r = ch | r
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION PadR(s AS STRING, w AS S32, ch AS STRING) AS STRING
+        LET r AS STRING = s
+        WHILE LEN(r) < w
+            r = r | ch
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION ZPad(s AS STRING, w AS S32) AS STRING
+        RETURN PadL(s, w, "0")
+    END FUNCTION
+
+    -- Zero-padded hex/binary to exactly w digits.
+    FUNCTION HexW(v AS S64, w AS S32) AS STRING
+        RETURN ZPad(AlbConv.ToHex(v), w)
+    END FUNCTION
+
+    FUNCTION BinW(v AS S64, w AS S32) AS STRING
+        RETURN ZPad(AlbConv.ToBin(v), w)
+    END FUNCTION
+END MODULE

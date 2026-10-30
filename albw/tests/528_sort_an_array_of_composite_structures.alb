@@ -1,0 +1,47 @@
+-- 528 | Sort an array of composite structures: records with a name
+-- and score, sorted by score then name index.
+DECLARE MODULE Comp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Comp
+    STRICT score[6] AS S64
+    STRICT ord[6] AS S64
+    STRICT name[6] AS STRING
+
+    PROCEDURE Run()
+        name[1] = "alice"
+        score[1] = 50
+        name[2] = "bob"
+        score[2] = 88
+        name[3] = "carol"
+        score[3] = 12
+        name[4] = "dave"
+        score[4] = 70
+        name[5] = "erin"
+        score[5] = 34
+        name[6] = "fred"
+        score[6] = 91
+        FOR i = 1 TO 6
+            ord[i] = i
+        END FOR
+        FOR i2 = 2 TO 6
+            LET v AS S64 = score[ord[i2]]
+            LET vi AS S64 = ord[i2]
+            LET j AS S64 = i2 - 1
+            WHILE j >= 1 ANDALSO score[ord[j]] > v
+                ord[j + 1] = ord[j]
+                j = j - 1
+            END WHILE
+            ord[j + 1] = vi
+        END FOR
+        FOR k = 1 TO 6
+            PRINT name[ord[k]] | " " | score[ord[k]]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Comp
+BEGIN
+    Comp.Run()
+END

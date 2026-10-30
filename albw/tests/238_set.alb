@@ -1,0 +1,63 @@
+-- 238 | Set: unique insertion, membership, removal, and iteration.
+DECLARE MODULE IntSet
+    PROCEDURE Add(value AS S32)
+    PROCEDURE Remove(value AS S32)
+    FUNCTION Contains(value AS S32) AS S32
+    FUNCTION Count() AS S32
+    FUNCTION Item(index_value AS S32) AS S32
+END DECLARE MODULE
+
+MODULE IntSet
+    STRICT members[16] AS S32
+    LET member_count AS S32 = 0
+
+    FUNCTION Contains(value AS S32) AS S32
+        FOR i = 0 TO member_count - 1
+            IF members[i] = value THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Add(value AS S32)
+        IF Contains(value) = 0 THEN
+            members[member_count] = value
+            member_count = member_count + 1
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Remove(value AS S32)
+        LET pos AS S32 = -1
+        FOR i = 0 TO member_count - 1
+            IF members[i] = value THEN pos = i END IF
+        END FOR
+        IF pos >= 0 THEN
+            FOR i = pos TO member_count - 2
+                members[i] = members[i + 1]
+            END FOR
+            member_count = member_count - 1
+        END IF
+    END PROCEDURE
+
+    FUNCTION Count() AS S32
+        RETURN member_count
+    END FUNCTION
+
+    FUNCTION Item(index_value AS S32) AS S32
+        RETURN members[index_value]
+    END FUNCTION
+END MODULE
+
+IMPORT IntSet
+BEGIN
+    IntSet.Add(3)
+    IntSet.Add(1)
+    IntSet.Add(3)
+    IntSet.Add(2)
+    PRINT "contains 2 = " | IntSet.Contains(2)
+    PRINT "contains 9 = " | IntSet.Contains(9)
+    IntSet.Remove(1)
+    PRINT "count = " | IntSet.Count()
+    FOR i = 0 TO IntSet.Count() - 1
+        PRINT IntSet.Item(i)
+    END FOR
+END

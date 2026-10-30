@@ -1,0 +1,62 @@
+-- 336 | Long multiplication: schoolbook digit multiply of two decimal strings.
+DECLARE MODULE LongMul
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE LongMul
+    STRICT a[64] AS S32
+    STRICT b[64] AS S32
+    STRICT pr[128] AS S32
+
+    FUNCTION Unpack(s AS STRING, which AS S32) AS S32
+        LET n AS S32 = LEN(s)
+        FOR i = 1 TO n
+            LET ch AS S32 = ASC(MID$(s, i, 1)) - 48
+            IF which = 0 THEN
+                a[i - 1] = ch
+            ELSE
+                b[i - 1] = ch
+            END IF
+        END FOR
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE DoMul(s1 AS STRING, s2 AS STRING)
+        LET n1 AS S32 = Unpack(s1, 0)
+        LET n2 AS S32 = Unpack(s2, 1)
+        FOR i = 0 TO 127
+            pr[i] = 0
+        END FOR
+        FOR i = n1 - 1 TO 0 STEP -1
+            FOR j = n2 - 1 TO 0 STEP -1
+                LET k AS S32 = (n1 - 1 - i) + (n2 - 1 - j)
+                pr[k] = pr[k] + a[i] * b[j]
+            END FOR
+        END FOR
+        FOR k = 0 TO 126
+            IF pr[k] >= 10 THEN
+                pr[k + 1] = pr[k + 1] + pr[k] / 10
+                pr[k] = pr[k] MOD 10
+            END IF
+        END FOR
+        LET hi AS S32 = 127
+        WHILE hi > 0 ANDALSO pr[hi] = 0
+            hi = hi - 1
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = hi TO 0 STEP -1
+            s = s | pr[k]
+        END FOR
+        PRINT s1 | " * " | s2 | " = " | s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        DoMul("123456789", "987654321")
+        DoMul("18446744073709551616", "18446744073709551616")
+    END PROCEDURE
+END MODULE
+
+IMPORT LongMul
+BEGIN
+    LongMul.Run()
+END

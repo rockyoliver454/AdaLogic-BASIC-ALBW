@@ -1,0 +1,61 @@
+-- 963 | Compiler/virtual machine interpreter: execute a
+-- small stack-machine bytecode: push, add, sub, mul, print.
+-- Program: compute (2+3)*4 - 10 then print top.
+DECLARE MODULE Vm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vm
+    STRICT bc[30] AS S64
+    STRICT st[30] AS S64
+
+    PROCEDURE Run()
+        -- ops: 0=push 1=add 2=sub 3=mul 4=div 5=print 9=halt
+        -- program: push 2 push 3 add push 4 mul push 10 sub print halt
+        bc[1] = 0; bc[2] = 2
+        bc[3] = 0; bc[4] = 3
+        bc[5] = 1
+        bc[6] = 0; bc[7] = 4
+        bc[8] = 3
+        bc[9] = 0; bc[10] = 10
+        bc[11] = 2
+        bc[12] = 5
+        bc[13] = 9
+        LET pc AS S64 = 1
+        LET sp AS S64 = 0
+        WHILE bc[pc] <> 9
+            LET op AS S64 = bc[pc]
+            pc = pc + 1
+            IF op = 0 THEN
+                sp = sp + 1
+                st[sp] = bc[pc]
+                pc = pc + 1
+            ELSE IF op = 1 THEN
+                st[sp - 1] = st[sp - 1] + st[sp]
+                sp = sp - 1
+            ELSE IF op = 2 THEN
+                st[sp - 1] = st[sp - 1] - st[sp]
+                sp = sp - 1
+            ELSE IF op = 3 THEN
+                st[sp - 1] = st[sp - 1] * st[sp]
+                sp = sp - 1
+            ELSE IF op = 4 THEN
+                st[sp - 1] = st[sp - 1] / st[sp]
+                sp = sp - 1
+            ELSE IF op = 5 THEN
+                PRINT "vm out: " | st[sp]
+            END IF
+            END IF
+            END IF
+            END IF
+            END IF
+            END IF
+        END WHILE
+        PRINT "sp=" | sp
+    END PROCEDURE
+END MODULE
+
+IMPORT Vm
+BEGIN
+    Vm.Run()
+END

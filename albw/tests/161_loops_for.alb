@@ -1,0 +1,6 @@
+-- 161 | Loops/For: counted iteration.
+BEGIN
+    FOR i = 1 TO 5
+        PRINT$ "*" | i;
+    END FOR
+END

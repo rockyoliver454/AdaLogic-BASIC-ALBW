@@ -1,0 +1,26 @@
+-- 285 | Reverse words in a string: reverse word order, one space between words.
+BEGIN
+    LET s AS STRING = "The quick brown fox jumped over the lazy dog"
+    STRICT words[9] AS STRING
+    LET count AS S32 = 0
+    LET word AS STRING = ""
+    FOR i = 1 TO LEN(s)
+        LET c AS S32 = ASC(MID$(s, i, 1))
+        IF c = 32 THEN
+            words[count] = word
+            count = count + 1
+            word = ""
+        ELSE
+            word = word | CHR(c)
+        END IF
+    END FOR
+    words[count] = word
+    count = count + 1
+
+    LET out_line AS STRING = ""
+    FOR i = count - 1 TO 0 STEP -1
+        IF i < count - 1 THEN out_line = out_line | " " END IF
+        out_line = out_line | words[i]
+    END FOR
+    PRINT out_line
+END

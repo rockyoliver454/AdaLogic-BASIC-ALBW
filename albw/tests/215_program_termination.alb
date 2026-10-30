@@ -1,0 +1,6 @@
+-- 215 | Program termination: top-level RETURN exits the process immediately.
+BEGIN
+    PRINT "before termination"
+    RETURN 0
+    PRINT "unreachable"
+END

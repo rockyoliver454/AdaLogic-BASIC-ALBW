@@ -1,0 +1,38 @@
+-- 417 | Minimal steps down to 1: with steps n/2 (even), n/3 (divisible
+-- by 3), or n-1, show minimum steps for 1..50.
+DECLARE MODULE MinSteps
+    FUNCTION Steps(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MinSteps
+    STRICT f[51] AS S64
+
+    FUNCTION Steps(n AS S64) AS S64
+        RETURN f[n]
+    END FUNCTION
+
+    PROCEDURE Run()
+        f[1] = 0
+        FOR n = 2 TO 50
+            LET best AS S64 = f[n - 1] + 1
+            IF n MOD 2 = 0 THEN
+                IF f[n / 2] + 1 < best THEN best = f[n / 2] + 1 END IF
+            END IF
+            IF n MOD 3 = 0 THEN
+                IF f[n / 3] + 1 < best THEN best = f[n / 3] + 1 END IF
+            END IF
+            f[n] = best
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 1 TO 50
+            s = s | Steps(n) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT MinSteps
+BEGIN
+    MinSteps.Run()
+END

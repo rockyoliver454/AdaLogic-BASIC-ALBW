@@ -1,0 +1,41 @@
+-- 612 | Hex dump: offset, hex bytes, ASCII column.
+DECLARE MODULE Hex
+    FUNCTION Hx(d AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hex
+    STRICT b[16] AS S64
+
+    FUNCTION Hx(d AS S64) AS S64
+        IF d < 10 THEN RETURN 48 + d END IF
+        RETURN 55 + d
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "Rosetta Code ALB"
+        FOR i = 1 TO LEN(s)
+            b[i] = ASC(MID$(s, i, 1))
+        END FOR
+        LET off AS S64 = 0
+        LET pos AS S64 = 1
+        WHILE pos <= 16
+            LET hb AS STRING = "0" | off | "  "
+            FOR j = pos TO pos + 7
+                hb = hb | CHR(Hx(b[j] / 16)) | CHR(Hx(b[j] MOD 16)) | " "
+            END FOR
+            hb = hb | " |"
+            FOR k = pos TO pos + 7
+                hb = hb | CHR(b[k])
+            END FOR
+            PRINT hb | "|"
+            off = off + 8
+            pos = pos + 8
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Hex
+BEGIN
+    Hex.Run()
+END

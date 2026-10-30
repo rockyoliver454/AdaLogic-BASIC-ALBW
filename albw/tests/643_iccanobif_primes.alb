@@ -1,0 +1,46 @@
+-- 643 | Iccanobif primes: primes which are the reversal of a
+-- Fibonacci number.
+DECLARE MODULE Icc
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION Rev(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Icc
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Rev(n AS S64) AS S64
+        LET r AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            r = r * 10 + m MOD 10
+            m = m / 10
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET a AS S64 = 1
+        LET b AS S64 = 1
+        WHILE a < 100000
+            LET rv AS S64 = Rev(a)
+            IF IsPrime(rv) = 1 THEN PRINT rv | " from " | a END IF
+            LET t AS S64 = a + b
+            a = b
+            b = t
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Icc
+BEGIN
+    Icc.Run()
+END

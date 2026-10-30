@@ -1,0 +1,56 @@
+-- 626 | Textonyms: T9 keypad -- words sharing a digit sequence.
+DECLARE MODULE Txt
+    FUNCTION Digits(s AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Txt
+    STRICT w[8] AS STRING
+
+    FUNCTION Digits(s AS STRING) AS STRING
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            LET d AS S64 = 2
+            IF c >= 100 ANDALSO c <= 102 THEN d = 3 END IF
+            IF c >= 103 ANDALSO c <= 105 THEN d = 4 END IF
+            IF c >= 106 ANDALSO c <= 108 THEN d = 5 END IF
+            IF c >= 109 ANDALSO c <= 111 THEN d = 6 END IF
+            IF c >= 112 ANDALSO c <= 115 THEN d = 7 END IF
+            IF c >= 116 ANDALSO c <= 118 THEN d = 8 END IF
+            IF c >= 119 ANDALSO c <= 122 THEN d = 9 END IF
+            r = r | d
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "good"
+        w[2] = "home"
+        w[3] = "gone"
+        w[4] = "hood"
+        w[5] = "hoof"
+        w[6] = "cat"
+        w[7] = "bat"
+        w[8] = "dog"
+        FOR i = 1 TO 8
+            LET grp AS STRING = ""
+            LET first2 AS S64 = 0
+            LET d AS STRING = Digits(w[i])
+            FOR j = 1 TO 8
+                IF Digits(w[j]) = d THEN
+                    IF first2 = 0 THEN first2 = j END IF
+                    grp = grp | w[j] | " "
+                END IF
+            END FOR
+            IF i = first2 ANDALSO LEN(grp) > LEN(w[i]) + 1 THEN
+                PRINT d | ": " | grp
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Txt
+BEGIN
+    Txt.Run()
+END

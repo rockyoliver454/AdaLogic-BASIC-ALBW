@@ -1,0 +1,10 @@
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{},"resources":{}},"serverInfo":{"name":"alb-mcp-test","version":"0.1.0"}}}
+{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"add_nums","description":"add two numbers","inputSchema":{"type":"object","properties":{"a":{"type":"integer"},"b":{"type":"integer"}},"required":["a","b"]}},{"name":"get_status","description":"status text","inputSchema":{"type":"object","properties":{},"required":[]}},{"name":"double_it","description":"double a number","inputSchema":{"type":"object","properties":{"n":{"type":"integer"}},"required":["n"]}},{"name":"shout","description":"uppercase echo","inputSchema":{"type":"object","properties":{"msg":{"type":"string"}},"required":["msg"]}}]}}
+{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"ok"}]}}
+{"jsonrpc":"2.0","id":4,"result":{"content":[{"type":"text","text":"ready"}]}}
+{"jsonrpc":"2.0","id":5,"result":{"content":[{"type":"text","text":"ok"}]}}
+{"jsonrpc":"2.0","id":6,"result":{"resources":[{"uri":"alb://hello","name":"hello","mimeType":"application/json"}]}}
+{"jsonrpc":"2.0","id":7,"result":{"contents":[{"uri":"alb://hello","mimeType":"application/json","text":"hello world"}]}}
+{"jsonrpc":"2.0","id":8,"result":{"content":[{"type":"text","text":"ok"}]}}
+{"jsonrpc":"2.0","id":9,"error":{"code":-32602,"message":"unknown tool: nope"}}
+{"jsonrpc":"2.0","id":10,"result":{}}

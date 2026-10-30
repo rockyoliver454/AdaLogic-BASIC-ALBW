@@ -1,0 +1,61 @@
+-- 260 | Range expansion: expand "-6,-3--1,3-5,7-11,14,15,17-20" into full list.
+DECLARE MODULE RangeExpand
+    PROCEDURE Expand()
+END DECLARE MODULE
+
+MODULE RangeExpand
+    LET src AS STRING = "-6,-3--1,3-5,7-11,14,15,17-20"
+    LET pos AS S32 = 1
+    LET out_line AS STRING = "["
+    LET emitted AS S32 = 0
+
+    FUNCTION CharAt() AS S32
+        RETURN ASC(MID$(src, pos, 1))
+    END FUNCTION
+
+    FUNCTION ParseInt() AS S32
+        LET sign AS S32 = 1
+        IF CharAt() = 45 THEN
+            sign = -1
+            pos = pos + 1
+        END IF
+        LET value AS S32 = 0
+        WHILE pos <= LEN(src)
+            LET c AS S32 = CharAt()
+            IF c < 48 OR c > 57 THEN BREAK END IF
+            value = value * 10 + (c - 48)
+            pos = pos + 1
+        END WHILE
+        RETURN sign * value
+    END FUNCTION
+
+    PROCEDURE Emit(v AS S32)
+        IF emitted = 1 THEN out_line = out_line | "," END IF
+        out_line = out_line | v
+        emitted = 1
+    END PROCEDURE
+
+    PROCEDURE Expand()
+        WHILE pos <= LEN(src)
+            LET first AS S32 = ParseInt()
+            LET last AS S32 = first
+            IF pos <= LEN(src) ANDALSO CharAt() = 45 THEN
+                pos = pos + 1
+                last = ParseInt()
+            END IF
+            FOR v = first TO last
+                Emit(v)
+            END FOR
+            IF pos <= LEN(src) ANDALSO CharAt() = 44 THEN
+                pos = pos + 1
+            END IF
+        END WHILE
+        out_line = out_line | "]"
+        PRINT out_line
+    END PROCEDURE
+END MODULE
+
+IMPORT RangeExpand
+BEGIN
+    RangeExpand.Expand()
+END

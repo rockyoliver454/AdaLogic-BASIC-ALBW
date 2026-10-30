@@ -1,0 +1,53 @@
+-- 509 | Sorting algorithms/Shell sort (Ciura gaps).
+DECLARE MODULE Shell
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Shell
+    STRICT a[12] AS S64
+    STRICT gaps[5] AS S64
+
+    PROCEDURE Run()
+        a[1] = 62
+        a[2] = 83
+        a[3] = 18
+        a[4] = 53
+        a[5] = 7
+        a[6] = 48
+        a[7] = 95
+        a[8] = 16
+        a[9] = 33
+        a[10] = 71
+        a[11] = 5
+        a[12] = 40
+        gaps[1] = 57
+        gaps[2] = 23
+        gaps[3] = 10
+        gaps[4] = 4
+        gaps[5] = 1
+        FOR g = 1 TO 5
+            LET gap AS S64 = gaps[g]
+            IF gap < 12 THEN
+                FOR i = gap + 1 TO 12
+                    LET v AS S64 = a[i]
+                    LET j AS S64 = i
+                    WHILE j > gap ANDALSO a[j - gap] > v
+                        a[j] = a[j - gap]
+                        j = j - gap
+                    END WHILE
+                    a[j] = v
+                END FOR
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 12
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Shell
+BEGIN
+    Shell.Run()
+END

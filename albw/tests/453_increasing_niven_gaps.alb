@@ -1,0 +1,45 @@
+-- 453 | Increasing gaps between consecutive Niven numbers: largest
+-- gaps in the first 1,000,000 Niven numbers.
+DECLARE MODULE NivGap
+    FUNCTION IsNiven(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NivGap
+    FUNCTION IsNiven(n AS S64) AS S32
+        LET ds AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            ds = ds + t MOD 10
+            t = t / 10
+        END WHILE
+        IF ds = 0 THEN RETURN 0 END IF
+        IF n MOD ds = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET prev AS S64 = 0
+        LET bestGap AS S64 = 0
+        LET count AS S64 = 0
+        LET n AS S64 = 1
+        WHILE count < 1000000
+            IF IsNiven(n) = 1 THEN
+                LET gap AS S64 = n - prev
+                IF gap > bestGap THEN
+                    bestGap = gap
+                    PRINT "gap=" | gap | " at " | n
+                END IF
+                prev = n
+                count = count + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT "total=" | count
+    END PROCEDURE
+END MODULE
+
+IMPORT NivGap
+BEGIN
+    NivGap.Run()
+END

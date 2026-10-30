@@ -1,0 +1,38 @@
+-- Module invariants: `INVARIANT expr` at module scope is checked once
+-- at the end of _alb_init (established) and again at every exit of
+-- every PUBLIC member routine — fault 28 on violation.  PRIVATE
+-- members are exempt: they may violate the invariant mid-operation.
+
+MODULE Bank
+    PRIVATE LET balance AS S32 = 100
+    INVARIANT balance >= 0
+
+    PROCEDURE Deposit(amt AS S32)
+        balance = balance + amt
+    END PROCEDURE
+
+    PROCEDURE Withdraw(amt AS S32)
+        balance = balance - amt
+    END PROCEDURE
+
+    FUNCTION Bal() AS S32
+        RETURN balance
+    END FUNCTION
+END MODULE
+
+MODULE Gauge
+    LET level AS S32 = 5
+    INVARIANT level >= 0 ANDALSO level <= 10
+
+    FUNCTION Half() AS S32
+        RETURN level / 2
+    END FUNCTION
+END MODULE
+
+BEGIN
+    Bank.Deposit(50)
+    PRINT Bank.Bal()
+    Bank.Withdraw(30)
+    PRINT Bank.Bal()
+    PRINT Gauge.Half()
+END

@@ -1,0 +1,10 @@
+k=0 max a(n)/n=1/1
+k=1 max a(n)/n=2/3
+k=2 max a(n)/n=4/7
+k=3 max a(n)/n=8/15
+k=4 max a(n)/n=16/31
+k=5 max a(n)/n=32/63
+k=6 max a(n)/n=64/127
+k=7 max a(n)/n=128/255
+k=8 max a(n)/n=256/511
+k=9 max a(n)/n=510/1000

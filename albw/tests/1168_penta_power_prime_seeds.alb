@@ -1,0 +1,98 @@
+VERSION 1.0
+
+STRICT sm[12] AS S64
+
+
+FUNCTION MulMd(a AS S64, b AS S64, m AS S64) AS S64
+    LET res AS S64 = 0
+    LET bb AS S64 = b
+    WHILE bb > 0
+        IF bb MOD 2 = 1 THEN
+            res = res + a
+            IF res >= m THEN
+                res = res - m
+            END IF
+        END IF
+        a = a + a
+        IF a >= m THEN
+            a = a - m
+        END IF
+        bb = bb / 2
+    END WHILE
+    RETURN res
+END FUNCTION
+
+
+FUNCTION PwMd(bse AS S64, xp AS S64, m AS S64) AS S64
+    LET res AS S64 = 1
+    bse = bse MOD m
+    WHILE xp > 0
+        IF xp MOD 2 = 1 THEN
+            res = MulMd(res, bse, m)
+        END IF
+        bse = MulMd(bse, bse, m)
+        xp = xp / 2
+    END WHILE
+    RETURN res
+END FUNCTION
+
+
+FUNCTION IsP(v AS S64) AS S64
+    IF v < 2 THEN
+        RETURN 0
+    END IF
+    LET i AS S64 = 0
+    WHILE i < 12
+        IF v = sm[i] THEN
+            RETURN 1
+        END IF
+        IF v MOD sm[i] = 0 THEN
+            RETURN 0
+        END IF
+        i = i + 1
+    END WHILE
+    LET d AS S64 = v - 1
+    LET s AS S64 = 0
+    WHILE d MOD 2 = 0
+        d = d / 2
+        s = s + 1
+    END WHILE
+    i = 0
+    WHILE i < 12
+        LET x AS S64 = PwMd(sm[i], d, v)
+        IF x <> 1 ANDALSO x <> v - 1 THEN
+            LET comp AS S64 = 1
+            LET r AS S64 = 1
+            WHILE r < s
+                x = MulMd(x, x, v)
+                IF x = v - 1 THEN
+                    comp = 0
+                END IF
+                r = r + 1
+            END WHILE
+            IF comp = 1 THEN
+                RETURN 0
+            END IF
+        END IF
+        i = i + 1
+    END WHILE
+    RETURN 1
+END FUNCTION
+
+
+BEGIN
+    sm[0] = 2 sm[1] = 3 sm[2] = 5 sm[3] = 7 sm[4] = 11 sm[5] = 13
+    sm[6] = 17 sm[7] = 19 sm[8] = 23 sm[9] = 29 sm[10] = 31 sm[11] = 37
+    LET cnt AS S64 = 0
+    LET n AS S64 = 1
+    WHILE cnt < 7
+        LET n2 AS S64 = n * n
+        LET v AS S64 = n2 * n2 + n + 1
+        IF IsP(n + 2) = 1 ANDALSO IsP(n + n + 1) = 1 ANDALSO IsP(n2 + n + 1) = 1 ANDALSO IsP(n2 * n + n + 1) = 1 ANDALSO IsP(v) = 1 THEN
+            cnt = cnt + 1
+            PRINT "seed " | cnt | " = " | n
+        END IF
+        n = n + 1
+    END WHILE
+    PRINT "(S64 limit: n^4+n+1 overflows for n > ~31000)"
+END

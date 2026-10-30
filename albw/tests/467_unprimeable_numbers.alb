@@ -1,0 +1,58 @@
+-- 467 | Unprimeable numbers: first 35 (changing any single digit
+-- never yields a prime).
+DECLARE MODULE Unpr
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION IsUnprimeable(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Unpr
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IsUnprimeable(n AS S64) AS S32
+        IF IsPrime(n) = 1 THEN RETURN 0 END IF
+        LET place AS S64 = 1
+        WHILE place <= n
+            LET base AS S64 = n - (n / place MOD 10) * place
+            FOR d = 0 TO 9
+                LET cand AS S64 = base + d * place
+                IF cand >= place ORELSE place * 10 > n THEN
+                    IF IsPrime(cand) = 1 THEN RETURN 0 END IF
+                END IF
+            END FOR
+            place = place * 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 35
+            IF IsUnprimeable(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Unpr
+BEGIN
+    Unpr.Run()
+END

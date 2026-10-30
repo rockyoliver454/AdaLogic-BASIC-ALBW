@@ -1,0 +1,13 @@
+BEGIN
+    LET a = 1
+    LET b = 0
+    IF a = 1 AND b = 1 THEN
+        PRINT$ "and"
+    END IF
+    IF a = 1 OR b = 1 THEN
+        PRINT$ "or"
+    END IF
+    IF NOT (b = 1) THEN
+        PRINT$ "not"
+    END IF
+END

@@ -1,0 +1,10 @@
+-- 165 | Loops/N plus one half: the last step prints the half.
+BEGIN
+    FOR i = 0 TO 12
+        IF i < 12 THEN
+            PRINT i;
+        ELSE
+            PRINT$ "12 and a half";
+        END IF
+    END FOR
+END

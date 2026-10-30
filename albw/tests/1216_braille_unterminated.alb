@@ -1,0 +1,5 @@
+-- 1216 | BRAILLE block with no END BRAILLE terminator — lexer error.
+BEGIN
+    BRAILLE
+The quick brown fox
+END

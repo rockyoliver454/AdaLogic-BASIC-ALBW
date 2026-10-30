@@ -1,0 +1,52 @@
+-- 329 | Zeckendorf number representation: Fibonacci-base digits for 0..20.
+DECLARE MODULE Zeck
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Zeck
+    STRICT fibs[64] AS S32
+    LET nfibs AS S32 = 0
+
+    PROCEDURE BuildFibs()
+        fibs[0] = 1
+        fibs[1] = 2
+        LET i AS S32 = 2
+        WHILE fibs[i - 1] + fibs[i - 2] <= 1000000
+            fibs[i] = fibs[i - 1] + fibs[i - 2]
+            i = i + 1
+        END WHILE
+        nfibs = i
+    END PROCEDURE
+
+    PROCEDURE Show(v AS S32)
+        IF v = 0 THEN
+            PRINT "0"
+            RETURN
+        END IF
+        LET n AS S32 = v
+        LET s AS STRING = ""
+        LET started AS S32 = 0
+        FOR i = nfibs - 1 TO 0 STEP -1
+            IF n >= fibs[i] THEN
+                s = s | "1"
+                n = n - fibs[i]
+                started = 1
+            ELSE
+                IF started = 1 THEN s = s | "0" END IF
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        BuildFibs()
+        FOR v = 0 TO 20
+            Show(v)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Zeck
+BEGIN
+    Zeck.Run()
+END

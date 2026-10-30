@@ -1,0 +1,37 @@
+-- 442 | Inconsummate numbers in base 10: numbers n that are not
+-- k / digitsum(k) for any k. Print all below 1000.
+DECLARE MODULE Incon
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Incon
+    STRICT hits[10000] AS S32
+
+    PROCEDURE Run()
+        FOR i = 1 TO 9999
+            hits[i] = 0
+        END FOR
+        FOR k = 1 TO 99999
+            LET ds AS S64 = 0
+            LET t AS S64 = k
+            WHILE t > 0
+                ds = ds + t MOD 10
+                t = t / 10
+            END WHILE
+            IF k MOD ds = 0 THEN
+                LET q AS S64 = k / ds
+                IF q <= 9999 THEN hits[q] = 1 END IF
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 1 TO 999
+            IF hits[n] = 0 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Incon
+BEGIN
+    Incon.Run()
+END

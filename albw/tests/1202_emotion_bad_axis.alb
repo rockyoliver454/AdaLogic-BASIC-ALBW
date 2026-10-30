@@ -1,0 +1,3 @@
+EMOTION mood AXES calm focus END_EMOTION
+LET r AS S64 = 0
+SET_AXIS mood missing 10

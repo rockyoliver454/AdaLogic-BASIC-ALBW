@@ -1,0 +1,64 @@
+-- 350 | Brilliant numbers: semiprimes whose two prime factors have equal digit length.
+DECLARE MODULE Brilliant
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION Digits(n AS S64) AS S64
+    FUNCTION IsBrilliant(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Brilliant
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Digits(n AS S64) AS S64
+        LET c AS S64 = 1
+        LET m AS S64 = n
+        WHILE m >= 10
+            m = m / 10
+            c = c + 1
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    FUNCTION IsBrilliant(n AS S64) AS S64
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                LET o AS S64 = n / d
+                IF IsPrime(d) = 1 ANDALSO IsPrime(o) = 1 ANDALSO Digits(d) = Digits(o) THEN
+                    RETURN 1
+                END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 4
+        WHILE found < 25
+            IF IsBrilliant(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Brilliant
+BEGIN
+    Brilliant.Run()
+END

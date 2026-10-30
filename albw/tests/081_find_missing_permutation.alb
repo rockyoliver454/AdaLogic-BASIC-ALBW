@@ -1,0 +1,43 @@
+-- 081 | Find the missing permutation of ABCD from 23 listed.
+--  Per position the missing letter appears only 5 times (full set: 6).
+DECLARE MODULE MP
+    PROCEDURE Setup()
+    FUNCTION Missing() AS STRING
+END DECLARE MODULE
+
+MODULE MP
+    STRICT p[23] AS STRING;
+    PROCEDURE Setup()
+        p[0]="ABCD"; p[1]="ABDC"; p[2]="ACBD"; p[3]="ACDB";
+        p[4]="ADBC"; p[5]="ADCB"; p[6]="BACD"; p[7]="BADC";
+        p[8]="BCAD"; p[9]="BCDA"; p[10]="BDAC"; p[11]="BDCA";
+        p[12]="CABD"; p[13]="CADB"; p[14]="CBAD"; p[15]="CBDA";
+        p[16]="CDAB"; p[17]="CDBA"; p[18]="DABC"; p[19]="DACB";
+        p[20]="DBAC"; p[21]="DBCA"; p[22]="DCAB";
+    END PROCEDURE
+    FUNCTION Missing() AS STRING
+        Setup();
+        LET res AS STRING = "";
+        STRICT cnt[91] AS S32;
+        FOR pos = 1 TO 4 THEN
+            FOR c = 65 TO 90 THEN
+                cnt[c] = 0;
+            END FOR
+            FOR i = 0 TO 22 THEN
+                LET cc AS S32 = ASC(MID$(p[i], pos, 1));
+                cnt[cc] = cnt[cc] + 1;
+            END FOR
+            FOR c = 65 TO 68 THEN
+                IF cnt[c] = 5 THEN
+                    res = res | CHR(c);
+                END IF
+            END FOR
+        END FOR
+        RETURN res
+    END FUNCTION
+END MODULE
+
+IMPORT MP
+BEGIN
+    PRINT$ MP.Missing();
+END

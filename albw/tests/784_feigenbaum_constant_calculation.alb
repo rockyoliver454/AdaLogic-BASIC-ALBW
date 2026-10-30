@@ -1,0 +1,37 @@
+-- 784 | Feigenbaum constant delta: canonical Newton-iteration
+-- approach on the map x -> a - x^2 (per Rosetta reference).
+DECLARE MODULE Fe
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fe
+    PROCEDURE Run()
+        LET a1 AS F64 = 1.0
+        LET a2 AS F64 = 0.0
+        LET d1 AS F64 = 3.2
+        LET a AS F64 = 0.0
+        PRINT "i  a"
+        FOR i = 2 TO 13
+            a = a1 + (a1 - a2) / d1
+            FOR j = 1 TO 10
+                LET x AS F64 = 0.0
+                LET y AS F64 = 0.0
+                FOR k = 1 TO 2 ^ i
+                    y = 1.0 - 2.0 * y * x
+                    x = a - x * x
+                END FOR
+                a = a - x / y
+            END FOR
+            d1 = (a1 - a2) / (a - a1)
+            a2 = a1
+            a1 = a
+            PRINT i | " " | a
+        END FOR
+        PRINT "delta=" | d1
+    END PROCEDURE
+END MODULE
+
+IMPORT Fe
+BEGIN
+    Fe.Run()
+END

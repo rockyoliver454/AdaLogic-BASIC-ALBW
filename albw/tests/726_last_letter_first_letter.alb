@@ -1,0 +1,60 @@
+-- 726 | Last letter-first letter: longest word chain where
+-- each word starts with the previous word's last letter.
+DECLARE MODULE Lf
+    PROCEDURE Dfs(cur AS S64, depth AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lf
+    STRICT wd[9] AS STRING
+    STRICT used[9] AS S32
+    STRICT best[1] AS S64
+    STRICT bst[9] AS S64
+    STRICT cur[9] AS S64
+
+    PROCEDURE Dfs(curi AS S64, depth AS S64)
+        cur[depth] = curi
+        IF depth > best[1] THEN
+            best[1] = depth
+            FOR i = 1 TO depth
+                bst[i] = cur[i]
+            END FOR
+        END IF
+        LET last AS STRING = MID$(wd[curi], LEN(wd[curi]), 1)
+        FOR j = 1 TO 8
+            IF used[j] = 0 THEN
+                IF MID$(wd[j], 1, 1) = last THEN
+                    used[j] = 1
+                    Dfs(j, depth + 1)
+                    used[j] = 0
+                END IF
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        wd[1] = "cat"
+        wd[2] = "trout"
+        wd[3] = "turkey"
+        wd[4] = "eel"
+        wd[5] = "lion"
+        wd[6] = "yak"
+        wd[7] = "nut"
+        wd[8] = "tiger"
+        best[1] = 0
+        FOR s = 1 TO 8
+            used[s] = 1
+            Dfs(s, 1)
+            used[s] = 0
+        END FOR
+        PRINT "longest chain:"
+        FOR k = 1 TO best[1]
+            PRINT wd[bst[k]]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lf
+BEGIN
+    Lf.Run()
+END

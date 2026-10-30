@@ -1,0 +1,6 @@
+n=1 2^2^n-k prime, k=1
+n=2 2^2^n-k prime, k=3
+n=3 2^2^n-k prime, k=5
+n=4 2^2^n-k prime, k=15
+n=5 2^2^n-k prime, k=5
+(n=6 onward needs 2^64+ bits, beyond S64)

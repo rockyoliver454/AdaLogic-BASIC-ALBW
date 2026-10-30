@@ -1,0 +1,212 @@
+-- 253 | Stable marriage problem: Gale-Shapley algorithm and stability check.
+DECLARE MODULE StableMarriage
+    PROCEDURE Solve()
+    PROCEDURE ShowStable()
+    PROCEDURE PerturbAndCheck()
+END DECLARE MODULE
+
+MODULE StableMarriage
+    LET n AS S32 = 10
+    STRICT men[10] AS STRING
+    STRICT women[10] AS STRING
+    STRICT man_pref[100] AS S32
+    STRICT woman_pref[100] AS S32
+    STRICT wife_of[10] AS S32
+    STRICT husband_of[10] AS S32
+    STRICT next_proposal[10] AS S32
+    STRICT unmatched[100] AS S32
+
+    PROCEDURE InitNames()
+        men[0] = "abe"
+        men[1] = "bob"
+        men[2] = "col"
+        men[3] = "dan"
+        men[4] = "ed"
+        men[5] = "fred"
+        men[6] = "gav"
+        men[7] = "hal"
+        men[8] = "ian"
+        men[9] = "jon"
+
+        women[0] = "abi"
+        women[1] = "bea"
+        women[2] = "cath"
+        women[3] = "dee"
+        women[4] = "eve"
+        women[5] = "fay"
+        women[6] = "gay"
+        women[7] = "hope"
+        women[8] = "ivy"
+        women[9] = "jan"
+    END PROCEDURE
+
+    PROCEDURE SetManPref(m AS S32, w0 AS S32, w1 AS S32, w2 AS S32, w3 AS S32, w4 AS S32, w5 AS S32, w6 AS S32, w7 AS S32, w8 AS S32, w9 AS S32)
+        man_pref[m * n + 0] = w0
+        man_pref[m * n + 1] = w1
+        man_pref[m * n + 2] = w2
+        man_pref[m * n + 3] = w3
+        man_pref[m * n + 4] = w4
+        man_pref[m * n + 5] = w5
+        man_pref[m * n + 6] = w6
+        man_pref[m * n + 7] = w7
+        man_pref[m * n + 8] = w8
+        man_pref[m * n + 9] = w9
+    END PROCEDURE
+
+    PROCEDURE SetWomanPref(w AS S32, m0 AS S32, m1 AS S32, m2 AS S32, m3 AS S32, m4 AS S32, m5 AS S32, m6 AS S32, m7 AS S32, m8 AS S32, m9 AS S32)
+        woman_pref[w * n + 0] = m0
+        woman_pref[w * n + 1] = m1
+        woman_pref[w * n + 2] = m2
+        woman_pref[w * n + 3] = m3
+        woman_pref[w * n + 4] = m4
+        woman_pref[w * n + 5] = m5
+        woman_pref[w * n + 6] = m6
+        woman_pref[w * n + 7] = m7
+        woman_pref[w * n + 8] = m8
+        woman_pref[w * n + 9] = m9
+    END PROCEDURE
+
+    PROCEDURE InitPrefs()
+        -- abe: abi, eve, cath, ivy, jan, dee, fay, bea, hope, gay
+        SetManPref(0, 0, 4, 2, 8, 9, 3, 5, 1, 7, 6)
+        -- bob: cath, hope, abi, dee, eve, fay, bea, jan, ivy, gay
+        SetManPref(1, 2, 7, 0, 3, 4, 5, 1, 9, 8, 6)
+        -- col: hope, eve, abi, dee, bea, fay, ivy, gay, cath, jan
+        SetManPref(2, 7, 4, 0, 3, 1, 5, 8, 6, 2, 9)
+        -- dan: ivy, fay, dee, gay, hope, eve, jan, bea, cath, abi
+        SetManPref(3, 8, 5, 3, 6, 7, 4, 9, 1, 2, 0)
+        -- ed: jan, dee, bea, cath, fay, eve, abi, ivy, hope, gay
+        SetManPref(4, 9, 3, 1, 2, 5, 4, 0, 8, 7, 6)
+        -- fred: bea, abi, dee, gay, eve, ivy, cath, jan, hope, fay
+        SetManPref(5, 1, 0, 3, 6, 4, 8, 2, 9, 7, 5)
+        -- gav: gay, eve, ivy, bea, cath, abi, dee, hope, jan, fay
+        SetManPref(6, 6, 4, 8, 1, 2, 0, 3, 7, 9, 5)
+        -- hal: abi, eve, hope, fay, ivy, cath, jan, bea, gay, dee
+        SetManPref(7, 0, 4, 7, 5, 8, 2, 9, 1, 6, 3)
+        -- ian: hope, cath, dee, gay, bea, abi, fay, ivy, jan, eve
+        SetManPref(8, 7, 2, 3, 6, 1, 0, 5, 8, 9, 4)
+        -- jon: abi, fay, jan, gay, eve, bea, dee, cath, ivy, hope
+        SetManPref(9, 0, 5, 9, 6, 4, 1, 3, 2, 8, 7)
+
+        -- abi: bob, fred, jon, gav, ian, abe, dan, ed, col, hal
+        SetWomanPref(0, 1, 5, 9, 6, 8, 0, 3, 4, 2, 7)
+        -- bea: bob, abe, col, fred, gav, dan, ian, ed, jon, hal
+        SetWomanPref(1, 1, 0, 2, 5, 6, 3, 8, 4, 9, 7)
+        -- cath: fred, bob, ed, gav, hal, col, ian, abe, dan, jon
+        SetWomanPref(2, 5, 1, 4, 6, 7, 2, 8, 0, 3, 9)
+        -- dee: fred, jon, col, abe, ian, hal, gav, dan, bob, ed
+        SetWomanPref(3, 5, 9, 2, 0, 8, 7, 6, 3, 1, 4)
+        -- eve: jon, hal, fred, dan, abe, gav, col, ed, ian, bob
+        SetWomanPref(4, 9, 7, 5, 3, 0, 6, 2, 4, 8, 1)
+        -- fay: bob, abe, ed, ian, jon, dan, fred, gav, col, hal
+        SetWomanPref(5, 1, 0, 4, 8, 9, 3, 5, 6, 2, 7)
+        -- gay: jon, gav, hal, fred, bob, abe, col, ed, dan, ian
+        SetWomanPref(6, 9, 6, 7, 5, 1, 0, 2, 4, 3, 8)
+        -- hope: gav, jon, bob, abe, ian, dan, hal, ed, col, fred
+        SetWomanPref(7, 6, 9, 1, 0, 8, 3, 7, 4, 2, 5)
+        -- ivy: ian, col, hal, gav, fred, bob, abe, ed, jon, dan
+        SetWomanPref(8, 8, 2, 7, 6, 5, 1, 0, 4, 9, 3)
+        -- jan: ed, hal, gav, abe, bob, jon, col, ian, fred, dan
+        SetWomanPref(9, 4, 7, 6, 0, 1, 9, 2, 8, 5, 3)
+    END PROCEDURE
+
+    FUNCTION WomanPrefers(w AS S32, a AS S32, b AS S32) AS S32
+        IF woman_pref[w * n + a] < woman_pref[w * n + b] THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION ManPrefers(m AS S32, a AS S32, b AS S32) AS S32
+        IF man_pref[m * n + a] < man_pref[m * n + b] THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Solve()
+        InitNames()
+        InitPrefs()
+        FOR i = 0 TO n - 1
+            wife_of[i] = -1
+            husband_of[i] = -1
+            next_proposal[i] = 0
+            unmatched[i] = i
+        END FOR
+        LET head AS S32 = 0
+        LET tail AS S32 = n
+        WHILE head < tail
+            LET m AS S32 = unmatched[head]
+            head = head + 1
+            LET w AS S32 = man_pref[m * n + next_proposal[m]]
+            next_proposal[m] = next_proposal[m] + 1
+            IF husband_of[w] < 0 THEN
+                wife_of[m] = w
+                husband_of[w] = m
+            ELSEIF WomanPrefers(w, m, husband_of[w]) THEN
+                LET old AS S32 = husband_of[w]
+                wife_of[old] = -1
+                unmatched[tail] = old
+                tail = tail + 1
+                wife_of[m] = w
+                husband_of[w] = m
+            ELSE
+                unmatched[tail] = m
+                tail = tail + 1
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE ShowStable()
+        FOR m = 0 TO n - 1
+            LET out_line AS STRING = men[m] | " and " | women[wife_of[m]]
+            PRINT out_line
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE PrintPairings()
+        FOR m = 0 TO n - 1
+            LET out_line AS STRING = men[m] | " -> " | women[wife_of[m]]
+            PRINT out_line
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE PerturbAndCheck()
+        -- Swap partners of men 0 (abe) and 1 (bob).
+        LET w0 AS S32 = wife_of[0]
+        LET w1 AS S32 = wife_of[1]
+        wife_of[0] = w1
+        wife_of[1] = w0
+        husband_of[w0] = 1
+        husband_of[w1] = 0
+
+        PRINT "Perturbed:"
+        PrintPairings()
+
+        LET unstable AS S32 = 0
+        FOR m = 0 TO n - 1
+            IF unstable = 1 THEN BREAK END IF
+            LET current_w AS S32 = wife_of[m]
+            FOR w = 0 TO n - 1
+                IF w <> current_w THEN
+                    IF ManPrefers(m, w, current_w) = 1 ANDALSO WomanPrefers(w, m, husband_of[w]) = 1 THEN
+                        LET msg AS STRING = men[m] | " and " | women[w] | " prefer each other over assigned partners."
+                        PRINT msg
+                        unstable = 1
+                        BREAK
+                    END IF
+                END IF
+            END FOR
+        END FOR
+        IF unstable = 1 THEN
+            PRINT "unstable"
+        ELSE
+            PRINT "stable"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT StableMarriage
+BEGIN
+    StableMarriage.Solve()
+    PRINT "Stable engagements:"
+    StableMarriage.ShowStable()
+    PRINT ""
+    StableMarriage.PerturbAndCheck()
+END

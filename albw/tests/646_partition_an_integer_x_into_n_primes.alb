@@ -1,0 +1,69 @@
+-- 646 | Partition an integer x into n primes:
+-- 99809 into 1; 18 into 2; 19 into 3; 20 into 4.
+DECLARE MODULE Part
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION Place(rem AS S64, depth AS S64, lo AS S64) AS S32
+    PROCEDURE Show(x AS S64, k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Part
+    STRICT best[6] AS S64
+    STRICT plist[60] AS S64
+    STRICT np[1] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Place(rem AS S64, depth AS S64, lo AS S64) AS S32
+        IF rem = 0 ANDALSO depth = 0 THEN RETURN 1 END IF
+        IF depth = 0 THEN RETURN 0 END IF
+        FOR i = 1 TO np[1]
+            LET pv AS S64 = plist[i]
+            IF pv >= lo ANDALSO pv <= rem THEN
+                best[depth] = pv
+                IF Place(rem - pv, depth - 1, pv) = 1 THEN RETURN 1 END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show(x AS S64, k AS S64)
+        LET s AS STRING = x | " = "
+        IF Place(x, k, 2) = 1 THEN
+            FOR d2 = 1 TO k
+                s = s | best[k + 1 - d2]
+                IF d2 < k THEN s = s | " + " END IF
+            END FOR
+        ELSE
+            s = s | "no partition"
+        END IF
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        np[1] = 0
+        FOR n = 2 TO 200
+            IF IsPrime(n) = 1 THEN
+                np[1] = np[1] + 1
+                plist[np[1]] = n
+            END IF
+        END FOR
+        IF IsPrime(99809) = 1 THEN PRINT "99809 = 99809" END IF
+        Show(18, 2)
+        Show(19, 3)
+        Show(20, 4)
+    END PROCEDURE
+END MODULE
+
+IMPORT Part
+BEGIN
+    Part.Run()
+END

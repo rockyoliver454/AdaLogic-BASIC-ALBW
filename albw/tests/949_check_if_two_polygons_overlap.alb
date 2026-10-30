@@ -1,0 +1,140 @@
+-- 949 | Check if two polygons overlap: true if any edges
+-- intersect or either polygon contains a vertex of the other.
+DECLARE MODULE Pp2
+    FUNCTION InPoly(x AS F64, y AS F64, base AS S64) AS S32
+    FUNCTION SegInt(x1 AS F64, y1 AS F64, x2 AS F64, y2 AS F64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pp2
+    -- two convex polys, 4 verts each; ax/ay then bx/byy
+    STRICT ax[5] AS F64
+    STRICT ay[5] AS F64
+    STRICT bx[5] AS F64
+    STRICT byy[5] AS F64
+    STRICT qx[1] AS F64
+    STRICT qy[1] AS F64
+    STRICT qx2[1] AS F64
+    STRICT qy2[1] AS F64
+
+    FUNCTION InPoly(x AS F64, y AS F64, base AS S64) AS S32
+        LET ins AS S32 = 0
+        FOR i = 1 TO 4
+            LET j AS S64 = i - 1
+            IF j = 0 THEN j = 4 END IF
+            LET xi AS F64 = 0.0
+            LET xj AS F64 = 0.0
+            LET yi AS F64 = 0.0
+            LET yj AS F64 = 0.0
+            IF base = 0 THEN
+                xi = ax[i]; xj = ax[j]; yi = ay[i]; yj = ay[j]
+            ELSE
+                xi = bx[i]; xj = bx[j]; yi = byy[i]; yj = byy[j]
+            END IF
+            IF (yi > y ANDALSO yj <= y) ORELSE (yj > y ANDALSO yi <= y) THEN
+                LET xin AS F64 = xi + (y - yi) / (yj - yi) * (xj - xi)
+                IF xin > x THEN ins = 1 - ins END IF
+            END IF
+        END FOR
+        RETURN ins
+    END FUNCTION
+
+    FUNCTION SegInt(x1 AS F64, y1 AS F64, x2 AS F64, y2 AS F64) AS S32
+        -- segment (x1,y1)-(x2,y2) vs (qx,qy)-(qx2,qy2):
+        -- proper intersection iff strict orientation split both ways
+        LET d1 AS F64 = 0.0
+        LET d2 AS F64 = 0.0
+        LET d3 AS F64 = 0.0
+        LET d4 AS F64 = 0.0
+        -- orientations: (q1->q2) vs p1,p2
+        LET ox AS F64 = qx[1]
+        LET oy AS F64 = qy[1]
+        LET tx AS F64 = x1
+        LET ty AS F64 = y1
+        -- compute manually: orient(q1,q2,p1)
+        d1 = (qx2[1] - ox) * (ty - oy) - (qy2[1] - oy) * (tx - ox)
+        tx = x2
+        ty = y2
+        d2 = (qx2[1] - ox) * (ty - oy) - (qy2[1] - oy) * (tx - ox)
+        -- orient(p1,p2,q1)
+        ox = x1
+        oy = y1
+        tx = qx[1]
+        ty = qy[1]
+        d3 = (x2 - ox) * (ty - oy) - (y2 - oy) * (tx - ox)
+        tx = qx2[1]
+        ty = qy2[1]
+        d4 = (x2 - ox) * (ty - oy) - (y2 - oy) * (tx - ox)
+        IF ((d1 > 0.0 ANDALSO d2 < 0.0) ORELSE (d1 < 0.0 ANDALSO d2 > 0.0)) ANDALSO ((d3 > 0.0 ANDALSO d4 < 0.0) ORELSE (d3 < 0.0 ANDALSO d4 > 0.0)) THEN
+            RETURN 1
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- poly A: (0,0)-(4,0)-(4,4)-(0,4)
+        ax[1] = 0.0; ay[1] = 0.0
+        ax[2] = 4.0; ay[2] = 0.0
+        ax[3] = 4.0; ay[3] = 4.0
+        ax[4] = 0.0; ay[4] = 4.0
+        -- poly B: (3,2)-(7,2)-(7,6)-(3,6) overlaps A
+        bx[1] = 3.0; byy[1] = 2.0
+        bx[2] = 7.0; byy[2] = 2.0
+        bx[3] = 7.0; byy[3] = 6.0
+        bx[4] = 3.0; byy[4] = 6.0
+        -- vertex-in-poly test
+        LET hit AS S32 = 0
+        FOR i = 1 TO 4
+            IF InPoly(bx[i], byy[i], 0) = 1 THEN hit = 1 END IF
+            IF InPoly(ax[i], ay[i], 1) = 1 THEN hit = 1 END IF
+        END FOR
+        -- edge intersection test
+        IF hit = 0 THEN
+            FOR i = 1 TO 4
+                LET j AS S64 = i - 1
+                IF j = 0 THEN j = 4 END IF
+                FOR k = 1 TO 4
+                    LET l AS S64 = k - 1
+                    IF l = 0 THEN l = 4 END IF
+                    qx[1] = bx[k]
+                    qy[1] = byy[k]
+                    qx2[1] = bx[l]
+                    qy2[1] = byy[l]
+                    IF SegInt(ax[i], ay[i], ax[j], ay[j]) = 1 THEN hit = 1 END IF
+                END FOR
+            END FOR
+        END IF
+        IF hit = 1 THEN PRINT "A vs B: overlap" END IF
+        -- poly C far away
+        bx[1] = 10.0; byy[1] = 10.0
+        bx[2] = 12.0; byy[2] = 10.0
+        bx[3] = 12.0; byy[3] = 12.0
+        bx[4] = 10.0; byy[4] = 12.0
+        hit = 0
+        FOR i = 1 TO 4
+            IF InPoly(bx[i], byy[i], 0) = 1 THEN hit = 1 END IF
+            IF InPoly(ax[i], ay[i], 1) = 1 THEN hit = 1 END IF
+        END FOR
+        IF hit = 0 THEN
+            FOR i = 1 TO 4
+                LET j AS S64 = i - 1
+                IF j = 0 THEN j = 4 END IF
+                FOR k = 1 TO 4
+                    LET l AS S64 = k - 1
+                    IF l = 0 THEN l = 4 END IF
+                    qx[1] = bx[k]
+                    qy[1] = byy[k]
+                    qx2[1] = bx[l]
+                    qy2[1] = byy[l]
+                    IF SegInt(ax[i], ay[i], ax[j], ay[j]) = 1 THEN hit = 1 END IF
+                END FOR
+            END FOR
+        END IF
+        IF hit = 0 THEN PRINT "A vs C: no overlap" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Pp2
+BEGIN
+    Pp2.Run()
+END

@@ -1,0 +1,39 @@
+-- Range types: TYPE name IS base RANGE lo..hi
+-- Bounds enforced at declaration, assignment, params, array elements;
+-- violations fault via support::_alb_fault(23).
+
+TYPE Percent IS S32 RANGE 0..100
+TYPE Small IS S32 RANGE -5..5
+
+LET p AS Percent = 42
+PRINT p
+
+p = 75
+PRINT p
+
+LET s AS Small = -3
+PRINT s
+
+-- Range-typed STRICT array: every element write checked.
+STRICT vals[3] AS Percent
+vals[0] = 10
+vals[1] = 55
+vals[2] = 100
+PRINT vals[0] | " " | vals[1] | " " | vals[2]
+
+-- Param range check: Clamp accepts Percent, halves it.
+FUNCTION Half(v AS Percent) AS S32
+    RETURN v / 2
+END FUNCTION
+PRINT Half(80)
+
+-- Range-typed return: identity must stay in range.
+FUNCTION Id(v AS Percent) AS Percent
+    RETURN v
+END FUNCTION
+LET q AS Percent = Id(60)
+PRINT q
+
+-- In-range arithmetic stays fine.
+p = p - 25
+PRINT p

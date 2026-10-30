@@ -1,0 +1,29 @@
+-- 787 | Ramanujan's constant: e^(pi*sqrt(163)), which is
+-- within 7.5e-13 of an integer (262537412640768744).
+DECLARE MODULE Rc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rc
+    PROCEDURE Run()
+        LET pi AS F64 = 3.141592653589793
+        LET v AS F64 = (pi * 163.0 ^ 0.5)
+        -- e^v via series or exp: use exp identity e^x
+        LET e AS F64 = 1.0
+        LET term AS F64 = 1.0
+        LET i AS S64 = 1
+        WHILE i <= 200
+            term = term * v / i
+            e = e + term
+            i = i + 1
+        END WHILE
+        PRINT "ramanujan const=" | e
+        LET nearest AS F64 = 262537412640768744.0
+        PRINT "diff from int=" | (nearest - e)
+    END PROCEDURE
+END MODULE
+
+IMPORT Rc
+BEGIN
+    Rc.Run()
+END

@@ -1,0 +1,19 @@
+-- 153 | Longest increasing subsequence, O(n^2) DP.
+BEGIN
+    STRICT a[8] AS S32;
+    STRICT dp[8] AS S32;
+    a[0]=10; a[1]=9; a[2]=2; a[3]=5; a[4]=3; a[5]=7; a[6]=101; a[7]=18;
+    LET best AS S32 = 1;
+    FOR i = 0 TO 7
+        dp[i] = 1;
+        FOR j = 0 TO i - 1
+            IF a[j] < a[i] ANDALSO dp[j] + 1 > dp[i] THEN
+                dp[i] = dp[j] + 1;
+            END IF
+        END FOR
+        IF dp[i] > best THEN
+            best = dp[i];
+        END IF
+    END FOR
+    PRINT best;
+END

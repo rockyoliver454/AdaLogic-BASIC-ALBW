@@ -1,0 +1,38 @@
+-- 662 | Long year: years 2000-2100 with 53 ISO weeks
+-- (year starts Thursday, or leap year starts Wednesday).
+DECLARE MODULE Ly
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+    FUNCTION Leap(y AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ly
+    FUNCTION Wd(y AS S64, m AS S64, d AS S64) AS S64
+        LET a AS S64 = (14 - m) / 12
+        LET y2 AS S64 = y - a
+        LET m2 AS S64 = m + 12 * a - 3
+        LET j AS S64 = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400
+        RETURN (j + 1) MOD 7
+    END FUNCTION
+
+    FUNCTION Leap(y AS S64) AS S32
+        IF y MOD 4 = 0 ANDALSO (y MOD 100 <> 0 ORELSE y MOD 400 = 0) THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR y = 2000 TO 2100
+            LET w AS S64 = Wd(y, 1, 1)
+            IF w = 3 ORELSE (w = 2 ANDALSO Leap(y) = 1) THEN
+                s = s | y | " "
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Ly
+BEGIN
+    Ly.Run()
+END

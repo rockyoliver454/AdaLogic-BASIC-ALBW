@@ -1,0 +1,43 @@
+-- 341 | Almost prime: first 10 k-almost primes for k = 1..5.
+DECLARE MODULE AlmostPrime
+    FUNCTION PrimeFactors(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AlmostPrime
+    FUNCTION PrimeFactors(n AS S64) AS S64
+        LET cnt AS S64 = 0
+        LET m AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                cnt = cnt + 1
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN cnt = cnt + 1 END IF
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR k = 1 TO 5
+            LET s AS STRING = k | ": "
+            LET found AS S32 = 0
+            LET n AS S64 = 2
+            WHILE found < 10
+                IF PrimeFactors(n) = k THEN
+                    s = s | n | " "
+                    found = found + 1
+                END IF
+                n = n + 1
+            END WHILE
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT AlmostPrime
+BEGIN
+    AlmostPrime.Run()
+END

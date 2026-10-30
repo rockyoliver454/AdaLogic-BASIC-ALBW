@@ -1,0 +1,140 @@
+VERSION 1.0
+
+STRICT am[9] AS F64
+STRICT ata[9] AS F64
+STRICT vv[9] AS F64
+STRICT sg[3] AS F64
+STRICT uu[9] AS F64
+
+
+BEGIN
+    am[0] = 3.0 am[1] = 1.0 am[2] = 1.0
+    am[3] = -1.0 am[4] = 3.0 am[5] = 1.0
+    am[6] = 1.0 am[7] = 1.0 am[8] = 3.0
+
+    LET i AS S64 = 0
+    WHILE i < 3
+        LET j AS S64 = 0
+        WHILE j < 3
+            LET wac AS F64 = 0.0
+            LET k AS S64 = 0
+            WHILE k < 3
+                wac = wac + am[k * 3 + i] * am[k * 3 + j]
+                k = k + 1
+            END WHILE
+            ata[i * 3 + j] = wac
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+
+    vv[0] = 1.0 vv[1] = 0.0 vv[2] = 0.0
+    vv[3] = 0.0 vv[4] = 1.0 vv[5] = 0.0
+    vv[6] = 0.0 vv[7] = 0.0 vv[8] = 1.0
+
+    LET swp2 AS S64 = 0
+    WHILE swp2 < 30
+        LET chg2 AS S64 = 0
+        LET pp AS S64 = 0
+        WHILE pp < 2
+            LET qq AS S64 = pp + 1
+            WHILE qq < 3
+                LET wpq AS F64 = ata[pp * 3 + qq]
+                IF ABS(wpq) > 0.0000001 THEN
+                    LET wpp AS F64 = ata[pp * 3 + pp]
+                    LET wqq AS F64 = ata[qq * 3 + qq]
+                    LET thv AS F64 = (wqq - wpp) / (2.0 * wpq)
+                    LET sgv AS F64 = 1.0
+                    IF thv < 0.0 THEN
+                        sgv = -1.0
+                    END IF
+                    LET arg1 AS F64 = thv * thv + 1.0
+                    LET sqv AS F64 = SQRT(arg1)
+                    LET dnv AS F64 = ABS(thv) + sqv
+                    LET tnv AS F64 = sgv / dnv
+                    LET arg2 AS F64 = 1.0 + tnv * tnv
+                    LET sqw AS F64 = SQRT(arg2)
+                    LET csv AS F64 = 1.0 / sqw
+                    LET snv AS F64 = tnv * csv
+                    i = 0
+                    WHILE i < 3
+                        LET wip AS F64 = ata[i * 3 + pp]
+                        LET wiq AS F64 = ata[i * 3 + qq]
+                        ata[i * 3 + pp] = csv * wip - snv * wiq
+                        ata[i * 3 + qq] = snv * wip + csv * wiq
+                        i = i + 1
+                    END WHILE
+                    i = 0
+                    WHILE i < 3
+                        LET wpi AS F64 = ata[pp * 3 + i]
+                        LET wqi AS F64 = ata[qq * 3 + i]
+                        ata[pp * 3 + i] = csv * wpi - snv * wqi
+                        ata[qq * 3 + i] = snv * wpi + csv * wqi
+                        i = i + 1
+                    END WHILE
+                    i = 0
+                    WHILE i < 3
+                        LET vip AS F64 = vv[i * 3 + pp]
+                        LET viq AS F64 = vv[i * 3 + qq]
+                        vv[i * 3 + pp] = csv * vip - snv * viq
+                        vv[i * 3 + qq] = snv * vip + csv * viq
+                        i = i + 1
+                    END WHILE
+                    chg2 = 1
+                END IF
+                qq = qq + 1
+            END WHILE
+            pp = pp + 1
+        END WHILE
+        IF chg2 = 0 THEN
+            swp2 = 30
+        ELSE
+            swp2 = swp2 + 1
+        END IF
+    END WHILE
+
+    sg[0] = SQRT(ata[0])
+    sg[1] = SQRT(ata[4])
+    sg[2] = SQRT(ata[8])
+
+    i = 0
+    WHILE i < 3
+        IF sg[i] > 0.0001 THEN
+            LET j AS S64 = 0
+            WHILE j < 3
+                LET wac AS F64 = 0.0
+                LET k AS S64 = 0
+                WHILE k < 3
+                    wac = wac + am[j * 3 + k] * vv[k * 3 + i]
+                    k = k + 1
+                END WHILE
+                uu[j * 3 + i] = wac / sg[i]
+                j = j + 1
+            END WHILE
+        END IF
+        i = i + 1
+    END WHILE
+
+    IF sg[1] > sg[0] THEN
+        LET tg AS F64 = sg[0]
+        sg[0] = sg[1]
+        sg[1] = tg
+    END IF
+    IF sg[2] > sg[1] THEN
+        LET tg2 AS F64 = sg[1]
+        sg[1] = sg[2]
+        sg[2] = tg2
+    END IF
+    IF sg[1] > sg[0] THEN
+        LET tg3 AS F64 = sg[0]
+        sg[0] = sg[1]
+        sg[1] = tg3
+    END IF
+    LET sv0 AS S64 = ROUND(sg[0] * 1000.0)
+    LET sv1 AS S64 = ROUND(sg[1] * 1000.0)
+    LET sv2 AS S64 = ROUND(sg[2] * 1000.0)
+    PRINT "singular values x1000:"
+    PRINT sv0
+    PRINT sv1
+    PRINT sv2
+END

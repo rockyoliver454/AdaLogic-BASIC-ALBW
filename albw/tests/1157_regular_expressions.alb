@@ -1,0 +1,60 @@
+VERSION 1.0
+
+LET hit AS S64 = 0
+
+PROCEDURE RxMatch(pat AS STRING, txt AS STRING, pi AS S64, ti AS S64)
+    IF hit = 1 THEN
+        RETURN
+    END IF
+    IF pi > LEN(pat) THEN
+        IF ti > LEN(txt) THEN
+            hit = 1
+        END IF
+        RETURN
+    END IF
+    LET pc AS STRING = MID$(pat, pi, 1)
+    LET star AS S64 = 0
+    IF pi < LEN(pat) THEN
+        IF MID$(pat, pi + 1, 1) = "*" THEN
+            star = 1
+        END IF
+    END IF
+    IF star = 1 THEN
+        RxMatch(pat, txt, pi + 2, ti)
+        LET t2 AS S64 = ti
+        WHILE t2 <= LEN(txt) ANDALSO hit = 0
+            LET tc AS STRING = MID$(txt, t2, 1)
+            IF pc = "." ORELSE pc = tc THEN
+                RxMatch(pat, txt, pi + 2, t2 + 1)
+                t2 = t2 + 1
+            ELSE
+                t2 = 99
+            END IF
+        END WHILE
+    ELSE
+        IF ti <= LEN(txt) THEN
+            LET tc2 AS STRING = MID$(txt, ti, 1)
+            IF pc = "." ORELSE pc = tc2 THEN
+                RxMatch(pat, txt, pi + 1, ti + 1)
+            END IF
+        END IF
+    END IF
+END PROCEDURE
+
+FUNCTION M(pat AS STRING, txt AS STRING) AS S64
+    hit = 0
+    RxMatch(pat, txt, 1, 1)
+    RETURN hit
+END FUNCTION
+
+
+BEGIN
+    PRINT "abc ~ abc   = " | M("abc", "abc")
+    PRINT "a.c ~ abc   = " | M("a.c", "abc")
+    PRINT "a.c ~ axy   = " | M("a.c", "axy")
+    PRINT "a.c ~ abd   = " | M("a.c", "abd")
+    PRINT "a*c ~ aac   = " | M("a*c", "aac")
+    PRINT "a*c ~ c     = " | M("a*c", "c")
+    PRINT "ab* ~ a     = " | M("ab*", "a")
+    PRINT ".* ~ hello  = " | M(".*", "hello")
+END

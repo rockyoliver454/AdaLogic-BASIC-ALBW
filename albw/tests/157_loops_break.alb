@@ -1,0 +1,10 @@
+-- 157 | Loops/Break: exit a loop early.
+BEGIN
+    FOR i = 1 TO 10
+        IF i > 4 THEN
+            BREAK
+        END IF
+        PRINT i;
+    END FOR
+    PRINT$ "done";
+END

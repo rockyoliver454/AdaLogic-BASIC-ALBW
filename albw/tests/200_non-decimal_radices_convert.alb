@@ -1,0 +1,6 @@
+BEGIN
+    LET h = $FF
+    LET b = %1010
+    PRINT$ h
+    PRINT$ b
+END

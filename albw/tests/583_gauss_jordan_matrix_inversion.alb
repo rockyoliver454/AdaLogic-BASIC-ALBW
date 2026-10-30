@@ -1,0 +1,42 @@
+-- 583 | Gauss-Jordan matrix inversion: invert [[1,2],[3,4]]
+-- -> [[-2,1],[1.5,-0.5]].
+DECLARE MODULE GJ
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE GJ
+    STRICT a[8] AS F64
+
+    PROCEDURE Run()
+        -- augmented [A|I], row-major 2x4
+        a[1] = 1
+        a[2] = 2
+        a[3] = 1
+        a[4] = 0
+        a[5] = 3
+        a[6] = 4
+        a[7] = 0
+        a[8] = 1
+        FOR c = 1 TO 2
+            LET piv AS F64 = a[(c - 1) * 4 + c]
+            FOR k = 1 TO 4
+                a[(c - 1) * 4 + k] = a[(c - 1) * 4 + k] / piv
+            END FOR
+            FOR r = 1 TO 2
+                IF r <> c THEN
+                    LET f AS F64 = a[(r - 1) * 4 + c]
+                    FOR k2 = 1 TO 4
+                        a[(r - 1) * 4 + k2] = a[(r - 1) * 4 + k2] - f * a[(c - 1) * 4 + k2]
+                    END FOR
+                END IF
+            END FOR
+        END FOR
+        PRINT a[3] | " " | a[4]
+        PRINT a[7] | " " | a[8]
+    END PROCEDURE
+END MODULE
+
+IMPORT GJ
+BEGIN
+    GJ.Run()
+END

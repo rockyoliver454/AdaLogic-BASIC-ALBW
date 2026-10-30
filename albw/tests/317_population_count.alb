@@ -1,0 +1,33 @@
+-- 317 | Population count: number of set bits in non-negative integers.
+DECLARE MODULE PopCount
+    FUNCTION Pop(v AS S32) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PopCount
+    FUNCTION Pop(v AS S32) AS S32
+        LET cnt AS S32 = 0
+        LET n AS S32 = v
+        WHILE n > 0
+            cnt = cnt + (n - (n / 2) * 2)
+            n = n / 2
+        END WHILE
+        RETURN cnt
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR v = 1 TO 10
+            PRINT Pop(v)
+        END FOR
+        LET p AS S32 = 1
+        FOR k = 1 TO 5
+            p = p * 3
+            PRINT Pop(p)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT PopCount
+BEGIN
+    PopCount.Run()
+END

@@ -1,0 +1,86 @@
+-- 577 | Convex hull: Andrew monotone chain on the RC points
+-- (16,3),(12,17),(0,6),(-4,-6),(16,6),(16,-7),(17,-4),(5,10),
+-- (-3,15),(-6,7),(-7,-3),(7,-9),(9,-8) -> hull listing.
+DECLARE MODULE Hull
+    FUNCTION XCross(o AS S64, a AS S64, b AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hull
+    STRICT px[16] AS F64
+    STRICT py[16] AS F64
+    STRICT h[18] AS S64
+
+    FUNCTION XCross(o AS S64, a AS S64, b AS S64) AS F64
+        RETURN (px[a] - px[o]) * (py[b] - py[o]) - (py[a] - py[o]) * (px[b] - px[o])
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET n AS S64 = 13
+        px[1] = 16
+        py[1] = 3
+        px[2] = 12
+        py[2] = 17
+        px[3] = 0
+        py[3] = 6
+        px[4] = -4
+        py[4] = -6
+        px[5] = 16
+        py[5] = 6
+        px[6] = 16
+        py[6] = -7
+        px[7] = 17
+        py[7] = -4
+        px[8] = 5
+        py[8] = 10
+        px[9] = -3
+        py[9] = 15
+        px[10] = -6
+        py[10] = 7
+        px[11] = -7
+        py[11] = -3
+        px[12] = 7
+        py[12] = -9
+        px[13] = 9
+        py[13] = -8
+        -- sort by (x,y): insertion sort with swap of both arrays
+        FOR i = 2 TO n
+            LET xv AS F64 = px[i]
+            LET yv AS F64 = py[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO (px[j] > xv ORELSE (px[j] = xv ANDALSO py[j] > yv))
+                px[j + 1] = px[j]
+                py[j + 1] = py[j]
+                j = j - 1
+            END WHILE
+            px[j + 1] = xv
+            py[j + 1] = yv
+        END FOR
+        LET k AS S64 = 0
+        FOR p = 1 TO n
+            WHILE k >= 2 ANDALSO XCross(h[k - 1], h[k], p) <= 0.0
+                k = k - 1
+            END WHILE
+            k = k + 1
+            h[k] = p
+        END FOR
+        LET lb AS S64 = k + 1
+        LET p2 AS S64 = n - 1
+        WHILE p2 >= 1
+            WHILE k >= lb ANDALSO XCross(h[k - 1], h[k], p2) <= 0.0
+                k = k - 1
+            END WHILE
+            k = k + 1
+            h[k] = p2
+            p2 = p2 - 1
+        END WHILE
+        FOR r = 1 TO k - 1
+            PRINT "(" | px[h[r]] | ", " | py[h[r]] | ")"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Hull
+BEGIN
+    Hull.Run()
+END

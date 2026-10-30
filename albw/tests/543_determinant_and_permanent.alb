@@ -1,0 +1,39 @@
+-- 543 | Determinant and permanent of a 3x3 matrix (Sarrus).
+DECLARE MODULE DetPerm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DetPerm
+    STRICT m[9] AS S64
+
+    PROCEDURE Run()
+        -- matrix rows: 1 2 3 / 4 5 6 / 7 8 10  (det = -3)
+        m[1] = 1
+        m[2] = 2
+        m[3] = 3
+        m[4] = 4
+        m[5] = 5
+        m[6] = 6
+        m[7] = 7
+        m[8] = 8
+        m[9] = 10
+        LET a AS S64 = m[1]
+        LET b AS S64 = m[2]
+        LET c AS S64 = m[3]
+        LET d AS S64 = m[4]
+        LET e AS S64 = m[5]
+        LET f AS S64 = m[6]
+        LET g AS S64 = m[7]
+        LET h AS S64 = m[8]
+        LET i AS S64 = m[9]
+        LET det AS S64 = a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h
+        LET perm AS S64 = a * e * i + b * f * g + c * d * h + c * e * g + b * d * i + a * f * h
+        PRINT "det = " | det
+        PRINT "perm = " | perm
+    END PROCEDURE
+END MODULE
+
+IMPORT DetPerm
+BEGIN
+    DetPerm.Run()
+END

@@ -1,0 +1,41 @@
+-- PRIVATE module members: `PRIVATE FUNCTION` drops `pub` so the
+-- member is only callable from inside the module (rustc E0603 seals
+-- it from outside).  `PRIVATE LET` is a module-private static —
+-- initialized via the module's own `_alb_init` (crate-internal, so
+-- private writes work) rather than a qualified external write.
+MODULE Vault
+    PRIVATE FUNCTION Secret() AS S32
+        RETURN 42
+    END FUNCTION
+
+    PRIVATE LET hidden AS S32 = 7
+
+    FUNCTION Reveal() AS S32
+        RETURN Secret() + 1
+    END FUNCTION
+
+    FUNCTION Peek2() AS S32
+        RETURN hidden
+    END FUNCTION
+END MODULE
+
+MODULE Counter
+    PRIVATE LET count AS S32 = 0
+
+    PROCEDURE Bump()
+        count = count + 1
+    END PROCEDURE
+
+    FUNCTION Get() AS S32
+        RETURN count
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT Vault.Reveal()
+    PRINT Vault.Peek2()
+    Counter.Bump()
+    Counter.Bump()
+    Counter.Bump()
+    PRINT Counter.Get()
+END

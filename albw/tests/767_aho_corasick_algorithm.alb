@@ -1,0 +1,116 @@
+-- 767 | Aho-Corasick algorithm: multi-pattern search; find
+-- all match end positions of {"he","she","his","hers"} in
+-- "ahishers" and "ushers".
+DECLARE MODULE Ac
+    PROCEDURE AddWord(w AS STRING)
+    FUNCTION Trans(nd AS S64, ch AS S64) AS S64
+    PROCEDURE Scan(txt AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ac
+    STRICT esrc[300] AS S64
+    STRICT ech[300] AS S64
+    STRICT edst[300] AS S64
+    STRICT ne[1] AS S64
+    STRICT nn[1] AS S64
+    STRICT fail[60] AS S64
+    STRICT okey[60] AS S32
+    STRICT qq[300] AS S64
+
+    FUNCTION Trans(nd AS S64, ch AS S64) AS S64
+        FOR e = 1 TO ne[1]
+            IF esrc[e] = nd ANDALSO ech[e] = ch THEN
+                RETURN edst[e]
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE AddWord(w AS STRING)
+        LET cur AS S64 = 1
+        FOR i = 1 TO LEN(w)
+            LET ch AS S64 = ASC(MID$(w, i, 1))
+            LET t AS S64 = Trans(cur, ch)
+            IF t = 0 THEN
+                nn[1] = nn[1] + 1
+                ne[1] = ne[1] + 1
+                esrc[ne[1]] = cur
+                ech[ne[1]] = ch
+                edst[ne[1]] = nn[1] + 1
+                cur = nn[1] + 1
+            ELSE
+                cur = t
+            END IF
+        END FOR
+        okey[cur] = 1
+    END PROCEDURE
+
+    PROCEDURE Scan(txt AS STRING)
+        LET cur AS S64 = 1
+        FOR i = 1 TO LEN(txt)
+            LET ch AS S64 = ASC(MID$(txt, i, 1))
+            WHILE cur <> 1 ANDALSO Trans(cur, ch) = 0
+                cur = fail[cur]
+            END WHILE
+            LET nx AS S64 = Trans(cur, ch)
+            IF nx <> 0 THEN cur = nx END IF
+            IF okey[cur] = 1 THEN
+                PRINT "  match ends at " | i
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        ne[1] = 0
+        nn[1] = 1
+        okey[1] = 0
+        fail[1] = 1
+        AddWord("he")
+        AddWord("she")
+        AddWord("his")
+        AddWord("hers")
+        -- BFS failure links
+        LET qh AS S64 = 1
+        LET qt AS S64 = 0
+        FOR e = 1 TO ne[1]
+            IF esrc[e] = 1 THEN
+                qt = qt + 1
+                qq[qt] = edst[e]
+                fail[edst[e]] = 1
+            END IF
+        END FOR
+        WHILE qh <= qt
+            LET u AS S64 = qq[qh]
+            qh = qh + 1
+            FOR e = 1 TO ne[1]
+                IF esrc[e] = u THEN
+                    LET v AS S64 = edst[e]
+                    LET ch AS S64 = ech[e]
+                    LET f AS S64 = fail[u]
+                    WHILE f <> 1 ANDALSO Trans(f, ch) = 0
+                        f = fail[f]
+                    END WHILE
+                    LET t AS S64 = Trans(f, ch)
+                    IF t = 0 ORELSE t = v THEN
+                        fail[v] = 1
+                    ELSE
+                        fail[v] = t
+                    END IF
+                    IF okey[fail[v]] = 1 THEN okey[v] = 1 END IF
+                    qt = qt + 1
+                    qq[qt] = v
+                END IF
+            END FOR
+        END WHILE
+        PRINT "ahishers:"
+        Scan("ahishers")
+        PRINT "ushers:"
+        Scan("ushers")
+    END PROCEDURE
+END MODULE
+
+IMPORT Ac
+BEGIN
+    Ac.Run()
+END

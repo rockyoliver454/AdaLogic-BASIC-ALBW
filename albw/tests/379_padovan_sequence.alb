@@ -1,0 +1,26 @@
+-- 379 | Padovan sequence: P(0)=P(1)=P(2)=1, P(n)=P(n-2)+P(n-3); first 20.
+DECLARE MODULE Padovan
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Padovan
+    STRICT p[32] AS S64
+    PROCEDURE Run()
+        p[0] = 1
+        p[1] = 1
+        p[2] = 1
+        FOR n = 3 TO 19
+            p[n] = p[n - 2] + p[n - 3]
+        END FOR
+        LET s AS STRING = ""
+        FOR n = 0 TO 19
+            s = s | p[n] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Padovan
+BEGIN
+    Padovan.Run()
+END

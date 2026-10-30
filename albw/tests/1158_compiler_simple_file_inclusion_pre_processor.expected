@@ -1,0 +1,9 @@
+--- preprocessed ---
+VERSION 1.0
+LET x = 99
+
+BEGIN
+PRINT x
+END
+
+

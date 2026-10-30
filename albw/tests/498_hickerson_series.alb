@@ -1,0 +1,38 @@
+-- 498 | Hickerson series of almost integers: h(n) = n!/(2*ln(2)^(n+1))
+-- for n = 1..17; mark those within 0.1 of an integer.
+DECLARE MODULE Hick
+    FUNCTION Fact(n AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hick
+    FUNCTION Fact(n AS S64) AS F64
+        LET r AS F64 = 1.0
+        FOR i = 2 TO n
+            r = r * i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET ln2 AS F64 = 0.693147180559945
+        FOR n = 1 TO 17
+            LET denom AS F64 = 2.0
+            FOR i = 1 TO n + 1
+                denom = denom * ln2
+            END FOR
+            LET h AS F64 = Fact(n) / denom
+            LET nearest AS S64 = h + 0.5
+            LET diff AS F64 = h - nearest
+            IF diff < 0 THEN diff = 0 - diff END IF
+            LET mark AS STRING = ""
+            IF diff < 0.1 THEN mark = " *" END IF
+            PRINT "h(" | n | ")=" | h | mark
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Hick
+BEGIN
+    Hick.Run()
+END

@@ -1,0 +1,8 @@
+-- 087 | Format a string: padding and fixed-width fields.
+BEGIN
+    LET n AS S32 = 42;
+    PRINT$ RIGHT$("00000" | n, 5);
+    PRINT$ "left[" | n | SPC(3) | "right]";
+    LET f AS F64 = 3.5;
+    PRINT$ "pi-ish: " | f;
+END

@@ -1,0 +1,8 @@
+cat -> bat ok
+bat -> beat ok
+beat -> boat ok
+boat -> boast ok
+boast -> blast ok
+blast -> bleat INVALID
+bleat -> beat ok
+score=6

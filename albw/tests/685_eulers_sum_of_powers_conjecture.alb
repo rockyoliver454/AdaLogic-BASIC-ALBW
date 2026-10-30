@@ -1,0 +1,29 @@
+-- 685 | Euler's sum of powers conjecture (disproved 1966):
+-- 27^5 + 84^5 + 110^5 + 133^5 = 144^5.
+DECLARE MODULE Eu
+    FUNCTION P5(x AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Eu
+    FUNCTION P5(x AS S64) AS S64
+        RETURN x * x * x * x * x
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET lhs AS S64 = P5(27) + P5(84) + P5(110) + P5(133)
+        LET rhs AS S64 = P5(144)
+        PRINT "lhs=" | lhs
+        PRINT "rhs=" | rhs
+        IF lhs = rhs THEN
+            PRINT "counterexample verified"
+        ELSE
+            PRINT "mismatch"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Eu
+BEGIN
+    Eu.Run()
+END

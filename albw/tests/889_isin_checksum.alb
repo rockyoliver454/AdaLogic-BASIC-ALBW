@@ -1,0 +1,54 @@
+-- 889 | Validate International Securities Identification
+-- Number (ISIN): 12 chars, country letters convert to digits
+-- (A=10..Z=35), Luhn check over the converted digit string.
+DECLARE MODULE Isn
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Isn
+    PROCEDURE Check(s AS STRING)
+        -- convert to digit string
+        LET ds AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS S64 = ASC(MID$(s, i, 1))
+            IF c >= 48 ANDALSO c <= 57 THEN
+                ds = ds | CHR(c)
+            ELSE
+                LET v AS S64 = c - 55
+                ds = ds | v
+            END IF
+        END FOR
+        -- Luhn over ds (check digit last)
+        LET sm AS S64 = 0
+        LET n AS S64 = LEN(ds)
+        FOR i = 1 TO n
+            LET d AS S64 = ASC(MID$(ds, i, 1)) - 48
+            -- double digits at even positions from right among
+            -- the non-check digits: position parity from right
+            LET pp AS S64 = n - i
+            IF pp MOD 2 = 1 THEN
+                d = d * 2
+                IF d > 9 THEN d = d - 9 END IF
+            END IF
+            sm = sm + d
+        END FOR
+        IF sm MOD 10 = 0 THEN
+            PRINT s | " valid"
+        ELSE
+            PRINT s | " INVALID"
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Check("US0378331005")
+        Check("US0373831005")
+        Check("US5038073044")
+        Check("US0378331009")
+        Check("GB00B03MLX29")
+    END PROCEDURE
+END MODULE
+
+IMPORT Isn
+BEGIN
+    Isn.Run()
+END

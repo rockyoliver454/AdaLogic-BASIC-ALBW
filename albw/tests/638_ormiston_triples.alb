@@ -1,0 +1,68 @@
+-- 638 | Ormiston triples: verify the two smallest Ormiston
+-- triples -- consecutive prime triples that are anagrams of
+-- each other. Confirms primality, same sorted digits, and no
+-- intermediate primes.
+DECLARE MODULE Orm
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION DigKey(n AS S64) AS S64
+    FUNCTION NoPrimesBetween(a AS S64, b AS S64) AS S32
+    PROCEDURE Check(a AS S64, b AS S64, c AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Orm
+    STRICT cnt[10] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION DigKey(n AS S64) AS S64
+        FOR i = 0 TO 9
+            cnt[i] = 0
+        END FOR
+        LET m AS S64 = n
+        WHILE m > 0
+            cnt[m MOD 10] = cnt[m MOD 10] + 1
+            m = m / 10
+        END WHILE
+        LET k AS S64 = 0
+        FOR d = 0 TO 9
+            FOR t = 1 TO cnt[d]
+                k = k * 10 + d
+            END FOR
+        END FOR
+        RETURN k
+    END FUNCTION
+
+    FUNCTION NoPrimesBetween(a AS S64, b AS S64) AS S32
+        FOR n = a + 1 TO b - 1
+            IF IsPrime(n) = 1 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Check(a AS S64, b AS S64, c AS S64)
+        LET ok AS S32 = 1
+        IF IsPrime(a) = 0 ORELSE IsPrime(b) = 0 ORELSE IsPrime(c) = 0 THEN ok = 0 END IF
+        IF DigKey(a) <> DigKey(b) ORELSE DigKey(a) <> DigKey(c) THEN ok = 0 END IF
+        IF NoPrimesBetween(a, b) = 0 ORELSE NoPrimesBetween(b, c) = 0 THEN ok = 0 END IF
+        PRINT a | " " | b | " " | c | " ormiston triple: " | ok
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Check(11117123, 11117213, 11117321)
+        Check(12980783, 12980837, 12980873)
+    END PROCEDURE
+END MODULE
+
+IMPORT Orm
+BEGIN
+    Orm.Run()
+END

@@ -1,0 +1,33 @@
+-- Rosetta: Camel case and snake case
+-- snake_case -> camelCase and camelCase -> snake_case
+-- exercises UCASE$/LCASE$/MID$ + string building via |
+BEGIN
+    LET s AS STRING = "the_quick_brown_fox"
+    LET out_s AS STRING = ""
+    LET upper_next AS S32 = 0
+    FOR i = 1 TO LEN(s)
+        LET c AS STRING = MID$(s, i, 1)
+        IF c = "_" THEN
+            upper_next = 1
+        ELSE
+            IF upper_next = 1 THEN
+                out_s = out_s | UCASE$(c)
+                upper_next = 0
+            ELSE
+                out_s = out_s | c
+            END IF
+        END IF
+    END FOR
+    PRINT out_s
+    LET t AS STRING = "theQuickBrownFox"
+    LET sn AS STRING = ""
+    FOR i = 1 TO LEN(t)
+        LET c AS STRING = MID$(t, i, 1)
+        IF UCASE$(c) = c AND LCASE$(c) <> c THEN
+            sn = sn | "_" | LCASE$(c)
+        ELSE
+            sn = sn | c
+        END IF
+    END FOR
+    PRINT sn
+END

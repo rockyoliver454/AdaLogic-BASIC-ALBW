@@ -1,0 +1,23 @@
+-- Builtin return-type table regression (dogfood find): ARGC/SHELL/
+-- EXEC/KILL/DELETE return i64 in alb_host.rs — comparisons against
+-- int literals must promote, and _alb_chr/_alb_mid take i32 args so
+-- S64 values must narrow.  Both died E0308 before the fix.
+BEGIN
+    --  i64 builtin vs i32 literal: must emit (2 as i64).
+    IF ARGC() < 2 THEN
+        PRINT "argc-ok"
+    ELSE
+        PRINT "argc-bad"
+    END IF
+
+    --  i64 index into MID$/CHR (i32 params): must narrow.
+    LET s AS STRING = "ABCDEF"
+    LET ix AS S64 = 2
+    PRINT MID$(s, ix, 3)
+    LET code AS S64 = 72
+    PRINT CHR(code)
+
+    --  i32-result builtins against literals still fine.
+    IF LEN(s) = 6 THEN PRINT "len-ok" END IF
+    IF VAL("41") = 41 THEN PRINT "val-ok" END IF
+END

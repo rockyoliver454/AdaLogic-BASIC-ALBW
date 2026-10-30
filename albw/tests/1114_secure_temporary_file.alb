@@ -1,0 +1,17 @@
+VERSION 1.0
+
+BEGIN
+    LET name AS STRING = "alb_tmp_7749.dat"
+    LET probe AS S64 = OPEN(name, "r")
+    IF probe <> 0 THEN
+        CLOSE probe
+        PRINT "exists - refusing"
+    ELSE
+        LET h AS S64 = OPEN(name, "w")
+        WRITE h, "temp secret payload"
+        CLOSE h
+        PRINT "created len=" | FILELEN(name)
+        LET k AS S64 = KILL(name)
+        PRINT "removed=" | k
+    END IF
+END

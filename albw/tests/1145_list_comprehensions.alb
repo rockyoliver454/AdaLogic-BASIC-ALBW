@@ -1,0 +1,22 @@
+VERSION 1.0
+
+STRICT sq[11] AS S64
+
+
+BEGIN
+    LET n AS S64 = 0
+    LET i AS S64 = 0
+    WHILE i <= 20
+        IF i MOD 2 = 0 THEN
+            sq[n] = i * i
+            n = n + 1
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "[x*x for x in 0..20 if x even] -> " | n | " items"
+    i = 0
+    WHILE i < n
+        PRINT sq[i]
+        i = i + 1
+    END WHILE
+END

@@ -1,0 +1,61 @@
+-- 791 | QR decomposition: Gram-Schmidt QR of a 3x3 matrix;
+-- prints Q (orthonormal columns) and upper-triangular R.
+DECLARE MODULE Qr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Qr
+    STRICT aa[9] AS F64
+    STRICT qq[9] AS F64
+    STRICT rr[9] AS F64
+
+    PROCEDURE Run()
+        -- A = [[12,-51,4],[6,167,-68],[-4,24,-41]]
+        aa[1] = 12.0
+        aa[2] = 0.0 - 51.0
+        aa[3] = 4.0
+        aa[4] = 6.0
+        aa[5] = 167.0
+        aa[6] = 0.0 - 68.0
+        aa[7] = 0.0 - 4.0
+        aa[8] = 24.0
+        aa[9] = 0.0 - 41.0
+        FOR j = 1 TO 3
+            -- v = column j of A
+            LET nx AS F64 = 0.0
+            FOR i = 1 TO 3
+                LET tmp AS F64 = aa[(i - 1) * 3 + j]
+                nx = nx + tmp * tmp
+            END FOR
+            nx = nx ^ 0.5
+            rr[(j - 1) * 3 + j] = nx
+            FOR i = 1 TO 3
+                qq[(i - 1) * 3 + j] = aa[(i - 1) * 3 + j] / nx
+            END FOR
+            -- orthogonalize later columns
+            FOR k = j + 1 TO 3
+                LET dp AS F64 = 0.0
+                FOR i = 1 TO 3
+                    dp = dp + qq[(i - 1) * 3 + j] * aa[(i - 1) * 3 + k]
+                END FOR
+                rr[(j - 1) * 3 + k] = dp
+                FOR i = 1 TO 3
+                    aa[(i - 1) * 3 + k] = aa[(i - 1) * 3 + k] - dp * qq[(i - 1) * 3 + j]
+                END FOR
+            END FOR
+        END FOR
+        PRINT "Q:"
+        FOR i = 1 TO 3
+            PRINT qq[(i - 1) * 3 + 1] | " " | qq[(i - 1) * 3 + 2] | " " | qq[(i - 1) * 3 + 3]
+        END FOR
+        PRINT "R:"
+        FOR i = 1 TO 3
+            PRINT rr[(i - 1) * 3 + 1] | " " | rr[(i - 1) * 3 + 2] | " " | rr[(i - 1) * 3 + 3]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Qr
+BEGIN
+    Qr.Run()
+END

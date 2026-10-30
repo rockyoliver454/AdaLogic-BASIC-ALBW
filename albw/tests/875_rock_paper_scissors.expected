@@ -1,0 +1,6 @@
+r1: paper vs paper -> tie
+r2: scissors vs scissors -> tie
+r3: rock vs scissors -> player wins
+r4: paper vs rock -> player wins
+r5: scissors vs scissors -> tie
+score 2-0

@@ -1,0 +1,47 @@
+-- 426 | Ruth-Aaron numbers: first 30 n where sum of distinct prime
+-- factors of n equals that of n+1.
+DECLARE MODULE RuthA
+    FUNCTION FactorSum(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE RuthA
+    FUNCTION FactorSum(n AS S64) AS S64
+        LET m AS S64 = n
+        LET total AS S64 = 0
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            IF m MOD d = 0 THEN
+                total = total + d
+                WHILE m MOD d = 0
+                    m = m / d
+                END WHILE
+            END IF
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN total = total + m END IF
+        RETURN total
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET prev AS S64 = FactorSum(1)
+        LET got AS S64 = 0
+        WHILE got < 30
+            LET cur AS S64 = FactorSum(n + 1)
+            IF cur = prev THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            prev = cur
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT RuthA
+BEGIN
+    RuthA.Run()
+END

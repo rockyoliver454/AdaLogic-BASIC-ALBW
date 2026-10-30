@@ -1,0 +1,76 @@
+-- 697 | Achilles numbers: powerful numbers (every prime
+-- factor's square also divides n) that are not perfect powers.
+DECLARE MODULE Ac
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+    FUNCTION Powerful(n AS S64) AS S32
+    FUNCTION Perfp(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ac
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+        LET m AS S64 = x
+        LET nn AS S64 = y
+        LET r AS S64 = m MOD nn
+        WHILE r <> 0
+            m = nn
+            nn = r
+            r = m MOD nn
+        END WHILE
+        RETURN nn
+    END FUNCTION
+
+    FUNCTION Powerful(n AS S64) AS S32
+        LET v AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= v
+            IF v MOD d = 0 THEN
+                IF v MOD (d * d) <> 0 THEN RETURN 0 END IF
+                WHILE v MOD d = 0
+                    v = v / d
+                END WHILE
+            END IF
+            d = d + 1
+        END WHILE
+        IF v > 1 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Perfp(n AS S64) AS S32
+        -- true iff n = a^b for a>1, b>1
+        FOR b = 2 TO 30
+            LET a AS S64 = 2
+            WHILE a * a <= n
+                LET p AS S64 = 1
+                LET ok AS S32 = 1
+                FOR i = 1 TO b
+                    IF p <= n / a THEN
+                        p = p * a
+                    ELSE
+                        ok = 0
+                    END IF
+                END FOR
+                IF ok = 1 ANDALSO p = n THEN RETURN 1 END IF
+                a = a + 1
+            END WHILE
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 2
+        WHILE cnt < 30
+            IF Powerful(n) = 1 ANDALSO Perfp(n) = 0 THEN
+                PRINT n
+                cnt = cnt + 1
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Ac
+BEGIN
+    Ac.Run()
+END

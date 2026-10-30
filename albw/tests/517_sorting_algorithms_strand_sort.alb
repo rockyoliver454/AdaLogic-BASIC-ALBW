@@ -1,0 +1,82 @@
+-- 517 | Sorting algorithms/Strand sort.
+DECLARE MODULE Strand
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Strand
+    STRICT src[10] AS S64
+    STRICT outArr[10] AS S64
+    STRICT strand[10] AS S64
+    STRICT tmp[10] AS S64
+
+    PROCEDURE Run()
+        src[1] = 5
+        src[2] = 2
+        src[3] = 9
+        src[4] = 1
+        src[5] = 8
+        src[6] = 3
+        src[7] = 7
+        src[8] = 4
+        src[9] = 6
+        src[10] = 0
+        LET srcLen AS S64 = 10
+        LET outLen AS S64 = 0
+        WHILE srcLen > 0
+            -- extract increasing strand
+            LET stLen AS S64 = 1
+            strand[1] = src[1]
+            LET last AS S64 = src[1]
+            LET w AS S64 = 1
+            FOR r = 2 TO srcLen
+                IF src[r] >= last THEN
+                    stLen = stLen + 1
+                    strand[stLen] = src[r]
+                    last = src[r]
+                ELSE
+                    src[w] = src[r]
+                    w = w + 1
+                END IF
+            END FOR
+            srcLen = w - 1
+            -- merge strand into outArr via tmp
+            LET oi AS S64 = 1
+            LET si AS S64 = 1
+            LET ti AS S64 = 0
+            WHILE oi <= outLen ANDALSO si <= stLen
+                ti = ti + 1
+                IF outArr[oi] < strand[si] THEN
+                    tmp[ti] = outArr[oi]
+                    oi = oi + 1
+                ELSE
+                    tmp[ti] = strand[si]
+                    si = si + 1
+                END IF
+            END WHILE
+            WHILE oi <= outLen
+                ti = ti + 1
+                tmp[ti] = outArr[oi]
+                oi = oi + 1
+            END WHILE
+            WHILE si <= stLen
+                ti = ti + 1
+                tmp[ti] = strand[si]
+                si = si + 1
+            END WHILE
+            FOR c = 1 TO ti
+                outArr[c] = tmp[c]
+            END FOR
+            outLen = ti
+        END WHILE
+        LET s AS STRING = ""
+        FOR k = 1 TO outLen
+            s = s | outArr[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Strand
+BEGIN
+    Strand.Run()
+END

@@ -1,0 +1,86 @@
+-- 822 | Tic-tac-toe: minimax self-play; prints each move and
+-- the result (expected: draw under optimal play).
+DECLARE MODULE Tt
+    FUNCTION Win(p AS S64) AS S32
+    FUNCTION Mini(p AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tt
+    STRICT bd[10] AS S64
+    STRICT wln[24] AS S64
+
+    FUNCTION Win(p AS S64) AS S32
+        FOR i = 1 TO 8
+            IF bd[wln[(i - 1) * 3 + 1]] = p ANDALSO bd[wln[(i - 1) * 3 + 2]] = p ANDALSO bd[wln[(i - 1) * 3 + 3]] = p THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Full() AS S32
+        FOR i = 1 TO 9
+            IF bd[i] = 0 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Mini(p AS S64) AS S64
+        -- returns score: +1 win for player 1, -1 for player 2, 0 draw
+        LET opp AS S64 = 3 - p
+        IF Win(opp) = 1 THEN RETURN 0 - 1 END IF
+        IF Full() = 1 THEN RETURN 0 END IF
+        LET best AS S64 = 0 - 2
+        FOR i = 1 TO 9
+            IF bd[i] = 0 THEN
+                bd[i] = p
+                LET sc AS S64 = 0 - Mini(opp)
+                bd[i] = 0
+                IF sc > best THEN best = sc END IF
+            END IF
+        END FOR
+        RETURN best
+    END FUNCTION
+
+    PROCEDURE Run()
+        wln[1] = 1; wln[2] = 2; wln[3] = 3
+        wln[4] = 4; wln[5] = 5; wln[6] = 6
+        wln[7] = 7; wln[8] = 8; wln[9] = 9
+        wln[10] = 1; wln[11] = 4; wln[12] = 7
+        wln[13] = 2; wln[14] = 5; wln[15] = 8
+        wln[16] = 3; wln[17] = 6; wln[18] = 9
+        wln[19] = 1; wln[20] = 5; wln[21] = 9
+        wln[22] = 3; wln[23] = 5; wln[24] = 7
+        FOR i = 1 TO 9
+            bd[i] = 0
+        END FOR
+        LET p AS S64 = 1
+        LET mv AS S64 = 0
+        WHILE Win(1) = 0 ANDALSO Win(2) = 0 ANDALSO Full() = 0
+            LET bs AS S64 = 0 - 3
+            LET bm AS S64 = 0
+            FOR i = 1 TO 9
+                IF bd[i] = 0 THEN
+                    bd[i] = p
+                    LET sc AS S64 = 0 - Mini(3 - p)
+                    bd[i] = 0
+                    IF sc > bs THEN
+                        bs = sc
+                        bm = i
+                    END IF
+                END IF
+            END FOR
+            bd[bm] = p
+            mv = mv + 1
+            PRINT "move" | mv | " player" | p | " cell" | bm
+            p = 3 - p
+        END WHILE
+        IF Win(1) = 1 THEN PRINT "X wins" END IF
+        IF Win(2) = 1 THEN PRINT "O wins" END IF
+        IF Win(1) = 0 ANDALSO Win(2) = 0 THEN PRINT "draw" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Tt
+BEGIN
+    Tt.Run()
+END

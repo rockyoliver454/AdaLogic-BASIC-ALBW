@@ -1,0 +1,39 @@
+-- 535 | Cycles of a permutation: decompose the permutation
+-- (3 0 2 4 1 5) of 0..5 into cycles.
+DECLARE MODULE Cyc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cyc
+    STRICT p[6] AS S64
+    STRICT seen[6] AS S32
+
+    PROCEDURE Run()
+        p[0] = 3
+        p[1] = 0
+        p[2] = 2
+        p[3] = 4
+        p[4] = 1
+        p[5] = 5
+        FOR i = 0 TO 5
+            seen[i] = 0
+        END FOR
+        FOR s = 0 TO 5
+            IF seen[s] = 0 THEN
+                LET c AS STRING = "("
+                LET v AS S64 = s
+                WHILE seen[v] = 0
+                    seen[v] = 1
+                    c = c | v | " "
+                    v = p[v]
+                END WHILE
+                PRINT c | ")"
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cyc
+BEGIN
+    Cyc.Run()
+END

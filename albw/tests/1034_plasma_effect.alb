@@ -1,0 +1,65 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+
+
+BEGIN
+    LET y AS S64 = 0
+    LET x AS S64 = 0
+    WHILE y < 64
+        x = 0
+        WHILE x < 64
+            LET xf AS F64 = x * 1.0
+            LET yf AS F64 = y * 1.0
+            LET v AS F64 = SIN(xf * 0.35) + SIN(yf * 0.30)
+            v = v + SIN((xf + yf) * 0.22)
+            v = v + SIN(SQRT(xf * xf + yf * yf) * 0.35)
+            LET g AS S64 = ROUND(127.0 + 120.0 * SIN(v))
+            LET r AS S64 = ROUND(127.0 + 120.0 * SIN(v + 2.094))
+            LET b AS S64 = ROUND(127.0 + 120.0 * SIN(v + 4.188))
+            img[y * 64 + x] = r * 65536 + g * 256 + b
+            x = x + 1
+        END WHILE
+        y = y + 1
+    END WHILE
+
+    CREATE_WINDOW "Plasma effect", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(20, 30)
+    END
+
+    LISTEN
+
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "px(20,30)=" | fpx
+END
+

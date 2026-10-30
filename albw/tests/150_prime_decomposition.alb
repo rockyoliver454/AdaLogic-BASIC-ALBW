@@ -1,0 +1,21 @@
+-- 150 | Prime decomposition: trial division factor list.
+BEGIN
+    STRICT targets[4] AS S32;
+    targets[0]=360; targets[1]=97; targets[2]=1024; targets[3]=561;
+    FOR t = 0 TO 3
+        LET n AS S32 = targets[t];
+        LET res AS STRING = targets[t] | " = ";
+        LET f AS S32 = 2;
+        WHILE f * f <= n
+            WHILE n MOD f = 0
+                res = res | f | " ";
+                n = n / f;
+            END WHILE
+            f = f + 1;
+        END WHILE
+        IF n > 1 THEN
+            res = res | n;
+        END IF
+        PRINT$ res;
+    END FOR
+END

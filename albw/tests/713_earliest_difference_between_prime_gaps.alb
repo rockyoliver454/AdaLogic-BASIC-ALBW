@@ -1,0 +1,50 @@
+-- 713 | Earliest difference between prime gaps: first prime
+-- pair exhibiting each gap size 2,4,...,24.
+DECLARE MODULE Eg
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Eg
+    STRICT sv[200000] AS S32
+    STRICT seen[13] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 199999
+            sv[i] = 1
+        END FOR
+        sv[0] = 0
+        sv[1] = 0
+        LET p AS S64 = 2
+        WHILE p * p <= 199999
+            IF sv[p] = 1 THEN
+                LET m AS S64 = p * p
+                WHILE m <= 199999
+                    sv[m] = 0
+                    m = m + p
+                END WHILE
+            END IF
+            p = p + 1
+        END WHILE
+        FOR g = 0 TO 12
+            seen[g] = 0
+        END FOR
+        LET prev AS S64 = 0
+        FOR n = 2 TO 199999
+            IF sv[n] = 1 THEN
+                LET gap AS S64 = n - prev
+                IF prev > 0 ANDALSO gap MOD 2 = 0 ANDALSO gap >= 2 ANDALSO gap <= 24 THEN
+                    IF seen[gap / 2] = 0 THEN
+                        seen[gap / 2] = prev
+                        PRINT "gap " | gap | ": " | prev | " " | n
+                    END IF
+                END IF
+                prev = n
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Eg
+BEGIN
+    Eg.Run()
+END

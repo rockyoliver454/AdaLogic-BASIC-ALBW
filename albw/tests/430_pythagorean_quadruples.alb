@@ -1,0 +1,31 @@
+-- 430 | Pythagorean quadruples: all a<=b<=c, a^2+b^2+c^2=d^2, d <= 30.
+DECLARE MODULE PyQuad
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PyQuad
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        FOR a = 1 TO 30
+            FOR b = a TO 30
+                FOR c = b TO 30
+                    LET t AS S64 = a * a + b * b + c * c
+                    LET d AS S64 = c
+                    WHILE d * d < t
+                        d = d + 1
+                    END WHILE
+                    IF d * d = t ANDALSO d <= 30 THEN
+                        PRINT a | " " | b | " " | c | " " | d
+                        cnt = cnt + 1
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT PyQuad
+BEGIN
+    PyQuad.Run()
+END

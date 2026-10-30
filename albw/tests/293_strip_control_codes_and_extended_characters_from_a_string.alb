@@ -1,0 +1,10 @@
+-- 293 | Strip control codes and extended characters: keep only printable ASCII.
+BEGIN
+    LET s AS STRING = "abc" | CHR(9) | CHR(0) | "def" | CHR(200) | CHR(127) | "ghi"
+    LET res AS STRING = ""
+    FOR i = 1 TO LEN(s)
+        LET c AS S32 = ASC(MID$(s, i, 1))
+        IF c >= 32 ANDALSO c <= 126 THEN res = res | CHR(c) END IF
+    END FOR
+    PRINT res
+END

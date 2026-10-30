@@ -1,0 +1,56 @@
+-- 220 | Ternary logic: false, maybe, and true with five logical operations.
+ENUM Trit TRIT_FALSE, TRIT_MAYBE, TRIT_TRUE END ENUM
+
+DECLARE MODULE TritLogic
+    FUNCTION TNot(a AS S32) AS S32
+    FUNCTION TAnd(a AS S32, b AS S32) AS S32
+    FUNCTION TOr(a AS S32, b AS S32) AS S32
+    FUNCTION TImplies(a AS S32, b AS S32) AS S32
+    FUNCTION TEquivalent(a AS S32, b AS S32) AS S32
+    FUNCTION TName(a AS S32) AS STRING
+END DECLARE MODULE
+
+MODULE TritLogic
+    FUNCTION TNot(a AS S32) AS S32
+        RETURN TRIT_TRUE - a
+    END FUNCTION
+
+    FUNCTION TAnd(a AS S32, b AS S32) AS S32
+        IF a < b THEN RETURN a END IF
+        RETURN b
+    END FUNCTION
+
+    FUNCTION TOr(a AS S32, b AS S32) AS S32
+        IF a > b THEN RETURN a END IF
+        RETURN b
+    END FUNCTION
+
+    FUNCTION TImplies(a AS S32, b AS S32) AS S32
+        IF a = TRIT_TRUE THEN RETURN b END IF
+        IF a = TRIT_FALSE THEN RETURN TRIT_TRUE END IF
+        IF a + b > TRIT_TRUE THEN RETURN TRIT_TRUE END IF
+        RETURN TRIT_MAYBE
+    END FUNCTION
+
+    FUNCTION TEquivalent(a AS S32, b AS S32) AS S32
+        IF a = b THEN RETURN TRIT_TRUE END IF
+        IF a = TRIT_TRUE THEN RETURN b END IF
+        IF b = TRIT_TRUE THEN RETURN a END IF
+        RETURN TRIT_MAYBE
+    END FUNCTION
+
+    FUNCTION TName(a AS S32) AS STRING
+        IF a = TRIT_FALSE THEN RETURN "false" END IF
+        IF a = TRIT_MAYBE THEN RETURN "maybe" END IF
+        RETURN "true"
+    END FUNCTION
+END MODULE
+
+IMPORT TritLogic
+BEGIN
+    PRINT "not true = " | TritLogic.TName(TritLogic.TNot(TRIT_TRUE))
+    PRINT "true and maybe = " | TritLogic.TName(TritLogic.TAnd(TRIT_TRUE, TRIT_MAYBE))
+    PRINT "false or maybe = " | TritLogic.TName(TritLogic.TOr(TRIT_FALSE, TRIT_MAYBE))
+    PRINT "maybe implies false = " | TritLogic.TName(TritLogic.TImplies(TRIT_MAYBE, TRIT_FALSE))
+    PRINT "maybe equivalent true = " | TritLogic.TName(TritLogic.TEquivalent(TRIT_MAYBE, TRIT_TRUE))
+END

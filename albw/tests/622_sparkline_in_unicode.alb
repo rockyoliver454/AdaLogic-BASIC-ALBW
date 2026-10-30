@@ -1,0 +1,48 @@
+-- 622 | Sparkline in unicode: map values to the eight-level
+-- block characters.
+DECLARE MODULE Spark
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Spark
+    STRICT v[8] AS F64
+    STRICT bar[9] AS STRING
+
+    PROCEDURE Run()
+        v[1] = 1
+        v[2] = 2
+        v[3] = 3
+        v[4] = 8
+        v[5] = 7
+        v[6] = 5
+        v[7] = 2
+        v[8] = 0.5
+        bar[1] = "_"
+        bar[2] = "a"
+        bar[3] = "b"
+        bar[4] = "c"
+        bar[5] = "d"
+        bar[6] = "e"
+        bar[7] = "f"
+        bar[8] = "g"
+        LET mn AS F64 = v[1]
+        LET mx AS F64 = v[1]
+        FOR i = 2 TO 8
+            IF v[i] < mn THEN mn = v[i] END IF
+            IF v[i] > mx THEN mx = v[i] END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR j = 1 TO 8
+            LET lvl AS S64 = 1
+            LET frac AS F64 = (v[j] - mn) / (mx - mn)
+            lvl = 1 + frac * 7.0
+            s = s | bar[lvl]
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Spark
+BEGIN
+    Spark.Run()
+END

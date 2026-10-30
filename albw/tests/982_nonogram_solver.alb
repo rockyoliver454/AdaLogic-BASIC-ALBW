@@ -1,0 +1,114 @@
+-- 982 | Nonogram solver: 5x5 puzzle solved by exhaustive
+-- line permutation + constraint check against column clues.
+DECLARE MODULE Ng
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ng
+    STRICT grid[26] AS S64
+    STRICT rh[16] AS S64
+    STRICT ch2[16] AS S64
+    STRICT cok[6] AS S64
+
+    PROCEDURE Chk(r AS S64)
+        -- verify columns complete so far match prefix clues
+        FOR c = 1 TO 5
+            -- build clue sequence for this column up to row r
+            LET runs AS S64 = 0
+            LET cur AS S64 = 0
+            LET ci AS S64 = 0
+            FOR i = 1 TO r
+                LET v AS S64 = grid[(i - 1) * 5 + c]
+                IF v = 1 THEN cur = cur + 1 END IF
+                IF v = 0 ANDALSO cur > 0 THEN
+                    ci = ci + 1
+                    IF ci <= 2 ANDALSO cur <> ch2[c * 3 - 3 + ci] THEN cok[c] = 0 END IF
+                    cur = 0
+                END IF
+            END FOR
+            IF r = 5 ANDALSO cur > 0 THEN
+                ci = ci + 1
+                IF ci <= 2 ANDALSO cur <> ch2[c * 3 - 3 + ci] THEN cok[c] = 0 END IF
+                cur = 0
+            END IF
+            IF r = 5 ANDALSO ch2[c * 3 - 3 + ci + 1] > 0 THEN cok[c] = 0 END IF
+            IF ci > 2 THEN cok[c] = 0 END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE RowGen(r AS S64)
+        -- try each of 2^5 fillings for row r; check row clue
+        FOR m = 0 TO 31
+            LET ok AS S64 = 1
+            -- row clue check
+            LET runs AS S64 = 0
+            LET cur AS S64 = 0
+            FOR c = 1 TO 5
+                LET v AS S64 = (m / (2 ^ (c - 1))) MOD 2
+                IF v = 1 THEN cur = cur + 1 END IF
+                IF v = 0 ANDALSO cur > 0 THEN
+                    runs = runs + 1
+                    IF runs > 2 ORELSE cur <> rh[r * 3 - 3 + runs] THEN ok = 0 END IF
+                    cur = 0
+                END IF
+            END FOR
+            IF cur > 0 THEN
+                runs = runs + 1
+                IF runs > 2 ORELSE cur <> rh[r * 3 - 3 + runs] THEN ok = 0 END IF
+            END IF
+            IF ok = 1 THEN
+                FOR c = 1 TO 5
+                    grid[(r - 1) * 5 + c] = (m / (2 ^ (c - 1))) MOD 2
+                END FOR
+                IF r = 5 THEN
+                    FOR c = 1 TO 5
+                        cok[c] = 1
+                    END FOR
+                    Chk(5)
+                    LET allok AS S64 = 1
+                    FOR c = 1 TO 5
+                        IF cok[c] = 0 THEN allok = 0 END IF
+                    END FOR
+                    IF allok = 1 THEN
+                        FOR i = 1 TO 5
+                            LET row AS STRING = ""
+                            FOR c = 1 TO 5
+                                IF grid[(i - 1) * 5 + c] = 1 THEN
+                                    row = row | "#"
+                                ELSE
+                                    row = row | "."
+                                END IF
+                            END FOR
+                            PRINT row
+                        END FOR
+                        PRINT "solved"
+                    END IF
+                ELSE
+                    RowGen(r + 1)
+                END IF
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- unique-solution puzzle
+        -- row clues: 2,2 / 5 / 3,1 / 1,1 / 1,2
+        rh[1] = 2; rh[2] = 2; rh[3] = 0
+        rh[4] = 5; rh[5] = 0; rh[6] = 0
+        rh[7] = 3; rh[8] = 1; rh[9] = 0
+        rh[10] = 1; rh[11] = 1; rh[12] = 0
+        rh[13] = 1; rh[14] = 2; rh[15] = 0
+        -- col clues: 4 / 3,1 / 2 / 2,1 / 5
+        ch2[1] = 4; ch2[2] = 0; ch2[3] = 0
+        ch2[4] = 3; ch2[5] = 1; ch2[6] = 0
+        ch2[7] = 2; ch2[8] = 0; ch2[9] = 0
+        ch2[10] = 2; ch2[11] = 1; ch2[12] = 0
+        ch2[13] = 5; ch2[14] = 0; ch2[15] = 0
+        RowGen(1)
+    END PROCEDURE
+END MODULE
+
+IMPORT Ng
+BEGIN
+    Ng.Run()
+END

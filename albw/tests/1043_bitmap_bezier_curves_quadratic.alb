@@ -1,0 +1,74 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET npx AS S64 = 0
+
+PROCEDURE BQ(px0 AS S64, py0 AS S64, px1 AS S64, py1 AS S64, px2 AS S64, py2 AS S64)
+    LET t AS F64 = 0.0
+    WHILE t <= 1.0
+        LET u AS F64 = 1.0 - t
+        LET x0 AS F64 = px0 * 1.0
+        LET y0 AS F64 = py0 * 1.0
+        LET x1 AS F64 = px1 * 1.0
+        LET y1 AS F64 = py1 * 1.0
+        LET x2 AS F64 = px2 * 1.0
+        LET y2 AS F64 = py2 * 1.0
+        LET xf AS F64 = u * u * x0 + 2.0 * u * t * x1 + t * t * x2
+        LET yf AS F64 = u * u * y0 + 2.0 * u * t * y1 + t * t * y2
+        LET sx AS S64 = ROUND(xf)
+        LET sy AS S64 = ROUND(yf)
+        IF sx >= 0 ANDALSO sx < 64 ANDALSO sy >= 0 ANDALSO sy < 64 THEN
+            img[sy * 64 + sx] = 65535
+            npx = npx + 1
+        END IF
+        t = t + 0.01
+    END WHILE
+END PROCEDURE
+
+
+BEGIN
+    CALL BQ(4, 56, 32, 4, 60, 56)
+
+    CREATE_WINDOW "Bezier quadratic", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "pts=101"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

@@ -1,0 +1,105 @@
+-- 824 | Twelve statements: search 2^12 truth assignments for
+-- the consistent one(s); statements reference each other.
+DECLARE MODULE Tw
+    FUNCTION Stmt(i AS S64, m AS S64) AS S32
+    FUNCTION Cnt(m AS S64, lo AS S64, hi AS S64) AS S64
+    FUNCTION CntP(m AS S64, par AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tw
+    FUNCTION Bit(m AS S64, i AS S64) AS S64
+        RETURN (m / (2 ^ (i - 1))) MOD 2
+    END FUNCTION
+
+    FUNCTION Cnt(m AS S64, lo AS S64, hi AS S64) AS S64
+        LET c AS S64 = 0
+        FOR i = lo TO hi
+            c = c + Bit(m, i)
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    FUNCTION CntP(m AS S64, par AS S64) AS S64
+        -- count true among statements of parity par (0 even, 1 odd)
+        LET c AS S64 = 0
+        FOR i = 1 TO 12
+            IF i MOD 2 = par ANDALSO Bit(m, i) = 1 THEN c = c + 1 END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    FUNCTION Stmt(i AS S64, m AS S64) AS S32
+        IF i = 1 THEN RETURN 1 END IF
+        IF i = 2 THEN
+            IF Cnt(m, 7, 12) = 3 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 3 THEN
+            IF CntP(m, 0) = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 4 THEN
+            IF Bit(m, 5) = 0 ORELSE (Bit(m, 6) = 1 ANDALSO Bit(m, 7) = 1) THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 5 THEN
+            IF Bit(m, 2) = 0 ANDALSO Bit(m, 3) = 0 ANDALSO Bit(m, 4) = 0 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 6 THEN
+            IF CntP(m, 1) = 4 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 7 THEN
+            IF Bit(m, 2) + Bit(m, 3) = 1 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 8 THEN
+            IF Bit(m, 7) = 0 ORELSE (Bit(m, 5) = 1 ANDALSO Bit(m, 6) = 1) THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 9 THEN
+            IF Cnt(m, 1, 6) = 3 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 10 THEN
+            IF Bit(m, 11) = 1 ANDALSO Bit(m, 12) = 1 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 11 THEN
+            IF Bit(m, 7) + Bit(m, 8) + Bit(m, 9) = 1 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF i = 12 THEN
+            IF Cnt(m, 1, 11) = 4 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR m = 0 TO 4095
+            LET ok AS S32 = 1
+            FOR i = 1 TO 12
+                IF Stmt(i, m) <> Bit(m, i) THEN ok = 0 END IF
+            END FOR
+            IF ok = 1 THEN
+                LET s AS STRING = ""
+                FOR i = 1 TO 12
+                    IF Bit(m, i) = 1 THEN
+                        s = s | "T"
+                    ELSE
+                        s = s | "F"
+                    END IF
+                END FOR
+                PRINT "consistent: " | s
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Tw
+BEGIN
+    Tw.Run()
+END

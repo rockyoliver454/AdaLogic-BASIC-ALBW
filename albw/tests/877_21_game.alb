@@ -1,0 +1,39 @@
+-- 877 | 21 game: players add 1-3 to a running total; whoever
+-- says 21 loses. Computer uses the winning strategy
+-- (keep total at 4k+1). Scripted deterministic play.
+DECLARE MODULE G21
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE G21
+    PROCEDURE Run()
+        LET tot AS S64 = 0
+        LET turn AS S64 = 0
+        -- computer strategy: bring total to 4k+1 (4,8,12,16,20)
+        WHILE tot < 21
+            LET mv AS S64 = 0
+            LET want AS S64 = tot MOD 4
+            IF want <> 1 THEN
+                mv = (5 - want) MOD 4
+                IF mv = 0 THEN mv = 4 END IF
+                IF mv > 3 THEN mv = 1 END IF
+            ELSE
+                mv = 1
+            END IF
+            tot = tot + mv
+            IF turn MOD 2 = 0 THEN
+                PRINT "computer +" | mv | " -> " | tot
+            ELSE
+                PRINT "player   +" | mv | " -> " | tot
+            END IF
+            turn = turn + 1
+        END WHILE
+        IF turn MOD 2 = 1 THEN PRINT "player said 21 and loses" END IF
+        PRINT "moves=" | turn
+    END PROCEDURE
+END MODULE
+
+IMPORT G21
+BEGIN
+    G21.Run()
+END

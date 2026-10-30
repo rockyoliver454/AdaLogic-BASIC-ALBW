@@ -1,0 +1,55 @@
+-- 681 | Closest-pair problem: brute-force closest pair of the
+-- RC example points.
+DECLARE MODULE Cp
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cp
+    STRICT px[10] AS F64
+    STRICT py[10] AS F64
+
+    PROCEDURE Run()
+        px[1] = 0.654682
+        py[1] = 0.925557
+        px[2] = 0.409382
+        py[2] = 0.619391
+        px[3] = 0.891663
+        py[3] = 0.888594
+        px[4] = 0.716629
+        py[4] = 0.996200
+        px[5] = 0.477721
+        py[5] = 0.946355
+        px[6] = 0.925092
+        py[6] = 0.818220
+        px[7] = 0.624291
+        py[7] = 0.142924
+        px[8] = 0.211332
+        py[8] = 0.221507
+        px[9] = 0.293786
+        py[9] = 0.691701
+        px[10] = 0.839186
+        py[10] = 0.728260
+        LET best AS F64 = 4.0
+        LET bi AS S64 = 0
+        LET bj AS S64 = 0
+        FOR i = 1 TO 10
+            FOR j = i + 1 TO 10
+                LET dx AS F64 = px[i] - px[j]
+                LET dy AS F64 = py[i] - py[j]
+                LET d AS F64 = dx * dx + dy * dy
+                IF d < best THEN
+                    best = d
+                    bi = i
+                    bj = j
+                END IF
+            END FOR
+        END FOR
+        PRINT "closest: " | bi | " and " | bj
+        PRINT "distance: " | SQRT(best)
+    END PROCEDURE
+END MODULE
+
+IMPORT Cp
+BEGIN
+    Cp.Run()
+END

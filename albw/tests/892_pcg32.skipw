@@ -1,0 +1,1 @@
+requires exact u64 multiply/mod beyond 2^53 (f64 mantissa limit)

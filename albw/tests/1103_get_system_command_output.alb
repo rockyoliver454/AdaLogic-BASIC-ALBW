@@ -1,0 +1,10 @@
+VERSION 1.0
+
+BEGIN
+    LET rc AS S64 = SHELL("echo captured-output-123 > cap.txt")
+    LET r AS S64 = OPEN("cap.txt", "r")
+    LET s AS STRING = READ(r, FILELEN("cap.txt"))
+    CLOSE r
+    PRINT "captured=" | s
+    LET k AS S64 = KILL("cap.txt")
+END

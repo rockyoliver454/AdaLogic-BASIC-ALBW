@@ -1,0 +1,18 @@
+BEGIN
+    LET n = 5
+    LET k = 3
+    IF k > n THEN
+        PRINT$ 0
+    ELSE
+        IF k > n - k THEN
+            k = n - k
+        END IF
+        LET r = 1
+        LET i = 1
+        WHILE i <= k
+            r = r * (n - k + i) / i
+            i = i + 1
+        END WHILE
+        PRINT$ r
+    END IF
+END

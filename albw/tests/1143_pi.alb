@@ -1,0 +1,77 @@
+VERSION 1.0
+
+STRICT rem[190] AS S64
+STRICT digs[60] AS S64
+
+LET nd AS S64 = 45
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 190
+        rem[i] = 10
+        i = i + 1
+    END WHILE
+
+    LET ln2 AS S64 = (nd + 8) * 10 / 3 + 1
+    i = 0
+    WHILE i < ln2
+        rem[i] = 2
+        i = i + 1
+    END WHILE
+
+    LET nines AS S64 = 0
+    LET pred AS S64 = 0
+    LET dc AS S64 = 0
+    LET j AS S64 = 0
+    WHILE j < nd + 5
+        LET q AS S64 = 0
+        LET i2 AS S64 = ln2
+        WHILE i2 > 0
+            LET x AS S64 = rem[i2 - 1] * 10 + q * i2
+            rem[i2 - 1] = x MOD (2 * i2 - 1)
+            q = x / (2 * i2 - 1)
+            i2 = i2 - 1
+        END WHILE
+        rem[0] = q MOD 10
+        q = q / 10
+        IF q = 9 THEN
+            nines = nines + 1
+        ELSE
+            IF q = 10 THEN
+                digs[dc] = pred + 1
+                dc = dc + 1
+                i2 = 0
+                WHILE i2 < nines
+                    digs[dc] = 0
+                    dc = dc + 1
+                    i2 = i2 + 1
+                END WHILE
+                pred = 0
+                nines = 0
+            ELSE
+                digs[dc] = pred
+                dc = dc + 1
+                pred = q
+                IF nines > 0 THEN
+                    i2 = 0
+                    WHILE i2 < nines
+                        digs[dc] = 9
+                        dc = dc + 1
+                        i2 = i2 + 1
+                    END WHILE
+                    nines = 0
+                END IF
+            END IF
+        END IF
+        j = j + 1
+    END WHILE
+
+    LET res AS STRING = ""
+    i = 2
+    WHILE i <= nd
+        res = res | digs[i]
+        i = i + 1
+    END WHILE
+    PRINT "pi=3." | res
+END

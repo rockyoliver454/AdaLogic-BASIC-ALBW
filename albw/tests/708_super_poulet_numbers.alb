@@ -1,0 +1,58 @@
+-- 708 | Super-Poulet numbers: Poulet pseudoprimes whose every
+-- divisor d satisfies 2^d = 2 mod d. First 10.
+DECLARE MODULE Sp
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sp
+    FUNCTION Powm(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN
+                r = r * bb MOD m
+            END IF
+            bb = bb * bb MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 3
+        WHILE cnt < 10
+            IF Prime(n) = 0 ANDALSO Powm(2, n - 1, n) = 1 THEN
+                LET ok AS S32 = 1
+                FOR d = 2 TO n - 1
+                    IF n MOD d = 0 THEN
+                        IF Powm(2, d - 1, d) <> 1 THEN ok = 0 END IF
+                    END IF
+                END FOR
+                IF ok = 1 THEN
+                    PRINT n
+                    cnt = cnt + 1
+                END IF
+            END IF
+            n = n + 2
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Sp
+BEGIN
+    Sp.Run()
+END

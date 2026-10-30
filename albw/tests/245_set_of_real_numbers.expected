@@ -1,0 +1,3 @@
+0: union=1 intersection=0 diff-open=1 diff-closed=0
+1: union=1 intersection=0 diff-open=1 diff-closed=0
+2: union=0 intersection=0 diff-open=1 diff-closed=1

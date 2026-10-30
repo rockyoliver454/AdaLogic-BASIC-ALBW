@@ -1,0 +1,49 @@
+VERSION 1.0
+
+STRICT ev[10] AS STRING
+
+
+BEGIN
+    ev[0] = "OUT f1 u1"
+    ev[1] = "OUT f1 u2"
+    ev[2] = "IN f1 u1"
+    ev[3] = "OUT f1 u3"
+    ev[4] = "OUT f1 u4"
+    ev[5] = "IN f1 u2"
+    ev[6] = "IN f1 u3"
+    ev[7] = "OUT f2 u9"
+    ev[8] = "IN f1 u4"
+    ev[9] = "IN f2 u9"
+
+    LET cur1 AS S64 = 0
+    LET max1 AS S64 = 0
+    LET cur2 AS S64 = 0
+    LET max2 AS S64 = 0
+    LET i AS S64 = 0
+    WHILE i < 10
+        LET ln AS STRING = ev[i]
+        LET io AS STRING = LEFT$(ln, 2)
+        LET feat AS STRING = MID$(ln, 4, 2)
+        IF MID$(ln, 4, 1) = " " THEN
+            feat = MID$(ln, 5, 2)
+        END IF
+        IF feat = "f1" THEN
+            IF io = "OU" THEN
+                cur1 = cur1 + 1
+                IF cur1 > max1 THEN max1 = cur1 END IF
+            ELSE
+                cur1 = cur1 - 1
+            END IF
+        ELSE
+            IF io = "OU" THEN
+                cur2 = cur2 + 1
+                IF cur2 > max2 THEN max2 = cur2 END IF
+            ELSE
+                cur2 = cur2 - 1
+            END IF
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "f1 max in use=" | max1
+    PRINT "f2 max in use=" | max2
+END

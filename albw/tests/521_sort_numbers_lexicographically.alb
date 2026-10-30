@@ -1,0 +1,52 @@
+-- 521 | Sort numbers lexicographically: order numerals 1..120 as
+-- strings using byte-wise comparison.
+DECLARE MODULE LexNum
+    FUNCTION Less(x AS STRING, y AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE LexNum
+    STRICT a[13] AS STRING
+
+    FUNCTION Less(x AS STRING, y AS STRING) AS S32
+        LET i AS S64 = 1
+        LET xl AS S64 = LEN(x)
+        LET yl AS S64 = LEN(y)
+        WHILE i <= xl ANDALSO i <= yl
+            LET cx AS S64 = ASC(MID$(x, i, 1))
+            LET cy AS S64 = ASC(MID$(y, i, 1))
+            IF cx < cy THEN RETURN 1 END IF
+            IF cx > cy THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        IF xl < yl THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 0 TO 12
+            LET v AS S64 = n * 10 + 1
+            IF v > 120 THEN v = n END IF
+            a[n + 1] = "" | v
+        END FOR
+        FOR i = 2 TO 13
+            LET ky AS STRING = a[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO Less(ky, a[j]) = 1
+                a[j + 1] = a[j]
+                j = j - 1
+            END WHILE
+            a[j + 1] = ky
+        END FOR
+        LET s AS STRING = ""
+        FOR k = 1 TO 13
+            s = s | a[k] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT LexNum
+BEGIN
+    LexNum.Run()
+END

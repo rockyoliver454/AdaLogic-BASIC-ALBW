@@ -1,0 +1,51 @@
+-- 419 | Pernicious numbers: numbers whose binary digit count is prime.
+-- First 25 and count below 1,000,000.
+DECLARE MODULE Pern
+    FUNCTION PopCount(n AS S64) AS S64
+    FUNCTION IsPern(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pern
+    FUNCTION PopCount(n AS S64) AS S64
+        LET c AS S64 = 0
+        WHILE n > 0
+            IF n MOD 2 = 1 THEN c = c + 1 END IF
+            n = n / 2
+        END WHILE
+        RETURN c
+    END FUNCTION
+
+    FUNCTION IsPern(n AS S64) AS S32
+        LET pc AS S64 = PopCount(n)
+        IF pc < 2 THEN RETURN 0 END IF
+        FOR d = 2 TO pc - 1
+            IF pc MOD d = 0 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 1
+        LET got AS S64 = 0
+        WHILE got < 25
+            IF IsPern(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+        LET cnt AS S64 = 0
+        FOR m = 1 TO 999999
+            IF IsPern(m) = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Pern
+BEGIN
+    Pern.Run()
+END

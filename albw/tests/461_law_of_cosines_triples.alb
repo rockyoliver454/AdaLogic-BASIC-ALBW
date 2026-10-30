@@ -1,0 +1,24 @@
+-- 461 | Law of cosines - triples: integer triangles with a 60-degree
+-- angle (c^2 = a^2 + b^2 - a*b), a <= b, all sides <= 21.
+DECLARE MODULE CosTri
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CosTri
+    PROCEDURE Run()
+        FOR a = 1 TO 21
+            FOR b = a TO 21
+                FOR c = b TO a + b - 1
+                    IF c * c = a * a + b * b - a * b THEN
+                        PRINT a | " " | b | " " | c
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT CosTri
+BEGIN
+    CosTri.Run()
+END

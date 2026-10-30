@@ -1,0 +1,14 @@
+<students>
+  <student id="1">
+    <name>alice</name>
+    <age>30</age>
+  </student>
+  <student id="2">
+    <name>bob</name>
+    <age>25</age>
+  </student>
+  <student id="3">
+    <name>carol</name>
+    <age>41</age>
+  </student>
+</students>

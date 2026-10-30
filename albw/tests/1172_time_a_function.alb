@@ -1,0 +1,19 @@
+VERSION 1.0
+
+
+FUNCTION FibR(n AS S64) AS S64
+    IF n < 2 THEN
+        RETURN n
+    END IF
+    RETURN FibR(n - 1) + FibR(n - 2)
+END FUNCTION
+
+
+BEGIN
+    LET t0 AS F64 = TIMER()
+    LET r AS S64 = FibR(24)
+    LET t1 AS F64 = TIMER()
+    LET el AS F64 = t1 - t0
+    PRINT "fib(24)=" | r
+    PRINT "elapsed_seconds=" | (el > 0.0)
+END

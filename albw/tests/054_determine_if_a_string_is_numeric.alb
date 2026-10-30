@@ -1,0 +1,26 @@
+-- 066 | Determine if a string is numeric -- all chars digits 0-9
+DECLARE MODULE Str
+    FUNCTION IsNumeric(s AS STRING) AS S32
+END MODULE
+
+MODULE Str
+    FUNCTION IsNumeric(s AS STRING) AS S32
+        LET i AS S32 = 0
+        IF LEN(s) = 0 THEN
+            RETURN 0
+        END IF
+        FOR i = 0 TO LEN(s) - 1
+            LET c AS S32 = ASC(MID$(s, i + 1, 1))
+            IF c < 48 OR c > 57 THEN
+                RETURN 0
+            END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT Str.IsNumeric("12345")
+    PRINT Str.IsNumeric("12a45")
+    PRINT Str.IsNumeric("")
+END

@@ -1,0 +1,25 @@
+-- ELSEIF/ELSIF chains: each ELSEIF emits a nested if inside the else
+-- block, so one END IF closes the whole chain.  Both multi-line and
+-- single-line forms work.
+BEGIN
+    LET g AS S32 = 85
+    IF g >= 90 THEN
+        PRINT "A"
+    ELSEIF g >= 80 THEN
+        PRINT "B"
+    ELSEIF g >= 70 THEN
+        PRINT "C"
+    ELSE
+        PRINT "F"
+    END IF
+    LET h AS S32 = 95
+    IF h >= 90 THEN PRINT "A" ELSEIF h >= 80 THEN PRINT "B" ELSE PRINT "F" END IF
+    LET k AS S32 = 10
+    IF k = 1 THEN
+        PRINT "one"
+    ELSIF k = 10 THEN
+        PRINT "ten"
+    ELSE
+        PRINT "other"
+    END IF
+END

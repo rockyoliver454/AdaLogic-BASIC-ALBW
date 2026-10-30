@@ -1,0 +1,47 @@
+VERSION 1.0
+
+STRICT names[3] AS STRING
+
+
+BEGIN
+    names[0] = "rep_a.txt"
+    names[1] = "rep_b.txt"
+    names[2] = "rep_c.txt"
+
+    LET f AS S64 = 0
+    WHILE f < 3
+        LET h AS S64 = OPEN(names[f], "w")
+        WRITE h, "the cat sat" | CHR(10) | "cat again" | CHR(10)
+        CLOSE h
+        f = f + 1
+    END WHILE
+
+    f = 0
+    WHILE f < 3
+        LET r AS S64 = OPEN(names[f], "r")
+        LET whole AS STRING = READ(r, FILELEN(names[f]))
+        CLOSE r
+        LET res AS STRING = ""
+        LET i AS S64 = 1
+        LET hits AS S64 = 0
+        WHILE i <= LEN(whole)
+            IF MID$(whole, i, 3) = "cat" THEN
+                res = res | "dog"
+                i = i + 3
+                hits = hits + 1
+            ELSE
+                res = res | MID$(whole, i, 1)
+                i = i + 1
+            END IF
+        END WHILE
+        LET w AS S64 = OPEN(names[f], "w")
+        WRITE w, res
+        CLOSE w
+        PRINT names[f] | " replacements=" | hits
+        f = f + 1
+    END WHILE
+
+    LET r2 AS S64 = OPEN("rep_a.txt", "r")
+    PRINT "a=" | READ(r2, FILELEN("rep_a.txt"))
+    CLOSE r2
+END

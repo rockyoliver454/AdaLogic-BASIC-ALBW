@@ -1,0 +1,51 @@
+-- 170 | Lychrel numbers: reverse-and-add until palindrome or cap.
+DECLARE MODULE L
+    FUNCTION Rev(n AS S64) AS S64
+    FUNCTION IsPal(n AS S64) AS S32
+END DECLARE MODULE
+
+MODULE L
+    FUNCTION Rev(n AS S64) AS S64
+        LET r AS S64 = 0;
+        WHILE n > 0
+            IF r > 900000000000000000 THEN
+                RETURN -1
+            END IF
+            r = r * 10 + n MOD 10;
+            n = n / 10;
+        END WHILE
+        RETURN r
+    END FUNCTION
+    FUNCTION IsPal(n AS S64) AS S32
+        IF Rev(n) = n THEN RETURN -1 END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+IMPORT L
+BEGIN
+    STRICT t[4] AS S64;
+    t[0]=59; t[1]=89; t[2]=196; t[3]=167;
+    FOR i = 0 TO 3
+        LET n AS S64 = t[i];
+        LET iters AS S32 = 0;
+        LET done AS S32 = 0;
+        WHILE done = 0 ANDALSO iters < 60
+            LET rv AS S64 = L.Rev(n);
+            IF rv < 0 ORELSE n > 9000000000000000000 - rv THEN
+                done = 2;
+            ELSE
+                n = n + rv;
+                iters = iters + 1;
+                IF L.IsPal(n) <> 0 THEN
+                    done = 1;
+                END IF
+            END IF
+        END WHILE
+        IF done = 1 THEN
+            PRINT$ t[i] | " -> " | n | " in " | iters;
+        ELSE
+            PRINT$ t[i] | " lychrel";
+        END IF
+    END FOR
+END

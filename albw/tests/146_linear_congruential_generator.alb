@@ -1,0 +1,9 @@
+-- 156 | Linear congruential generator -- BSD formula, 10 values from seed 0
+BEGIN
+    LET state AS U64 = 0
+    LET i AS S32 = 0
+    FOR i = 0 TO 9
+        state = (state * 1103515245 + 12345) MOD 2147483648
+        PRINT state
+    END FOR
+END

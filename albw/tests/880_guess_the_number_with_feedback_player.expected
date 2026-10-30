@@ -1,0 +1,6 @@
+guess 50 -> too low
+guess 75 -> too high
+guess 62 -> too low
+guess 68 -> too low
+guess 71 -> too low
+computer guessed 73 in 6 tries

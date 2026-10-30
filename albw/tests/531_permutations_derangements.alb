@@ -1,0 +1,53 @@
+-- 531 | Permutations/Derangements: count !n and list derangements
+-- of [1,2,3,4].
+DECLARE MODULE Derng
+    PROCEDURE GenPerm(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Derng
+    STRICT a[4] AS S64
+
+    PROCEDURE GenPerm(k AS S64)
+        IF k = 1 THEN
+            LET ok AS S32 = 1
+            FOR i = 1 TO 4
+                IF a[i] = i THEN ok = 0 END IF
+            END FOR
+            IF ok = 1 THEN PRINT a[1] | a[2] | a[3] | a[4] END IF
+            RETURN
+        END IF
+        FOR i2 = 1 TO k
+            GenPerm(k - 1)
+            LET p AS S64 = i2
+            IF k MOD 2 = 1 THEN p = 1 END IF
+            LET t AS S64 = a[p]
+            a[p] = a[k]
+            a[k] = t
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        LET d0 AS S64 = 1
+        LET d1 AS S64 = 0
+        PRINT "!0 = " | d0
+        PRINT "!1 = " | d1
+        FOR n = 2 TO 6
+            LET dn AS S64 = (n - 1) * (d0 + d1)
+            PRINT "!" | n | " = " | dn
+            d0 = d1
+            d1 = dn
+        END FOR
+        PRINT "derangements of 1234:"
+        a[1] = 1
+        a[2] = 2
+        a[3] = 3
+        a[4] = 4
+        GenPerm(4)
+    END PROCEDURE
+END MODULE
+
+IMPORT Derng
+BEGIN
+    Derng.Run()
+END

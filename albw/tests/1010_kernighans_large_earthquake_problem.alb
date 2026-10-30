@@ -1,0 +1,42 @@
+-- 1010 | Kernighan's large earthquake problem: from a data
+-- file of quake records, print those with magnitude > 6.
+BEGIN
+LET h = OPEN("rosetta_quakes.dat", "w")
+WRITE h, "1906 San Francisco 7.9" | CHR(10)
+WRITE h, "1960 Valdivia 9.5" | CHR(10)
+WRITE h, "1989 Loma Prieta 6.9" | CHR(10)
+WRITE h, "1992 Joshua Tree 5.9" | CHR(10)
+WRITE h, "1994 Northridge 6.7" | CHR(10)
+WRITE h, "2004 Sumatra 9.1" | CHR(10)
+WRITE h, "2010 Chile 8.8" | CHR(10)
+WRITE h, "2011 Tohoku 9.0" | CHR(10)
+WRITE h, "2015 Illapel 8.3" | CHR(10)
+WRITE h, "2018 Anchorage 7.0" | CHR(10)
+WRITE h, "2019 Ridgecrest 7.1" | CHR(10)
+WRITE h, "2020 Sparta 5.1" | CHR(10)
+WRITE h, "2021 Chignik 8.2" | CHR(10)
+CLOSE h
+LET r = OPEN("rosetta_quakes.dat", "r")
+LET whole AS STRING = READ(r, FILELEN("rosetta_quakes.dat"))
+CLOSE r
+LET n AS S64 = LEN(whole)
+LET i AS S64 = 1
+WHILE i <= n
+    LET j AS S64 = i
+    WHILE j <= n ANDALSO ASC(MID$(whole, j, 1)) <> 10
+        j = j + 1
+    END WHILE
+    IF j > i THEN
+        LET rec AS STRING = MID$(whole, i, j - i)
+        -- magnitude = text after last space
+        LET k AS S64 = LEN(rec)
+        WHILE k > 0 ANDALSO ASC(MID$(rec, k, 1)) <> 32
+            k = k - 1
+        END WHILE
+        LET mag AS STRING = MID$(rec, k + 1, LEN(rec) - k)
+        LET mv AS F64 = VAL(mag)
+        IF mv > 6.0 THEN PRINT rec END IF
+    END IF
+    i = j + 1
+END WHILE
+END

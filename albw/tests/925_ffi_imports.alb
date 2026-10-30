@@ -1,0 +1,7 @@
+IMPORTDLL FUNCTION GetCurrentProcessId() AS U32 FROM "kernel32"
+IMPORTDLL PROCEDURE Sleep(ms AS U32) FROM "kernel32"
+IMPORTSO FUNCTION hypot(a AS F64, b AS F64) AS F64 FROM "msvcrt"
+LET pid AS U32 = GetCurrentProcessId()
+Sleep(0)
+PRINT pid > 0
+PRINT hypot(3.0, 4.0)

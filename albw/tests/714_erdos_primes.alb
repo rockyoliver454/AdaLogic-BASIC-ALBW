@@ -1,0 +1,45 @@
+-- 714 | Erdos-primes: primes p such that p - k! is composite
+-- for every k with k! < p.
+DECLARE MODULE Ep
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ep
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 2
+        WHILE cnt < 10
+            IF Prime(n) = 1 THEN
+                LET ok AS S32 = 1
+                LET f AS S64 = 1
+                LET k AS S64 = 1
+                WHILE f < n
+                    IF n - f > 1 ANDALSO Prime(n - f) = 1 THEN ok = 0 END IF
+                    k = k + 1
+                    f = f * k
+                END WHILE
+                IF ok = 1 THEN
+                    PRINT n
+                    cnt = cnt + 1
+                END IF
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Ep
+BEGIN
+    Ep.Run()
+END

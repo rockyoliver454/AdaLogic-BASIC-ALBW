@@ -1,0 +1,73 @@
+-- ============================================================================
+-- alb_str — string toolkit on top of the builtins.
+--
+-- Padding, prefix/suffix tests, and a delimiter Split into a
+-- module-owned piece table (Split returns the count; Piece(i) reads
+-- slot i, 0-based). Same static-memory shape as alb_sort: the piece
+-- table is a fixed STRICT array, no allocation surprises.
+--
+--   PRINT AlbStr.PadLeft("42", 5)        -- "   42"
+--   IF AlbStr.StartsWith(n$, "ERR") THEN ...
+--   n = AlbStr.Split(csv$, ",")
+--   PRINT AlbStr.Piece(1)
+-- ============================================================================
+
+MODULE AlbStr
+    STRICT PTAB[64] AS STRING
+    LET pc AS S32 = 0
+
+    FUNCTION PadLeft(s AS STRING, w AS S32) AS STRING
+        LET r AS STRING = s
+        WHILE LEN(r) < w
+            r = " " | r
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION PadRight(s AS STRING, w AS S32) AS STRING
+        LET r AS STRING = s
+        WHILE LEN(r) < w
+            r = r | " "
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    FUNCTION StartsWith(s AS STRING, p AS STRING) AS S32
+        IF LEN(s) < LEN(p) THEN RETURN 0 END IF
+        IF LEFT$(s, LEN(p)) = p THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION EndsWith(s AS STRING, p AS STRING) AS S32
+        IF LEN(s) < LEN(p) THEN RETURN 0 END IF
+        IF RIGHT$(s, LEN(p)) = p THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    -- Split s on single-char delimiter d into PTAB; returns piece count
+    -- (capped at 64; extra content lands in the last slot).
+    FUNCTION Split(s AS STRING, d AS STRING) AS S32
+        pc = 0
+        LET cur AS STRING = ""
+        LET ix AS S32 = 1
+        WHILE ix <= LEN(s)
+            LET ch AS STRING = MID$(s, ix, 1)
+            IF ch = d ANDALSO pc < 63 THEN
+                PTAB[pc] = cur
+                pc = pc + 1
+                cur = ""
+            ELSE
+                cur = cur | ch
+            END IF
+            ix = ix + 1
+        END WHILE
+        PTAB[pc] = cur
+        pc = pc + 1
+        RETURN pc
+    END FUNCTION
+
+    FUNCTION Piece(ix AS S32) AS STRING
+        IF ix < 0 ORELSE ix >= pc THEN RETURN "" END IF
+        RETURN PTAB[ix]
+    END FUNCTION
+END MODULE

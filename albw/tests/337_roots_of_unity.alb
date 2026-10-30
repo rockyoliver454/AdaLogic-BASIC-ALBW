@@ -1,0 +1,30 @@
+-- 337 | Roots of unity: print the n complex n-th roots of 1.
+DECLARE MODULE Roots
+    PROCEDURE Show(n AS S32)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Roots
+    PROCEDURE Show(n AS S32)
+        LET pi AS F64 = 4.0 * ATAN(1.0)
+        PRINT "n=" | n
+        FOR k = 0 TO n - 1
+            LET ang AS F64 = 2.0 * pi * k / n
+            LET re AS F64 = COS(ang)
+            LET im AS F64 = SIN(ang)
+            IF ABS(re) < 0.0000001 THEN re = 0.0 END IF
+            IF ABS(im) < 0.0000001 THEN im = 0.0 END IF
+            PRINT "  " | re | " " | im
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(3)
+        Show(4)
+    END PROCEDURE
+END MODULE
+
+IMPORT Roots
+BEGIN
+    Roots.Run()
+END

@@ -1,0 +1,27 @@
+-- 138 | Josephus problem -- n=41, k=3, survivor position (1-based)
+BEGIN
+    STRICT alive[41] AS S32;
+    LET i AS S32 = 0
+    FOR i = 0 TO 40
+        alive[i] = 1
+    END FOR
+    LET left AS S32 = 41
+    LET pos AS S32 = 0
+    LET skip AS S32 = 0
+    WHILE left > 1
+        IF alive[pos] = 1 THEN
+            skip = skip + 1
+            IF skip = 3 THEN
+                alive[pos] = 0
+                left = left - 1
+                skip = 0
+            END IF
+        END IF
+        pos = (pos + 1) MOD 41
+    END WHILE
+    FOR i = 0 TO 40
+        IF alive[i] = 1 THEN
+            PRINT i + 1
+        END IF
+    END FOR
+END

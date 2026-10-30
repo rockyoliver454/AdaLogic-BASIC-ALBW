@@ -1,0 +1,60 @@
+-- 372 | Descending primes: digits strictly descend left to right; generated
+--        from subsets of {9..0}, sorted.
+DECLARE MODULE DescPrime
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE DescPrime
+    STRICT hits[512] AS S64
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S32 = 0
+        FOR mask = 1 TO 1023
+            LET v AS S64 = 0
+            LET bit AS S64 = 512
+            FOR d = 9 TO 0 STEP -1
+                IF mask >= bit ANDALSO (mask / bit) MOD 2 = 1 THEN
+                    v = v * 10 + d
+                END IF
+                bit = bit / 2
+            END FOR
+            IF v > 1 ANDALSO IsPrime(v) = 1 THEN
+                hits[cnt] = v
+                cnt = cnt + 1
+            END IF
+        END FOR
+        FOR i = 0 TO cnt - 1
+            FOR j = i + 1 TO cnt - 1
+                IF hits[j] < hits[i] THEN
+                    LET t AS S64 = hits[i]
+                    hits[i] = hits[j]
+                    hits[j] = t
+                END IF
+            END FOR
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 0 TO cnt - 1
+            s = s | hits[i] | " "
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT DescPrime
+BEGIN
+    DescPrime.Run()
+END

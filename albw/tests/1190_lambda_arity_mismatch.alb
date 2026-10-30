@@ -1,0 +1,6 @@
+-- Negative: LAMBDA arity must match the target ROUTINE alias exactly.
+TYPE Cmp IS ROUTINE(a AS S64, b AS S64) AS S32;
+BEGIN
+    LET f AS Cmp = LAMBDA(a AS S64) AS S32 => a
+    PRINT f(1, 2)
+END

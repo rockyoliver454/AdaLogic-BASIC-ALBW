@@ -1,0 +1,15 @@
+-- 219 | Start from a main routine: the entry block delegates to Main.
+DECLARE MODULE Application
+    PROCEDURE Main()
+END DECLARE MODULE
+
+MODULE Application
+    PROCEDURE Main()
+        PRINT "main routine"
+    END PROCEDURE
+END MODULE
+
+IMPORT Application
+BEGIN
+    Application.Main()
+END

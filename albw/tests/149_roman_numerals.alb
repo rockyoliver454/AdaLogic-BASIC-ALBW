@@ -1,0 +1,57 @@
+-- 149 | Roman numeral arithmetic: parse, add, emit.
+DECLARE MODULE RN
+    FUNCTION ToInt(s AS STRING) AS S32
+    FUNCTION ToRoman(n AS S32) AS STRING
+END DECLARE MODULE
+
+MODULE RN
+    FUNCTION DVal(c AS STRING) AS S32
+        IF c = "M" THEN RETURN 1000 END IF
+        IF c = "D" THEN RETURN 500 END IF
+        IF c = "C" THEN RETURN 100 END IF
+        IF c = "L" THEN RETURN 50 END IF
+        IF c = "X" THEN RETURN 10 END IF
+        IF c = "V" THEN RETURN 5 END IF
+        RETURN 1
+    END FUNCTION
+    FUNCTION ToInt(s AS STRING) AS S32
+        LET total AS S32 = 0;
+        FOR i = 1 TO LEN(s)
+            LET v AS S32 = DVal(MID$(s, i, 1));
+            IF i < LEN(s) ANDALSO DVal(MID$(s, i + 1, 1)) > v THEN
+                total = total - v;
+            ELSE
+                total = total + v;
+            END IF
+        END FOR
+        RETURN total
+    END FUNCTION
+    FUNCTION ToRoman(n AS S32) AS STRING
+        STRICT vals[13] AS S32;
+        STRICT syms[13] AS STRING;
+        vals[0]=1000; syms[0]="M";   vals[1]=900; syms[1]="CM";
+        vals[2]=500;  syms[2]="D";   vals[3]=400; syms[3]="CD";
+        vals[4]=100;  syms[4]="C";   vals[5]=90;  syms[5]="XC";
+        vals[6]=50;   syms[6]="L";   vals[7]=40;  syms[7]="XL";
+        vals[8]=10;   syms[8]="X";   vals[9]=9;   syms[9]="IX";
+        vals[10]=5;   syms[10]="V";  vals[11]=4;  syms[11]="IV";
+        vals[12]=1;   syms[12]="I";
+        LET res AS STRING = "";
+        FOR i = 0 TO 12
+            WHILE n >= vals[i]
+                res = res | syms[i];
+                n = n - vals[i];
+            END WHILE
+        END FOR
+        RETURN res
+    END FUNCTION
+END MODULE
+
+IMPORT RN
+BEGIN
+    LET sum AS S32 = RN.ToInt("XLII") + RN.ToInt("IX");
+    PRINT sum;
+    PRINT$ RN.ToRoman(sum);
+    PRINT$ RN.ToRoman(2024);
+    PRINT RN.ToInt("MMXXIV");
+END

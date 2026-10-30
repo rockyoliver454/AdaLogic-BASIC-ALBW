@@ -1,0 +1,38 @@
+-- 485 | Fairshare between two and more: Thue-Morse turn sequence
+-- for 2 and 3 people, first 25 turns each.
+DECLARE MODULE Fair
+    FUNCTION Trit(n AS S64, base AS S64) AS S64
+    PROCEDURE Show(base AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fair
+    FUNCTION Trit(n AS S64, base AS S64) AS S64
+        LET s AS S64 = 0
+        WHILE n > 0
+            s = s + n MOD base
+            n = n / base
+        END WHILE
+        RETURN s MOD base
+    END FUNCTION
+
+    PROCEDURE Show(base AS S64)
+        LET s AS STRING = "base " | base | ": "
+        FOR n = 0 TO 24
+            s = s | Trit(n, base) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(2)
+        Show(3)
+        Show(5)
+        Show(11)
+    END PROCEDURE
+END MODULE
+
+IMPORT Fair
+BEGIN
+    Fair.Run()
+END

@@ -1,0 +1,6 @@
+-- 271 | String prepend: prepend one string before another in place.
+BEGIN
+    LET s AS STRING = "world"
+    s = "Hello, " | s | "!"
+    PRINT s
+END

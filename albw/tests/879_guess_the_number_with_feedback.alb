@@ -1,0 +1,49 @@
+-- 879 | Guess the number/With feedback: player gets
+-- "warmer/colder" distance feedback in addition to
+-- high/low. Scripted deterministic guesses.
+DECLARE MODULE Gf
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gf
+    STRICT gs[8] AS S64
+
+    PROCEDURE Run()
+        LET sec AS S64 = 42
+        gs[1] = 50
+        gs[2] = 10
+        gs[3] = 35
+        gs[4] = 45
+        gs[5] = 40
+        gs[6] = 42
+        gs[7] = 0
+        gs[8] = 0
+        LET prev AS S64 = 0 - 1
+        FOR i = 1 TO 8
+            LET g AS S64 = gs[i]
+            IF g = 0 THEN RETURN END IF
+            LET d AS S64 = g - sec
+            IF d < 0 THEN d = 0 - d END IF
+            LET fb AS STRING = ""
+            IF g < sec THEN fb = "too low" END IF
+            IF g > sec THEN fb = "too high" END IF
+            IF g = sec THEN
+                PRINT "guess " | g | " correct!"
+            ELSE
+                LET wb AS STRING = ""
+                IF prev >= 0 THEN
+                    IF d < prev THEN wb = " (warmer)" END IF
+                    IF d > prev THEN wb = " (colder)" END IF
+                    IF d = prev THEN wb = " (same)" END IF
+                END IF
+                PRINT "guess " | g | " " | fb | wb
+                prev = d
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Gf
+BEGIN
+    Gf.Run()
+END

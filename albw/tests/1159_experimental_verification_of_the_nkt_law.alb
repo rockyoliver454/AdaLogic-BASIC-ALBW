@@ -1,0 +1,25 @@
+VERSION 1.0
+
+STRICT nm[8] AS STRING
+STRICT xx[8] AS F64
+STRICT mv[8] AS F64
+
+
+BEGIN
+    nm[0] = "Mercury" xx[0] = 57.9 mv[0] = 47.4
+    nm[1] = "Venus"   xx[1] = 108.2 mv[1] = 35.0
+    nm[2] = "Earth"   xx[2] = 149.6 mv[2] = 29.8
+    nm[3] = "Mars"    xx[3] = 227.9 mv[3] = 24.1
+    nm[4] = "Jupiter" xx[4] = 778.6 mv[4] = 13.1
+    nm[5] = "Saturn"  xx[5] = 1433.5 mv[5] = 9.7
+    nm[6] = "Uranus"  xx[6] = 2872.5 mv[6] = 6.8
+    nm[7] = "Neptune" xx[7] = 4495.1 mv[7] = 5.4
+
+    LET i AS S64 = 0
+    WHILE i < 8
+        LET nkt1 AS F64 = xx[i] * mv[i]
+        PRINT nm[i] | " NKTg1=x*mv=" | nkt1
+        i = i + 1
+    END WHILE
+    PRINT "NKTg2=mv per planet shown via mv column"
+END

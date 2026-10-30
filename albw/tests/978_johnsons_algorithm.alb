@@ -1,0 +1,85 @@
+-- 978 | Johnson's algorithm: all-pairs shortest paths via
+-- Bellman-Ford reweighting + Dijkstra from each vertex.
+DECLARE MODULE Jn
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Jn
+    STRICT eu[10] AS S64
+    STRICT ev[10] AS S64
+    STRICT ew[10] AS S64
+    STRICT hh[6] AS S64
+    STRICT dist[6] AS S64
+    STRICT done[6] AS S64
+    STRICT ne2[1] AS S64
+
+    PROCEDURE Run()
+        -- 5 vertices, 9 edges (may have negative weights)
+        ne2[1] = 9
+        eu[1] = 1; ev[1] = 2; ew[1] = 3
+        eu[2] = 1; ev[2] = 3; ew[2] = 8
+        eu[3] = 1; ev[3] = 5; ew[3] = 0 - 4
+        eu[4] = 2; ev[4] = 4; ew[4] = 1
+        eu[5] = 2; ev[5] = 5; ew[5] = 7
+        eu[6] = 3; ev[6] = 2; ew[6] = 4
+        eu[7] = 4; ev[7] = 1; ew[7] = 2
+        eu[8] = 4; ev[8] = 3; ew[8] = 0 - 5
+        eu[9] = 5; ev[9] = 4; ew[9] = 6
+        -- Bellman-Ford from virtual source 0 (h[v], edges 0->v w=0)
+        FOR i = 1 TO 5
+            hh[i] = 0
+        END FOR
+        FOR it = 1 TO 5
+            FOR e = 1 TO ne2[1]
+                IF hh[eu[e]] + ew[e] < hh[ev[e]] THEN
+                    hh[ev[e]] = hh[eu[e]] + ew[e]
+                END IF
+            END FOR
+        END FOR
+        -- reweight: w'(u,v) = w + h[u] - h[v]
+        FOR e = 1 TO ne2[1]
+            ew[e] = ew[e] + hh[eu[e]] - hh[ev[e]]
+        END FOR
+        -- Dijkstra per source
+        FOR s = 1 TO 5
+            FOR i = 1 TO 5
+                dist[i] = 999
+                done[i] = 0
+            END FOR
+            dist[s] = 0
+            FOR it = 1 TO 5
+                LET u AS S64 = 0
+                LET bd AS S64 = 999
+                FOR i = 1 TO 5
+                    IF done[i] = 0 ANDALSO dist[i] < bd THEN
+                        bd = dist[i]
+                        u = i
+                    END IF
+                END FOR
+                IF u > 0 THEN
+                    done[u] = 1
+                    FOR e = 1 TO ne2[1]
+                        IF eu[e] = u ANDALSO dist[u] + ew[e] < dist[ev[e]] THEN
+                            dist[ev[e]] = dist[u] + ew[e]
+                        END IF
+                    END FOR
+                END IF
+            END FOR
+            LET row AS STRING = "from " | s | ":"
+            FOR i = 1 TO 5
+                LET d2 AS S64 = dist[i] + hh[i] - hh[s]
+                IF dist[i] >= 999 THEN
+                    row = row | " inf"
+                ELSE
+                    row = row | " " | d2
+                END IF
+            END FOR
+            PRINT row
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Jn
+BEGIN
+    Jn.Run()
+END

@@ -1,0 +1,45 @@
+-- 845 | XML/Input: parse a simple XML document, extract text
+-- content of each <item> element.
+DECLARE MODULE Xi
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Xi
+    STRICT doc[1] AS STRING
+    STRICT pos[1] AS S64
+
+    PROCEDURE Run()
+        doc[1] = "<root><item>alpha</item><item>beta</item><item>gamma</item></root>"
+        -- scan for <item>...</item>
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(doc[1])
+        LET found AS S64 = 0
+        WHILE i <= n - 6
+            -- check "<item>"
+            LET ok AS S32 = 1
+            LET kw AS STRING = "<item>"
+            FOR k = 1 TO 6
+                IF ASC(MID$(doc[1], i + k - 1, 1)) <> ASC(MID$(kw, k, 1)) THEN ok = 0 END IF
+            END FOR
+            IF ok = 1 THEN
+                found = found + 1
+                -- read until "</item>"
+                LET s AS STRING = ""
+                LET j AS S64 = i + 6
+                WHILE j <= n ANDALSO ASC(MID$(doc[1], j, 1)) <> 60
+                    s = s | MID$(doc[1], j, 1)
+                    j = j + 1
+                END WHILE
+                PRINT "item" | found | ": " | s
+                i = j
+            ELSE
+                i = i + 1
+            END IF
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Xi
+BEGIN
+    Xi.Run()
+END

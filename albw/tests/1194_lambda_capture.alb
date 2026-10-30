@@ -1,0 +1,12 @@
+-- Negative: LAMBDA bodies see globals + own params ONLY.
+-- Referencing an enclosing routine's local/param is a compile-time
+-- fatal — no heap captures exist in this architecture.
+TYPE Cmp IS ROUTINE(a AS S64) AS S32;
+FUNCTION Make(x AS S64) AS Cmp
+    LET f AS Cmp = LAMBDA(a AS S64) AS S32 => a + x
+    RETURN f
+END FUNCTION
+BEGIN
+    LET g AS Cmp = Make(5)
+    PRINT g(1)
+END

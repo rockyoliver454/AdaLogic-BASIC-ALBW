@@ -1,0 +1,8 @@
+BEGIN
+    LET y = 2024
+    IF y MOD 4 = 0 AND y MOD 100 <> 0 OR y MOD 400 = 0 THEN
+        PRINT$ "leap"
+    ELSE
+        PRINT$ "not leap"
+    END IF
+END

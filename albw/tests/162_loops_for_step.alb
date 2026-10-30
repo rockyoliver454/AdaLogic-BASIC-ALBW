@@ -1,0 +1,6 @@
+-- 162 | Loops/For with a specified step.
+BEGIN
+    FOR i = 2 TO 20 STEP 4
+        PRINT i;
+    END FOR
+END

@@ -1,0 +1,134 @@
+-- 301 | Four is magic: chain number to its name length until four.
+DECLARE MODULE FourMagic
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE FourMagic
+    STRICT small[20] AS STRING
+    STRICT tens[10] AS STRING
+
+    PROCEDURE Init()
+        small[0] = "zero"
+        small[1] = "one"
+        small[2] = "two"
+        small[3] = "three"
+        small[4] = "four"
+        small[5] = "five"
+        small[6] = "six"
+        small[7] = "seven"
+        small[8] = "eight"
+        small[9] = "nine"
+        small[10] = "ten"
+        small[11] = "eleven"
+        small[12] = "twelve"
+        small[13] = "thirteen"
+        small[14] = "fourteen"
+        small[15] = "fifteen"
+        small[16] = "sixteen"
+        small[17] = "seventeen"
+        small[18] = "eighteen"
+        small[19] = "nineteen"
+        tens[2] = "twenty"
+        tens[3] = "thirty"
+        tens[4] = "forty"
+        tens[5] = "fifty"
+        tens[6] = "sixty"
+        tens[7] = "seventy"
+        tens[8] = "eighty"
+        tens[9] = "ninety"
+    END PROCEDURE
+
+    FUNCTION LetterCount(v AS S32) AS S32
+        IF v < 0 THEN v = 0 - v END IF
+        IF v < 20 THEN RETURN LEN(small[v]) END IF
+        IF v < 100 THEN
+            LET t AS S32 = v / 10
+            LET r AS S32 = v - t * 10
+            LET cnt AS S32 = LEN(tens[t])
+            IF r > 0 THEN cnt = cnt + LEN(small[r]) END IF
+            RETURN cnt
+        END IF
+        IF v < 1000 THEN
+            LET h AS S32 = v / 100
+            LET r AS S32 = v - h * 100
+            LET cnt AS S32 = LEN(small[h]) + 7
+            IF r > 0 THEN cnt = cnt + LetterCount(r) END IF
+            RETURN cnt
+        END IF
+        LET th AS S32 = v / 1000
+        LET r AS S32 = v - th * 1000
+        LET cnt AS S32 = LetterCount(th) + 8
+        IF r > 0 THEN cnt = cnt + LetterCount(r) END IF
+        RETURN cnt
+    END FUNCTION
+
+    FUNCTION Under100(v AS S32) AS STRING
+        IF v < 20 THEN RETURN small[v] END IF
+        LET t AS S32 = v / 10
+        LET r AS S32 = v - t * 10
+        IF r = 0 THEN RETURN tens[t] END IF
+        RETURN tens[t] | "-" | small[r]
+    END FUNCTION
+
+    FUNCTION Under1000(v AS S32) AS STRING
+        IF v < 100 THEN RETURN Under100(v) END IF
+        LET h AS S32 = v / 100
+        LET r AS S32 = v - h * 100
+        IF r = 0 THEN RETURN small[h] | " hundred" END IF
+        RETURN small[h] | " hundred " | Under100(r)
+    END FUNCTION
+
+    FUNCTION NameOf(v AS S32) AS STRING
+        IF v < 0 THEN RETURN "minus " | Under1000(0 - v) END IF
+        IF v < 1000 THEN RETURN Under1000(v) END IF
+        LET th AS S32 = v / 1000
+        LET r AS S32 = v - th * 1000
+        IF r = 0 THEN RETURN Under1000(th) | " thousand" END IF
+        RETURN Under1000(th) | " thousand " | Under1000(r)
+    END FUNCTION
+
+    FUNCTION CapFirst(s AS STRING) AS STRING
+        LET c AS S32 = ASC(MID$(s, 1, 1))
+        IF c >= 97 ANDALSO c <= 122 THEN
+            RETURN CHR(c - 32) | MID$(s, 2, LEN(s) - 1)
+        END IF
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Magic(v AS S32)
+        LET out_line AS STRING = ""
+        LET cur AS S32 = v
+        LET first AS S32 = 1
+        WHILE cur <> 4
+            LET nxt AS S32 = LetterCount(cur)
+            IF first = 1 THEN
+                out_line = out_line | CapFirst(NameOf(cur)) | " is " | NameOf(nxt) | ", "
+                first = 0
+            ELSE
+                out_line = out_line | NameOf(cur) | " is " | NameOf(nxt) | ", "
+            END IF
+            cur = nxt
+        END WHILE
+        IF first = 1 THEN
+            out_line = "Four is magic."
+        ELSE
+            out_line = out_line | "four is magic."
+        END IF
+        PRINT out_line
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Init()
+        Magic(4)
+        Magic(8)
+        Magic(11)
+        Magic(69)
+        Magic(236)
+        Magic(762)
+    END PROCEDURE
+END MODULE
+
+IMPORT FourMagic
+BEGIN
+    FourMagic.Run()
+END

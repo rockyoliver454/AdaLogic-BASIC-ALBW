@@ -1,0 +1,58 @@
+-- 944 | Thiele's interpolation formula: reciprocal
+-- differences on a tan() table, then evaluate the
+-- continued fraction (the canonical demo for Thiele).
+DECLARE MODULE Th
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Th
+    STRICT px[8] AS F64
+    STRICT py[8] AS F64
+    STRICT rh[64] AS F64
+
+    PROCEDURE Run()
+        LET n AS S64 = 6
+        px[1] = 1.00
+        px[2] = 1.05
+        px[3] = 1.10
+        px[4] = 1.15
+        px[5] = 1.20
+        px[6] = 1.25
+        FOR i = 1 TO n
+            py[i] = TAN(px[i])
+        END FOR
+        -- reciprocal differences: rh[row j][col i] at j*8+i
+        FOR i = 1 TO n
+            rh[i] = py[i]
+        END FOR
+        FOR i = 1 TO n - 1
+            rh[8 + i] = (px[i] - px[i + 1]) / (rh[i] - rh[i + 1])
+        END FOR
+        FOR j = 2 TO n - 1
+            FOR i = 1 TO n - j
+                rh[j * 8 + i] = rh[(j - 2) * 8 + i + 1] + (px[i] - px[i + j]) / (rh[(j - 1) * 8 + i] - rh[(j - 1) * 8 + i + 1])
+            END FOR
+        END FOR
+        -- Thiele CF: f = a0 + (x-x1)/(a1 + (x-x2)/(a2 + ...))
+        -- a0=rho0, a1=rho1, a_j = rho_j - rho_{j-2} for j>=2
+        LET x AS F64 = 1.175
+        LET r AS F64 = rh[(n - 1) * 8 + 1] - rh[(n - 3) * 8 + 1]
+        LET jj AS S64 = n - 2
+        WHILE jj >= 1
+            LET aj AS F64 = rh[jj * 8 + 1]
+            IF jj >= 2 THEN
+                aj = aj - rh[(jj - 2) * 8 + 1]
+            END IF
+            r = aj + (x - px[jj + 1]) / r
+            jj = jj - 1
+        END WHILE
+        LET res AS F64 = rh[1] + (x - px[1]) / r
+        PRINT "tan(1.175) interp=" | res
+        PRINT "tan(1.175) exact =" | TAN(1.175)
+    END PROCEDURE
+END MODULE
+
+IMPORT Th
+BEGIN
+    Th.Run()
+END

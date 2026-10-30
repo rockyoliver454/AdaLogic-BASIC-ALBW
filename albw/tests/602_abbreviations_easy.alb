@@ -1,0 +1,46 @@
+-- 602 | Abbreviations, easy: resolve abbreviations against a
+-- command table where each command has a minimum length.
+DECLARE MODULE Abb
+    FUNCTION Resolve(t AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Abb
+    STRICT cmd[6] AS STRING
+    STRICT minlen[6] AS S64
+
+    FUNCTION Resolve(t AS STRING) AS STRING
+        FOR i = 1 TO 6
+            IF LEN(t) >= minlen[i] ANDALSO LEN(t) <= LEN(cmd[i]) THEN
+                IF LEFT$(cmd[i], LEN(t)) = t THEN RETURN cmd[i] END IF
+            END IF
+        END FOR
+        RETURN "error"
+    END FUNCTION
+
+    PROCEDURE Run()
+        cmd[1] = "add"
+        cmd[2] = "alter"
+        cmd[3] = "backup"
+        cmd[4] = "bottom"
+        cmd[5] = "compress"
+        cmd[6] = "copy"
+        minlen[1] = 1
+        minlen[2] = 3
+        minlen[3] = 2
+        minlen[4] = 1
+        minlen[5] = 4
+        minlen[6] = 1
+        PRINT Resolve("add")
+        PRINT Resolve("alt")
+        PRINT Resolve("b")
+        PRINT Resolve("comp")
+        PRINT Resolve("c")
+        PRINT Resolve("zz")
+    END PROCEDURE
+END MODULE
+
+IMPORT Abb
+BEGIN
+    Abb.Run()
+END

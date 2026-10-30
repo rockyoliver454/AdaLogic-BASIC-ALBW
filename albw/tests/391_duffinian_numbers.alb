@@ -1,0 +1,63 @@
+-- 391 | Duffinian numbers: composite n coprime with sigma(n); first 50.
+DECLARE MODULE Duffinian
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+    FUNCTION Sigma(n AS S64) AS S64
+    FUNCTION IsComposite(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Duffinian
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        LET x AS S64 = a
+        LET y AS S64 = b
+        WHILE y <> 0
+            LET t AS S64 = x MOD y
+            x = y
+            y = t
+        END WHILE
+        RETURN x
+    END FUNCTION
+
+    FUNCTION Sigma(n AS S64) AS S64
+        LET s AS S64 = 0
+        LET d AS S64 = 1
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION IsComposite(n AS S64) AS S32
+        IF n < 4 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 1 END IF
+            d = d + 1
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 4
+        WHILE found < 50
+            IF IsComposite(n) = 1 ANDALSO Gcd(Sigma(n), n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Duffinian
+BEGIN
+    Duffinian.Run()
+END

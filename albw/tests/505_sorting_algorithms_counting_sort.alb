@@ -1,0 +1,40 @@
+-- 505 | Sorting algorithms/Counting sort.
+DECLARE MODULE CntSort
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CntSort
+    STRICT a[10] AS S64
+    STRICT cnt[100] AS S64
+
+    PROCEDURE Run()
+        a[1] = 42
+        a[2] = 7
+        a[3] = 93
+        a[4] = 15
+        a[5] = 7
+        a[6] = 51
+        a[7] = 28
+        a[8] = 93
+        a[9] = 1
+        a[10] = 60
+        FOR i = 0 TO 99
+            cnt[i] = 0
+        END FOR
+        FOR j = 1 TO 10
+            cnt[a[j]] = cnt[a[j]] + 1
+        END FOR
+        LET s AS STRING = ""
+        FOR v = 0 TO 99
+            FOR rep = 1 TO cnt[v]
+                s = s | v | " "
+            END FOR
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT CntSort
+BEGIN
+    CntSort.Run()
+END

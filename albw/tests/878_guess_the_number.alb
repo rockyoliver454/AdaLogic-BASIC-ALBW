@@ -1,0 +1,37 @@
+-- 878 | Guess the number: computer picks 1-20 (seeded),
+-- scripted player guesses until correct with hints.
+DECLARE MODULE Gn
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gn
+    STRICT gs[8] AS S64
+
+    PROCEDURE Run()
+        LET sec AS S64 = 13
+        gs[1] = 10
+        gs[2] = 15
+        gs[3] = 12
+        gs[4] = 14
+        gs[5] = 13
+        gs[6] = 0
+        gs[7] = 0
+        gs[8] = 0
+        FOR i = 1 TO 8
+            LET g AS S64 = gs[i]
+            IF g = sec THEN
+                PRINT "guess " | g | " correct!"
+                RETURN
+            ELSE
+                IF g < sec THEN PRINT "guess " | g | " too low" END IF
+                IF g > sec THEN PRINT "guess " | g | " too high" END IF
+            END IF
+        END FOR
+        PRINT "out of guesses"
+    END PROCEDURE
+END MODULE
+
+IMPORT Gn
+BEGIN
+    Gn.Run()
+END

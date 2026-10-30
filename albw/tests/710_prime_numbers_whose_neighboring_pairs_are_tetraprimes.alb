@@ -1,0 +1,54 @@
+-- 710 | Prime numbers whose neighboring pairs are
+-- tetraprimes: p where p-1 and p+1 each have exactly 4 prime
+-- factors (with multiplicity).
+DECLARE MODULE Tt
+    FUNCTION Omega(n AS S64) AS S64
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tt
+    FUNCTION Omega(n AS S64) AS S64
+        LET c AS S64 = 0
+        LET v AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= v
+            WHILE v MOD d = 0
+                c = c + 1
+                v = v / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF v > 1 THEN c = c + 1 END IF
+        RETURN c
+    END FUNCTION
+
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET p AS S64 = 3
+        WHILE cnt < 12
+            IF Prime(p) = 1 THEN
+                IF Omega(p - 1) = 4 ANDALSO Omega(p + 1) = 4 THEN
+                    PRINT p
+                    cnt = cnt + 1
+                END IF
+            END IF
+            p = p + 2
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Tt
+BEGIN
+    Tt.Run()
+END

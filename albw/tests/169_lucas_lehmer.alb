@@ -1,0 +1,22 @@
+-- 169 | Lucas-Lehmer test: which small Mersennes are prime.
+BEGIN
+    STRICT p[8] AS S32;
+    p[0]=3; p[1]=5; p[2]=7; p[3]=11; p[4]=13; p[5]=17; p[6]=19; p[7]=23;
+    FOR t = 0 TO 7
+        LET pp AS S32 = p[t];
+        LET m AS S64 = 1;
+        FOR i = 1 TO pp
+            m = m * 2;
+        END FOR
+        m = m - 1;
+        LET s AS S64 = 4;
+        FOR i = 1 TO pp - 2
+            s = (s * s - 2) MOD m;
+        END FOR
+        IF s = 0 THEN
+            PRINT$ "M" | pp | " prime";
+        ELSE
+            PRINT$ "M" | pp | " composite";
+        END IF
+    END FOR
+END

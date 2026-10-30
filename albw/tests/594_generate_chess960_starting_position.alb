@@ -1,0 +1,80 @@
+-- 594 | Generate Chess960 starting position: derive the
+-- arrangement for position ID 518 (traditional) and 0.
+DECLARE MODULE C960
+    PROCEDURE Gen(id AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE C960
+    STRICT pos[8] AS STRING
+    STRICT pairs[10] AS S64
+
+    PROCEDURE Gen(id AS S64)
+        FOR i = 0 TO 7
+            pos[i] = ""
+        END FOR
+        -- b2 bishop on odd file (2,4,6,8)
+        LET b2 AS S64 = id MOD 4
+        id = id / 4
+        LET b1 AS S64 = id MOD 4
+        id = id / 4
+        LET q AS S64 = id MOD 6
+        id = id / 6
+        LET kn AS S64 = id
+        -- place bishops: b1 on even squares 0,2,4,6; b2 on odd 1,3,5,7
+        pos[b1 * 2] = "B"
+        pos[b2 * 2 + 1] = "B"
+        -- queen into q-th free square
+        LET cnt AS S64 = -1
+        FOR p = 0 TO 7
+            IF pos[p] = "" THEN
+                cnt = cnt + 1
+                IF cnt = q THEN pos[p] = "Q" END IF
+            END IF
+        END FOR
+        -- knights: kn-th pair of free squares from the 5 remaining
+        pairs[0] = 1
+        pairs[1] = 2
+        pairs[2] = 3
+        pairs[3] = 4
+        pairs[4] = 12
+        pairs[5] = 13
+        pairs[6] = 14
+        pairs[7] = 23
+        pairs[8] = 24
+        pairs[9] = 34
+        LET p1 AS S64 = pairs[kn] / 10
+        LET p2 AS S64 = pairs[kn] MOD 10
+        cnt = -1
+        FOR s = 0 TO 7
+            IF pos[s] = "" THEN
+                cnt = cnt + 1
+                IF cnt = p1 THEN pos[s] = "N" END IF
+                IF cnt = p2 THEN pos[s] = "N" END IF
+            END IF
+        END FOR
+        -- remaining three: king goes in the middle, rooks outside
+        LET cnt3 AS S64 = 0
+        FOR t = 0 TO 7
+            IF pos[t] = "" THEN
+                IF cnt3 = 1 THEN pos[t] = "K" ELSE pos[t] = "R" END IF
+                cnt3 = cnt3 + 1
+            END IF
+        END FOR
+        LET s2 AS STRING = ""
+        FOR u = 0 TO 7
+            s2 = s2 | pos[u]
+        END FOR
+        PRINT s2
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Gen(518)
+        Gen(0)
+    END PROCEDURE
+END MODULE
+
+IMPORT C960
+BEGIN
+    C960.Run()
+END

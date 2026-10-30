@@ -1,0 +1,11 @@
+BEGIN
+    LET i = 1
+    WHILE i <= 3
+        LET j = 1
+        WHILE j <= 3
+            PRINT$ i | "x" | j | "=" | (i * j)
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+END

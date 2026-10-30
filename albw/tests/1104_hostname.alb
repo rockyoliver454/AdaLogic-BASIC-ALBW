@@ -1,0 +1,10 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS STRING = ENV$("COMPUTERNAME")
+    IF LEN(h) = 0 THEN
+        h = ENV$("HOSTNAME")
+    END IF
+    PRINT "hostname present=" | (LEN(h) > 0)
+    PRINT "hostname len>0=" | (LEN(h) > 0)
+END

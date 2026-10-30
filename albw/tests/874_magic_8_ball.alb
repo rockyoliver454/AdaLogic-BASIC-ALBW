@@ -1,0 +1,49 @@
+-- 874 | Magic 8-ball: seeded deterministic answers from the
+-- classic 20-answer ball.
+DECLARE MODULE M8
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE M8
+    STRICT sd[1] AS S64
+    STRICT ans[20] AS STRING
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536
+    END FUNCTION
+
+    PROCEDURE Run()
+        ans[1] = "It is certain"
+        ans[2] = "It is decidedly so"
+        ans[3] = "Without a doubt"
+        ans[4] = "Yes definitely"
+        ans[5] = "You may rely on it"
+        ans[6] = "As I see it yes"
+        ans[7] = "Most likely"
+        ans[8] = "Outlook good"
+        ans[9] = "Yes"
+        ans[10] = "Signs point to yes"
+        ans[11] = "Reply hazy try again"
+        ans[12] = "Ask again later"
+        ans[13] = "Better not tell you now"
+        ans[14] = "Cannot predict now"
+        ans[15] = "Concentrate and ask again"
+        ans[16] = "Dont count on it"
+        ans[17] = "My reply is no"
+        ans[18] = "My sources say no"
+        ans[19] = "Outlook not so good"
+        ans[20] = "Very doubtful"
+        sd[1] = 42
+        FOR i = 1 TO 5
+            LET j AS S64 = (Nxt() MOD 20) + 1
+            PRINT ans[j]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT M8
+BEGIN
+    M8.Run()
+END

@@ -1,0 +1,63 @@
+-- 828 | Playing cards: build a 52-card deck, shuffle with a
+-- seeded LCG (deterministic), deal and print four hands.
+DECLARE MODULE Pc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pc
+    STRICT dk[53] AS S64
+    STRICT sd[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 52
+            dk[i] = i - 1
+        END FOR
+        sd[1] = 7
+        -- Fisher-Yates (forward pass)
+        FOR i = 2 TO 52
+            LET j AS S64 = (Nxt() MOD i) + 1
+            LET t AS S64 = dk[i]
+            dk[i] = dk[j]
+            dk[j] = t
+        END FOR
+        -- deal 4 hands of 5
+        FOR h = 1 TO 4
+            LET s AS STRING = "hand" | h | ":"
+            FOR c = 1 TO 5
+                LET card AS S64 = dk[(h - 1) * 5 + c]
+                LET r AS S64 = card MOD 13
+                LET st AS S64 = card / 13
+                LET rs AS STRING = ""
+                IF r = 0 THEN rs = "2" END IF
+                IF r = 1 THEN rs = "3" END IF
+                IF r = 2 THEN rs = "4" END IF
+                IF r = 3 THEN rs = "5" END IF
+                IF r = 4 THEN rs = "6" END IF
+                IF r = 5 THEN rs = "7" END IF
+                IF r = 6 THEN rs = "8" END IF
+                IF r = 7 THEN rs = "9" END IF
+                IF r = 8 THEN rs = "10" END IF
+                IF r = 9 THEN rs = "J" END IF
+                IF r = 10 THEN rs = "Q" END IF
+                IF r = 11 THEN rs = "K" END IF
+                IF r = 12 THEN rs = "A" END IF
+                IF st = 0 THEN rs = rs | "S" END IF
+                IF st = 1 THEN rs = rs | "H" END IF
+                IF st = 2 THEN rs = rs | "D" END IF
+                IF st = 3 THEN rs = rs | "C" END IF
+                s = s | " " | rs
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pc
+BEGIN
+    Pc.Run()
+END

@@ -1,0 +1,102 @@
+-- 837 | Solve a Hopido puzzle: fill a 5x5 grid 1..25 so that
+-- consecutive numbers are a "hop" apart: (+-3,0), (0,+-3) or
+-- (+-2,+-2). Backtracking with givens.
+DECLARE MODULE Hp
+    FUNCTION Place(v AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hp
+    STRICT gd[26] AS S64
+    STRICT gv[26] AS S64
+    STRICT mvx[8] AS S64
+    STRICT mvy[8] AS S64
+    STRICT calls[1] AS S64
+
+    FUNCTION Place(v AS S64) AS S32
+        calls[1] = calls[1] + 1
+        IF calls[1] > 2000000 THEN RETURN 0 END IF
+        IF v > 25 THEN RETURN 1 END IF
+        IF gv[v] > 0 THEN
+            LET prev AS S64 = 0
+            FOR i = 1 TO 25
+                IF gd[i] = v - 1 THEN prev = i END IF
+            END FOR
+            LET pr AS S64 = (prev - 1) / 5
+            LET pc AS S64 = (prev - 1) MOD 5
+            LET tr AS S64 = (gv[v] - 1) / 5
+            LET tc AS S64 = (gv[v] - 1) MOD 5
+            LET dr AS S64 = ABS(pr - tr)
+            LET dc AS S64 = ABS(pc - tc)
+            LET hop AS S32 = 0
+            IF dr = 3 ANDALSO dc = 0 THEN hop = 1 END IF
+            IF dr = 0 ANDALSO dc = 3 THEN hop = 1 END IF
+            IF dr = 2 ANDALSO dc = 2 THEN hop = 1 END IF
+            IF hop = 1 ANDALSO gd[gv[v]] = 0 THEN
+                gd[gv[v]] = v
+                IF Place(v + 1) = 1 THEN RETURN 1 END IF
+                gd[gv[v]] = 0
+            END IF
+            RETURN 0
+        END IF
+        LET prev AS S64 = 0
+        FOR i = 1 TO 25
+            IF gd[i] = v - 1 THEN prev = i END IF
+        END FOR
+        LET pr AS S64 = (prev - 1) / 5
+        LET pc AS S64 = (prev - 1) MOD 5
+        FOR m = 1 TO 8
+            LET nr AS S64 = pr + mvx[m]
+            LET nc AS S64 = pc + mvy[m]
+            IF nr >= 0 ANDALSO nr < 5 ANDALSO nc >= 0 ANDALSO nc < 5 THEN
+                LET cell AS S64 = nr * 5 + nc + 1
+                IF gd[cell] = 0 THEN
+                    LET res AS S32 = 0
+                    FOR w = 1 TO 25
+                        IF gv[w] = cell THEN res = 1 END IF
+                    END FOR
+                    IF res = 0 THEN
+                        gd[cell] = v
+                        IF Place(v + 1) = 1 THEN RETURN 1 END IF
+                        gd[cell] = 0
+                    END IF
+                END IF
+            END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        mvx[1] = 0 - 3; mvx[2] = 3; mvx[3] = 0; mvx[4] = 0
+        mvx[5] = 0 - 2; mvx[6] = 0 - 2; mvx[7] = 2; mvx[8] = 2
+        mvy[1] = 0; mvy[2] = 0; mvy[3] = 0 - 3; mvy[4] = 3
+        mvy[5] = 0 - 2; mvy[6] = 2; mvy[7] = 0 - 2; mvy[8] = 2
+        calls[1] = 0
+        FOR i = 1 TO 25
+            gd[i] = 0
+            gv[i] = 0
+        END FOR
+        gv[1] = 1
+        gv[25] = 25
+        gd[1] = 1
+        IF Place(2) = 1 THEN
+            FOR r = 0 TO 4
+                LET s AS STRING = ""
+                FOR c = 0 TO 4
+                    LET v AS S64 = gd[r * 5 + c + 1]
+                    IF v < 10 THEN s = s | " " END IF
+                    s = s | v | " "
+                END FOR
+                PRINT s
+            END FOR
+        ELSE
+            PRINT "no solution"
+        END IF
+        PRINT "calls=" | calls[1]
+    END PROCEDURE
+END MODULE
+
+IMPORT Hp
+BEGIN
+    Hp.Run()
+END

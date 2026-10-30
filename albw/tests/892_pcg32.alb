@@ -1,0 +1,50 @@
+-- 892 | Pseudo-random numbers/PCG32: implement the PCG32
+-- generator (state*6364136223846793005+1442695040888963407,
+-- xorshift+rotate output). First values for
+-- state=42 seq=54 are the published test vector.
+DECLARE MODULE Pc
+    FUNCTION Lshr(v AS S64, k AS S64) AS S64
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pc
+    STRICT st[1] AS S64
+    STRICT inc[1] AS S64
+
+    FUNCTION Lshr(v AS S64, k AS S64) AS S64
+        -- logical (unsigned) right shift on 64-bit values
+        LET m AS S64 = v AND 9223372036854775807
+        LET r AS S64 = m / (2 ^ k)
+        IF v < 0 THEN r = r + (2 ^ (63 - k)) END IF
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Nxt() AS S64
+        LET old AS S64 = st[1]
+        st[1] = old * 6364136223846793005 + inc[1]
+        LET xs AS S64 = Lshr(old, 18) XOR old
+        xs = Lshr(xs, 27) AND 4294967295
+        LET rot AS S64 = Lshr(old, 59)
+        LET hi AS S64 = xs / (2 ^ rot)
+        LET lo AS S64 = (xs MOD (2 ^ rot)) * (2 ^ (32 - rot))
+        RETURN (hi + lo) AND 4294967295
+    END FUNCTION
+
+    PROCEDURE Run()
+        st[1] = 0
+        inc[1] = 54 * 2 + 1
+        -- seeding: one advance, add 42, advance
+        LET d AS S64 = Nxt()
+        st[1] = st[1] + 42
+        d = Nxt()
+        FOR i = 1 TO 10
+            PRINT Nxt()
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pc
+BEGIN
+    Pc.Run()
+END

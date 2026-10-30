@@ -1,0 +1,51 @@
+-- 677 | Roots of a function: bisection for cos(x) = x and
+-- x^3 - x - 2 = 0.
+DECLARE MODULE Root
+    FUNCTION F(x AS F64) AS F64
+    FUNCTION G(x AS F64) AS F64
+    FUNCTION Bisect(lo AS F64, hi AS F64, which AS S64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Root
+    FUNCTION F(x AS F64) AS F64
+        RETURN COS(x) - x
+    END FUNCTION
+
+    FUNCTION G(x AS F64) AS F64
+        RETURN x * x * x - x - 2.0
+    END FUNCTION
+
+    FUNCTION Bisect(lo AS F64, hi AS F64, which AS S64) AS F64
+        LET a AS F64 = lo
+        LET b AS F64 = hi
+        FOR i = 1 TO 60
+            LET m AS F64 = (a + b) / 2.0
+            LET fa AS F64
+            LET fm AS F64
+            IF which = 1 THEN
+                fa = F(a)
+                fm = F(m)
+            ELSE
+                fa = G(a)
+                fm = G(m)
+            END IF
+            IF fa * fm <= 0.0 THEN
+                b = m
+            ELSE
+                a = m
+            END IF
+        END FOR
+        RETURN (a + b) / 2.0
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Bisect(0.0, 1.0, 1)
+        PRINT Bisect(1.0, 2.0, 2)
+    END PROCEDURE
+END MODULE
+
+IMPORT Root
+BEGIN
+    Root.Run()
+END

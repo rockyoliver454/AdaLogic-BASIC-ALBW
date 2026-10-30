@@ -1,0 +1,99 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT bins[15] AS S64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    LET row AS S64 = 0
+    WHILE row < 9
+        LET x AS S64 = 32 - row * 2
+        WHILE x <= 32 + row * 2
+            img[(10 + row * 4) * 64 + x] = 16777215
+            x = x + 4
+        END WHILE
+        row = row + 1
+    END WHILE
+
+    sd = 99
+    LET b AS S64 = 0
+    WHILE b < 300
+        LET pos AS S64 = 32
+        row = 0
+        WHILE row < 9
+            IF Nxt() MOD 2 = 0 THEN pos = pos - 1 ELSE pos = pos + 1 END IF
+            row = row + 1
+        END WHILE
+        LET bi AS S64 = (pos - 32 + 18) / 2
+        IF bi < 0 THEN bi = 0 END IF
+        IF bi > 14 THEN bi = 14 END IF
+        bins[bi] = bins[bi] + 1
+        b = b + 1
+    END WHILE
+
+    LET i AS S64 = 0
+    WHILE i < 15
+        LET h AS S64 = bins[i] / 4
+        LET y AS S64 = 0
+        WHILE y < h ANDALSO 62 - y > 44
+            img[(62 - y) * 64 + 4 + i * 4] = 65535
+            img[(62 - y) * 64 + 5 + i * 4] = 65535
+            img[(62 - y) * 64 + 6 + i * 4] = 65535
+            y = y + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+
+    CREATE_WINDOW "Galton box", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "balls=300 pegs=9x9"
+    i = 0
+    WHILE i < 15
+        PRINT "bin" | i | "=" | bins[i]
+        i = i + 1
+    END WHILE
+    PRINT "ink=" | ink
+    PRINT "hitpx=" | fpx
+END

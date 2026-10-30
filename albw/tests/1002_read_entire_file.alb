@@ -1,0 +1,12 @@
+-- 1002 | Read entire file: write a known file then read the
+-- whole contents back in one call.
+BEGIN
+LET h = OPEN("rosetta_whole.dat", "w")
+WRITE h, "abc123XYZ"
+CLOSE h
+LET r = OPEN("rosetta_whole.dat", "r")
+LET whole AS STRING = READ(r, 0)
+PRINT "len=" | LEN(whole)
+PRINT "content=" | whole
+CLOSE r
+END

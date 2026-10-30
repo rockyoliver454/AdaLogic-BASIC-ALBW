@@ -1,0 +1,43 @@
+-- 295 | N'th: append the correct ordinal suffix to numbers.
+DECLARE MODULE Nth
+    FUNCTION Suffix(v AS S32) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nth
+    FUNCTION Suffix(v AS S32) AS STRING
+        LET last_two AS S32 = v - (v / 100) * 100
+        LET last AS S32 = v - (v / 10) * 10
+        IF last_two >= 11 ANDALSO last_two <= 13 THEN RETURN "th" END IF
+        IF last = 1 THEN RETURN "st" END IF
+        IF last = 2 THEN RETURN "nd" END IF
+        IF last = 3 THEN RETURN "rd" END IF
+        RETURN "th"
+    END FUNCTION
+
+    PROCEDURE Run()
+        STRICT nums[13] AS S32
+        nums[0] = 0
+        nums[1] = 1
+        nums[2] = 2
+        nums[3] = 3
+        nums[4] = 4
+        nums[5] = 11
+        nums[6] = 12
+        nums[7] = 13
+        nums[8] = 21
+        nums[9] = 22
+        nums[10] = 23
+        nums[11] = 101
+        nums[12] = 112
+        FOR i = 0 TO 12
+            LET out_line AS STRING = nums[i] | Suffix(nums[i])
+            PRINT out_line
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Nth
+BEGIN
+    Nth.Run()
+END

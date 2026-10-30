@@ -1,0 +1,39 @@
+-- 566 | CSV data manipulation: parse a small CSV, sum a column,
+-- and emit modified CSV.
+DECLARE MODULE Csv
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Csv
+    STRICT cell[24] AS STRING
+
+    PROCEDURE Run()
+        LET rows AS STRING = "name,age,score;alice,30,88;bob,25,72;carol,41,95"
+        LET ncell AS S64 = 0
+        LET cur AS STRING = ""
+        FOR i = 1 TO LEN(rows)
+            LET ch AS STRING = MID$(rows, i, 1)
+            IF ch = "," ORELSE ch = ";" THEN
+                ncell = ncell + 1
+                cell[ncell] = cur
+                cur = ""
+            ELSE
+                cur = cur | ch
+            END IF
+        END FOR
+        ncell = ncell + 1
+        cell[ncell] = cur
+        PRINT "cells: " | ncell
+        LET sum AS S64 = 0
+        FOR r = 1 TO 3
+            PRINT cell[r * 3 + 1] | " " | cell[r * 3 + 2] | " " | cell[r * 3 + 3]
+            sum = sum + VAL(cell[r * 3 + 3])
+        END FOR
+        PRINT "score total: " | sum
+    END PROCEDURE
+END MODULE
+
+IMPORT Csv
+BEGIN
+    Csv.Run()
+END

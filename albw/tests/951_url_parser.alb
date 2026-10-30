@@ -1,0 +1,99 @@
+-- 951 | URL parser: split a URL into scheme, authority,
+-- userinfo, hst, prt, path, query, fragment.
+DECLARE MODULE Up
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Up
+    FUNCTION Ch(s AS STRING, i AS S64, c AS STRING) AS S64
+        RETURN ASC(MID$(s, i, 1)) = ASC(c)
+    END FUNCTION
+
+    PROCEDURE Parse(u AS STRING)
+        LET n AS S64 = LEN(u)
+        LET p AS S64 = 1
+        LET scheme AS STRING = ""
+        LET auth AS STRING = ""
+        LET path AS STRING = ""
+        LET query AS STRING = ""
+        LET frag AS STRING = ""
+        -- scheme: up to ':'
+        LET i AS S64 = p
+        WHILE i <= n ANDALSO Ch(u, i, ":") = 0
+            i = i + 1
+        END WHILE
+        IF i <= n THEN
+            scheme = MID$(u, p, i - p)
+            p = i + 1
+        END IF
+        -- authority: //...
+        IF p + 1 <= n ANDALSO ASC(MID$(u, p, 1)) = ASC("/") ANDALSO ASC(MID$(u, p + 1, 1)) = ASC("/") THEN
+            p = p + 2
+            i = p
+            WHILE i <= n ANDALSO Ch(u, i, "/") = 0 ANDALSO Ch(u, i, "?") = 0 ANDALSO Ch(u, i, "#") = 0
+                i = i + 1
+            END WHILE
+            auth = MID$(u, p, i - p)
+            p = i
+        END IF
+        -- path up to ? or #
+        i = p
+        WHILE i <= n ANDALSO Ch(u, i, "?") = 0 ANDALSO Ch(u, i, "#") = 0
+            i = i + 1
+        END WHILE
+        path = MID$(u, p, i - p)
+        p = i
+        IF p <= n ANDALSO Ch(u, p, "?") = 1 THEN
+            p = p + 1
+            i = p
+            WHILE i <= n ANDALSO Ch(u, i, "#") = 0
+                i = i + 1
+            END WHILE
+            query = MID$(u, p, i - p)
+            p = i
+        END IF
+        IF p <= n ANDALSO Ch(u, p, "#") = 1 THEN
+            frag = MID$(u, p + 1, n - p)
+        END IF
+        -- split authority into userinfo@hst:prt
+        LET hst AS STRING = auth
+        LET usr AS STRING = ""
+        LET prt AS STRING = ""
+        i = 1
+        LET an AS S64 = LEN(auth)
+        WHILE i <= an ANDALSO Ch(auth, i, "@") = 0
+            i = i + 1
+        END WHILE
+        IF i <= an THEN
+            usr = MID$(auth, 1, i - 1)
+            hst = MID$(auth, i + 1, an - i)
+        END IF
+        LET hn AS S64 = LEN(hst)
+        i = hn
+        WHILE i >= 1 ANDALSO Ch(hst, i, ":") = 0
+            i = i - 1
+        END WHILE
+        IF i >= 1 THEN
+            prt = MID$(hst, i + 1, hn - i)
+            hst = MID$(hst, 1, i - 1)
+        END IF
+        PRINT "url    : " | u
+        PRINT "scheme : " | scheme
+        PRINT "usr   : " | usr
+        PRINT "hst   : " | hst
+        PRINT "prt   : " | prt
+        PRINT "path   : " | path
+        PRINT "query  : " | query
+        PRINT "frag   : " | frag
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Parse("https://user@example.com:8080/a/b?x=1&y=2#sec")
+        Parse("ftp://files.org/pub/rel/notes.txt")
+    END PROCEDURE
+END MODULE
+
+IMPORT Up
+BEGIN
+    Up.Run()
+END

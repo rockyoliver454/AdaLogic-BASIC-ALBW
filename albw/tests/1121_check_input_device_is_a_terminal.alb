@@ -1,0 +1,17 @@
+VERSION 1.0
+
+IMPORTDLL FUNCTION GetStdHandle(n AS S64) AS S64 FROM "kernel32"
+IMPORTDLL FUNCTION GetConsoleMode(h AS S64, m AS S64) AS S32 FROM "kernel32"
+
+STRICT MODEB[8] AS S32
+
+
+BEGIN
+    LET h AS S64 = GetStdHandle(-10)
+    LET ok AS S64 = 0
+    IF h <> 0 THEN ok = 1 END IF
+    IF h = 0 - 1 THEN ok = 0 END IF
+    LET rc AS S32 = GetConsoleMode(h, @MODEB)
+    PRINT "handle ok=" | ok
+    PRINT "is console=" | rc
+END

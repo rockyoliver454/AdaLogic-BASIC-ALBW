@@ -1,0 +1,57 @@
+-- 641 | Legendre prime counting function: pi(100) and
+-- pi(1000) via the Legendre sieve formula.
+DECLARE MODULE Lpc
+    FUNCTION Phi(x AS S64, a AS S64) AS S64
+    FUNCTION Pi(x AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lpc
+    STRICT p[200] AS S64
+    STRICT np[1] AS S64
+
+    FUNCTION Phi(x AS S64, a AS S64) AS S64
+        IF a = 0 THEN RETURN x END IF
+        LET v AS S64 = Phi(x, a - 1) - Phi(x / p[a], a - 1)
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Pi(x AS S64) AS S64
+        IF x < 2 THEN RETURN 0 END IF
+        LET a AS S64 = 0
+        LET rt AS S64 = 1
+        WHILE rt * rt <= x
+            rt = rt + 1
+        END WHILE
+        rt = rt - 1
+        a = 0
+        FOR i = 1 TO np[1]
+            IF p[i] <= rt THEN a = a + 1 END IF
+        END FOR
+        LET v AS S64 = Phi(x, a) + a - 1
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- primes below 32 for the phi sieve
+        np[1] = 0
+        FOR n = 2 TO 101
+            LET ok AS S32 = 1
+            FOR d = 2 TO n - 1
+                IF n MOD d = 0 THEN ok = 0 END IF
+            END FOR
+            IF ok = 1 THEN
+                np[1] = np[1] + 1
+                p[np[1]] = n
+            END IF
+        END FOR
+        PRINT Pi(100)
+        PRINT Pi(1000)
+        PRINT Pi(10000)
+    END PROCEDURE
+END MODULE
+
+IMPORT Lpc
+BEGIN
+    Lpc.Run()
+END

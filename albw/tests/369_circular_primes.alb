@@ -1,0 +1,64 @@
+-- 369 | Circular primes: every rotation of the digits is prime; all below 1000.
+DECLARE MODULE Circular
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION Pow10(e AS S32) AS S64
+    FUNCTION IsCircular(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Circular
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Pow10(e AS S32) AS S64
+        LET p AS S64 = 1
+        FOR i = 1 TO e
+            p = p * 10
+        END FOR
+        RETURN p
+    END FUNCTION
+
+    FUNCTION IsCircular(n AS S64) AS S32
+        IF IsPrime(n) = 0 THEN RETURN 0 END IF
+        LET m AS S64 = n
+        LET nd AS S32 = 0
+        WHILE m > 0
+            nd = nd + 1
+            m = m / 10
+        END WHILE
+        LET r AS S64 = n
+        FOR i = 1 TO nd - 1
+            LET dig AS S64 = r MOD 10
+            r = r / 10 + dig * Pow10(nd - 1)
+            IF IsPrime(r) = 0 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET cnt AS S32 = 0
+        FOR n = 2 TO 999
+            IF IsCircular(n) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Circular
+BEGIN
+    Circular.Run()
+END

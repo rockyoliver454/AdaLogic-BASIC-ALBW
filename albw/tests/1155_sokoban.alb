@@ -1,0 +1,102 @@
+VERSION 1.0
+
+STRICT bd[54] AS S64
+STRICT dist[5500] AS S64
+STRICT seen[5500] AS S64
+STRICT qpos[5500] AS S64
+STRICT qd[5500] AS S64
+
+LET sol AS S64 = 0
+
+PROCEDURE Encode(idx AS S64)
+    seen[idx] = 1
+END PROCEDURE
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 54
+        bd[i] = 0
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < 54
+        IF i < 9 ORELSE i >= 45 ORELSE i MOD 9 = 0 ORELSE i MOD 9 = 8 THEN
+            bd[i] = 1
+        END IF
+        i = i + 1
+    END WHILE
+
+    LET px AS S64 = 4
+    LET py AS S64 = 4
+    LET bxx AS S64 = 4
+    LET byy AS S64 = 3
+    LET tx AS S64 = 6
+    LET ty AS S64 = 3
+
+    LET qh AS S64 = 0
+    LET qt AS S64 = 0
+    LET stt AS S64 = (py * 9 + px) * 100 + byy * 9 + bxx
+    qpos[qt] = stt
+    qd[qt] = 0
+    qt = qt + 1
+    seen[stt] = 1
+
+    sol = 0 - 1
+    WHILE qh < qt ANDALSO sol < 0
+        LET cur AS S64 = qpos[qh]
+        LET dd AS S64 = qd[qh]
+        qh = qh + 1
+        LET cb AS S64 = cur MOD 100
+        LET cp AS S64 = cur / 100
+        LET cbx AS S64 = cb MOD 9
+        LET cby AS S64 = cb / 9
+        IF cbx = tx ANDALSO cby = ty THEN
+            sol = dd
+        ELSE
+            LET m AS S64 = 0
+            WHILE m < 4
+                LET dx AS S64 = 0
+                LET dy AS S64 = 0
+                IF m = 0 THEN dx = 1 END IF
+                IF m = 1 THEN dx = 0 - 1 END IF
+                IF m = 2 THEN dy = 1 END IF
+                IF m = 3 THEN dy = 0 - 1 END IF
+                LET npx AS S64 = (cp MOD 9) + dx
+                LET npy AS S64 = (cp / 9) + dy
+                LET nbx AS S64 = cbx
+                LET nby AS S64 = cby
+                LET ok AS S64 = 1
+                IF npx < 0 ORELSE npx > 8 ORELSE npy < 0 ORELSE npy > 5 THEN
+                    ok = 0
+                ELSE
+                    IF bd[npy * 9 + npx] = 1 THEN
+                        ok = 0
+                    END IF
+                END IF
+                IF ok = 1 ANDALSO npx = cbx ANDALSO npy = cby THEN
+                    LET b2x AS S64 = cbx + dx
+                    LET b2y AS S64 = cby + dy
+                    IF b2x < 0 ORELSE b2x > 8 ORELSE b2y < 0 ORELSE b2y > 5 ORELSE bd[b2y * 9 + b2x] = 1 THEN
+                        ok = 0
+                    ELSE
+                        nbx = b2x
+                        nby = b2y
+                    END IF
+                END IF
+                IF ok = 1 THEN
+                    LET ns AS S64 = (npy * 9 + npx) * 100 + nby * 9 + nbx
+                    IF seen[ns] = 0 THEN
+                        seen[ns] = 1
+                        qpos[qt] = ns
+                        qd[qt] = dd + 1
+                        qt = qt + 1
+                    END IF
+                END IF
+                m = m + 1
+            END WHILE
+        END IF
+    END WHILE
+    PRINT "sokoban solved in " | sol | " moves"
+    PRINT "states explored=" | qt
+END

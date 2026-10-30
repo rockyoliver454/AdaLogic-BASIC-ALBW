@@ -1,0 +1,43 @@
+-- 788 | Conjugate transpose: Hermitian adjoint of a complex
+-- matrix (re/im split into two matrices).
+DECLARE MODULE Ct
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ct
+    STRICT re[9] AS S64
+    STRICT im[9] AS S64
+    STRICT tre[9] AS S64
+    STRICT tim[9] AS S64
+
+    PROCEDURE Run()
+        -- 2x2 complex matrix: [[1+i, 2-3i],[4, -i]]
+        re[1] = 1
+        im[1] = 1
+        re[2] = 2
+        im[2] = 0 - 3
+        re[3] = 4
+        im[3] = 0
+        re[4] = 0
+        im[4] = 0 - 1
+        FOR i = 1 TO 2
+            FOR j = 1 TO 2
+                tre[(j - 1) * 2 + i] = re[(i - 1) * 2 + j]
+                tim[(j - 1) * 2 + i] = 0 - im[(i - 1) * 2 + j]
+            END FOR
+        END FOR
+        PRINT "conjugate transpose:"
+        FOR i = 1 TO 2
+            FOR j = 1 TO 2
+                LET k AS S64 = (i - 1) * 2 + j
+                PRINT "(" | tre[k] | "," | tim[k] | ") ";
+            END FOR
+            PRINT ""
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ct
+BEGIN
+    Ct.Run()
+END

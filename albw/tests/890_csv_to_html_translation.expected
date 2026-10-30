@@ -1,0 +1,6 @@
+<table>
+  <tr><th>name</th><th>age</th><th>city</th></tr>
+  <tr><td>alice</td><td>30</td><td>london</td></tr>
+  <tr><td>bob</td><td>25</td><td>paris</td></tr>
+  <tr><td>smith, jr.</td><td>41</td><td>rome</td></tr>
+</table>

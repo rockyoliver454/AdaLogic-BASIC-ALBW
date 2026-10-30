@@ -1,0 +1,22 @@
+-- 059 | Doubly-linked list via prev/next index arrays.
+BEGIN
+    STRICT val[4] AS S32;
+    STRICT prv[4] AS S32;
+    STRICT nxt[4] AS S32;
+    val[0]=10; val[1]=20; val[2]=30; val[3]=40;
+    prv[0]=-1; nxt[0]=1;
+    prv[1]=0;  nxt[1]=2;
+    prv[2]=1;  nxt[2]=3;
+    prv[3]=2;  nxt[3]=-1;
+    LET i AS S32 = 0;
+    WHILE i >= 0
+        PRINT val[i];
+        i = nxt[i];
+    END WHILE
+    PRINT$ "reverse:";
+    i = 3;
+    WHILE i >= 0
+        PRINT val[i];
+        i = prv[i];
+    END WHILE
+END

@@ -1,0 +1,45 @@
+-- 614 | Isograms and heterograms: isogram = no letter repeats;
+-- heterogram = every letter distinct at any count (same thing
+-- at word level); report repeat counts.
+DECLARE MODULE Iso
+    FUNCTION Repeats(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Iso
+    STRICT w[6] AS STRING
+
+    FUNCTION Repeats(s AS STRING) AS S64
+        LET mx AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            LET cnt AS S64 = 0
+            FOR j = 1 TO LEN(s)
+                IF MID$(s, i, 1) = MID$(s, j, 1) THEN cnt = cnt + 1 END IF
+            END FOR
+            IF cnt > mx THEN mx = cnt END IF
+        END FOR
+        RETURN mx
+    END FUNCTION
+
+    PROCEDURE Run()
+        w[1] = "lumberjacks"
+        w[2] = "background"
+        w[3] = "downstream"
+        w[4] = "isograms"
+        w[5] = "banana"
+        w[6] = "letter"
+        FOR i = 1 TO 6
+            LET r AS S64 = Repeats(w[i])
+            IF r = 1 THEN
+                PRINT w[i] | " isogram"
+            ELSE
+                PRINT w[i] | " repeats: " | r
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Iso
+BEGIN
+    Iso.Run()
+END

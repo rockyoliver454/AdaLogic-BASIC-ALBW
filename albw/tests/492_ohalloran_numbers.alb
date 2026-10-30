@@ -1,0 +1,36 @@
+-- 492 | O'Halloran numbers: even n <= 200 not expressible as the
+-- surface area 2(ab+bc+ca) of an integer cuboid with a<=b<=c.
+DECLARE MODULE OHal
+    FUNCTION Expressible(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE OHal
+    FUNCTION Expressible(n AS S64) AS S32
+        LET half AS S64 = n / 2
+        FOR a = 1 TO half / 3
+            FOR b = a TO half / 2
+                LET rem AS S64 = half - a * b
+                LET den AS S64 = a + b
+                IF rem > 0 ANDALSO rem MOD den = 0 THEN
+                    LET c AS S64 = rem / den
+                    IF c >= b THEN RETURN 1 END IF
+                END IF
+            END FOR
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 2 TO 200 STEP 2
+            IF Expressible(n) = 0 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT OHal
+BEGIN
+    OHal.Run()
+END

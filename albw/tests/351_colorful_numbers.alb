@@ -1,0 +1,65 @@
+-- 351 | Colorful numbers below 100: every contiguous digit-substring product is unique.
+DECLARE MODULE Colorful
+    FUNCTION IsColorful(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Colorful
+    STRICT dig[16] AS S64
+    STRICT prods[64] AS S64
+
+    FUNCTION IsColorful(n AS S64) AS S32
+        LET m AS S64 = n
+        LET nd AS S32 = 0
+        IF n = 0 THEN
+            dig[0] = 0
+            nd = 1
+        ELSE
+            WHILE m > 0
+                dig[nd] = m MOD 10
+                nd = nd + 1
+                m = m / 10
+            END WHILE
+        END IF
+        FOR i = 0 TO nd / 2 - 1
+            IF i < nd - 1 - i THEN
+                LET t AS S64 = dig[i]
+                dig[i] = dig[nd - 1 - i]
+                dig[nd - 1 - i] = t
+            END IF
+        END FOR
+        LET cnt AS S32 = 0
+        FOR i = 0 TO nd - 1
+            LET p AS S64 = 1
+            FOR j = i TO nd - 1
+                p = p * dig[j]
+                IF cnt > 0 THEN
+                    FOR k = 0 TO cnt - 1
+                        IF prods[k] = p THEN RETURN 0 END IF
+                    END FOR
+                END IF
+                prods[cnt] = p
+                cnt = cnt + 1
+            END FOR
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        FOR n = 0 TO 99
+            IF IsColorful(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | found
+    END PROCEDURE
+END MODULE
+
+IMPORT Colorful
+BEGIN
+    Colorful.Run()
+END

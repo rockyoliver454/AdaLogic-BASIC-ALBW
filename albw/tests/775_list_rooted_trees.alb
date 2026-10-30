@@ -1,0 +1,41 @@
+-- 775 | List rooted trees: enumerate ordered rooted trees
+-- with n nodes via parent arrays (n<=4).
+DECLARE MODULE Rt
+    PROCEDURE Gen(n AS S64, lev AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rt
+    STRICT par[8] AS S64
+    STRICT tot[1] AS S64
+
+    PROCEDURE Gen(n AS S64, lev AS S64)
+        IF lev > n THEN
+            tot[1] = tot[1] + 1
+            LET s AS STRING = ""
+            FOR i = 2 TO n
+                s = s | par[i] | " "
+            END FOR
+            PRINT s
+            RETURN
+        END IF
+        FOR p = 1 TO lev - 1
+            par[lev] = p
+            Gen(n, lev + 1)
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 2 TO 4
+            tot[1] = 0
+            PRINT "n=" | n
+            Gen(n, 2)
+            PRINT "count=" | tot[1]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rt
+BEGIN
+    Rt.Run()
+END

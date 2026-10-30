@@ -1,0 +1,11 @@
+x=42, name=forge!
+sum=50 mid=bcd
+nest=UPPER(ab)-4
+edge=42
+42=edge
+empty=hole
+plain {x} stays literal
+lit {brace} end
+free } brace ok
+nested=in=42 out
+two 42 and 43

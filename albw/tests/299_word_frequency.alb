@@ -1,0 +1,69 @@
+-- 299 | Word frequency: count occurrences of each distinct word.
+DECLARE MODULE WordFreq
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE WordFreq
+    STRICT words[64] AS STRING
+    STRICT counts[64] AS S32
+    LET distinct AS S32 = 0
+    STRICT tokens[64] AS STRING
+    LET ntok AS S32 = 0
+
+    FUNCTION StrEq(a AS STRING, b AS STRING) AS S32
+        IF LEN(a) <> LEN(b) THEN RETURN 0 END IF
+        FOR i = 1 TO LEN(a)
+            IF ASC(MID$(a, i, 1)) <> ASC(MID$(b, i, 1)) THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE AddWord(w AS STRING)
+        FOR i = 0 TO distinct - 1
+            IF StrEq(words[i], w) = 1 THEN
+                counts[i] = counts[i] + 1
+                RETURN
+            END IF
+        END FOR
+        words[distinct] = w
+        counts[distinct] = 1
+        distinct = distinct + 1
+    END PROCEDURE
+
+    PROCEDURE Run()
+        LET body AS STRING = "the cat sat on the mat and the cat ate the rat"
+        LET cur AS STRING = ""
+        FOR i = 1 TO LEN(body)
+            LET c AS S32 = ASC(MID$(body, i, 1))
+            IF c = 32 THEN
+                AddWord(cur)
+                cur = ""
+            ELSE
+                cur = cur | CHR(c)
+            END IF
+        END FOR
+        AddWord(cur)
+
+        FOR i = 0 TO distinct - 2
+            FOR j = i + 1 TO distinct - 1
+                IF counts[j] > counts[i] THEN
+                    LET tc AS S32 = counts[i]
+                    LET tw AS STRING = words[i]
+                    counts[i] = counts[j]
+                    words[i] = words[j]
+                    counts[j] = tc
+                    words[j] = tw
+                END IF
+            END FOR
+        END FOR
+
+        FOR i = 0 TO distinct - 1
+            PRINT counts[i] | " " | words[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT WordFreq
+BEGIN
+    WordFreq.Run()
+END

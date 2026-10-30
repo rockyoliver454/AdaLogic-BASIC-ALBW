@@ -1,0 +1,14 @@
+-- 018 | Arrays -- declare, fill, read, sum
+BEGIN
+    STRICT nums[5] AS S32;
+    LET i AS S32 = 0;
+    FOR i = 0 TO 4
+        nums[i] = (i + 1) * 10;
+    END FOR
+    LET total AS S32 = 0;
+    FOR i = 0 TO 4
+        total = total + nums[i];
+    END FOR
+    PRINT total;
+    PRINT$ "nums[0]=" | nums[0] | " nums[4]=" | nums[4];
+END

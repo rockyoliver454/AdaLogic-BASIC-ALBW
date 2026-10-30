@@ -1,0 +1,94 @@
+-- 254 | Kosaraju's algorithm: strongly connected components of a directed graph.
+DECLARE MODULE Kosaraju
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Kosaraju
+    LET n AS S32 = 8
+    STRICT visited[8] AS S32
+    STRICT assigned[8] AS S32
+    STRICT component[8] AS S32
+    STRICT order[8] AS S32
+    LET order_count AS S32 = 0
+
+    STRICT fwd_deg[8] AS S32
+    STRICT fwd_edges[64] AS S32
+    STRICT rev_deg[8] AS S32
+    STRICT rev_edges[64] AS S32
+
+    PROCEDURE AddEdge(u AS S32, v AS S32)
+        fwd_edges[u * n + fwd_deg[u]] = v
+        fwd_deg[u] = fwd_deg[u] + 1
+        rev_edges[v * n + rev_deg[v]] = u
+        rev_deg[v] = rev_deg[v] + 1
+    END PROCEDURE
+
+    PROCEDURE InitGraph()
+        FOR i = 0 TO n - 1
+            fwd_deg[i] = 0
+            rev_deg[i] = 0
+            visited[i] = 0
+            assigned[i] = 0
+            component[i] = -1
+        END FOR
+
+        AddEdge(0, 1)
+        AddEdge(1, 2)
+        AddEdge(2, 0)
+        AddEdge(3, 1)
+        AddEdge(3, 2)
+        AddEdge(3, 4)
+        AddEdge(4, 3)
+        AddEdge(4, 5)
+        AddEdge(5, 2)
+        AddEdge(5, 6)
+        AddEdge(6, 5)
+        AddEdge(7, 4)
+        AddEdge(7, 6)
+        AddEdge(7, 7)
+    END PROCEDURE
+
+    PROCEDURE FirstVisit(u AS S32)
+        IF visited[u] = 1 THEN RETURN END IF
+        visited[u] = 1
+        FOR i = 0 TO fwd_deg[u] - 1
+            LET v AS S32 = fwd_edges[u * n + i]
+            FirstVisit(v)
+        END FOR
+        order[order_count] = u
+        order_count = order_count + 1
+    END PROCEDURE
+
+    PROCEDURE SecondVisit(u AS S32, root AS S32)
+        IF assigned[u] = 1 THEN RETURN END IF
+        assigned[u] = 1
+        component[u] = root
+        FOR i = 0 TO rev_deg[u] - 1
+            LET v AS S32 = rev_edges[u * n + i]
+            SecondVisit(v, root)
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        InitGraph()
+        FOR u = 0 TO n - 1
+            FirstVisit(u)
+        END FOR
+        LET i AS S32 = order_count - 1
+        WHILE i >= 0
+            LET u AS S32 = order[i]
+            IF assigned[u] = 0 THEN
+                SecondVisit(u, u)
+            END IF
+            i = i - 1
+        END WHILE
+        FOR u = 0 TO n - 1
+            PRINT component[u]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Kosaraju
+BEGIN
+    Kosaraju.Run()
+END

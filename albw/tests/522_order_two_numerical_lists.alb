@@ -1,0 +1,63 @@
+-- 522 | Order two numerical lists: element-wise compare two lists
+-- held in arrays, reporting which is less.
+DECLARE MODULE TwoLists
+    FUNCTION Less() AS S64
+    PROCEDURE Show()
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE TwoLists
+    STRICT x[3] AS S64
+    STRICT y[3] AS S64
+
+    FUNCTION Less() AS S64
+        FOR i = 1 TO 3
+            IF x[i] <> y[i] THEN RETURN x[i] - y[i] END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Show()
+        LET d AS S64 = Less()
+        LET r AS STRING = "equal"
+        IF d < 0 THEN r = "first" END IF
+        IF d > 0 THEN r = "second" END IF
+        PRINT "[" | x[1] | "," | x[2] | "," | x[3] | "] vs [" | y[1] | "," | y[2] | "," | y[3] | "] -> " | r
+    END PROCEDURE
+
+    PROCEDURE Run()
+        x[1] = 1
+        x[2] = 2
+        x[3] = 3
+        y[1] = 1
+        y[2] = 2
+        y[3] = 4
+        Show()
+        x[1] = 1
+        x[2] = 3
+        x[3] = 0
+        y[1] = 1
+        y[2] = 2
+        y[3] = 9
+        Show()
+        x[1] = 5
+        x[2] = 5
+        x[3] = 5
+        y[1] = 5
+        y[2] = 5
+        y[3] = 5
+        Show()
+        x[1] = 9
+        x[2] = 1
+        x[3] = 1
+        y[1] = 2
+        y[2] = 9
+        y[3] = 9
+        Show()
+    END PROCEDURE
+END MODULE
+
+IMPORT TwoLists
+BEGIN
+    TwoLists.Run()
+END

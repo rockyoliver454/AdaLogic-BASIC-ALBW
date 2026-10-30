@@ -1,0 +1,8 @@
+-- mathkit.albi -- shared interface file resolved via ALB_LIB.
+FUNCTION LibTriple(x AS S32) AS S32
+    RETURN x * 3
+END FUNCTION
+
+FUNCTION LibSquare(x AS S32) AS S32
+    RETURN x * x
+END FUNCTION

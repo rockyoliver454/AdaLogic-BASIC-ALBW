@@ -1,0 +1,43 @@
+-- 790 | Matrix chain multiplication: optimal parenthesization
+-- cost for chain dims 10,30,5,60,50,40 via DP.
+DECLARE MODULE Mc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mc
+    STRICT dm[7] AS S64
+    STRICT dp[36] AS S64
+    STRICT bp[36] AS S64
+
+    PROCEDURE Run()
+        dm[1] = 10
+        dm[2] = 30
+        dm[3] = 5
+        dm[4] = 60
+        dm[5] = 50
+        dm[6] = 40
+        LET n AS S64 = 5
+        FOR i = 1 TO n
+            dp[(i - 1) * n + i] = 0
+        END FOR
+        FOR ln = 2 TO n
+            FOR i = 1 TO n - ln + 1
+                LET j AS S64 = i + ln - 1
+                dp[(i - 1) * n + j] = 2000000000
+                FOR k = i TO j - 1
+                    LET c AS S64 = dp[(i - 1) * n + k] + dp[k * n + j] + dm[i] * dm[k + 1] * dm[j + 1]
+                    IF c < dp[(i - 1) * n + j] THEN
+                        dp[(i - 1) * n + j] = c
+                        bp[(i - 1) * n + j] = k
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+        PRINT "min cost=" | dp[n]
+    END PROCEDURE
+END MODULE
+
+IMPORT Mc
+BEGIN
+    Mc.Run()
+END

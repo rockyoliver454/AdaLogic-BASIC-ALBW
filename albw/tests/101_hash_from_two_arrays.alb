@@ -1,0 +1,16 @@
+-- 101 | Hash from two arrays: zip keys[] and vals[] into a lookup.
+BEGIN
+    STRICT ks[4] AS STRING;
+    STRICT vs[4] AS S32;
+    ks[0]="red"; ks[1]="green"; ks[2]="blue"; ks[3]="gold";
+    vs[0]=1;    vs[1]=2;       vs[2]=3;       vs[3]=4;
+    STRICT want[3] AS STRING;
+    want[0]="blue"; want[1]="red"; want[2]="gold";
+    FOR i = 0 TO 2
+        FOR j = 0 TO 3
+            IF ks[j] = want[i] THEN
+                PRINT$ want[i] | " -> " | vs[j];
+            END IF
+        END FOR
+    END FOR
+END

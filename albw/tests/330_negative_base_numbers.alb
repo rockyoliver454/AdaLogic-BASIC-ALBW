@@ -1,0 +1,40 @@
+-- 330 | Negative base numbers: convert integers into bases -2 and -10.
+DECLARE MODULE NegBase
+    FUNCTION ToNegBase(v AS S64, base AS S64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NegBase
+    FUNCTION ToNegBase(v AS S64, base AS S64) AS STRING
+        IF v = 0 THEN RETURN "0" END IF
+        LET b AS S64 = base
+        IF b < 0 THEN b = 0 - b END IF
+        LET s AS STRING = ""
+        LET n AS S64 = v
+        WHILE n <> 0
+            LET q AS S64 = n / base
+            LET rem AS S64 = n - q * base
+            IF rem < 0 THEN rem = rem + b END IF
+            IF rem < 10 THEN
+                s = rem | s
+            ELSE
+                s = CHR(55 + rem) | s
+            END IF
+            n = (n - rem) / base
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT ToNegBase(10, -2)
+        PRINT ToNegBase(-24, -2)
+        PRINT ToNegBase(-1, -2)
+        PRINT ToNegBase(15, -10)
+        PRINT ToNegBase(-459, -10)
+    END PROCEDURE
+END MODULE
+
+IMPORT NegBase
+BEGIN
+    NegBase.Run()
+END

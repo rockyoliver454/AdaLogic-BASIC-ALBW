@@ -1,0 +1,12 @@
+-- alb_fmt: zero-padded hex/bin width formatting; also exercises nested
+-- INCLUDE (alb_fmt -> alb_conv dedup through the ALB_LIB weave).
+
+INCLUDE "alb_fmt"
+
+BEGIN
+    PRINT AlbFmt.HexW(255, 4)
+    PRINT AlbFmt.BinW(5, 8)
+    PRINT AlbFmt.ZPad("42", 5)
+    PRINT AlbFmt.PadR("ab", 5, ".")
+    PRINT AlbFmt.HexW(4096, 4)
+END

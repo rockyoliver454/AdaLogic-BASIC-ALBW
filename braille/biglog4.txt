@@ -1,0 +1,3 @@
+=== 13745 identical / 2 differ ===
+centimes                 ref ⠉⠢⠞⠊⠍⠑⠎  |  got ⠉⠢⠐⠞⠎  @2
+moshav                   ref ⠍⠕⠩⠁⠧  |  got ⠍⠕⠎⠓⠁⠧  @2

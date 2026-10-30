@@ -1,0 +1,103 @@
+-- 729 | Sort an outline at every level: sort dotted section
+-- numbers "1.10" < "1.2" correctly per component.
+DECLARE MODULE So
+    FUNCTION Cmp(a AS STRING, b AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE So
+    STRICT it[7] AS STRING
+
+    FUNCTION NumAt(s AS STRING, idx AS S64) AS S64
+        -- extract number token at position idx splitting on "."
+        LET p AS S64 = 1
+        LET tok AS S64 = 0
+        LET v AS S64 = 0
+        LET n AS S64 = LEN(s)
+        LET i AS S64 = idx
+        WHILE i <= n ANDALSO MID$(s, i, 1) <> "."
+            v = v * 10 + ASC(MID$(s, i, 1)) - 48
+            i = i + 1
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- compare section lists componentwise via split
+        it[1] = "1.10.2"
+        it[2] = "1.2"
+        it[3] = "1.1.4"
+        it[4] = "1.10"
+        it[5] = "1.1.12"
+        it[6] = "2.1"
+        -- compare by each dotted component using positions
+        FOR i = 2 TO 6
+            LET kv AS STRING = it[i]
+            LET j AS S64 = i - 1
+            LET cont AS S32 = 1
+            WHILE j >= 1 ANDALSO cont = 1
+                -- compare it[j] vs kv componentwise
+                LET p1 AS S64 = 1
+                LET p2 AS S64 = 1
+                LET done AS S32 = 0
+                LET diff AS S64 = 0
+                WHILE done = 0
+                    LET a AS S64 = 0
+                    LET b AS S64 = 0
+                    LET ha AS S32 = 0
+                    LET hb AS S32 = 0
+                    IF p1 <= LEN(it[j]) THEN
+                        ha = 1
+                        LET q AS S64 = p1
+                        WHILE q <= LEN(it[j]) ANDALSO MID$(it[j], q, 1) <> "."
+                            a = a * 10 + ASC(MID$(it[j], q, 1)) - 48
+                            q = q + 1
+                        END WHILE
+                        p1 = q + 1
+                    END IF
+                    IF p2 <= LEN(kv) THEN
+                        hb = 1
+                        LET q2 AS S64 = p2
+                        WHILE q2 <= LEN(kv) ANDALSO MID$(kv, q2, 1) <> "."
+                            b = b * 10 + ASC(MID$(kv, q2, 1)) - 48
+                            q2 = q2 + 1
+                        END WHILE
+                        p2 = q2 + 1
+                    END IF
+                    IF ha = 0 ANDALSO hb = 0 THEN
+                        done = 1
+                    ELSE
+                        IF ha = 0 THEN
+                            diff = -1
+                            done = 1
+                        END IF
+                        IF hb = 0 THEN
+                            diff = 1
+                            done = 1
+                        END IF
+                        IF ha = 1 ANDALSO hb = 1 THEN
+                            IF a <> b THEN
+                                diff = a - b
+                                done = 1
+                            END IF
+                        END IF
+                    END IF
+                END WHILE
+                IF diff <= 0 THEN cont = 0 END IF
+                IF diff > 0 THEN
+                    it[j + 1] = it[j]
+                    j = j - 1
+                END IF
+            END WHILE
+            it[j + 1] = kv
+        END FOR
+        FOR i = 1 TO 6
+            PRINT it[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT So
+BEGIN
+    So.Run()
+END

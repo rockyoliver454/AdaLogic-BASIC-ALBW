@@ -1,0 +1,36 @@
+-- 353 | Perfect numbers: n equal to the sum of its proper divisors; all below 10000.
+DECLARE MODULE Perfect
+    FUNCTION IsPerfect(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Perfect
+    FUNCTION IsPerfect(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET s AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        IF s = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 2 TO 9999
+            IF IsPerfect(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Perfect
+BEGIN
+    Perfect.Run()
+END

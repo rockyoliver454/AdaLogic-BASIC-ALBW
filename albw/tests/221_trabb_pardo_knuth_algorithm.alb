@@ -1,0 +1,29 @@
+-- 221 | Trabb Pardo-Knuth: read eleven values, reverse them, apply f, flag overflow.
+DECLARE MODULE TPK
+    FUNCTION Evaluate(x AS F64) AS F64
+END DECLARE MODULE
+
+MODULE TPK
+    FUNCTION Evaluate(x AS F64) AS F64
+        RETURN SQRT(ABS(x)) + 5.0 * x * x * x
+    END FUNCTION
+END MODULE
+
+IMPORT TPK
+BEGIN
+    STRICT values[11] AS F64
+    LET input_value AS S32 = 0
+    PRINT "Enter eleven numbers:"
+    FOR i = 0 TO 10
+        INPUT >> input_value
+        values[i] = input_value
+    END FOR
+    FOR i = 10 TO 0 STEP -1
+        LET result_value AS F64 = TPK.Evaluate(values[i])
+        IF result_value > 400.0 THEN
+            PRINT values[i] | ": TOO LARGE"
+        ELSE
+            PRINT values[i] | ": " | result_value
+        END IF
+    END FOR
+END

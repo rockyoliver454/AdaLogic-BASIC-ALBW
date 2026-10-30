@@ -1,0 +1,95 @@
+-- 181 | MD5 implementation: digest of "abc" via masked-32 arithmetic.
+--  All ops stay in S64 with MOD 2^32 masks (Rust release wraps would
+--  panic in debug, so mask explicitly instead of relying on u32 wrap).
+BEGIN
+    --  pad "abc": bytes + 0x80 + zeros + 64-bit LE length (24 bits)
+    STRICT msg[64] AS S64;
+    msg[0] = 97; msg[1] = 98; msg[2] = 99; msg[3] = 128;
+    msg[56] = 24;
+    STRICT m[16] AS S64;
+    FOR i = 0 TO 15
+        m[i] = msg[i * 4] + msg[i * 4 + 1] * 256
+             + msg[i * 4 + 2] * 65536 + msg[i * 4 + 3] * 16777216;
+    END FOR
+    STRICT p2[33] AS S64;
+    p2[0] = 1;
+    FOR i = 1 TO 32
+        p2[i] = p2[i - 1] * 2;
+    END FOR
+    STRICT ss[64] AS S32;
+    ss[0]=7;  ss[1]=12; ss[2]=17; ss[3]=22;
+    ss[4]=7;  ss[5]=12; ss[6]=17; ss[7]=22;
+    ss[8]=7;  ss[9]=12; ss[10]=17; ss[11]=22;
+    ss[12]=7; ss[13]=12; ss[14]=17; ss[15]=22;
+    ss[16]=5;  ss[17]=9;  ss[18]=14; ss[19]=20;
+    ss[20]=5;  ss[21]=9;  ss[22]=14; ss[23]=20;
+    ss[24]=5;  ss[25]=9;  ss[26]=14; ss[27]=20;
+    ss[28]=5;  ss[29]=9;  ss[30]=14; ss[31]=20;
+    ss[32]=4;  ss[33]=11; ss[34]=16; ss[35]=23;
+    ss[36]=4;  ss[37]=11; ss[38]=16; ss[39]=23;
+    ss[40]=4;  ss[41]=11; ss[42]=16; ss[43]=23;
+    ss[44]=4;  ss[45]=11; ss[46]=16; ss[47]=23;
+    ss[48]=6;  ss[49]=10; ss[50]=15; ss[51]=21;
+    ss[52]=6;  ss[53]=10; ss[54]=15; ss[55]=21;
+    ss[56]=6;  ss[57]=10; ss[58]=15; ss[59]=21;
+    ss[60]=6;  ss[61]=10; ss[62]=15; ss[63]=21;
+    LET a0 AS S64 = 1732584193;
+    LET b0 AS S64 = 4023233417;
+    LET c0 AS S64 = 2562383102;
+    LET d0 AS S64 = 271733878;
+    LET a AS S64 = a0;
+    LET b AS S64 = b0;
+    LET c AS S64 = c0;
+    LET d AS S64 = d0;
+    FOR i = 0 TO 63
+        LET f AS S64 = 0;
+        LET g AS S32 = 0;
+        LET rr AS S32 = i / 16;
+        IF rr = 0 THEN
+            f = (b AND c) OR ((NOT b) AND d);
+            g = i;
+        END IF
+        IF rr = 1 THEN
+            f = (d AND b) OR ((NOT d) AND c);
+            g = (5 * i + 1) MOD 16;
+        END IF
+        IF rr = 2 THEN
+            f = b XOR c XOR d;
+            g = (3 * i + 5) MOD 16;
+        END IF
+        IF rr = 3 THEN
+            f = c XOR (b OR ((NOT d) AND 4294967295));
+            g = (7 * i) MOD 16;
+        END IF
+        LET arg AS F64 = i + 1.0;
+        LET sv AS F64 = SIN(arg);
+        LET av AS F64 = ABS(sv);
+        LET kk AS S64 = FLOOR(av * 4294967296.0);
+        LET sh AS S64 = ss[i];
+        LET pw AS S64 = p2[sh];
+        LET pd AS S64 = p2[32 - sh];
+        LET sum AS S64 = (a + f + kk + m[g]) MOD 4294967296;
+        LET rol AS S64 = ((sum * pw) MOD 4294967296)
+                       + sum / pd;
+        LET tmp AS S64 = d;
+        d = c;
+        c = b;
+        b = (b + rol) MOD 4294967296;
+        a = tmp;
+    END FOR
+    a = (a + a0) MOD 4294967296;
+    b = (b + b0) MOD 4294967296;
+    c = (c + c0) MOD 4294967296;
+    d = (d + d0) MOD 4294967296;
+    LET hex AS STRING = "";
+    STRICT word[4] AS S64;
+    word[0] = a; word[1] = b; word[2] = c; word[3] = d;
+    FOR wi = 0 TO 3
+        LET w AS S64 = word[wi];
+        FOR byi = 0 TO 3
+            LET byte AS S32 = (w / p2[byi * 8]) MOD 256;
+            hex = hex | MID$("0123456789abcdef", byte / 16 + 1, 1) | MID$("0123456789abcdef", byte MOD 16 + 1, 1);
+        END FOR
+    END FOR
+    PRINT$ hex;
+END

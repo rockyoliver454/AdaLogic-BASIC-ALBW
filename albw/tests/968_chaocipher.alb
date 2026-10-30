@@ -1,0 +1,70 @@
+-- 968 | Chaocipher: two 26-letter wheels; encipher by index,
+-- then permute left (ct char to zenith, move pos1 to pos13)
+-- and right (pt char to zenith, shift, move pos2 to pos13).
+DECLARE MODULE Cc
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cc
+    STRICT lt[27] AS STRING
+    STRICT rt[27] AS STRING
+
+    FUNCTION Idx(s AS STRING, c AS S64) AS S64
+        FOR i = 1 TO 26
+            IF ASC(MID$(s, i, 1)) = c THEN RETURN i END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Rot(s AS STRING, k AS S64) AS STRING
+        RETURN MID$(s, k, 27 - k) | MID$(s, 1, k - 1)
+    END FUNCTION
+
+    FUNCTION MvIns(s AS STRING, a AS S64, b AS S64) AS STRING
+        -- remove char at a (1-based), insert at position b+1
+        LET c AS STRING = MID$(s, a, 1)
+        LET t AS STRING = MID$(s, 1, a - 1) | MID$(s, a + 1, 26 - a)
+        RETURN MID$(t, 1, b) | c | MID$(t, b + 1, 25 - b)
+    END FUNCTION
+
+    PROCEDURE Perm(ptc AS S64, ctc AS S64)
+        -- left: rotate ct char to zenith (index 1), move pos2->14
+        lt[1] = Rot(lt[1], Idx(lt[1], ctc))
+        lt[1] = MvIns(lt[1], 2, 13)
+        -- right: rotate pt char to zenith, shift 1 more, pos3->14
+        rt[1] = Rot(rt[1], Idx(rt[1], ptc))
+        rt[1] = Rot(rt[1], 2)
+        rt[1] = MvIns(rt[1], 3, 13)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        lt[1] = "HXUCZVAMDSLKPEFRIQJYWNOGTB"
+        rt[1] = "PTLNBQDEOYSFAVZKGJRIHWXUMC"
+        LET pt AS STRING = "WELLDONEISBETTERTHANWELLSAID"
+        LET ct AS STRING = ""
+        FOR i = 1 TO LEN(pt)
+            LET c AS S64 = ASC(MID$(pt, i, 1))
+            LET k AS S64 = Idx(rt[1], c)
+            ct = ct | MID$(lt[1], k, 1)
+            Perm(c, ASC(MID$(lt[1], k, 1)))
+        END FOR
+        PRINT "ct: " | ct
+        -- decrypt: reset wheels, find ct in left, take same index of right
+        lt[1] = "HXUCZVAMDSLKPEFRIQJYWNOGTB"
+        rt[1] = "PTLNBQDEOYSFAVZKGJRIHWXUMC"
+        LET back AS STRING = ""
+        FOR i = 1 TO LEN(ct)
+            LET c AS S64 = ASC(MID$(ct, i, 1))
+            LET k AS S64 = Idx(lt[1], c)
+            LET p AS S64 = ASC(MID$(rt[1], k, 1))
+            back = back | CHR(p)
+            Perm(p, c)
+        END FOR
+        PRINT "pt: " | back
+    END PROCEDURE
+END MODULE
+
+IMPORT Cc
+BEGIN
+    Cc.Run()
+END

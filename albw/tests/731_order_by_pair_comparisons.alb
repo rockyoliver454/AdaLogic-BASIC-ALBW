@@ -1,0 +1,53 @@
+-- 731 | Order by pair comparisons: sort names using a
+-- pairwise ordering table instead of the alphabet.
+DECLARE MODULE Op
+    FUNCTION Before(a AS STRING, b AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Op
+    STRICT wd[6] AS STRING
+    STRICT or1[5] AS STRING
+    STRICT or2[5] AS STRING
+
+    FUNCTION Before(a AS STRING, b AS STRING) AS S32
+        -- "or1[i] < or2[i]" defines custom order on tokens
+        FOR i = 1 TO 4
+            IF or1[i] = a ANDALSO or2[i] = b THEN RETURN 1 END IF
+            IF or1[i] = b ANDALSO or2[i] = a THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        wd[1] = "dog"
+        wd[2] = "ant"
+        wd[3] = "cat"
+        wd[4] = "eel"
+        or1[1] = "ant"
+        or2[1] = "cat"
+        or1[2] = "cat"
+        or2[2] = "dog"
+        or1[3] = "dog"
+        or2[3] = "eel"
+        or1[4] = "ant"
+        or2[4] = "dog"
+        FOR i = 2 TO 4
+            LET kv AS STRING = wd[i]
+            LET j AS S64 = i - 1
+            WHILE j >= 1 ANDALSO Before(wd[j], kv) = 0
+                wd[j + 1] = wd[j]
+                j = j - 1
+            END WHILE
+            wd[j + 1] = kv
+        END FOR
+        FOR i = 1 TO 4
+            PRINT wd[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Op
+BEGIN
+    Op.Run()
+END

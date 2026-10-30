@@ -1,0 +1,8 @@
+-- 217 | Show ASCII table: emit printable ASCII characters in code-point order.
+BEGIN
+    LET ascii_row AS STRING = ""
+    FOR cd = 33 TO 126
+        ascii_row = ascii_row | CHR(cd)
+    END FOR
+    PRINT ascii_row
+END

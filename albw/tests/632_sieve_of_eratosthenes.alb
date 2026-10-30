@@ -1,0 +1,26 @@
+-- 632 | Sieve of Eratosthenes: primes below 100.
+DECLARE MODULE Sieve
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sieve
+    STRICT comp[100] AS S32
+
+    PROCEDURE Run()
+        FOR i = 2 TO 99
+            IF comp[i] = 0 THEN
+                PRINT i
+                LET m AS S64 = i * i
+                WHILE m < 100
+                    comp[m] = 1
+                    m = m + i
+                END WHILE
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sieve
+BEGIN
+    Sieve.Run()
+END

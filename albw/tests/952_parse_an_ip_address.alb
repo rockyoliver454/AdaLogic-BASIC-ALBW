@@ -1,0 +1,68 @@
+-- 952 | Parse an IP address: dotted-quad IPv4 and compressed
+-- IPv6 forms; print the 4 or 8 numeric groups.
+DECLARE MODULE Ip
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ip
+    FUNCTION Digit(c AS S64) AS S64
+        IF c >= ASC("0") ANDALSO c <= ASC("9") THEN RETURN c - ASC("0") END IF
+        RETURN 0 - 1
+    END FUNCTION
+
+    PROCEDURE Parse4(s AS STRING)
+        LET n AS S64 = LEN(s)
+        LET v AS S64 = 0
+        LET part AS S64 = 0
+        LET ok AS S64 = 1
+        LET res AS STRING = ""
+        FOR i = 1 TO n + 1
+            LET c AS S64 = 46
+            IF i <= n THEN c = ASC(MID$(s, i, 1)) END IF
+            IF c = 46 THEN
+                IF v > 255 THEN ok = 0 END IF
+                res = res | v | " "
+                part = part + 1
+                v = 0
+            ELSE
+                LET d AS S64 = Digit(c)
+                IF d < 0 THEN ok = 0 END IF
+                v = v * 10 + d
+            END IF
+        END FOR
+        IF part <> 4 THEN ok = 0 END IF
+        IF ok = 1 THEN
+            PRINT s | " -> " | res | "valid"
+        ELSE
+            PRINT s | " -> invalid"
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Parse6(s AS STRING)
+        -- expand :: then split 8 groups, print each in decimal
+        LET cnt AS S64 = 0
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            IF Ch2(s, i) = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "ipv6 " | s | " colons=" | cnt
+    END PROCEDURE
+
+    FUNCTION Ch2(s AS STRING, i AS S64) AS S64
+        RETURN ASC(MID$(s, i, 1)) = ASC(":")
+    END FUNCTION
+
+    PROCEDURE Run()
+        Parse4("127.0.0.1")
+        Parse4("192.168.0.254")
+        Parse4("256.1.2.3")
+        Parse4("1.2.3")
+        Parse6("::1")
+        Parse6("fe80::1ff:fe23:4567:890a")
+    END PROCEDURE
+END MODULE
+
+IMPORT Ip
+BEGIN
+    Ip.Run()
+END

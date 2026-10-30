@@ -1,0 +1,103 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT pos[6] AS S64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+LET winner AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 2024
+    LET h AS S64 = 0
+    WHILE h < 6
+        pos[h] = 0
+        h = h + 1
+    END WHILE
+    winner = 0 - 1
+    LET tick2 AS S64 = 0
+    WHILE winner < 0 ANDALSO tick2 < 200
+        h = 0
+        WHILE h < 6
+            pos[h] = pos[h] + 1 + Nxt() MOD 3
+            IF pos[h] >= 60 ANDALSO winner < 0 THEN
+                winner = h
+            END IF
+            h = h + 1
+        END WHILE
+        tick2 = tick2 + 1
+    END WHILE
+
+    h = 0
+    WHILE h < 6
+        LET x AS S64 = 0
+        WHILE x < pos[h] ANDALSO x < 63
+            img[(8 + h * 9) * 64 + x + 2] = 8421504
+            x = x + 1
+        END WHILE
+        LET yy AS S64 = 0
+        WHILE yy < 3
+            LET xx AS S64 = 0
+            WHILE xx < 3
+                LET hx AS S64 = pos[h] - 1
+                IF hx > 60 THEN hx = 60 END IF
+                img[(6 + h * 9 + yy) * 64 + hx + xx] = 16776960
+                xx = xx + 1
+            END WHILE
+            yy = yy + 1
+        END WHILE
+        h = h + 1
+    END WHILE
+
+    CREATE_WINDOW "Horse racing", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "ticks=" | tick2
+    PRINT "winner=horse" | winner
+    h = 0
+    WHILE h < 6
+        PRINT "h" | h | "=" | pos[h]
+        h = h + 1
+    END WHILE
+    PRINT "ink=" | ink
+    PRINT "hitpx=" | fpx
+END

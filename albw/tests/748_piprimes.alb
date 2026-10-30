@@ -1,0 +1,38 @@
+-- 748 | Piprimes: prefixes of pi's decimal expansion that are
+-- prime. First few below 10^18.
+DECLARE MODULE Pp
+    FUNCTION Prime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pp
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "3141592653589793"
+        LET v AS S64 = 0
+        FOR i = 1 TO 16
+            v = v * 10 + ASC(MID$(s, i, 1)) - 48
+            IF Prime(v) = 1 THEN
+                PRINT "prefix " | i | ": " | v
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pp
+BEGIN
+    Pp.Run()
+END

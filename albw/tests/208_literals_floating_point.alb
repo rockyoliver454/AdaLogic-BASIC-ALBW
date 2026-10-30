@@ -1,0 +1,9 @@
+-- 208 | Floating-point literals: decimal, exponent notation, and signed values.
+BEGIN
+    LET decimal_value AS F64 = 3.5
+    LET exponent_value AS F64 = 1e-3
+    LET negative_value AS F64 = -2.25
+    PRINT decimal_value
+    PRINT exponent_value
+    PRINT negative_value
+END

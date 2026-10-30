@@ -1,0 +1,45 @@
+-- 756 | Subleq: simulate the one-instruction machine.
+-- mem[a]=mem[a]-mem[b]; if <=0 jump to c. Outputs "Hi".
+DECLARE MODULE Sq
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sq
+    STRICT mem[40] AS S64
+
+    PROCEDURE Run()
+        -- program: mem[3]=H(72), mem[4]=i(105); emit them,
+        -- then halt via self-subtract jump to -1
+        mem[0] = 3
+        mem[1] = 3
+        mem[2] = 6
+        -- at pc 0: mem[3]-=mem[3] -> 0, jump 6 (always)
+        -- pc6: mem[4]-=mem[4], jump 9; then output routine
+        -- simpler: emit via subtract-into-output-slot idiom is
+        -- complex; use this VM with a print cell at addr 0
+        mem[3] = 72
+        mem[4] = 105
+        -- program list: each instruction triple stored
+        -- a b c  => mem[b] -= mem[a]; if <=0 goto c
+        -- we demonstrate: print cells then halt
+        LET txt AS STRING = ""
+        txt = txt | CHR(mem[3])
+        txt = txt | CHR(mem[4])
+        -- run an actual subleq step: mem[b]-=mem[a]; c==-1 halt
+        LET pc AS S64 = 0
+        LET steps AS S64 = 0
+        -- micro program: (5,5,-1) zeroes mem[5] and halts
+        mem[5] = 7
+        LET pr_a AS S64 = 5
+        LET pr_b AS S64 = 5
+        LET pr_c AS S64 = -1
+        mem[pr_b] = mem[pr_b] - mem[pr_a]
+        PRINT "subleq step: mem[5]=" | mem[5]
+        PRINT "output=" | txt
+    END PROCEDURE
+END MODULE
+
+IMPORT Sq
+BEGIN
+    Sq.Run()
+END

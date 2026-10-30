@@ -1,0 +1,1 @@
+requires exact loop-carried S64 beyond 2^53 (f64 mantissa limit)

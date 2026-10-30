@@ -1,0 +1,6 @@
+root
+  |--left
+  |--  |--leafA
+  |--  |--leafB
+  |--right
+  |--  |--leafC

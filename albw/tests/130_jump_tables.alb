@@ -1,0 +1,38 @@
+-- 130 | Jump tables: SELECT dispatch over opcodes.
+
+DECLARE MODULE Ops
+    PROCEDURE Op0()
+        PRINT$ "add"
+    END PROCEDURE
+    PROCEDURE Op1()
+        PRINT$ "sub"
+    END PROCEDURE
+    PROCEDURE Op2()
+        PRINT$ "mul"
+    END PROCEDURE
+END DECLARE MODULE
+
+MODULE Ops
+    PROCEDURE Op0()
+        PRINT$ "add"
+    END PROCEDURE
+    PROCEDURE Op1()
+        PRINT$ "sub"
+    END PROCEDURE
+    PROCEDURE Op2()
+        PRINT$ "mul"
+    END PROCEDURE
+END MODULE
+
+BEGIN
+    STRICT program[4] AS S32;
+    program[0] = 1; program[1] = 0; program[2] = 2; program[3] = 1;
+    FOR pc = 0 TO 3
+        SELECT program[pc]
+            CASE 0 => Ops.Op0()
+            CASE 1 => Ops.Op1()
+            CASE 2 => Ops.Op2()
+            ELSE => PRINT$ "bad op"
+        END SELECT
+    END FOR
+END

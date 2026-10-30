@@ -1,0 +1,45 @@
+-- 986 | Currency: format integer cents as grouped dollars
+-- with 2 decimals; show several locales (symbols differ).
+DECLARE MODULE Cu
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cu
+    FUNCTION Fmt(cents AS S64, sym AS STRING) AS STRING
+        LET d AS S64 = cents / 100
+        LET c AS S64 = cents MOD 100
+        IF c < 0 THEN c = 0 - c END IF
+        -- group thousands
+        LET ds AS STRING = ""
+        LET neg AS S64 = 0
+        IF d < 0 THEN neg = 1; d = 0 - d END IF
+        IF d = 0 THEN ds = "0" END IF
+        LET cnt AS S64 = 0
+        WHILE d > 0
+            IF cnt = 3 THEN
+                ds = "," | ds
+                cnt = 0
+            END IF
+            ds = CHR(ASC("0") + d MOD 10) | ds
+            d = d / 10
+            cnt = cnt + 1
+        END WHILE
+        LET cc AS STRING = "0" | c
+        cc = MID$(cc, LEN(cc) - 1, 2)
+        LET res AS STRING = sym | ds | "." | cc
+        IF neg = 1 THEN res = "-" | res END IF
+        RETURN res
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Fmt(123456789, "$")
+        PRINT Fmt(0 - 456000, "$")
+        PRINT Fmt(99, "EUR ")
+        PRINT Fmt(123456, "GBP ")
+    END PROCEDURE
+END MODULE
+
+IMPORT Cu
+BEGIN
+    Cu.Run()
+END

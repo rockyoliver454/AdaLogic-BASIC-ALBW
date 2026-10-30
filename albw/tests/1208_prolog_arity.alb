@@ -1,0 +1,2 @@
+PREDICATE parent(U64, U64)
+ASSERT parent(5)

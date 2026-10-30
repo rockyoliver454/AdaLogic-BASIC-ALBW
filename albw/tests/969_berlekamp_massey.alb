@@ -1,0 +1,84 @@
+-- 969 | Berlekamp-Massey: recover the shortest LFSR (GF2)
+-- that generates a binary sequence; verify by regenerating.
+DECLARE MODULE Bm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bm
+    STRICT sv[25] AS S64
+    STRICT cv[25] AS S64
+    STRICT bv[25] AS S64
+    STRICT tv[25] AS S64
+
+    PROCEDURE Run()
+        -- generate seq from LFSR poly x^4 + x + 1 (taps 4,1)
+        -- s[n] = s[n-1] XOR s[n-4]  seed 1,0,0,0? use s[n]=s[n-3]^s[n-4]
+        sv[1] = 1; sv[2] = 0; sv[3] = 0; sv[4] = 1
+        FOR i = 5 TO 20
+            sv[i] = (sv[i - 1] + sv[i - 4]) MOD 2
+        END FOR
+        LET ln3 AS STRING = "seq:"
+        FOR i = 1 TO 20
+            ln3 = ln3 | " " | sv[i]
+        END FOR
+        PRINT ln3
+        -- BM over GF(2)
+        FOR i = 0 TO 24
+            cv[i] = 0; bv[i] = 0
+        END FOR
+        cv[0] = 1
+        bv[0] = 1
+        LET ll AS S64 = 0
+        LET m AS S64 = 1
+        LET bb AS S64 = 1
+        FOR n = 0 TO 19
+            LET d AS S64 = sv[n + 1]
+            FOR i = 1 TO ll
+                d = (d + cv[i] * sv[n + 1 - i]) MOD 2
+            END FOR
+            IF d = 1 THEN
+                FOR i = 0 TO 24
+                    tv[i] = cv[i]
+                END FOR
+                FOR i = 0 TO 24 - m
+                    cv[i + m] = (cv[i + m] + bb * bv[i]) MOD 2
+                END FOR
+                IF 2 * ll <= n THEN
+                    ll = n + 1 - ll
+                    FOR i = 0 TO 24
+                        bv[i] = tv[i]
+                    END FOR
+                    bb = d
+                    m = 1
+                ELSE
+                    m = m + 1
+                END IF
+            ELSE
+                m = m + 1
+            END IF
+        END FOR
+        LET cp AS STRING = "poly:"
+        FOR i = 0 TO ll
+            cp = cp | " " | cv[i]
+        END FOR
+        PRINT cp | " L=" | ll
+        -- verify: regenerate from taps cv[1..L]
+        FOR i = ll + 1 TO 20
+            LET v AS S64 = 0
+            FOR j = 1 TO ll
+                v = (v + cv[j] * sv[i - j]) MOD 2
+            END FOR
+            sv[i] = v
+        END FOR
+        LET chk AS STRING = "reg:"
+        FOR i = 1 TO 20
+            chk = chk | " " | sv[i]
+        END FOR
+        PRINT chk
+    END PROCEDURE
+END MODULE
+
+IMPORT Bm
+BEGIN
+    Bm.Run()
+END

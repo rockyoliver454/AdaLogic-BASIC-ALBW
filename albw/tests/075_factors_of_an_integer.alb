@@ -1,0 +1,10 @@
+BEGIN
+    LET n = 12
+    LET i = 1
+    WHILE i <= n
+        IF n MOD i = 0 THEN
+            PRINT$ i
+        END IF
+        i = i + 1
+    END WHILE
+END

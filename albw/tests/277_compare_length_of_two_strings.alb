@@ -1,0 +1,18 @@
+-- 277 | Compare length of two strings: report ordering by character count.
+BEGIN
+    STRICT firsts[3] AS STRING
+    STRICT seconds[3] AS STRING
+    firsts[0] = "short"
+    seconds[0] = "a longer string"
+    firsts[1] = "same size"
+    seconds[1] = "same size"
+    firsts[2] = "a much longer string"
+    seconds[2] = "small"
+
+    FOR i = 0 TO 2
+        LET out_line AS STRING = "equal"
+        IF LEN(firsts[i]) < LEN(seconds[i]) THEN out_line = "shorter" END IF
+        IF LEN(firsts[i]) > LEN(seconds[i]) THEN out_line = "longer" END IF
+        PRINT out_line
+    END FOR
+END

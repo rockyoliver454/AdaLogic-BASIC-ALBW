@@ -1,0 +1,30 @@
+-- 310 | Binary digits: print the binary representation of integers.
+DECLARE MODULE BinDigits
+    FUNCTION ToBin(v AS S32) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE BinDigits
+    FUNCTION ToBin(v AS S32) AS STRING
+        IF v = 0 THEN RETURN "0" END IF
+        LET s AS STRING = ""
+        LET n AS S32 = v
+        WHILE n > 0
+            LET bit AS S32 = n - (n / 2) * 2
+            s = bit | s
+            n = n / 2
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT ToBin(5)
+        PRINT ToBin(50)
+        PRINT ToBin(9000)
+    END PROCEDURE
+END MODULE
+
+IMPORT BinDigits
+BEGIN
+    BinDigits.Run()
+END

@@ -1,0 +1,98 @@
+VERSION 1.0
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET np AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fx AS S64 = 0
+LET fy AS S64 = 0
+LET fpx AS S64 = 0
+
+FUNCTION Sn(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN SIN(df * 0.017453292519943295)
+END FUNCTION
+
+FUNCTION Cs(deg AS S64) AS F64
+    LET df AS F64 = deg * 1.0
+    RETURN COS(df * 0.017453292519943295)
+END FUNCTION
+
+PROCEDURE SPlot(lat AS S64, lon AS S64)
+    LET cl AS F64 = Cs(lat)
+    LET x AS F64 = cl * Cs(lon)
+    LET y AS F64 = Sn(lat)
+    LET sx AS S64 = ROUND(32.0 + x * 24.0)
+    LET sy AS S64 = ROUND(32.0 - y * 24.0)
+    IF sx >= 0 ANDALSO sx < 64 ANDALSO sy >= 0 ANDALSO sy < 64 THEN
+        img[sy * 64 + sx] = 65535
+    END IF
+    np = np + 1
+END PROCEDURE
+
+BEGIN
+    LET la AS S64 = 0 - 60
+    LET lo AS S64 = 0
+    WHILE la <= 60
+        lo = 0
+        WHILE lo < 360
+            CALL SPlot(la, lo)
+            lo = lo + 6
+        END WHILE
+        la = la + 30
+    END WHILE
+    lo = 0
+    WHILE lo < 180
+        la = 0 - 90
+        WHILE la <= 90
+            CALL SPlot(la, lo)
+            la = la + 6
+        END WHILE
+        lo = lo + 30
+    END WHILE
+
+    CREATE_WINDOW "Draw a sphere", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        LET k AS S64 = 0
+        LET x AS S64 = 0
+        LET y AS S64 = 0
+        CLEAR $000000
+        COLOR $00FF00
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fx = k MOD 64
+        fy = k / 64
+        fpx = READ_PIXEL(fx, fy)
+    END
+
+    LISTEN
+
+    PRINT "points=" | np
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "px(" | fx | "," | fy | ")=" | fpx
+END

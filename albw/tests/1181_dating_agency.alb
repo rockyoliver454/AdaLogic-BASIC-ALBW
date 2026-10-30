@@ -1,0 +1,37 @@
+VERSION 1.0
+
+STRICT pname[6] AS STRING
+STRICT page[6] AS S64
+STRICT phobby[6] AS S64
+
+
+BEGIN
+    pname[0] = "Ann"  page[0] = 29 phobby[0] = 1
+    pname[1] = "Bob"  page[1] = 34 phobby[1] = 2
+    pname[2] = "Cleo" page[2] = 31 phobby[2] = 1
+    pname[3] = "Dan"  page[3] = 28 phobby[3] = 3
+    pname[4] = "Eve"  page[4] = 30 phobby[4] = 1
+    pname[5] = "Finn" page[5] = 33 phobby[5] = 2
+
+    PRINT "members sharing hobby 1 (hiking):"
+    LET i AS S64 = 0
+    WHILE i < 6
+        IF phobby[i] = 1 THEN
+            PRINT "  " | pname[i] | " age " | page[i]
+        END IF
+        i = i + 1
+    END WHILE
+
+    PRINT "pairs with matching hobby:"
+    i = 0
+    WHILE i < 6
+        LET j AS S64 = i + 1
+        WHILE j < 6
+            IF phobby[i] = phobby[j] THEN
+                PRINT "  " | pname[i] | " & " | pname[j] | " (hobby " | phobby[i] | ")"
+            END IF
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+END

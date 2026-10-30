@@ -1,0 +1,51 @@
+-- 794 | Tropical algebra overloading: min-plus matrix
+-- multiplication. C[i,j] = min_k (A[i,k] + B[k,j]).
+DECLARE MODULE Ta
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ta
+    STRICT aa[9] AS S64
+    STRICT bb[9] AS S64
+    STRICT cc[9] AS S64
+
+    PROCEDURE Run()
+        aa[1] = 2
+        aa[2] = 3
+        aa[3] = 5
+        aa[4] = 7
+        aa[5] = 1
+        aa[6] = 4
+        aa[7] = 6
+        aa[8] = 2
+        aa[9] = 8
+        bb[1] = 1
+        bb[2] = 4
+        bb[3] = 3
+        bb[4] = 2
+        bb[5] = 5
+        bb[6] = 7
+        bb[7] = 6
+        bb[8] = 1
+        bb[9] = 2
+        FOR i = 1 TO 3
+            FOR j = 1 TO 3
+                LET best AS S64 = 999999
+                FOR k = 1 TO 3
+                    LET v AS S64 = aa[(i - 1) * 3 + k] + bb[(k - 1) * 3 + j]
+                    IF v < best THEN best = v END IF
+                END FOR
+                cc[(i - 1) * 3 + j] = best
+            END FOR
+        END FOR
+        PRINT "tropical A(*)B:"
+        FOR i = 1 TO 3
+            PRINT cc[(i - 1) * 3 + 1] | " " | cc[(i - 1) * 3 + 2] | " " | cc[(i - 1) * 3 + 3]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ta
+BEGIN
+    Ta.Run()
+END

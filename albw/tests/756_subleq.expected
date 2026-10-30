@@ -1,0 +1,2 @@
+subleq step: mem[5]=0
+output=Hi

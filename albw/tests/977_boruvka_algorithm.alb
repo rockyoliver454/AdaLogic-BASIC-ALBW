@@ -1,0 +1,77 @@
+-- 977 | Boruvka's MST algorithm: repeatedly add each
+-- component's cheapest outgoing edge until one tree.
+DECLARE MODULE Bo
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bo
+    STRICT eu[15] AS S64
+    STRICT ev[15] AS S64
+    STRICT ew[15] AS S64
+    STRICT par[9] AS S64
+    STRICT best[9] AS S64
+
+    FUNCTION Fnd(x AS S64) AS S64
+        WHILE par[x] <> x
+            x = par[x]
+        END WHILE
+        RETURN x
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- 8 vertices, 14 edges (u v w)
+        LET ne AS S64 = 14
+        eu[1] = 1; ev[1] = 2; ew[1] = 7
+        eu[2] = 1; ev[2] = 3; ew[2] = 9
+        eu[3] = 2; ev[3] = 3; ew[3] = 2
+        eu[4] = 2; ev[4] = 4; ew[4] = 5
+        eu[5] = 3; ev[5] = 5; ew[5] = 3
+        eu[6] = 4; ev[6] = 5; ew[6] = 1
+        eu[7] = 4; ev[7] = 6; ew[7] = 8
+        eu[8] = 5; ev[8] = 6; ew[8] = 4
+        eu[9] = 5; ev[9] = 7; ew[9] = 6
+        eu[10] = 6; ev[10] = 8; ew[10] = 3
+        eu[11] = 7; ev[11] = 8; ew[11] = 2
+        eu[12] = 1; ev[12] = 4; ew[12] = 11
+        eu[13] = 6; ev[13] = 7; ew[13] = 9
+        eu[14] = 3; ev[14] = 4; ew[14] = 10
+        FOR i = 1 TO 8
+            par[i] = i
+        END FOR
+        LET total AS S64 = 0
+        LET done AS S64 = 0
+        WHILE done = 0
+            FOR i = 1 TO 8
+                best[i] = 0
+            END FOR
+            FOR e = 1 TO ne
+                LET ra AS S64 = Fnd(eu[e])
+                LET rb AS S64 = Fnd(ev[e])
+                IF ra <> rb THEN
+                    IF best[ra] = 0 ORELSE ew[e] < ew[best[ra]] THEN best[ra] = e END IF
+                    IF best[rb] = 0 ORELSE ew[e] < ew[best[rb]] THEN best[rb] = e END IF
+                END IF
+            END FOR
+            done = 1
+            FOR i = 1 TO 8
+                IF par[i] = i ANDALSO best[i] > 0 THEN
+                    LET e AS S64 = best[i]
+                    LET ra AS S64 = Fnd(eu[e])
+                    LET rb AS S64 = Fnd(ev[e])
+                    IF ra <> rb THEN
+                        par[ra] = rb
+                        total = total + ew[e]
+                        PRINT "edge " | eu[e] | "-" | ev[e] | " w=" | ew[e]
+                        done = 0
+                    END IF
+                END IF
+            END FOR
+        END WHILE
+        PRINT "mst weight=" | total
+    END PROCEDURE
+END MODULE
+
+IMPORT Bo
+BEGIN
+    Bo.Run()
+END

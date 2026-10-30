@@ -1,0 +1,39 @@
+-- 616 | Mad Libs: substitute placeholders in a template.
+DECLARE MODULE Mad
+    FUNCTION Sub2(s AS STRING, pat AS STRING, rep AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mad
+    FUNCTION Sub2(s AS STRING, pat AS STRING, rep AS STRING) AS STRING
+        LET r AS STRING = ""
+        LET i AS S64 = 1
+        WHILE i <= LEN(s)
+            LET found AS S32 = 0
+            IF i + LEN(pat) - 1 <= LEN(s) THEN
+                IF MID$(s, i, LEN(pat)) = pat THEN found = 1 END IF
+            END IF
+            IF found = 1 THEN
+                r = r | rep
+                i = i + LEN(pat)
+            ELSE
+                r = r | MID$(s, i, 1)
+                i = i + 1
+            END IF
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET t AS STRING = "The <animal> <verb> over the <thing>."
+        LET r AS STRING = Sub2(t, "<animal>", "fox")
+        LET r2 AS STRING = Sub2(r, "<verb>", "jumped")
+        LET r3 AS STRING = Sub2(r2, "<thing>", "moon")
+        PRINT r3
+    END PROCEDURE
+END MODULE
+
+IMPORT Mad
+BEGIN
+    Mad.Run()
+END

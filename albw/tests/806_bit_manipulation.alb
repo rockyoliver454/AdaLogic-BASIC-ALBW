@@ -1,0 +1,20 @@
+-- Rosetta-style bit manipulation: SHL/SHR infix (wraps on overshift)
+-- plus ROL/ROR/BSET/BCLR/BTST call helpers on integer widths.
+BEGIN
+    LET x AS U8 = 1
+    LET y AS S32 = x SHL 3
+    LET z AS S32 = x SHR 0
+    PRINT y
+    PRINT z
+    LET w AS S32 = 240 >> 4
+    PRINT w
+    LET a AS S32 = ROL(x, 4)
+    LET b AS S32 = ROR(x, 4)
+    PRINT a
+    PRINT b
+    LET r AS S32 = BSET(0, 5)
+    PRINT r
+    PRINT BCLR(r, 5)
+    PRINT BTST(r, 5)
+    PRINT BTST(r, 4)
+END

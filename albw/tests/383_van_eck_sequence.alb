@@ -1,0 +1,31 @@
+-- 383 | Van Eck sequence: first 30 terms (a(n)=0 if a(n-1) new, else distance to last occurrence).
+DECLARE MODULE VanEck
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE VanEck
+    STRICT last[4096] AS S64
+    PROCEDURE Run()
+        FOR i = 0 TO 4095
+            last[i] = -1
+        END FOR
+        LET a AS S64 = 0
+        LET s AS STRING = "0 "
+        last[0] = 0
+        FOR n = 1 TO 29
+            LET nxt AS S64 = 0
+            IF last[a] < n ANDALSO last[a] >= 0 THEN
+                nxt = n - last[a]
+            END IF
+            last[a] = n
+            a = nxt
+            s = s | a | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT VanEck
+BEGIN
+    VanEck.Run()
+END

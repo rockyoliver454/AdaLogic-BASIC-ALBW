@@ -1,0 +1,12 @@
+-- 099 | Hamming distance: positions where two strings differ.
+BEGIN
+    LET a AS STRING = "toned";
+    LET b AS STRING = "roses";
+    LET dist AS S32 = 0;
+    FOR i = 1 TO LEN(a)
+        IF MID$(a, i, 1) <> MID$(b, i, 1) THEN
+            dist = dist + 1;
+        END IF
+    END FOR
+    PRINT dist;
+END

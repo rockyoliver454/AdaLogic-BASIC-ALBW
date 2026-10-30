@@ -1,0 +1,15 @@
+-- 203 | Function prototype: declare a signature before its implementation.
+DECLARE MODULE Prototype
+    FUNCTION Square(value AS S32) AS S32
+END DECLARE MODULE
+
+MODULE Prototype
+    FUNCTION Square(value AS S32) AS S32
+        RETURN value * value
+    END FUNCTION
+END MODULE
+
+IMPORT Prototype
+BEGIN
+    PRINT Prototype.Square(9)
+END

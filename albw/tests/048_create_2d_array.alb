@@ -1,0 +1,12 @@
+-- 048 | Create a 2D array, fill and read it back.
+BEGIN
+    STRICT g[3,4] AS S32;
+    FOR i = 0 TO 2
+        FOR j = 0 TO 3
+            g[i,j] = i * 10 + j;
+        END FOR
+    END FOR
+    PRINT g[2,3];
+    PRINT g[0,1];
+    PRINT g[1,2];
+END

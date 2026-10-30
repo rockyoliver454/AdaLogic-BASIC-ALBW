@@ -1,0 +1,69 @@
+-- 869 | Dinesman's multiple-dwelling problem: 8 floors,
+-- assign Baker, Cooper, Fletcher, Miller, Smith with the
+-- classic clues; brute-force the permutation.
+-- Clues: B != top; C != bottom; F != top and != bottom;
+-- M > C; S not adjacent to F; F not adjacent to C.
+DECLARE MODULE Dm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dm
+    STRICT fl[6] AS S64
+    STRICT used[6] AS S64
+
+    FUNCTION Adj(a AS S64, b AS S64) AS S32
+        IF a - b = 1 ORELSE b - a = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION Good() AS S32
+        -- fl[i] = person on floor i (0..4 = B,C,F,M,S)
+        IF fl[5] = 0 THEN RETURN 0 END IF          -- B not top(5)
+        IF fl[1] = 1 THEN RETURN 0 END IF          -- C not bottom(1)
+        IF fl[5] = 2 ORELSE fl[1] = 2 THEN RETURN 0 END IF  -- F not 1/5
+        -- M above C
+        LET cm AS S64 = 0
+        LET cf AS S64 = 0
+        LET cs AS S64 = 0
+        LET cb AS S64 = 0
+        FOR i = 1 TO 5
+            IF fl[i] = 2 THEN cf = i END IF
+            IF fl[i] = 1 THEN cb = i END IF
+            IF fl[i] = 3 THEN cm = i END IF
+            IF fl[i] = 4 THEN cs = i END IF
+        END FOR
+        IF cm <= cb THEN RETURN 0 END IF
+        IF Adj(cs, cf) = 1 THEN RETURN 0 END IF
+        IF Adj(cf, cb) = 1 THEN RETURN 0 END IF
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- generate permutations via nested loops (5! = 120)
+        FOR a = 1 TO 5
+        FOR b = 1 TO 5
+        FOR c = 1 TO 5
+        FOR d = 1 TO 5
+        FOR e = 1 TO 5
+            IF a <> b ANDALSO a <> c ANDALSO a <> d ANDALSO a <> e ANDALSO b <> c ANDALSO b <> d ANDALSO b <> e ANDALSO c <> d ANDALSO c <> e ANDALSO d <> e THEN
+                fl[1] = a - 1
+                fl[2] = b - 1
+                fl[3] = c - 1
+                fl[4] = d - 1
+                fl[5] = e - 1
+                IF Good() = 1 THEN
+                    PRINT "floor5:" | fl[5] | " f4:" | fl[4] | " f3:" | fl[3] | " f2:" | fl[2] | " f1:" | fl[1]
+                END IF
+            END IF
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Dm
+BEGIN
+    Dm.Run()
+END

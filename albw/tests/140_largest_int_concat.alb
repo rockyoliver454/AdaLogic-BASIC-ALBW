@@ -1,0 +1,44 @@
+-- 140 | Largest int from concatenated parts: sort so ab > ba wins.
+DECLARE MODULE LC
+    FUNCTION StrGt(a AS STRING, b AS STRING) AS S32
+END DECLARE MODULE
+
+MODULE LC
+    --  -1 when a sorts lexically greater than b.
+    FUNCTION StrGt(a AS STRING, b AS STRING) AS S32
+        LET n AS S32 = LEN(a);
+        IF LEN(b) < n THEN
+            n = LEN(b);
+        END IF
+        FOR i = 1 TO n
+            LET ca AS S32 = ASC(MID$(a, i, 1));
+            LET cb AS S32 = ASC(MID$(b, i, 1));
+            IF ca > cb THEN
+                RETURN -1
+            END IF
+            IF ca < cb THEN
+                RETURN 0
+            END IF
+        END FOR
+        IF LEN(a) > LEN(b) THEN
+            RETURN -1
+        END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+IMPORT LC
+BEGIN
+    STRICT p[4] AS STRING;
+    p[0] = "54"; p[1] = "546"; p[2] = "548"; p[3] = "60";
+    FOR i = 0 TO 2
+        FOR j = 0 TO 2 - i
+            IF LC.StrGt(p[j] | p[j + 1], p[j + 1] | p[j]) = 0 THEN
+                LET t AS STRING = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = t;
+            END IF
+        END FOR
+    END FOR
+    PRINT$ p[0] | p[1] | p[2] | p[3];
+END

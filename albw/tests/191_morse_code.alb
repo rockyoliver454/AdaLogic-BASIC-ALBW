@@ -1,0 +1,33 @@
+-- 187 | Morse code -- SELECT dispatch per character (subset A-Z,0-9)
+DECLARE MODULE Morse
+    FUNCTION Encode(s AS STRING) AS STRING
+END MODULE
+
+MODULE Morse
+    FUNCTION Encode(s AS STRING) AS STRING
+        LET acc AS STRING = ""
+        LET i AS S32 = 0
+        FOR i = 0 TO LEN(s) - 1
+            LET c AS S32 = ASC(MID$(s, i + 1, 1))
+            SELECT c
+                CASE 65 => acc = acc | ".- "
+                CASE 66 => acc = acc | "-... "
+                CASE 67 => acc = acc | "-.-. "
+                CASE 69 => acc = acc | ". "
+                CASE 72 => acc = acc | ".... "
+                CASE 76 => acc = acc | ".-.. "
+                CASE 79 => acc = acc | "--- "
+                CASE 82 => acc = acc | ".-. "
+                CASE 83 => acc = acc | "... "
+                CASE 84 => acc = acc | "- "
+                ELSE => acc = acc | "? "
+            END SELECT
+        END FOR
+        RETURN acc
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT$ Morse.Encode("SOS")
+    PRINT$ Morse.Encode("HELLO")
+END

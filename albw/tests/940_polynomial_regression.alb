@@ -1,0 +1,93 @@
+-- 940 | Polynomial regression: least-squares quadratic fit
+-- of 11 points (the classic RC example data), solve the 3x3
+-- normal equations by Gaussian elimination.
+DECLARE MODULE Pr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pr
+    STRICT xs[12] AS F64
+    STRICT ys[12] AS F64
+    STRICT a[4] AS F64
+    STRICT b[4] AS F64
+    STRICT aug[16] AS F64
+    STRICT sol[4] AS F64
+
+    PROCEDURE Run()
+        xs[1] = 0; xs[2] = 1; xs[3] = 2; xs[4] = 3; xs[5] = 4
+        xs[6] = 5; xs[7] = 6; xs[8] = 7; xs[9] = 8; xs[10] = 9
+        xs[11] = 10
+        ys[1] = 1; ys[2] = 6; ys[3] = 17; ys[4] = 34; ys[5] = 57
+        ys[6] = 86; ys[7] = 121; ys[8] = 162; ys[9] = 209
+        ys[10] = 262; ys[11] = 321
+        LET n AS S64 = 11
+        -- normal equations for c0 + c1 x + c2 x^2
+        LET sx0 AS F64 = 0
+        LET sx1 AS F64 = 0
+        LET sx2 AS F64 = 0
+        LET sx3 AS F64 = 0
+        LET sx4 AS F64 = 0
+        LET sy AS F64 = 0
+        LET sxy AS F64 = 0
+        LET sx2y AS F64 = 0
+        FOR i = 1 TO n
+            LET x AS F64 = xs[i]
+            LET y AS F64 = ys[i]
+            sx0 = sx0 + 1.0
+            sx1 = sx1 + x
+            sx2 = sx2 + x * x
+            sx3 = sx3 + x * x * x
+            sx4 = sx4 + x * x * x * x
+            sy = sy + y
+            sxy = sxy + x * y
+            sx2y = sx2y + x * x * y
+        END FOR
+        -- augmented matrix (3x4), row-major
+        aug[1] = sx0; aug[2] = sx1; aug[3] = sx2; aug[4] = sy
+        aug[5] = sx1; aug[6] = sx2; aug[7] = sx3; aug[8] = sxy
+        aug[9] = sx2; aug[10] = sx3; aug[11] = sx4; aug[12] = sx2y
+        -- gaussian elimination
+        FOR col = 1 TO 3
+            LET pv AS S64 = col
+            FOR r = col + 1 TO 3
+                LET i1 AS S64 = (r - 1) * 4 + col
+                LET i2 AS S64 = (pv - 1) * 4 + col
+                IF ABS(aug[i1]) > ABS(aug[i2]) THEN pv = r END IF
+            END FOR
+            IF pv <> col THEN
+                FOR k = 1 TO 4
+                    LET i1 AS S64 = (col - 1) * 4 + k
+                    LET i2 AS S64 = (pv - 1) * 4 + k
+                    LET t AS F64 = aug[i1]
+                    aug[i1] = aug[i2]
+                    aug[i2] = t
+                END FOR
+            END IF
+            FOR r = col + 1 TO 3
+                LET i1 AS S64 = (r - 1) * 4 + col
+                LET i2 AS S64 = (col - 1) * 4 + col
+                LET f AS F64 = aug[i1] / aug[i2]
+                FOR k = col TO 4
+                    LET i3 AS S64 = (r - 1) * 4 + k
+                    LET i4 AS S64 = (col - 1) * 4 + k
+                    aug[i3] = aug[i3] - f * aug[i4]
+                END FOR
+            END FOR
+        END FOR
+        -- back substitution
+        FOR k = 0 TO 2
+            LET r AS S64 = 3 - k
+            LET s AS F64 = aug[r * 4]
+            FOR c = r + 1 TO 3
+                s = s - aug[(r - 1) * 4 + c] * sol[c]
+            END FOR
+            sol[r] = s / aug[(r - 1) * 4 + r]
+        END FOR
+        PRINT "c0=" | sol[1] | " c1=" | sol[2] | " c2=" | sol[3]
+    END PROCEDURE
+END MODULE
+
+IMPORT Pr
+BEGIN
+    Pr.Run()
+END

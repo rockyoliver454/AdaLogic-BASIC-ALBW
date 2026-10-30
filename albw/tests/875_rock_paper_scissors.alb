@@ -1,0 +1,46 @@
+-- 875 | Rock-paper-scissors: seeded best-of-5 match between
+-- a scripted player and the computer.
+DECLARE MODULE Rp
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rp
+    STRICT sd[1] AS S64
+    STRICT nm[4] AS STRING
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 3 + 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        nm[1] = "rock"
+        nm[2] = "paper"
+        nm[3] = "scissors"
+        sd[1] = 7
+        -- human plays a fixed strategy: 1,2,3,1,2
+        LET pw AS S64 = 0
+        LET cw AS S64 = 0
+        FOR rd = 1 TO 5
+            LET p AS S64 = rd MOD 3 + 1
+            LET c AS S64 = Nxt()
+            LET res AS STRING = "tie"
+            IF (p = 1 ANDALSO c = 3) ORELSE (p = 2 ANDALSO c = 1) ORELSE (p = 3 ANDALSO c = 2) THEN
+                res = "player wins"
+                pw = pw + 1
+            END IF
+            IF (c = 1 ANDALSO p = 3) ORELSE (c = 2 ANDALSO p = 1) ORELSE (c = 3 ANDALSO p = 2) THEN
+                res = "computer wins"
+                cw = cw + 1
+            END IF
+            PRINT "r" | rd | ": " | nm[p] | " vs " | nm[c] | " -> " | res
+        END FOR
+        PRINT "score " | pw | "-" | cw
+    END PROCEDURE
+END MODULE
+
+IMPORT Rp
+BEGIN
+    Rp.Run()
+END

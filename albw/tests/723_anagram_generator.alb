@@ -1,0 +1,38 @@
+-- 723 | Anagram generator: all anagrams of "word" via
+-- recursive permutation of its characters.
+DECLARE MODULE Ag
+    PROCEDURE Perm(dep AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ag
+    STRICT ch[5] AS STRING
+    STRICT used[5] AS S32
+    STRICT cur[5] AS STRING
+    STRICT srcarr[1] AS STRING
+
+    PROCEDURE Perm(dep AS S64)
+        IF dep > 4 THEN
+            PRINT cur[1] | cur[2] | cur[3] | cur[4]
+            RETURN
+        END IF
+        FOR i = 1 TO 4
+            IF used[i] = 0 THEN
+                used[i] = 1
+                cur[dep] = MID$(srcarr[1], i, 1)
+                Perm(dep + 1)
+                used[i] = 0
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        srcarr[1] = "word"
+        Perm(1)
+    END PROCEDURE
+END MODULE
+
+IMPORT Ag
+BEGIN
+    Ag.Run()
+END

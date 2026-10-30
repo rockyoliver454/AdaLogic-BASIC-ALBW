@@ -1,0 +1,6 @@
+BEGIN
+    LET i = 0
+    FOR i = 1 TO 3 THEN
+        PRINT i
+    END FOR
+END

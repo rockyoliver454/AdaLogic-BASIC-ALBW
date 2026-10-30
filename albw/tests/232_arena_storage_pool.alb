@@ -1,0 +1,11 @@
+-- 232 | Arena storage pool: checkpoint, allocate temporary values, and rewind.
+BEGIN
+    LET permanent_text AS STRING = "kept" | " value"
+    CLAIM pool_mark
+    FOR i = 1 TO 2000
+        LET temporary_text AS STRING = "temporary allocation " | i
+        SWEEP pool_mark
+    END FOR
+    PRINT permanent_text
+    PRINT "arena reclaimed"
+END

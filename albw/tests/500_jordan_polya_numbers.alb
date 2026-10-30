@@ -1,0 +1,48 @@
+-- 500 | Jordan-Polya numbers: numbers <= 10000 that are products of
+-- factorials (with repetition allowed).
+DECLARE MODULE JP
+    PROCEDURE Gen(v AS S64, fk AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE JP
+    STRICT hit[10001] AS S32
+
+    PROCEDURE Gen(v AS S64, fk AS S64)
+        IF v > 10000 THEN RETURN END IF
+        hit[v] = 1
+        -- multiply by factorials f! for f >= fk (nondecreasing order)
+        LET f AS S64 = fk
+        LET fact AS S64 = 1
+        FOR i = 2 TO f
+            fact = fact * i
+        END FOR
+        WHILE v <= 10000 / fact
+            Gen(v * fact, f)
+            f = f + 1
+            fact = fact * f
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 1 TO 10000
+            hit[i] = 0
+        END FOR
+        Gen(1, 2)
+        LET s AS STRING = ""
+        FOR n = 1 TO 500
+            IF hit[n] = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+        LET cnt AS S64 = 0
+        FOR m = 1 TO 10000
+            IF hit[m] = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT JP
+BEGIN
+    JP.Run()
+END

@@ -1,0 +1,33 @@
+-- 671 | Cumulative standard deviation: running stdev over
+-- 2,4,4,4,5,5,7,9.
+DECLARE MODULE Csd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Csd
+    STRICT v[8] AS F64
+
+    PROCEDURE Run()
+        v[1] = 2
+        v[2] = 4
+        v[3] = 4
+        v[4] = 4
+        v[5] = 5
+        v[6] = 5
+        v[7] = 7
+        v[8] = 9
+        LET mean AS F64 = 0.0
+        LET m2 AS F64 = 0.0
+        FOR i = 1 TO 8
+            LET delta AS F64 = v[i] - mean
+            mean = mean + delta / i
+            m2 = m2 + delta * (v[i] - mean)
+            IF i = 8 THEN PRINT "stdev: " | SQRT(m2 / i) END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Csd
+BEGIN
+    Csd.Run()
+END

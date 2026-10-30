@@ -1,0 +1,25 @@
+-- 114 | Haversine formula -- distance Nashville->Los Angeles in km
+DECLARE MODULE Geo
+    FUNCTION Radians(d AS F64) AS F64
+    FUNCTION Haversine(lat1 AS F64, lon1 AS F64, lat2 AS F64, lon2 AS F64) AS F64
+END MODULE
+
+MODULE Geo
+    FUNCTION Radians(d AS F64) AS F64
+        RETURN d * 0.017453292519943295
+    END FUNCTION
+    FUNCTION Haversine(lat1 AS F64, lon1 AS F64, lat2 AS F64, lon2 AS F64) AS F64
+        LET r AS F64 = 6372.8
+        LET dlat AS F64 = Radians(lat2 - lat1)
+        LET dlon AS F64 = Radians(lon2 - lon1)
+        LET sd1 AS F64 = SIN(dlat / 2.0)
+        LET sd2 AS F64 = SIN(dlon / 2.0)
+        LET aa AS F64 = sd1 * sd1 + COS(Radians(lat1)) * COS(Radians(lat2)) * sd2 * sd2
+        LET cc AS F64 = 2.0 * ASIN(SQRT(aa))
+        RETURN r * cc
+    END FUNCTION
+END MODULE
+
+BEGIN
+    PRINT Geo.Haversine(36.12, -86.67, 33.94, -118.40)
+END

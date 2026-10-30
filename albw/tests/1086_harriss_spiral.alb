@@ -1,0 +1,72 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+
+
+BEGIN
+    LET a AS S64 = 34
+    LET b AS S64 = 21
+    LET side AS S64 = 0
+    LET x AS S64 = 4
+    LET y AS S64 = 12
+    WHILE side < 5
+        LET w AS S64 = a - b
+        LET x2 AS S64 = x + w
+        LET y2 AS S64 = y
+        LET s AS S64 = 0
+        WHILE s < w
+            img[y * 64 + x + s] = 16777215
+            img[(y + w) * 64 + x + s] = 16777215
+            img[(y + s) * 64 + x] = 16777215
+            img[(y + s) * 64 + x + w] = 16777215
+            s = s + 1
+        END WHILE
+        y = y + w
+        a = b
+        b = w
+        side = side + 1
+    END WHILE
+
+    CREATE_WINDOW "Harriss spiral", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "squares=5 fib=34,21"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

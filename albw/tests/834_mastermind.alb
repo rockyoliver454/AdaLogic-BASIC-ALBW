@@ -1,0 +1,113 @@
+-- 834 | Mastermind: consistent-guess elimination solver over
+-- all 6^4 codes vs a fixed secret. Prints each guess and
+-- (black,white) score until cracked.
+DECLARE MODULE Mm
+    FUNCTION Score(a AS S64, b AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mm
+    STRICT okk[1297] AS S64
+    STRICT ad[5] AS S64
+    STRICT bd[5] AS S64
+    STRICT ua[5] AS S64
+    STRICT t[5] AS S64
+
+    PROCEDURE Digits(v AS S64, wh AS S64)
+        -- v encodes 4 base-6 digits stored as number 0..1295;
+        -- extract into slot arrays (digits 0..5)
+        LET x AS S64 = v
+        FOR k = 1 TO 4
+            LET i AS S64 = 5 - k
+            t[i] = x MOD 6
+            x = x / 6
+        END FOR
+        IF wh = 0 THEN
+            FOR i = 1 TO 4
+                ad[i] = t[i]
+            END FOR
+        ELSE
+            FOR i = 1 TO 4
+                bd[i] = t[i]
+            END FOR
+        END IF
+    END PROCEDURE
+
+    FUNCTION Score() AS S64
+        -- black*10 + white; ad=secret, bd=guess
+        LET black AS S64 = 0
+        FOR i = 1 TO 4
+            ua[i] = 0
+        END FOR
+        FOR i = 1 TO 4
+            IF ad[i] = bd[i] THEN
+                black = black + 1
+                ua[i] = 1
+            END IF
+        END FOR
+        LET white AS S64 = 0
+        FOR i = 1 TO 4
+            IF ad[i] <> bd[i] THEN
+                LET j AS S64 = 1
+                LET got AS S32 = 0
+                WHILE j <= 4 ANDALSO got = 0
+                    IF ua[j] = 0 ANDALSO bd[j] <> ad[j] ANDALSO bd[i] = ad[j] THEN
+                        ua[j] = 1
+                        white = white + 1
+                        got = 1
+                    END IF
+                    j = j + 1
+                END WHILE
+            END IF
+        END FOR
+        RETURN black * 10 + white
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- secret 4152 (digits 1..6 -> encoded 4,1,5,2 as base-6 0..5 minus)
+        -- encode code digits d_i-1... use digits 0..5 where digit=number-1
+        LET secret AS S64 = (4 - 1) * 216 + (1 - 1) * 36 + (5 - 1) * 6 + (2 - 1)
+        FOR i = 0 TO 1295
+            okk[i + 1] = 1
+        END FOR
+        LET guess AS S64 = 0 * 216 + 0 * 36 + 1 * 6 + 1  -- 1122
+        LET gno AS S64 = 0
+        LET done AS S32 = 0
+        WHILE done = 0
+            gno = gno + 1
+            Digits(secret, 0)
+            Digits(guess, 1)
+            LET sc AS S64 = Score()
+            -- display guess as digits+1
+            LET s AS STRING = ""
+            FOR i = 1 TO 4
+                s = s | (bd[i] + 1)
+            END FOR
+            PRINT "guess" | gno | " " | s | " black=" | sc / 10 | " white=" | sc MOD 10
+            IF sc = 40 THEN
+                PRINT "cracked: " | s
+                done = 1
+            ELSE
+                -- eliminate inconsistent codes
+                FOR c = 0 TO 1295
+                    IF okk[c + 1] = 1 THEN
+                        Digits(c, 0)
+                        Digits(guess, 1)
+                        IF Score() <> sc THEN okk[c + 1] = 0 END IF
+                    END IF
+                END FOR
+                -- next guess = first remaining consistent code
+                LET nxt AS S64 = 0 - 1
+                FOR c = 0 TO 1295
+                    IF okk[c + 1] = 1 ANDALSO nxt < 0 THEN nxt = c END IF
+                END FOR
+                guess = nxt
+            END IF
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Mm
+BEGIN
+    Mm.Run()
+END

@@ -1,0 +1,7 @@
+-- 273 | String length: report the length of two strings.
+BEGIN
+    LET s AS STRING = "AdaLogic"
+    LET empty AS STRING = ""
+    PRINT LEN(s)
+    PRINT LEN(empty)
+END

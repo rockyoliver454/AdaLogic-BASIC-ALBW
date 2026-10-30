@@ -1,0 +1,31 @@
+VERSION 1.0
+LET frames AS S64 = 0
+LET px AS S64 = 0
+
+BEGIN
+    CREATE_WINDOW "Window creation", 96, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+
+    ON PAINT
+        CLEAR $303060
+        px = READ_PIXEL(48, 32)
+    END
+
+    LISTEN
+
+    PRINT "created window 96x64"
+    PRINT "frames=" | frames
+    PRINT "bg=" | px
+    IF px = 4281348192 ANDALSO frames = 3 THEN
+        PRINT "window shown and closed cleanly"
+    ELSE
+        PRINT "FAIL"
+    END IF
+END

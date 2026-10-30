@@ -1,0 +1,43 @@
+-- 553 | One-time pad: XOR a message with a fixed pad and decrypt
+-- back to the plaintext.
+DECLARE MODULE OTP
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE OTP
+    STRICT padv[11] AS S64
+
+    PROCEDURE Run()
+        LET msg AS STRING = "HELLO WORLD"
+        padv[1] = 23
+        padv[2] = 61
+        padv[3] = 90
+        padv[4] = 17
+        padv[5] = 55
+        padv[6] = 40
+        padv[7] = 82
+        padv[8] = 9
+        padv[9] = 34
+        padv[10] = 67
+        padv[11] = 7
+        LET enc AS STRING = ""
+        FOR i = 1 TO LEN(msg)
+            enc = enc | CHR(ASC(MID$(msg, i, 1)) XOR padv[i])
+        END FOR
+        LET hx AS STRING = "cipher hex:"
+        FOR j = 1 TO LEN(enc)
+            hx = hx | " " | ASC(MID$(enc, j, 1))
+        END FOR
+        PRINT hx
+        LET dec AS STRING = ""
+        FOR k = 1 TO LEN(enc)
+            dec = dec | CHR(ASC(MID$(enc, k, 1)) XOR padv[k])
+        END FOR
+        PRINT dec
+    END PROCEDURE
+END MODULE
+
+IMPORT OTP
+BEGIN
+    OTP.Run()
+END

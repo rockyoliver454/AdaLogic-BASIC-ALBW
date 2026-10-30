@@ -1,0 +1,42 @@
+-- 358 | Harshad or Niven series: first 25 terms plus the first term beyond 1000.
+DECLARE MODULE Harshad
+    FUNCTION IsHarshad(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Harshad
+    FUNCTION IsHarshad(n AS S64) AS S32
+        LET m AS S64 = n
+        LET s AS S64 = 0
+        WHILE m > 0
+            s = s + m MOD 10
+            m = m / 10
+        END WHILE
+        IF s > 0 ANDALSO n MOD s = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 25
+            IF IsHarshad(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+        n = 1001
+        WHILE IsHarshad(n) = 0
+            n = n + 1
+        END WHILE
+        PRINT "first > 1000: " | n
+    END PROCEDURE
+END MODULE
+
+IMPORT Harshad
+BEGIN
+    Harshad.Run()
+END

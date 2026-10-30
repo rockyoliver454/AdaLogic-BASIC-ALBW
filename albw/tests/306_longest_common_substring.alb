@@ -1,0 +1,35 @@
+-- 306 | Longest common substring between pairs of strings.
+DECLARE MODULE LCS
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE LCS
+    PROCEDURE Show(a AS STRING, b AS STRING)
+        LET best AS S32 = 0
+        LET best_pos AS S32 = 1
+        FOR i = 1 TO LEN(a)
+            FOR j = 1 TO LEN(b)
+                LET k AS S32 = 0
+                WHILE i + k <= LEN(a) ANDALSO j + k <= LEN(b) ANDALSO ASC(MID$(a, i + k, 1)) = ASC(MID$(b, j + k, 1))
+                    k = k + 1
+                END WHILE
+                IF k > best THEN
+                    best = k
+                    best_pos = i
+                END IF
+            END FOR
+        END FOR
+        PRINT a | " + " | b | " -> '" | MID$(a, best_pos, best) | "'"
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show("thisisatest", "testing123testing")
+        Show("programming", "programmer")
+        Show("abcdef", "xyz")
+    END PROCEDURE
+END MODULE
+
+IMPORT LCS
+BEGIN
+    LCS.Run()
+END

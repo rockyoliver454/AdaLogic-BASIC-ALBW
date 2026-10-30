@@ -1,0 +1,1 @@
+cmd.exe builtins: mkdir/dir/s/b/rmdir/del + 2>nul

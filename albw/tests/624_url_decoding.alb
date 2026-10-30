@@ -1,0 +1,36 @@
+-- 624 | URL decoding: percent-decode an escaped string.
+DECLARE MODULE Udec
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Udec
+    PROCEDURE Run()
+        LET enc AS STRING = "a%20b%26c%3Dd%3F"
+        LET dec AS STRING = ""
+        LET i AS S64 = 1
+        WHILE i <= LEN(enc)
+            LET ch AS STRING = MID$(enc, i, 1)
+            IF ch = "%" THEN
+                LET h1 AS S64 = ASC(MID$(enc, i + 1, 1))
+                LET h2 AS S64 = ASC(MID$(enc, i + 2, 1))
+                IF h1 > 57 THEN h1 = h1 - 7 END IF
+                IF h2 > 57 THEN h2 = h2 - 7 END IF
+                dec = dec | CHR((h1 - 48) * 16 + h2 - 48)
+                i = i + 3
+            ELSE
+                IF ch = "+" THEN
+                    dec = dec | " "
+                ELSE
+                    dec = dec | ch
+                END IF
+                i = i + 1
+            END IF
+        END WHILE
+        PRINT dec
+    END PROCEDURE
+END MODULE
+
+IMPORT Udec
+BEGIN
+    Udec.Run()
+END

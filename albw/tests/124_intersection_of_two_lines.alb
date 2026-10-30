@@ -1,0 +1,16 @@
+-- 124 | Intersection of two lines Ax+By=C via determinants.
+BEGIN
+    LET a1 AS F64 = 4.0;
+    LET b1 AS F64 = 2.0;
+    LET c1 AS F64 = 10.0;
+    LET a2 AS F64 = 2.0;
+    LET b2 AS F64 = -3.0;
+    LET c2 AS F64 = -1.0;
+    LET det AS F64 = a1 * b2 - a2 * b1;
+    IF det = 0.0 THEN
+        PRINT$ "parallel";
+    ELSE
+        PRINT$ "x = " | (c1 * b2 - c2 * b1) / det;
+        PRINT$ "y = " | (a1 * c2 - a2 * c1) / det;
+    END IF
+END

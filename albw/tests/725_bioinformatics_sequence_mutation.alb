@@ -1,0 +1,36 @@
+-- 725 | Bioinformatics/Sequence mutation: apply deterministic
+-- point mutations to a DNA string.
+DECLARE MODULE Bm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bm
+    STRICT b[4] AS STRING
+
+    PROCEDURE Run()
+        b[1] = "A"
+        b[2] = "C"
+        b[3] = "G"
+        b[4] = "T"
+        LET s AS STRING = "ACGTACGTACGT"
+        -- mutate every 4th base to the next nucleotide
+        LET resl AS STRING = ""
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            LET c AS STRING = MID$(s, i, 1)
+            IF i MOD 4 = 0 THEN
+                FOR j = 1 TO 4
+                    IF b[j] = c THEN c = b[(j MOD 4) + 1] END IF
+                END FOR
+            END IF
+            resl = resl | c
+        END FOR
+        PRINT s
+        PRINT resl
+    END PROCEDURE
+END MODULE
+
+IMPORT Bm
+BEGIN
+    Bm.Run()
+END

@@ -1,0 +1,35 @@
+-- 333 | Price fraction: round cent prices to the nearest 0.05.
+DECLARE MODULE Price
+    FUNCTION Round5(cents AS S64) AS S64
+    PROCEDURE Show(cents AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Price
+    FUNCTION Round5(cents AS S64) AS S64
+        LET r AS S64 = cents MOD 5
+        LET c AS S64 = cents - r
+        IF r >= 3 THEN c = c + 5 END IF
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Show(cents AS S64)
+        LET c AS S64 = Round5(cents)
+        LET s AS STRING = "0." | (c / 10)
+        s = s | (c MOD 10)
+        PRINT "0." | (cents / 10) | (cents MOD 10) | " -> " | s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(38)
+        Show(2)
+        Show(97)
+        Show(13)
+        Show(44)
+    END PROCEDURE
+END MODULE
+
+IMPORT Price
+BEGIN
+    Price.Run()
+END

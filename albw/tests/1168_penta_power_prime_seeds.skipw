@@ -1,0 +1,1 @@
+Miller-Rabin over n^4+n+1 for n~30k needs exact BigInt arithmetic; JS BigInt loop exceeds practical runtime

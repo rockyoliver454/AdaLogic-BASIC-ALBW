@@ -1,0 +1,93 @@
+-- 973 | SHA-1: FIPS 180-1 over 32-bit words (masked S64).
+-- Prints SHA-1("abc") = a9993e36...
+DECLARE MODULE S1
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE S1
+    STRICT w[80] AS S64
+    STRICT msg[64] AS S64
+
+    FUNCTION Rlx(v AS S64, n AS S64) AS S64
+        v = v AND 4294967295
+        RETURN ((v * (2 ^ n) AND 4294967295) OR (v / (2 ^ (32 - n)))) AND 4294967295
+    END FUNCTION
+
+    FUNCTION Hx(v AS S64) AS STRING
+        LET h AS STRING = "0123456789abcdef"
+        LET s AS STRING = ""
+        FOR b = 0 TO 3
+            LET bt AS S64 = (v / (2 ^ ((3 - b) * 8))) MOD 256
+            s = s | MID$(h, bt / 16 + 1, 1) | MID$(h, bt MOD 16 + 1, 1)
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Hash(s AS STRING)
+        FOR i = 1 TO 64
+            msg[i] = 0
+        END FOR
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            msg[i] = ASC(MID$(s, i, 1))
+        END FOR
+        msg[n + 1] = 128
+        LET bits AS S64 = n * 8
+        msg[61] = (bits / 16777216) MOD 256
+        msg[62] = (bits / 65536) MOD 256
+        msg[63] = (bits / 256) MOD 256
+        msg[64] = bits MOD 256
+        FOR i = 0 TO 15
+            w[i] = msg[i * 4 + 1] * 16777216 + msg[i * 4 + 2] * 65536 + msg[i * 4 + 3] * 256 + msg[i * 4 + 4]
+        END FOR
+        FOR i = 16 TO 79
+            w[i] = Rlx(w[i - 3] XOR w[i - 8] XOR w[i - 14] XOR w[i - 16], 1)
+        END FOR
+        LET a AS S64 = 1732584193
+        LET b AS S64 = 4023233417
+        LET c AS S64 = 2562383102
+        LET d AS S64 = 271733878
+        LET e AS S64 = 3285377520
+        FOR i = 0 TO 79
+            LET f AS S64 = 0
+            LET k AS S64 = 0
+            IF i < 20 THEN
+                f = ((b AND c) OR ((4294967295 - b) AND d)) AND 4294967295
+                k = 1518500249
+            ELSE IF i < 40 THEN
+                f = (b XOR c XOR d) AND 4294967295
+                k = 1859775393
+            ELSE IF i < 60 THEN
+                f = ((b AND c) OR (b AND d) OR (c AND d)) AND 4294967295
+                k = 2400959708
+            ELSE
+                f = (b XOR c XOR d) AND 4294967295
+                k = 3395469782
+            END IF
+            END IF
+            END IF
+            LET tmp AS S64 = (Rlx(a, 5) + f + e + k + w[i]) AND 4294967295
+            e = d
+            d = c
+            c = Rlx(b, 30)
+            b = a
+            a = tmp
+        END FOR
+        a = (a + 1732584193) AND 4294967295
+        b = (b + 4023233417) AND 4294967295
+        c = (c + 2562383102) AND 4294967295
+        d = (d + 271733878) AND 4294967295
+        e = (e + 3285377520) AND 4294967295
+        PRINT "sha1(" | s | ")=" | Hx(a) | Hx(b) | Hx(c) | Hx(d) | Hx(e)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Hash("abc")
+        Hash("")
+    END PROCEDURE
+END MODULE
+
+IMPORT S1
+BEGIN
+    S1.Run()
+END

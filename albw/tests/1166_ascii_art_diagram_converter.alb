@@ -1,0 +1,46 @@
+VERSION 1.0
+
+STRICT diag[6] AS STRING
+
+
+BEGIN
+    diag[0] = "+-+ +---+"
+    diag[1] = "| | |   |"
+    diag[2] = "+-+ +   +"
+    diag[3] = "    |   |"
+    diag[4] = "+---+   |"
+    diag[5] = "+---+   |"
+
+    LET boxes AS S64 = 0
+    LET y AS S64 = 0
+    WHILE y < 5
+        LET x AS S64 = 1
+        WHILE x <= 8
+            LET c AS STRING = MID$(diag[y], x, 1)
+            IF c = "+" THEN
+                IF MID$(diag[y + 1], x, 1) = "|" THEN
+                    boxes = boxes + 1
+                END IF
+            END IF
+            x = x + 1
+        END WHILE
+        y = y + 1
+    END WHILE
+
+    LET edges AS S64 = 0
+    y = 0
+    WHILE y < 6
+        LET x AS S64 = 1
+        WHILE x <= 9
+            LET c AS STRING = MID$(diag[y], x, 1)
+            IF c = "-" ORELSE c = "|" THEN
+                edges = edges + 1
+            END IF
+            x = x + 1
+        END WHILE
+        y = y + 1
+    END WHILE
+    PRINT "rows=6 cols=9"
+    PRINT "box-left-edges=" | boxes
+    PRINT "line-cells=" | edges
+END

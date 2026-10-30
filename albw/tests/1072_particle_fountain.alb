@@ -1,0 +1,94 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT px[200] AS F64
+STRICT py[200] AS F64
+STRICT vx[200] AS F64
+STRICT vy[200] AS F64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET sd AS S64 = 0
+
+FUNCTION Nxt() AS S64
+    sd = (sd * 1103515245 + 12345) MOD 2147483648
+    RETURN (sd / 65536) MOD 32768
+END FUNCTION
+
+
+BEGIN
+    sd = 12345
+    LET i AS S64 = 0
+    WHILE i < 200
+        LET a AS F64 = (Nxt() MOD 60 - 30) * 1.0
+        LET sp AS F64 = (40 + Nxt() MOD 30) * 1.0
+        LET af AS F64 = a * 0.017453292519943295
+        vx[i] = SIN(af) * sp * 0.02
+        vy[i] = 0 - COS(af) * sp * 0.02
+        px[i] = 32.0
+        py[i] = 56.0
+        i = i + 1
+    END WHILE
+
+    LET fstep AS S64 = 0
+    WHILE fstep < 25
+        i = 0
+        WHILE i < 200
+            px[i] = px[i] + vx[i]
+            vy[i] = vy[i] + 0.08
+            py[i] = py[i] + vy[i]
+            i = i + 1
+        END WHILE
+        fstep = fstep + 1
+    END WHILE
+
+    i = 0
+    WHILE i < 200
+        LET sx AS S64 = ROUND(px[i])
+        LET sy AS S64 = ROUND(py[i])
+        IF sx >= 0 ANDALSO sx < 64 ANDALSO sy >= 0 ANDALSO sy < 64 THEN
+            img[sy * 64 + sx] = 8453888
+        END IF
+        i = i + 1
+    END WHILE
+
+    CREATE_WINDOW "Particle fountain", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET k AS S64 = 0
+        CLEAR $000000
+        k = 0
+        ink = 0
+        chk = 0
+        WHILE k < 4096
+            IF img[k] <> 0 THEN
+                COLOR img[k]
+                PLOT k MOD 64, k / 64
+                ink = ink + 1
+                chk = chk + k
+            END IF
+            k = k + 1
+        END WHILE
+        k = 0
+        WHILE img[k] = 0 ANDALSO k < 4095
+            k = k + 1
+        END WHILE
+        fpx = READ_PIXEL(k MOD 64, k / 64)
+    END
+
+    LISTEN
+
+    PRINT "particles=200 steps=25"
+    PRINT "ink=" | ink
+    PRINT "chk=" | chk
+    PRINT "hitpx=" | fpx
+END

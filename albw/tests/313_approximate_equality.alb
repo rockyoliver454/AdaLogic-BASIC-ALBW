@@ -1,0 +1,22 @@
+-- 313 | Approximate equality: compare floating-point values within an epsilon.
+BEGIN
+    STRICT aa[4] AS F64
+    STRICT bb[4] AS F64
+    aa[0] = 1.000000001
+    bb[0] = 1.0
+    aa[1] = 1.0001
+    bb[1] = 1.0
+    aa[2] = -1.000000001
+    bb[2] = -1.0
+    aa[3] = 0.0
+    bb[3] = 0.0000000001
+
+    LET eps AS F64 = 0.00000001
+    FOR i = 0 TO 3
+        LET d AS F64 = aa[i] - bb[i]
+        IF d < 0.0 THEN d = 0.0 - d END IF
+        LET same AS S32 = 0
+        IF d <= eps THEN same = 1 END IF
+        PRINT aa[i] | " ~ " | bb[i] | " -> " | same
+    END FOR
+END

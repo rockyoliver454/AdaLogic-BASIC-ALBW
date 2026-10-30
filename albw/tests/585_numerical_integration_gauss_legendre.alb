@@ -1,0 +1,33 @@
+-- 585 | Numerical integration/Gauss-Legendre Quadrature:
+-- 3-point GL quadrature of x^3 on [0,1] (exact 0.25) and
+-- exp(x) on [-1,1] (~2.350402).
+DECLARE MODULE GLQ
+    FUNCTION F(x AS F64) AS F64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE GLQ
+    FUNCTION F(x AS F64) AS F64
+        RETURN x * x * x
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- 3-point: nodes 0, +/-sqrt(3/5); weights 8/9, 5/9
+        LET w5 AS F64 = 5.0 / 9.0
+        LET w8 AS F64 = 8.0 / 9.0
+        LET t AS F64 = SQRT(0.6)
+        -- transform [0,1]: (b-a)/2=0.5 shift 0.5
+        LET n1 AS F64 = 0.5 + 0.5 * t
+        LET n2 AS F64 = 0.5 - 0.5 * t
+        LET s2 AS F64 = w8 * F(0.5) + w5 * F(n1) + w5 * F(n2)
+        PRINT "int x^3 [0,1] proper = " | (s2 * 0.5)
+        -- exp(x) on [-1,1]
+        LET s3 AS F64 = w8 * EXP(0.0) + w5 * EXP(t) + w5 * EXP(0.0 - t)
+        PRINT "int exp [-1,1] = " | s3
+    END PROCEDURE
+END MODULE
+
+IMPORT GLQ
+BEGIN
+    GLQ.Run()
+END

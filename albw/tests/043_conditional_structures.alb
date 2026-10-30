@@ -1,0 +1,22 @@
+-- 054 | Conditional structures -- SELECT/CASE dispatch incl. runtime exprs
+BEGIN
+    LET n AS S32 = 7
+    SELECT n MOD 4
+        CASE 0 =>
+            PRINT$ "div4"
+        CASE 1 =>
+            PRINT$ "rem1"
+        CASE 2 =>
+            PRINT$ "rem2"
+        ELSE
+            PRINT$ "rem3"
+    END SELECT
+    SELECT n
+        CASE 7 =>
+            PRINT$ "seven"
+        ELSE
+            PRINT$ "miss"
+    END SELECT
+    LET grade AS STRING = CHOOSE(n >= 7, "pass", "fail")
+    PRINT$ grade
+END

@@ -1,0 +1,31 @@
+-- 1007 | Make directory path: CreateDirectoryA for a nested
+-- path one level at a time, then drop the leaves back down.
+IMPORTDLL FUNCTION CreateDirectoryA(p AS S64, sec AS S64) AS S32 FROM "kernel32"
+IMPORTDLL FUNCTION RemoveDirectoryA(p AS S64) AS S32 FROM "kernel32"
+IMPORTDLL FUNCTION DeleteFileA(p AS S64) AS S32 FROM "kernel32"
+IMPORTDLL FUNCTION GetFileAttributesA(p AS S64) AS U32 FROM "kernel32"
+STRICT PB[128] AS U8
+FUNCTION Spath(s AS STRING) AS S64
+    FOR i = 1 TO LEN(s)
+        POKE @PB + i - 1, ASC(MID$(s, i, 1))
+    END FOR
+    POKE @PB + LEN(s), 0
+    RETURN @PB
+END FUNCTION
+BEGIN
+-- reset any leftovers from a previous run so the demo is idempotent
+LET x0 AS S32 = DeleteFileA(Spath("rosetta_dir/sub/leaf.txt"))
+LET x1 AS S32 = RemoveDirectoryA(Spath("rosetta_dir/sub"))
+LET x2 AS S32 = RemoveDirectoryA(Spath("rosetta_dir"))
+LET c1 AS S32 = CreateDirectoryA(Spath("rosetta_dir"), 0)
+LET c2 AS S32 = CreateDirectoryA(Spath("rosetta_dir/sub"), 0)
+PRINT "mkdir outer=" | c1 | " inner=" | c2
+LET atv AS U32 = GetFileAttributesA(Spath("rosetta_dir/sub"))
+PRINT "inner attr dir bit=" | (atv AND 16) / 16
+LET h = OPEN("rosetta_dir/sub/leaf.txt", "w")
+WRITE h, "inside"
+CLOSE h
+PRINT "nested file size=" | FILELEN("rosetta_dir/sub/leaf.txt")
+LET d0 AS S32 = CreateDirectoryA(Spath("zz_missing/inner"), 0)
+PRINT "missing-parent mkdir=" | d0
+END

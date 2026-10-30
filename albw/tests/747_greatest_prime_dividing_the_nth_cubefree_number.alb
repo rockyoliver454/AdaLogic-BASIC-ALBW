@@ -1,0 +1,51 @@
+-- 747 | Greatest prime dividing the n-th cubefree number:
+-- list cubefree numbers 1..30 with their largest prime factor.
+DECLARE MODULE Gp
+    FUNCTION Cubefree(n AS S64) AS S32
+    FUNCTION Gpf(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gp
+    FUNCTION Cubefree(n AS S64) AS S32
+        LET v AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d * d <= n
+            IF v MOD (d * d * d) = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Gpf(n AS S64) AS S64
+        LET g AS S64 = 1
+        LET v AS S64 = n
+        LET d AS S64 = 2
+        WHILE d * d <= v
+            WHILE v MOD d = 0
+                v = v / d
+                g = d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF v > 1 THEN g = v END IF
+        RETURN g
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET cnt AS S64 = 0
+        LET n AS S64 = 1
+        WHILE cnt < 20
+            IF Cubefree(n) = 1 THEN
+                cnt = cnt + 1
+                PRINT cnt | ": " | n | " gpf=" | Gpf(n)
+            END IF
+            n = n + 1
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT Gp
+BEGIN
+    Gp.Run()
+END

@@ -1,0 +1,4 @@
+apple vs apple: equal
+apple vs Apple: greater
+apple vs apples: less
+apples vs apple: greater

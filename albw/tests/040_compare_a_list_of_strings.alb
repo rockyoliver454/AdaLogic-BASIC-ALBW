@@ -1,0 +1,40 @@
+-- 050 | Compare a list of strings -- all equal? ascending order?
+DECLARE MODULE Cmp
+    FUNCTION AllEqual(n AS S32) AS S32
+    FUNCTION Ascending(n AS S32) AS S32
+END MODULE
+
+STRICT words[4] AS STRING;
+
+MODULE Cmp
+    FUNCTION AllEqual(n AS S32) AS S32
+        LET i AS S32 = 0
+        FOR i = 1 TO n - 1
+            IF words[i] <> words[0] THEN
+                RETURN 0
+            END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+    FUNCTION Ascending(n AS S32) AS S32
+        LET i AS S32 = 0
+        FOR i = 1 TO n - 1
+            IF words[i] < words[i - 1] THEN
+                RETURN 0
+            END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+END MODULE
+
+BEGIN
+    words[0] = "apple"
+    words[1] = "banana"
+    words[2] = "cherry"
+    words[3] = "date"
+    PRINT Cmp.AllEqual(4)
+    PRINT Cmp.Ascending(4)
+    words[2] = "apple"
+    PRINT Cmp.AllEqual(4)
+    PRINT Cmp.Ascending(4)
+END

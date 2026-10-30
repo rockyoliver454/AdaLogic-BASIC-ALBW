@@ -1,0 +1,10 @@
+10s Js Qs Ks As: royal flush
+5h 6h 7h 8h 9h: straight flush
+7s 7h 7d 7c Ks: four of a kind
+9s 9h 9d 4s 4h: full house
+2d 5d 8d 10d Kd: flush
+As 2h 3d 4c 5s: straight
+8s 8h 8d 2c Ks: three of a kind
+5s 5h Js Jd 2c: two pair
+10s 10h 3d 6c Qs: one pair
+2s 5h 9d Js Ac: high card

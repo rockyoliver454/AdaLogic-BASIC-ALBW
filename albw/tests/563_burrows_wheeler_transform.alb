@@ -1,0 +1,75 @@
+-- 563 | Burrows-Wheeler transform: "^BANANA|" -> "BNN^AA|A",
+-- then invert.
+DECLARE MODULE BWT
+    FUNCTION Lex(a AS STRING, b AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE BWT
+    STRICT rots[64] AS STRING
+    STRICT perm[64] AS S64
+    STRICT col[64] AS S64
+
+    FUNCTION Lex(a AS STRING, b AS STRING) AS S32
+        LET i AS S64 = 1
+        LET al AS S64 = LEN(a)
+        LET bl AS S64 = LEN(b)
+        WHILE i <= al ANDALSO i <= bl
+            LET ca AS S64 = ASC(MID$(a, i, 1))
+            LET cb AS S64 = ASC(MID$(b, i, 1))
+            IF ca < cb THEN RETURN 1 END IF
+            IF ca > cb THEN RETURN 0 END IF
+            i = i + 1
+        END WHILE
+        IF al < bl THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "^BANANA|"
+        LET n AS S64 = LEN(s)
+        FOR i = 0 TO n - 1
+            rots[i + 1] = MID$(s, i + 1, n - i) | MID$(s, 1, i)
+        END FOR
+        FOR a = 2 TO n
+            LET v AS STRING = rots[a]
+            LET j AS S64 = a - 1
+            WHILE j >= 1 ANDALSO Lex(v, rots[j]) = 1
+                rots[j + 1] = rots[j]
+                j = j - 1
+            END WHILE
+            rots[j + 1] = v
+        END FOR
+        LET bwt AS STRING = ""
+        LET srcRow AS S64 = 0
+        FOR r = 1 TO n
+            bwt = bwt | MID$(rots[r], n, 1)
+            IF rots[r] = s THEN srcRow = r END IF
+        END FOR
+        PRINT bwt
+        -- inverse BWT by repeated prepend + sort of the L column
+        FOR i2 = 1 TO n
+            rots[i2] = ""
+        END FOR
+        FOR t = 1 TO n
+            FOR i4 = 1 TO n
+                rots[i4] = MID$(bwt, i4, 1) | rots[i4]
+            END FOR
+            FOR a2 = 2 TO n
+                LET v2 AS STRING = rots[a2]
+                LET j3 AS S64 = a2 - 1
+                WHILE j3 >= 1 ANDALSO Lex(v2, rots[j3]) = 1
+                    rots[j3 + 1] = rots[j3]
+                    j3 = j3 - 1
+                END WHILE
+                rots[j3 + 1] = v2
+            END FOR
+        END FOR
+        PRINT rots[srcRow]
+    END PROCEDURE
+END MODULE
+
+IMPORT BWT
+BEGIN
+    BWT.Run()
+END

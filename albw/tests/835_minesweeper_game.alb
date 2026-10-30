@@ -1,0 +1,107 @@
+-- 835 | Minesweeper game: generate a seeded 8x8 board with 10
+-- mines, compute neighbour counts, reveal a flood-fill region,
+-- print the revealed board.
+DECLARE MODULE Ms
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ms
+    STRICT mn[65] AS S64
+    STRICT nm[65] AS S64
+    STRICT rv[65] AS S64
+    STRICT sd[1] AS S64
+    STRICT qq[65] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN sd[1] / 65536
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 12345
+        FOR i = 1 TO 64
+            mn[i] = 0
+            rv[i] = 0
+        END FOR
+        -- place 10 mines
+        LET placed AS S64 = 0
+        WHILE placed < 10
+            LET c AS S64 = (Nxt() MOD 64) + 1
+            IF mn[c] = 0 THEN
+                mn[c] = 1
+                placed = placed + 1
+            END IF
+        END WHILE
+        -- neighbour counts
+        FOR r = 0 TO 7
+            FOR c = 0 TO 7
+                LET cnt AS S64 = 0
+                FOR dr = 0 - 1 TO 1
+                    FOR dc = 0 - 1 TO 1
+                        LET rr AS S64 = r + dr
+                        LET cc AS S64 = c + dc
+                        IF rr >= 0 ANDALSO rr < 8 ANDALSO cc >= 0 ANDALSO cc < 8 THEN
+                            IF mn[rr * 8 + cc + 1] = 1 THEN cnt = cnt + 1 END IF
+                        END IF
+                    END FOR
+                END FOR
+                nm[r * 8 + c + 1] = cnt
+            END FOR
+        END FOR
+        -- reveal first zero cell with flood fill of zeros
+        LET hd AS S64 = 1
+        LET tl AS S64 = 2
+        LET start AS S64 = 0
+        FOR i = 1 TO 64
+            IF start = 0 ANDALSO nm[i] = 0 ANDALSO mn[i] = 0 THEN start = i END IF
+        END FOR
+        qq[hd] = start
+        rv[qq[hd]] = 1
+        WHILE hd < tl
+            LET cur AS S64 = qq[hd]
+            hd = hd + 1
+            LET r AS S64 = (cur - 1) / 8
+            LET c AS S64 = (cur - 1) MOD 8
+            IF nm[cur] = 0 ANDALSO mn[cur] = 0 THEN
+                FOR dr = 0 - 1 TO 1
+                    FOR dc = 0 - 1 TO 1
+                        LET rr AS S64 = r + dr
+                        LET cc AS S64 = c + dc
+                        IF rr >= 0 ANDALSO rr < 8 ANDALSO cc >= 0 ANDALSO cc < 8 THEN
+                            LET nc AS S64 = rr * 8 + cc + 1
+                            IF rv[nc] = 0 ANDALSO mn[nc] = 0 THEN
+                                rv[nc] = 1
+                                qq[tl] = nc
+                                tl = tl + 1
+                            END IF
+                        END IF
+                    END FOR
+                END FOR
+            END IF
+        END WHILE
+        -- print board: # hidden, * mine (unrevealed), digit, space
+        FOR r = 0 TO 7
+            LET s AS STRING = ""
+            FOR c = 0 TO 7
+                LET idx AS S64 = r * 8 + c + 1
+                IF rv[idx] = 0 THEN
+                    s = s | "#"
+                ELSE
+                    s = s | nm[idx]
+                END IF
+            END FOR
+            PRINT s
+        END FOR
+        LET cnt AS S64 = 0
+        FOR i = 1 TO 64
+            cnt = cnt + rv[i]
+        END FOR
+        PRINT "revealed=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Ms
+BEGIN
+    Ms.Run()
+END

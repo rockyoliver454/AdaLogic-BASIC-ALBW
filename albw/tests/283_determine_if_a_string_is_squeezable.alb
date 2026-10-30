@@ -1,0 +1,39 @@
+-- 283 | Determine if a string is squeezable: squeeze a specified repeated character.
+DECLARE MODULE StrSqueeze
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE StrSqueeze
+    PROCEDURE RunOne(s AS STRING, target AS S32)
+        LET res AS STRING = ""
+        LET prev AS S32 = -1
+        FOR i = 1 TO LEN(s)
+            LET c AS S32 = ASC(MID$(s, i, 1))
+            IF c = target ANDALSO c = prev THEN
+                c = -1
+            END IF
+            IF c >= 0 THEN
+                res = res | CHR(c)
+            END IF
+            IF c >= 0 THEN prev = c END IF
+        END FOR
+        PRINT "'" | CHR(target) | "'"
+        PRINT "  <<<" | s | ">>>" | " (" | LEN(s) | ")"
+        PRINT "  <<<" | res | ">>>" | " (" | LEN(res) | ")"
+    END PROCEDURE
+
+    PROCEDURE Run()
+        RunOne("", 32)
+        RunOne(CHR(34) | "If I were two-faced, would I be wearing this one?" | CHR(34) | " --- Abraham Lincoln", 45)
+        RunOne("..1111111111111111111111111111111111111111111111111111111111111117777888", 55)
+        RunOne("I never give 'em hell, I just tell the truth, and they think it's hell.", 46)
+        RunOne("                                                    --- Harry S Truman  ", 32)
+        RunOne("                                                    --- Harry S Truman  ", 45)
+        RunOne("                                                    --- Harry S Truman  ", 114)
+    END PROCEDURE
+END MODULE
+
+IMPORT StrSqueeze
+BEGIN
+    StrSqueeze.Run()
+END

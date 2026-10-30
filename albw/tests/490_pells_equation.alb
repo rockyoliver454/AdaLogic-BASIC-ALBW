@@ -1,0 +1,48 @@
+-- 490 | Pell's equation: minimal x, y with x^2 - n*y^2 = 1 via
+-- continued-fraction convergents, for n = 61, 109, 181.
+DECLARE MODULE Pell
+    PROCEDURE Solve(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pell
+    PROCEDURE Solve(n AS S64)
+        LET a0 AS S64 = 1
+        WHILE a0 * a0 < n
+            a0 = a0 + 1
+        END WHILE
+        a0 = a0 - 1
+        LET m AS S64 = 0
+        LET d AS S64 = 1
+        LET a AS S64 = a0
+        LET h1 AS S64 = a0
+        LET h2 AS S64 = 1
+        LET k1 AS S64 = 1
+        LET k2 AS S64 = 0
+        LET h AS S64 = a0
+        LET k AS S64 = 1
+        WHILE h * h - n * k * k <> 1
+            m = d * a - m
+            d = (n - m * m) / d
+            a = (a0 + m) / d
+            h = a * h1 + h2
+            h2 = h1
+            h1 = h
+            k = a * k1 + k2
+            k2 = k1
+            k1 = k
+        END WHILE
+        PRINT "n=" | n | " x=" | h | " y=" | k
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Solve(61)
+        Solve(109)
+        Solve(181)
+    END PROCEDURE
+END MODULE
+
+IMPORT Pell
+BEGIN
+    Pell.Run()
+END

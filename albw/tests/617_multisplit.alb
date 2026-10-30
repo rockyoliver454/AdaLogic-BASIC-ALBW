@@ -1,0 +1,45 @@
+-- 617 | Multisplit: split on several separators in one pass,
+-- dropping empty fields.
+DECLARE MODULE Msp
+    FUNCTION IsSep(ch AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Msp
+    STRICT tok[12] AS STRING
+    STRICT ntok[1] AS S64
+
+    FUNCTION IsSep(ch AS STRING) AS S32
+        IF ch = "!" ORELSE ch = "=" ORELSE ch = ";" THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = "a!===b=!=c;d==e"
+        LET cur AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET ch AS STRING = MID$(s, i, 1)
+            IF IsSep(ch) = 1 THEN
+                IF cur <> "" THEN
+                    ntok[1] = ntok[1] + 1
+                    tok[ntok[1]] = cur
+                    cur = ""
+                END IF
+            ELSE
+                cur = cur | ch
+            END IF
+        END FOR
+        IF cur <> "" THEN
+            ntok[1] = ntok[1] + 1
+            tok[ntok[1]] = cur
+        END IF
+        FOR j = 1 TO ntok[1]
+            PRINT j | ": " | tok[j]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Msp
+BEGIN
+    Msp.Run()
+END

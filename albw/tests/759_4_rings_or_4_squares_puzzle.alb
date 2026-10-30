@@ -1,0 +1,51 @@
+-- 759 | 4-rings or 4-squares puzzle: place 1..7 in
+-- a b c d e f g with a+b=b+c+d=d+e+f=f+g all equal; count
+-- solutions and show one.
+DECLARE MODULE F4
+    PROCEDURE Dfs(dep AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE F4
+    STRICT sl[8] AS S64
+    STRICT used[8] AS S32
+    STRICT cnt[1] AS S64
+    STRICT shown[1] AS S32
+
+    PROCEDURE Dfs(dep AS S64)
+        IF dep > 7 THEN
+            LET s1 AS S64 = sl[1] + sl[2]
+            LET s2 AS S64 = sl[2] + sl[3] + sl[4]
+            LET s3 AS S64 = sl[4] + sl[5] + sl[6]
+            LET s4 AS S64 = sl[6] + sl[7]
+            IF s1 = s2 ANDALSO s2 = s3 ANDALSO s3 = s4 THEN
+                cnt[1] = cnt[1] + 1
+                IF shown[1] = 0 THEN
+                    shown[1] = 1
+                    PRINT sl[1] | sl[2] | sl[3] | sl[4] | sl[5] | sl[6] | sl[7] | " sum=" | s1
+                END IF
+            END IF
+            RETURN
+        END IF
+        FOR v = 1 TO 7
+            IF used[v] = 0 THEN
+                used[v] = 1
+                sl[dep] = v
+                Dfs(dep + 1)
+                used[v] = 0
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        cnt[1] = 0
+        shown[1] = 0
+        Dfs(1)
+        PRINT "solutions=" | cnt[1]
+    END PROCEDURE
+END MODULE
+
+IMPORT F4
+BEGIN
+    F4.Run()
+END

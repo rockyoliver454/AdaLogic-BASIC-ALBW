@@ -1,0 +1,73 @@
+-- 615 | Lyndon word: binary Lyndon words of length dividing 5.
+-- Enumerate all length-5 binary strings, keep those that are
+-- aperiodic and strictly less than every nontrivial rotation;
+-- plus the two length-1 words.
+DECLARE MODULE Lyn
+    FUNCTION Aperiodic(s AS STRING) AS S32
+    FUNCTION Minimal(s AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Lyn
+    STRICT bits[8] AS S64
+
+    FUNCTION Aperiodic(s AS STRING) AS S32
+        LET n AS S64 = LEN(s)
+        LET p AS S64 = 1
+        WHILE p <= n / 2
+            IF n MOD p = 0 THEN
+                LET same AS S32 = 1
+                FOR i = p + 1 TO n
+                    IF MID$(s, i, 1) <> MID$(s, i - p, 1) THEN same = 0 END IF
+                END FOR
+                IF same = 1 THEN RETURN 0 END IF
+            END IF
+            p = p + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Minimal(s AS STRING) AS S32
+        LET n AS S64 = LEN(s)
+        FOR sh = 1 TO n - 1
+            LET dec AS S32 = 0
+            FOR i = 1 TO n
+                LET j AS S64 = i + sh
+                IF j > n THEN j = j - n END IF
+                LET a1 AS S64 = ASC(MID$(s, i, 1))
+                LET a2 AS S64 = ASC(MID$(s, j, 1))
+                IF dec = 0 THEN
+                    IF a1 > a2 THEN RETURN 0 END IF
+                    IF a1 < a2 THEN dec = 1 END IF
+                END IF
+            END FOR
+            IF dec = 0 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "0"
+        PRINT "1"
+        FOR code = 0 TO 31
+            LET c AS S64 = code
+            LET s AS STRING = ""
+            FOR k = 0 TO 4
+                IF c MOD 2 = 1 THEN
+                    s = "1" | s
+                ELSE
+                    s = "0" | s
+                END IF
+                c = c / 2
+            END FOR
+            IF Aperiodic(s) = 1 ANDALSO Minimal(s) = 1 THEN
+                PRINT s
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Lyn
+BEGIN
+    Lyn.Run()
+END

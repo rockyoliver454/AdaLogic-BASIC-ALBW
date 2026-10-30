@@ -1,0 +1,83 @@
+-- 139 | Knight's tour: Warnsdorff's heuristic on 8x8.
+DECLARE MODULE KT
+    FUNCTION Free(x AS S32, y AS S32) AS S32
+    FUNCTION Deg(x AS S32, y AS S32) AS S32
+    PROCEDURE Tour()
+END DECLARE MODULE
+
+MODULE KT
+    STRICT grid[8,8] AS S32;
+    STRICT dx[8] AS S32;
+    STRICT dy[8] AS S32;
+    PROCEDURE Init()
+        dx[0]=1; dy[0]=2;   dx[1]=2; dy[1]=1;
+        dx[2]=2; dy[2]=-1;  dx[3]=1; dy[3]=-2;
+        dx[4]=-1; dy[4]=-2; dx[5]=-2; dy[5]=-1;
+        dx[6]=-2; dy[6]=1;  dx[7]=-1; dy[7]=2;
+        FOR i = 0 TO 7 THEN
+            FOR j = 0 TO 7 THEN
+                grid[i,j] = 0;
+            END FOR
+        END FOR
+    END PROCEDURE
+    FUNCTION Free(x AS S32, y AS S32) AS S32
+        IF x >= 0 ANDALSO x < 8 ANDALSO y >= 0 ANDALSO y < 8 ANDALSO grid[x,y] = 0 THEN
+            RETURN -1
+        END IF
+        RETURN 0
+    END FUNCTION
+    FUNCTION Deg(x AS S32, y AS S32) AS S32
+        LET c AS S32 = 0;
+        FOR m = 0 TO 7 THEN
+            IF Free(x + dx[m], y + dy[m]) <> 0 THEN
+                c = c + 1;
+            END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+    PROCEDURE Tour()
+        Init();
+        LET x AS S32 = 0;
+        LET y AS S32 = 0;
+        grid[0,0] = 1;
+        FOR st = 2 TO 64 THEN
+            LET bm AS S32 = -1;
+            LET bd AS S32 = 9;
+            FOR m = 0 TO 7 THEN
+                LET nx AS S32 = x + dx[m];
+                LET ny AS S32 = y + dy[m];
+                IF Free(nx, ny) <> 0 THEN
+                    LET d AS S32 = Deg(nx, ny);
+                    IF d < bd THEN
+                        bd = d;
+                        bm = m;
+                    END IF
+                END IF
+            END FOR
+            IF bm < 0 THEN
+                st = 65;
+            ELSE
+                x = x + dx[bm];
+                y = y + dy[bm];
+                grid[x,y] = st;
+            END IF
+        END FOR
+        FOR i = 0 TO 7 THEN
+            LET row AS STRING = "";
+            FOR j = 0 TO 7 THEN
+                LET v AS S32 = grid[i,j];
+                IF v < 10 THEN
+                    row = row | " " | v | " ";
+                ELSE
+                    row = row | v | " ";
+                END IF
+            END FOR
+            PRINT$ row;
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT KT
+BEGIN
+    KT.Tour()
+END

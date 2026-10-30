@@ -1,0 +1,55 @@
+-- 871 | Word wheel: given 9 letters in a ring with a center
+-- letter, find words (4+ letters) in a fixed dictionary that
+-- use each wheel letter at most once and contain the center.
+DECLARE MODULE Ww
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ww
+    STRICT av[26] AS S64
+    STRICT wd[64] AS STRING
+
+    PROCEDURE Run()
+        -- wheel letters: N D E O K A W G E, center K
+        LET ring AS STRING = "ndeokawge"
+        LET cen AS S64 = ASC("k")
+        wd[1] = "knee"
+        wd[2] = "weak"
+        wd[3] = "woken"
+        wd[4] = "down"
+        wd[5] = "weekend"
+        wd[6] = "know"
+        wd[7] = "done"
+        wd[8] = "aged"
+        wd[9] = "gawked"
+        wd[10] = "awkward"
+        wd[11] = "knowledge"
+        LET nd AS S64 = 11
+        FOR i = 1 TO nd
+            LET w AS STRING = wd[i]
+            -- build availability from ring
+            FOR j = 1 TO 26
+                av[j] = 0
+            END FOR
+            FOR j = 1 TO 9
+                av[ASC(MID$(ring, j, 1)) - 96] = av[ASC(MID$(ring, j, 1)) - 96] + 1
+            END FOR
+            LET good AS S32 = 1
+            LET hasc AS S32 = 0
+            IF LEN(w) < 4 THEN good = 0 END IF
+            FOR j = 1 TO LEN(w)
+                LET c AS S64 = ASC(MID$(w, j, 1)) - 96
+                IF c = cen - 96 THEN hasc = 1 END IF
+                IF av[c] = 0 THEN good = 0 END IF
+                IF av[c] > 0 THEN av[c] = av[c] - 1 END IF
+            END FOR
+            IF hasc = 0 THEN good = 0 END IF
+            IF good = 1 THEN PRINT w END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ww
+BEGIN
+    Ww.Run()
+END

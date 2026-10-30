@@ -1,0 +1,12 @@
+1 versta  = 1066.799999 m
+1 sazhen  = 2.133599 m
+1 arshin  = 0.711200 m
+1 vershok = 0.044450 m
+1 pyad    = 0.177800 m
+1 fut     = 0.304800 m
+1 tochka  = 0.025400 m
+1 liniya  = 0.002540 m
+versta->sazhen=500
+sazhen->arshin=3
+arshin->vershok=16
+vershok->liniya=17.500000

@@ -1,0 +1,58 @@
+-- 831 | Number reversal game: sort a permutation using only
+-- prefix reversals. Greedy: bring the largest to the front,
+-- then flip it home.
+DECLARE MODULE Nr
+    PROCEDURE Rev(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nr
+    STRICT aa[10] AS S64
+
+    PROCEDURE Rev(k AS S64)
+        -- reverse aa[1..k]
+        LET i AS S64 = 1
+        LET j AS S64 = k
+        WHILE i < j
+            LET t AS S64 = aa[i]
+            aa[i] = aa[j]
+            aa[j] = t
+            i = i + 1
+            j = j - 1
+        END WHILE
+    END PROCEDURE
+
+    PROCEDURE Run()
+        aa[1] = 6; aa[2] = 3; aa[3] = 9; aa[4] = 1; aa[5] = 7
+        aa[6] = 2; aa[7] = 8; aa[8] = 4; aa[9] = 5
+        LET mv AS S64 = 0
+        FOR k = 1 TO 8
+            LET n AS S64 = 10 - k
+            -- find position of n
+            LET pos AS S64 = 0
+            FOR i = 1 TO 9
+                IF aa[i] = n THEN pos = i END IF
+            END FOR
+            IF pos <> n THEN
+                IF pos > 1 THEN
+                    Rev(pos)
+                    mv = mv + 1
+                END IF
+                Rev(n)
+                mv = mv + 1
+            END IF
+        END FOR
+        LET s AS STRING = ""
+        FOR i = 1 TO 9
+            s = s | aa[i]
+            IF i < 9 THEN s = s | " " END IF
+        END FOR
+        PRINT "sorted: " | s
+        PRINT "moves=" | mv
+    END PROCEDURE
+END MODULE
+
+IMPORT Nr
+BEGIN
+    Nr.Run()
+END

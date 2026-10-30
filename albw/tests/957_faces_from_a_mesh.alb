@@ -1,0 +1,61 @@
+-- 957 | Faces from a mesh: given triangles as vertex-index
+-- triples, deduplicate shared edges and list each face's
+-- perimeter edges with counts (perimeter = edges used once).
+DECLARE MODULE Fm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fm
+    STRICT tri[13] AS S64
+    STRICT eu[30] AS S64
+    STRICT ev[30] AS S64
+    STRICT ec[30] AS S64
+
+    PROCEDURE Edge(a AS S64, b AS S64)
+        IF a > b THEN
+            LET t AS S64 = a
+            a = b
+            b = t
+        END IF
+        FOR i = 1 TO 29
+            IF eu[i] = 0 THEN
+                eu[i] = a
+                ev[i] = b
+                ec[i] = 1
+                RETURN
+            END IF
+            IF eu[i] = a ANDALSO ev[i] = b THEN
+                ec[i] = ec[i] + 1
+                RETURN
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- two tris sharing edge (2,3): faces use idx triples
+        tri[1] = 1; tri[2] = 2; tri[3] = 3
+        tri[4] = 2; tri[5] = 4; tri[6] = 3
+        tri[7] = 4; tri[8] = 5; tri[9] = 6
+        FOR i = 1 TO 29
+            eu[i] = 0; ev[i] = 0; ec[i] = 0
+        END FOR
+        FOR f = 0 TO 2
+            LET a AS S64 = tri[f * 3 + 1]
+            LET b AS S64 = tri[f * 3 + 2]
+            LET c AS S64 = tri[f * 3 + 3]
+            Edge(a, b)
+            Edge(b, c)
+            Edge(c, a)
+        END FOR
+        FOR i = 1 TO 29
+            IF eu[i] > 0 THEN
+                PRINT eu[i] | "-" | ev[i] | " x" | ec[i]
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fm
+BEGIN
+    Fm.Run()
+END

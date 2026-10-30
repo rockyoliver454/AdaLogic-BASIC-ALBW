@@ -1,0 +1,95 @@
+-- 742 | Rational calculator: exact fraction arithmetic on
+-- "n/d op n/d" expressions.
+DECLARE MODULE Rc
+
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+    PROCEDURE Calc(op AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rc
+    STRICT qa[1] AS S64
+    STRICT qb[1] AS S64
+    STRICT qc[1] AS S64
+    STRICT qd[1] AS S64
+
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+        LET m AS S64 = x
+        LET n AS S64 = y
+        IF m < 0 THEN m = 0 - m END IF
+        IF n < 0 THEN n = 0 - n END IF
+        IF n = 0 THEN
+            IF m = 0 THEN RETURN 1 END IF
+            RETURN m
+        END IF
+        LET r AS S64 = m MOD n
+        WHILE r <> 0
+            m = n
+            n = r
+            r = m MOD n
+        END WHILE
+        IF n = 0 THEN RETURN 1 END IF
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Calc(op AS STRING)
+        LET a AS S64 = qa[1]
+        LET b AS S64 = qb[1]
+        LET c AS S64 = qc[1]
+        LET d AS S64 = qd[1]
+        LET rn AS S64 = 0
+        LET rd AS S64 = 1
+        IF op = "+" THEN
+            rn = a * d + c * b
+            rd = b * d
+        END IF
+        IF op = "-" THEN
+            rn = a * d - c * b
+            rd = b * d
+        END IF
+        IF op = "*" THEN
+            rn = a * c
+            rd = b * d
+        END IF
+        IF op = "/" THEN
+            rn = a * d
+            rd = b * c
+        END IF
+        LET g AS S64 = Gcd(rn, rd)
+        rn = rn / g
+        rd = rd / g
+        IF rd < 0 THEN
+            rn = 0 - rn
+            rd = 0 - rd
+        END IF
+        PRINT a | "/" | b | " " | op | " " | c | "/" | d | " = " | rn | "/" | rd
+    END PROCEDURE
+
+    PROCEDURE Run()
+        qa[1] = 1
+        qb[1] = 2
+        qc[1] = 1
+        qd[1] = 3
+        Calc("+")
+        qa[1] = 3
+        qb[1] = 4
+        qc[1] = 5
+        qd[1] = 6
+        Calc("-")
+        qa[1] = 2
+        qb[1] = 3
+        qc[1] = 9
+        qd[1] = 8
+        Calc("*")
+        qa[1] = 7
+        qb[1] = 5
+        qc[1] = 2
+        qd[1] = 3
+        Calc("/")
+    END PROCEDURE
+END MODULE
+
+IMPORT Rc
+BEGIN
+    Rc.Run()
+END

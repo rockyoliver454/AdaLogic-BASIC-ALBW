@@ -1,0 +1,4 @@
+mkdir outer=1 inner=1
+inner attr dir bit=1
+nested file size=6
+missing-parent mkdir=0

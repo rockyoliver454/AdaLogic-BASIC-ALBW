@@ -1,0 +1,7 @@
+-- 041 | Compile-time calculation: constant expressions fold at emit.
+BEGIN
+    LET f10 AS S32 = 10 * 9 * 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1;
+    PRINT f10;
+    LET sq AS S32 = 3 * 3 + 4 * 4;
+    PRINT sq;
+END

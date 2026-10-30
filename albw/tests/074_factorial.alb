@@ -1,0 +1,10 @@
+BEGIN
+    LET n = 5
+    LET r = 1
+    LET i = 1
+    WHILE i <= n
+        r = r * i
+        i = i + 1
+    END WHILE
+    PRINT$ r
+END

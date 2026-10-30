@@ -1,0 +1,32 @@
+-- 844 | XML/Output: serialize a record collection to XML text.
+DECLARE MODULE Xo
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Xo
+    STRICT nm[4] AS STRING
+    STRICT ag[4] AS S64
+
+    PROCEDURE Run()
+        nm[1] = "alice"
+        nm[2] = "bob"
+        nm[3] = "carol"
+        ag[1] = 30
+        ag[2] = 25
+        ag[3] = 41
+        LET q AS STRING = CHR(34)
+        PRINT "<students>"
+        FOR i = 1 TO 3
+            PRINT "  <student id=" | q | i | q | ">"
+            PRINT "    <name>" | nm[i] | "</name>"
+            PRINT "    <age>" | ag[i] | "</age>"
+            PRINT "  </student>"
+        END FOR
+        PRINT "</students>"
+    END PROCEDURE
+END MODULE
+
+IMPORT Xo
+BEGIN
+    Xo.Run()
+END

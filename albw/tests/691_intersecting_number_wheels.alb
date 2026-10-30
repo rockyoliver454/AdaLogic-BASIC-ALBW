@@ -1,0 +1,25 @@
+-- 691 | Intersecting number wheels: wheels A="123", B="54"
+-- step together; count clicks to return both to position 1.
+DECLARE MODULE Nw
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Nw
+    PROCEDURE Run()
+        -- wheel A has 3 slots, wheel B has 5; clicks to realign = lcm
+        LET a AS S64 = 0
+        LET b AS S64 = 0
+        LET clicks AS S64 = 0
+        REPEAT
+            clicks = clicks + 1
+            a = (a + 1) MOD 3
+            b = (b + 1) MOD 5
+        UNTIL a = 0 ANDALSO b = 0
+        PRINT "clicks=" | clicks
+    END PROCEDURE
+END MODULE
+
+IMPORT Nw
+BEGIN
+    Nw.Run()
+END

@@ -1,0 +1,116 @@
+# ueb diff corpus: words + sentences exercising every contraction class
+# alphabetic wordsigns
+but can do every from go have just knowledge like more not people
+quite rather so that us very will it you as
+# strong wordsigns + contractions
+child shall this which out still and for of the with
+# strong groupsigns inside words
+change ghost shoe think when edge heroous house town stand thing card
+chair church shout bath what where edward hero loud owl street ring
+# lower wordsigns (standalone vs adjacent)
+be enough were his in was
+# lower groupsigns
+bean beat read lead fear bear
+because behind become below between believe
+con concert discontent disconnect distrust
+ebb rabbit ribbon accent succeed flaccid
+en enough hidden given written open golden
+differ coffee giggle egg
+# initial-letter contractions
+upon these those whose word cannot had many spirit their world
+day ever father here know lord mother name one part question
+right some time under young there character through ought work
+one day father knows somebody had many questions upon time
+# had must not contract inside other words
+haddock shadow
+# knowledge uses the k wordsign NOT know- prefix
+knowledge acknowledge
+# days/parts allow +s
+days parts questions rights names times works worlds
+# final-letter groupsigns
+sound found around ground pound bound
+dance chance glance silence distance
+tension mission vision passion
+careless homeless restless
+mount count fountain account
+presence sentence silence science
+along strong belong song
+careful hopeful grateful
+motion station nation mention section
+darkness kindness sadness fitness
+moment government element payment
+city ability charity quality
+# shortforms
+about above according across after afternoon afterward again against
+also almost already altogether although always blind braille could
+declare deceive either friend first good great him himself herself
+immediate little letter myself much must necessary neither paid
+perceive perhaps quick receive rejoice said such today together
+tomorrow tonight its itself your yourself yourselves themselves
+children should thyself ourselves would
+# mixed / tricky
+the quick brown fox jumps over the lazy dog
+perceiving conceiving receiving rejoicing declaring
+understand understanding something somewhere sometimes
+cannot together tomorrow tonight
+# numbers
+0 1 5 9 42 100 365 1000 123456
+3.14 1,000 12:30 1-2 1/2 99.99
+room 101 page 42 years 1990-2020
+# caps
+The And But Can Do
+NASA FBI USA CEO
+McDonald McCarthy DiCaprio
+HELLO WORLD
+# punctuation
+hello, world! yes; no: maybe. why?
+"quoted" 'apos' (paren) [bracket] {brace} <angle>
+a-b c_d e/f g\h i@j k#l m%n o&p q+r s=t u~v w^x y`z aa|bb
+# sentences from real usage
+I can do it and you can too
+knowledge is power
+information is the answer
+isn't it? yes! (really)
+he said that it was his and not hers
+the sound of silence and darkness
+around the corner and across the street
+one day there was a character whose world changed
+should we go out together tomorrow afternoon?
+because before behind below beneath beside between beyond
+# -- liblouis-derived regressions ----------------------------------
+# be-: syllable onset needed (be+long/be+fit/be+ing) not be+nd/cluster
+bean belong beauty being beetle beast beacon
+bend bing bond bung byre beal beech befit
+# con- blocked only before e
+cone conic conga conus condor coney conceal concert concrete
+# dis- fires everywhere as prefix
+disarm disavow disable disco distant distil
+# en at word start; ea mid-only, never before r
+end enter enact enable inner inning income inbox
+each eave ear earl early heard heart search dear near tear wear
+bear pear earth earn reading leading sea flea area real idea
+# ui mid-word (zone/gone/done/one; ac+know; some+where; a+part+ment)
+zone gone done tone money phone apartment
+acknowledge undergo somewhat hereby timely named
+# had morpheme: haddock contracts, hades does not
+hades haddock
+# lone letters get grade-1 sign (except a i o)
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+I X B O A
+# caps passage + single letters inside
+A B C
+YES WE CAN DO IT NOW
+# numeric space + conditional re-indication
+0 0 6
+0 5 6 7
+0 5 7 6
+0 60 0
+0 60 6
+0 0 60
+0 10 5
+1 2 3 4 5
+1  2
+9 42 100 365 1000 123456
+-5 -6
+x=1 y=2
+8:30 a.m. and 4:15 p.m.

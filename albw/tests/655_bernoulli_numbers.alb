@@ -1,0 +1,57 @@
+-- 655 | Bernoulli numbers: Akiyama-Tanigawa algorithm for
+-- B(0)..B(10) as exact fractions.
+DECLARE MODULE Bern
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bern
+    STRICT an[14] AS S64
+    STRICT ad[14] AS S64
+
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+        LET m AS S64 = x
+        LET n AS S64 = y
+        IF m < 0 THEN m = 0 - m END IF
+        IF n < 0 THEN n = 0 - n END IF
+        LET r AS S64 = m MOD n
+        WHILE r <> 0
+            m = n
+            n = r
+            r = m MOD n
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 0 TO 13
+            an[i] = 0
+            ad[i] = 1
+        END FOR
+        FOR m = 0 TO 10
+            an[m] = 1
+            ad[m] = m + 1
+            LET j AS S64 = m
+            WHILE j >= 1
+                LET tn AS S64 = j * (an[j - 1] * ad[j] - an[j] * ad[j - 1])
+                LET td AS S64 = ad[j - 1] * ad[j]
+                LET g AS S64 = Gcd(tn, td)
+                tn = tn / g
+                td = td / g
+                IF td < 0 THEN
+                    tn = 0 - tn
+                    td = 0 - td
+                END IF
+                an[j - 1] = tn
+                ad[j - 1] = td
+                j = j - 1
+            END WHILE
+            PRINT "B(" | m | ") = " | an[0] | "/" | ad[0]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Bern
+BEGIN
+    Bern.Run()
+END

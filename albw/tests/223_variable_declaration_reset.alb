@@ -1,0 +1,31 @@
+-- 223 | Variable declaration reset: block locals reset; outer locals persist.
+BEGIN
+    STRICT numbers[7] AS S32
+    numbers[0] = 1
+    numbers[1] = 2
+    numbers[2] = 2
+    numbers[3] = 3
+    numbers[4] = 4
+    numbers[5] = 4
+    numbers[6] = 5
+
+    PRINT "block-local matches:"
+    FOR i = 0 TO 6
+        LET curr AS S32 = numbers[i]
+        LET previous AS S32 = 0
+        IF i > 0 ANDALSO curr = previous THEN
+            PRINT i
+        END IF
+        previous = curr
+    END FOR
+
+    PRINT "persistent matches:"
+    LET previous_value AS S32 = 0
+    FOR i = 0 TO 6
+        LET curr AS S32 = numbers[i]
+        IF i > 0 ANDALSO curr = previous_value THEN
+            PRINT i
+        END IF
+        previous_value = curr
+    END FOR
+END

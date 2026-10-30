@@ -1,0 +1,13 @@
+take 2 from heap1
+take 1 from heap1 (forced)
+take 1 from heap3
+take 1 from heap2 (forced)
+take 1 from heap3
+take 1 from heap2 (forced)
+take 1 from heap3
+take 1 from heap2 (forced)
+take 1 from heap3
+take 1 from heap2 (forced)
+take 1 from heap3
+moves=11
+optimal player takes last stone

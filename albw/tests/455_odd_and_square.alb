@@ -1,0 +1,25 @@
+-- 455 | Odd and square: odd squares between 100 and 1000, and verify
+-- each is 1 mod 8.
+DECLARE MODULE OddSq
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE OddSq
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET k AS S64 = 1
+        WHILE k * k <= 1000
+            LET sq AS S64 = k * k
+            IF sq > 100 ANDALSO sq MOD 2 = 1 THEN
+                s = s | sq | "(" | sq MOD 8 | ") "
+            END IF
+            k = k + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT OddSq
+BEGIN
+    OddSq.Run()
+END

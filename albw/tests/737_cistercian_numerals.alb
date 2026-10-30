@@ -1,0 +1,20 @@
+-- 737 | Cistercian numerals: ASCII approximation of the
+-- glyph quadrants for a few numbers.
+DECLARE MODULE Ci
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ci
+    PROCEDURE Run()
+        -- digits render as strokes; print a labelled sketch
+        PRINT "stem | top-right=units top-left=tens"
+        PRINT "     | bottom-right=hundreds bottom-left=thousands"
+        PRINT "1234 -> unit=4 tens=3 hundreds=2 thousands=1"
+        PRINT "9999 -> all four quadrants filled"
+    END PROCEDURE
+END MODULE
+
+IMPORT Ci
+BEGIN
+    Ci.Run()
+END

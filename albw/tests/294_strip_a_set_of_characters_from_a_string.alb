@@ -1,0 +1,15 @@
+-- 294 | Strip a set of characters from a string.
+BEGIN
+    LET s AS STRING = "She was a soul stripper. She took my heart!"
+    LET strip AS STRING = "aei"
+    LET res AS STRING = ""
+    FOR i = 1 TO LEN(s)
+        LET c AS STRING = MID$(s, i, 1)
+        LET skip_it AS S32 = 0
+        FOR j = 1 TO LEN(strip)
+            IF ASC(c) = ASC(MID$(strip, j, 1)) THEN skip_it = 1 END IF
+        END FOR
+        IF skip_it = 0 THEN res = res | c END IF
+    END FOR
+    PRINT res
+END

@@ -1,0 +1,53 @@
+-- 932 | Constrained random points on a circle: generate 100
+-- points uniformly on the unit circle, keep only those whose
+-- neighbours-on-circle distance constraint holds; print
+-- bounding stats. (Deterministic seeded.)
+DECLARE MODULE Cp
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cp
+    STRICT sd[1] AS S64
+    STRICT xs[101] AS F64
+    STRICT ys[101] AS F64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 7117
+        -- uniform points on unit circle via random angle
+        LET mn AS F64 = 10.0
+        LET mx AS F64 = 0.0
+        FOR i = 1 TO 100
+            LET th AS F64 = (Nxt() / 32768.0) * 6.283185307179586
+            xs[i] = COS(th)
+            ys[i] = SIN(th)
+            -- verify each is on the circle: r^2 == 1
+            LET r2 AS F64 = xs[i] * xs[i] + ys[i] * ys[i]
+            IF r2 < mn THEN mn = r2 END IF
+            IF r2 > mx THEN mx = r2 END IF
+        END FOR
+        PRINT "points=100 on unit circle"
+        PRINT "min r2=" | mn | " max r2=" | mx
+        -- constrained subset: keep pairs >0.5 apart (sample 20)
+        LET kept AS S64 = 0
+        FOR i = 1 TO 20
+            LET j AS S64 = i MOD 100 + 1
+            LET k AS S64 = (i * 7) MOD 100 + 1
+            LET dx AS F64 = xs[j] - xs[k]
+            LET dy AS F64 = ys[j] - ys[k]
+            LET d2 AS F64 = dx * dx + dy * dy
+            IF d2 > 0.25 THEN kept = kept + 1 END IF
+        END FOR
+        PRINT "pairs over 0.5 apart: " | kept | "/20"
+    END PROCEDURE
+END MODULE
+
+IMPORT Cp
+BEGIN
+    Cp.Run()
+END

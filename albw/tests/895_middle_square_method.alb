@@ -1,0 +1,31 @@
+-- 895 | Pseudo-random numbers/Middle-square method: Von
+-- Neumann's classic (and famously flawed) generator; squares
+-- an n-digit seed and takes the middle digits.
+DECLARE MODULE Ms
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ms
+    STRICT st[1] AS S64
+
+    FUNCTION Nxt() AS S64
+        -- 4-digit middle square: square, keep middle 4 digits
+        LET x AS S64 = st[1] * st[1]
+        st[1] = (x / 100) MOD 10000
+        RETURN st[1]
+    END FUNCTION
+
+    PROCEDURE Run()
+        st[1] = 675248
+        FOR i = 1 TO 10
+            PRINT Nxt()
+        END FOR
+        PRINT "period shows degeneracy near zeros"
+    END PROCEDURE
+END MODULE
+
+IMPORT Ms
+BEGIN
+    Ms.Run()
+END

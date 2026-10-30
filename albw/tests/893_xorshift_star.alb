@@ -1,0 +1,41 @@
+-- 893 | Pseudo-random numbers/Xorshift star: xorshift1024*
+-- would need a big state; implement xorshift64* instead
+-- (task allows any xorshift*). Known sequence for seed 1:
+-- 10066045379386927167, ... we verify in test.
+DECLARE MODULE Xs
+    FUNCTION Lshr(v AS S64, k AS S64) AS S64
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Xs
+    STRICT st[1] AS S64
+
+    FUNCTION Lshr(v AS S64, k AS S64) AS S64
+        LET m AS S64 = v AND 9223372036854775807
+        LET r AS S64 = m / (2 ^ k)
+        IF v < 0 THEN r = r + (2 ^ (63 - k)) END IF
+        RETURN r
+    END FUNCTION
+
+    FUNCTION Nxt() AS S64
+        LET x AS S64 = st[1]
+        x = x XOR (x * 4096)               -- x ^= x << 12
+        x = x XOR Lshr(x, 25)              -- x ^= x >> 25
+        x = x XOR (x * 134217728)          -- x ^= x << 27
+        st[1] = x
+        RETURN x * 2685821657736338717
+    END FUNCTION
+
+    PROCEDURE Run()
+        st[1] = 1
+        FOR i = 1 TO 8
+            PRINT Nxt()
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Xs
+BEGIN
+    Xs.Run()
+END

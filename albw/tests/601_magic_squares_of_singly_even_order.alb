@@ -1,0 +1,110 @@
+-- 601 | Magic squares of singly even order: Strachey's method.
+-- n = 6 = 4k+2 (k=1). Build an odd-order (m=3) Siamese magic square,
+-- lay it into four quadrants offset by m^2, then swap the prescribed
+-- cells between the left and right quadrants.
+DECLARE MODULE SinglyEvenMagic
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SinglyEvenMagic
+    STRICT sm[9] AS S64
+    STRICT g[36] AS S64
+
+    PROCEDURE Siamese(m AS S64)
+        FOR i = 0 TO 8
+            sm[i] = 0
+        END FOR
+        LET r AS S64 = 0
+        LET c AS S64 = m / 2
+        FOR v = 1 TO m * m
+            sm[r * m + c] = v
+            LET nr AS S64 = (r - 1 + m) MOD m
+            LET nc AS S64 = (c + 1) MOD m
+            IF sm[nr * m + nc] <> 0 THEN
+                r = (r + 1) MOD m
+            ELSE
+                r = nr
+                c = nc
+            END IF
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        LET n AS S64 = 6
+        LET k AS S64 = (n - 2) / 4
+        LET m AS S64 = n / 2
+        LET m2 AS S64 = m * m
+        Siamese(m)
+        -- quadrants: A=M, B=M+2m^2, C=M+3m^2, D=M+m^2
+        FOR i = 0 TO m - 1
+            FOR j = 0 TO m - 1
+                LET v AS S64 = sm[i * m + j]
+                g[i * n + j] = v
+                g[i * n + j + m] = v + 2 * m2
+                g[(i + m) * n + j] = v + 3 * m2
+                g[(i + m) * n + j + m] = v + m2
+            END FOR
+        END FOR
+        -- left swaps: cols 0..k-1, except middle block-row swaps cols 1..k
+        FOR i = 0 TO m - 1
+            LET lo AS S64 = 0
+            LET hi AS S64 = k - 1
+            IF i = m / 2 THEN
+                lo = 1
+                hi = k
+            END IF
+            FOR j = lo TO hi
+                LET tmp AS S64 = g[i * n + j]
+                g[i * n + j] = g[(i + m) * n + j]
+                g[(i + m) * n + j] = tmp
+            END FOR
+        END FOR
+        -- right swaps: last k-1 columns of B <-> D (none for k=1)
+        IF k >= 2 THEN
+            FOR i = 0 TO m - 1
+                FOR j = n - k + 2 TO n - 1
+                    LET tmp2 AS S64 = g[i * n + j]
+                    g[i * n + j] = g[(i + m) * n + j]
+                    g[(i + m) * n + j] = tmp2
+                END FOR
+            END FOR
+        END IF
+        FOR r2 = 0 TO n - 1
+            LET line_txt AS STRING = ""
+            FOR c2 = 0 TO n - 1
+                line_txt = line_txt | g[r2 * n + c2] | " "
+            END FOR
+            PRINT line_txt
+        END FOR
+        LET target AS S64 = n * (n * n + 1) / 2
+        LET allok AS S64 = 1
+        FOR r3 = 0 TO n - 1
+            LET s AS S64 = 0
+            FOR c3 = 0 TO n - 1
+                s = s + g[r3 * n + c3]
+            END FOR
+            IF s <> target THEN allok = 0 END IF
+        END FOR
+        FOR c4 = 0 TO n - 1
+            LET s4 AS S64 = 0
+            FOR r4 = 0 TO n - 1
+                s4 = s4 + g[r4 * n + c4]
+            END FOR
+            IF s4 <> target THEN allok = 0 END IF
+        END FOR
+        LET d1 AS S64 = 0
+        LET d2 AS S64 = 0
+        FOR i2 = 0 TO n - 1
+            d1 = d1 + g[i2 * n + i2]
+            d2 = d2 + g[i2 * n + (n - 1 - i2)]
+        END FOR
+        IF d1 <> target OR d2 <> target THEN allok = 0 END IF
+        PRINT "magic constant: " | target
+        PRINT "all sums ok: " | allok
+    END PROCEDURE
+END MODULE
+
+IMPORT SinglyEvenMagic
+BEGIN
+    SinglyEvenMagic.Run()
+END

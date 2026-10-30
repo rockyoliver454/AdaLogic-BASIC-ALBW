@@ -1,0 +1,11 @@
+VERSION 1.0
+
+BEGIN
+    LET p AS STRING = ARGV$(0)
+    LET i AS S64 = LEN(p)
+    WHILE i > 1 ANDALSO MID$(p, i, 1) <> "/" ANDALSO ASC(MID$(p, i, 1)) <> 92
+        i = i - 1
+    END WHILE
+    PRINT "program=" | MID$(p, i + 1, LEN(p) - i)
+    PRINT "full len>0=" | (LEN(p) > 0)
+END

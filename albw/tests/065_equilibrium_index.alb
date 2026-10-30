@@ -1,0 +1,17 @@
+-- 065 | Equilibrium index: left sum equals right sum.
+BEGIN
+    STRICT a[7] AS S32;
+    a[0]=-7; a[1]=1; a[2]=5; a[3]=2; a[4]=-4; a[5]=3; a[6]=0;
+    LET total AS S32 = 0;
+    FOR i = 0 TO 6
+        total = total + a[i];
+    END FOR
+    LET left AS S32 = 0;
+    FOR i = 0 TO 6
+        LET right AS S32 = total - left - a[i];
+        IF left = right THEN
+            PRINT i;
+        END IF
+        left = left + a[i];
+    END FOR
+END

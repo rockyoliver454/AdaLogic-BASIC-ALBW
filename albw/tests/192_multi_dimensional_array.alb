@@ -1,0 +1,15 @@
+-- 192 | Multi-dimensional array: 3x3x3 cube, fill and sum.
+BEGIN
+    STRICT cube[3,3,3] AS S32;
+    LET total AS S32 = 0;
+    FOR i = 0 TO 2
+        FOR j = 0 TO 2
+            FOR k = 0 TO 2
+                cube[i,j,k] = i + j + k;
+                total = total + cube[i,j,k];
+            END FOR
+        END FOR
+    END FOR
+    PRINT total;
+    PRINT cube[2,2,2];
+END

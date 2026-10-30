@@ -1,0 +1,50 @@
+-- 607 | Brace expansion: expand "x{a,b}y" style groups into
+-- the cross-product string list.
+DECLARE MODULE Br
+    PROCEDURE Expand(prefix AS STRING, rest AS STRING)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Br
+    STRICT res[16] AS STRING
+    STRICT nres[1] AS S64
+
+    PROCEDURE Expand(prefix AS STRING, rest AS STRING)
+        LET p AS S64 = 0
+        FOR i = 1 TO LEN(rest)
+            IF MID$(rest, i, 1) = "{" THEN p = i END IF
+            IF MID$(rest, i, 1) = "}" ANDALSO p > 0 THEN
+                LET body AS STRING = MID$(rest, p + 1, i - p - 1)
+                LET pre AS STRING = MID$(rest, 1, p - 1)
+                LET post AS STRING = MID$(rest, i + 1, LEN(rest) - i)
+                LET cur AS STRING = ""
+                FOR j = 1 TO LEN(body)
+                    LET ch AS STRING = MID$(body, j, 1)
+                    IF ch = "," THEN
+                        Expand(prefix | pre | cur, post)
+                        cur = ""
+                    ELSE
+                        cur = cur | ch
+                    END IF
+                END FOR
+                Expand(prefix | pre | cur, post)
+                RETURN
+            END IF
+        END FOR
+        nres[1] = nres[1] + 1
+        res[nres[1]] = prefix | rest
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Expand("", "a{b,c}d")
+        Expand("", "x{1,2}y{3,4}")
+        FOR i = 1 TO nres[1]
+            PRINT res[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Br
+BEGIN
+    Br.Run()
+END

@@ -1,0 +1,34 @@
+-- 385 | Cullen and Woodall numbers: n*2^n+1 and n*2^n-1 for n = 1..20 with primality.
+DECLARE MODULE CullWood
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CullWood
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 20
+            LET c AS S64 = n * (2 ^ n) + 1
+            LET w AS S64 = n * (2 ^ n) - 1
+            LET cp AS S32 = IsPrime(c)
+            LET wp AS S32 = IsPrime(w)
+            PRINT n | " cullen=" | c | ":" | cp | " woodall=" | w | ":" | wp
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT CullWood
+BEGIN
+    CullWood.Run()
+END

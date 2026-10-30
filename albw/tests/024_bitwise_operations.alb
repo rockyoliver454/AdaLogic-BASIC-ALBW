@@ -1,0 +1,7 @@
+BEGIN
+    LET a = 5
+    LET b = 3
+    PRINT$ "5 OR 3 = " | (a OR b)
+    PRINT$ "5 XOR 3 = " | (a XOR b)
+    PRINT$ "5 AND 3 = " | (a AND b)
+END

@@ -1,0 +1,7 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT "request pos: " | CHR(27) | "[6n"
+    PRINT "report expected on stdin"
+END

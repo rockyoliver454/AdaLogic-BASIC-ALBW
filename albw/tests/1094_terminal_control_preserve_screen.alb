@@ -1,0 +1,8 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT CHR(27) | "[?1049h" | "alt screen"
+    PRINT "working..."
+    PRINT CHR(27) | "[?1049l" | "restored"
+END

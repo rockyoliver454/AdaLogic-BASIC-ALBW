@@ -1,0 +1,5 @@
+-- Negative: LAMBDA requires an explicit ROUTINE-typed binding target.
+BEGIN
+    LET f = LAMBDA(a AS S64) AS S32 => a
+    PRINT f(1)
+END

@@ -1,0 +1,7 @@
+VERSION 1.0
+
+BEGIN
+    PRINT "copyright: " | CHR(194) | CHR(169)
+    PRINT "e-acute: " | CHR(195) | CHR(169)
+    PRINT "pound: " | CHR(194) | CHR(163)
+END

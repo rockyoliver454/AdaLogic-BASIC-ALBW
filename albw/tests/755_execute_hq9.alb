@@ -1,0 +1,27 @@
+-- 755 | Execute HQ9+: H prints hello world, Q prints the
+-- program, 9 prints 99 bottles (first lines here), + counts.
+DECLARE MODULE Hq
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Hq
+    PROCEDURE Run()
+        LET prog AS STRING = "HHQ+"
+        LET acc AS S64 = 0
+        FOR i = 1 TO LEN(prog)
+            LET c AS STRING = MID$(prog, i, 1)
+            IF c = "H" THEN PRINT "hello, world" END IF
+            IF c = "Q" THEN PRINT prog END IF
+            IF c = "+" THEN acc = acc + 1 END IF
+            IF c = "9" THEN
+                PRINT "99 bottles of beer on the wall"
+            END IF
+        END FOR
+        PRINT "accumulator=" | acc
+    END PROCEDURE
+END MODULE
+
+IMPORT Hq
+BEGIN
+    Hq.Run()
+END

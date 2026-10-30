@@ -1,0 +1,48 @@
+-- 340 | Additive primes: primes below 500 whose digit sum is also prime.
+DECLARE MODULE AddPrime
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION DigitSum(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE AddPrime
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION DigitSum(n AS S64) AS S64
+        LET s AS S64 = 0
+        LET m AS S64 = n
+        WHILE m > 0
+            s = s + m MOD 10
+            m = m / 10
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET cnt AS S32 = 0
+        FOR n = 2 TO 499
+            IF IsPrime(n) = 1 ANDALSO IsPrime(DigitSum(n)) = 1 THEN
+                s = s | n | " "
+                cnt = cnt + 1
+            END IF
+        END FOR
+        PRINT s
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT AddPrime
+BEGIN
+    AddPrime.Run()
+END

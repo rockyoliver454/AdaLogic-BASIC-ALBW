@@ -1,0 +1,53 @@
+-- 653 | Yellowstone sequence: a(n) = smallest k not yet used
+-- with gcd(k, a(n-2)) > 1 and gcd(k, a(n-1)) = 1. First 30 terms.
+DECLARE MODULE Yel
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+    FUNCTION Used(k AS S64, n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Yel
+    STRICT a[31] AS S64
+
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+        LET m AS S64 = x
+        LET n AS S64 = y
+        LET r AS S64 = m MOD n
+        WHILE r <> 0
+            m = n
+            n = r
+            r = m MOD n
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    FUNCTION Used(k AS S64, n AS S64) AS S32
+        FOR i = 1 TO n
+            IF a[i] = k THEN RETURN 1 END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        a[1] = 1
+        a[2] = 2
+        a[3] = 3
+        FOR n = 4 TO 30
+            LET k AS S64 = 4
+            WHILE Used(k, n - 1) = 1 ORELSE Gcd(k, a[n - 1]) <> 1 ORELSE Gcd(k, a[n - 2]) = 1
+                k = k + 1
+            END WHILE
+            a[n] = k
+        END FOR
+        LET s AS STRING = ""
+        FOR j = 1 TO 30
+            s = s | a[j] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Yel
+BEGIN
+    Yel.Run()
+END

@@ -1,0 +1,44 @@
+-- 938 | Numerical integration/Romberg integration: integrate
+-- exp(x) over [0,1] (exact = e-1) with Richardson
+-- extrapolation on trapezoid estimates.
+DECLARE MODULE Rm
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rm
+    STRICT r2[7] AS F64
+    STRICT rr[7] AS F64
+
+    PROCEDURE Run()
+        -- trapezoid with 2^i panels, i=0..5
+        FOR i = 0 TO 5
+            LET n AS S64 = 2 ^ i
+            LET h AS F64 = 1.0 / n
+            LET s AS F64 = EXP(0.0) / 2.0 + EXP(1.0) / 2.0
+            FOR k = 1 TO n - 1
+                LET kf AS F64 = k * 1.0
+                s = s + EXP(kf * h)
+            END FOR
+            r2[i] = s * h
+            rr[i] = s * h
+        END FOR
+        -- Richardson extrapolation in-place
+        LET fac AS F64 = 4.0
+        FOR lev = 1 TO 5
+            LET i2 AS S64 = 5
+            WHILE i2 >= lev
+                rr[i2] = rr[i2] + (rr[i2] - rr[i2 - 1]) / (fac - 1.0)
+                i2 = i2 - 1
+            END WHILE
+            fac = fac * 4.0
+        END FOR
+        PRINT "trap n=1: " | r2[0]
+        PRINT "romberg : " | rr[5]
+        PRINT "exact   : " | EXP(1.0) - 1.0
+    END PROCEDURE
+END MODULE
+
+IMPORT Rm
+BEGIN
+    Rm.Run()
+END

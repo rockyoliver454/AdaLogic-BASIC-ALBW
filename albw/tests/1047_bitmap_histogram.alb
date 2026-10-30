@@ -1,0 +1,70 @@
+VERSION 1.0
+
+STRICT img[4096] AS S32
+STRICT hist[8] AS S64
+
+LET frames AS S64 = 0
+LET ink AS S64 = 0
+LET chk AS S64 = 0
+LET fpx AS S64 = 0
+LET mx AS S64 = 0
+
+
+BEGIN
+    LET i AS S64 = 0
+    WHILE i < 4096
+        LET x AS S64 = i MOD 64
+        LET y AS S64 = i / 64
+        LET v AS S64 = ((x * y) + x) MOD 256
+        img[i] = v * 65536 + v * 256 + v
+        hist[v / 32] = hist[v / 32] + 1
+        i = i + 1
+    END WHILE
+    mx = 0
+    i = 0
+    WHILE i < 8
+        IF hist[i] > mx THEN mx = hist[i] END IF
+        i = i + 1
+    END WHILE
+
+    CREATE_WINDOW "Bitmap histogram", 64, 64
+
+    ON TICK
+        TICK 16
+        frames = frames + 1
+        IF frames >= 3 THEN
+            CEASE
+        END IF
+    END
+    ON PAINT
+        LET b AS S64 = 0
+        LET y2 AS S64 = 0
+        CLEAR $000000
+        b = 0
+        WHILE b < 8
+            LET bh AS S64 = hist[b] * 56 / mx
+            COLOR $00FF00
+            y2 = 0
+            WHILE y2 < bh
+                LET x2 AS S64 = 0
+                WHILE x2 < 7
+                    PLOT b * 8 + x2 + 1, 62 - y2
+                    x2 = x2 + 1
+                END WHILE
+                y2 = y2 + 1
+            END WHILE
+            b = b + 1
+        END WHILE
+        fpx = READ_PIXEL(4, 62)
+    END
+
+    LISTEN
+
+    i = 0
+    WHILE i < 8
+        PRINT "bucket" | i | "=" | hist[i]
+        i = i + 1
+    END WHILE
+    PRINT "max=" | mx
+    PRINT "barpx=" | fpx
+END

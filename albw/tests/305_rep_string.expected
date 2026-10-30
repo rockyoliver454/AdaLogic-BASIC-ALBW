@@ -1,0 +1,5 @@
+1010 -> 10
+ab -> none
+abcab -> none
+abababab -> ab
+abcabcabc -> abc

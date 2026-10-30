@@ -1,0 +1,92 @@
+-- 959 | Sutherland-Hodgman polygon clipping: clip subject
+-- polygon against each clip-polygon edge in turn.
+DECLARE MODULE Sh
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sh
+    STRICT sx[12] AS F64
+    STRICT sy[12] AS F64
+    STRICT cx[8] AS F64
+    STRICT cy[8] AS F64
+    STRICT ox[24] AS F64
+    STRICT oy[24] AS F64
+    STRICT nx2[24] AS F64
+    STRICT ny2[24] AS F64
+    STRICT ons[2] AS S64
+
+    FUNCTION Side(px AS F64, py AS F64, ax AS F64, ay AS F64, bx AS F64, b2 AS F64) AS F64
+        RETURN (bx - ax) * (py - ay) - (b2 - ay) * (px - ax)
+    END FUNCTION
+
+    PROCEDURE Clip(ax AS F64, ay AS F64, bx AS F64, b2 AS F64)
+        LET w AS S64 = 0
+        FOR i = 1 TO ons[1]
+            LET j AS S64 = i - 1
+            IF j = 0 THEN j = ons[1] END IF
+            LET d1 AS F64 = Side(ox[i], oy[i], ax, ay, bx, b2)
+            LET d2 AS F64 = Side(ox[j], oy[j], ax, ay, bx, b2)
+            IF d1 >= 0.0 THEN
+                IF d2 < 0.0 THEN
+                    LET t AS F64 = d2 / (d2 - d1)
+                    w = w + 1
+                    nx2[w] = ox[j] + t * (ox[i] - ox[j])
+                    ny2[w] = oy[j] + t * (oy[i] - oy[j])
+                END IF
+                w = w + 1
+                nx2[w] = ox[i]
+                ny2[w] = oy[i]
+            ELSE
+                IF d2 >= 0.0 THEN
+                    LET t AS F64 = d2 / (d2 - d1)
+                    w = w + 1
+                    nx2[w] = ox[j] + t * (ox[i] - ox[j])
+                    ny2[w] = oy[j] + t * (oy[i] - oy[j])
+                END IF
+            END IF
+        END FOR
+        FOR i = 1 TO w
+            ox[i] = nx2[i]
+            oy[i] = ny2[i]
+        END FOR
+        ons[1] = w
+    END PROCEDURE
+
+    PROCEDURE Run()
+        -- subject: (50,150)(200,50)(350,150)(350,300)(250,300)(200,250)(150,350)(100,250)(100,200)
+        -- clip: square (100,100)-(300,300)
+        LET ns AS S64 = 9
+        sx[1] = 50.0; sy[1] = 150.0
+        sx[2] = 200.0; sy[2] = 50.0
+        sx[3] = 350.0; sy[3] = 150.0
+        sx[4] = 350.0; sy[4] = 300.0
+        sx[5] = 250.0; sy[5] = 300.0
+        sx[6] = 200.0; sy[6] = 250.0
+        sx[7] = 150.0; sy[7] = 350.0
+        sx[8] = 100.0; sy[8] = 250.0
+        sx[9] = 100.0; sy[9] = 200.0
+        LET nc AS S64 = 4
+        cx[1] = 100.0; cy[1] = 100.0
+        cx[2] = 300.0; cy[2] = 100.0
+        cx[3] = 300.0; cy[3] = 300.0
+        cx[4] = 100.0; cy[4] = 300.0
+        FOR i = 1 TO ns
+            ox[i] = sx[i]
+            oy[i] = sy[i]
+        END FOR
+        ons[1] = ns
+        FOR e = 1 TO nc
+            LET f AS S64 = e MOD nc + 1
+            Clip(cx[e], cy[e], cx[f], cy[f])
+        END FOR
+        PRINT "clipped vertices=" | ons[1]
+        FOR i = 1 TO ons[1]
+            PRINT ox[i] | "," | oy[i]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sh
+BEGIN
+    Sh.Run()
+END

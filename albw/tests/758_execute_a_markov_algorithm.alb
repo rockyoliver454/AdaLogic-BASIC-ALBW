@@ -1,0 +1,54 @@
+-- 758 | Execute a Markov algorithm: string rewrite rules
+-- applied in order until a halt rule fires.
+DECLARE MODULE Mk
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Mk
+    STRICT pat[5] AS STRING
+    STRICT dst[5] AS STRING
+
+    PROCEDURE Run()
+        -- binary increment: rules for "101 +1"
+        pat[1] = "1@"
+        dst[1] = "@0"
+        pat[2] = "0@"
+        dst[2] = "1"
+        pat[3] = "@"
+        dst[3] = "@"
+        pat[4] = ""
+        dst[4] = "@"
+        LET s AS STRING = "101"
+        s = s | "@"
+        LET act AS S32 = 1
+        LET steps AS S64 = 0
+        WHILE act = 1 ANDALSO steps < 50
+            act = 0
+            FOR i = 1 TO 4
+                -- find first occurrence of pat[i] (skip empty)
+                LET fl AS S64 = LEN(pat[i])
+                IF fl > 0 THEN
+                    LET got AS S64 = 0
+                    FOR j = 1 TO LEN(s) - fl + 1
+                        IF MID$(s, j, fl) = pat[i] ANDALSO got = 0 THEN
+                            s = MID$(s, 1, j - 1) | dst[i] | MID$(s, j + fl, LEN(s))
+                            got = 1
+                        END IF
+                    END FOR
+                    IF got = 1 THEN
+                        act = 1
+                        i = 4
+                    END IF
+                END IF
+            END FOR
+            steps = steps + 1
+            IF s = "110" THEN act = 0 END IF
+        END WHILE
+        PRINT "101 + 1 = " | s
+    END PROCEDURE
+END MODULE
+
+IMPORT Mk
+BEGIN
+    Mk.Run()
+END

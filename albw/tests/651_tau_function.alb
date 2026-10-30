@@ -1,0 +1,22 @@
+-- 651 | Tau function: divisor count for n = 1..100 printed in
+-- a table.
+DECLARE MODULE Tau
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tau
+    PROCEDURE Run()
+        FOR n = 1 TO 100
+            LET c AS S64 = 0
+            FOR d = 1 TO n
+                IF n MOD d = 0 THEN c = c + 1 END IF
+            END FOR
+            PRINT n | ": " | c
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Tau
+BEGIN
+    Tau.Run()
+END

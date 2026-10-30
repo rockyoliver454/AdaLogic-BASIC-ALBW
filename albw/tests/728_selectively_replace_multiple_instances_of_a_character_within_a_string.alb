@@ -1,0 +1,30 @@
+-- 728 | Selectively replace multiple instances of a character
+-- within a string: replace only the 2nd and 4th 'a' with 'X'.
+DECLARE MODULE Sr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sr
+    PROCEDURE Run()
+        LET s AS STRING = "aabanaddinga"
+        LET want1 AS S64 = 2
+        LET want2 AS S64 = 4
+        LET cnt AS S64 = 0
+        LET resl AS STRING = ""
+        FOR i = 1 TO LEN(s)
+            LET c AS STRING = MID$(s, i, 1)
+            IF c = "a" THEN
+                cnt = cnt + 1
+                IF cnt = want1 ORELSE cnt = want2 THEN c = "X" END IF
+            END IF
+            resl = resl | c
+        END FOR
+        PRINT s
+        PRINT resl
+    END PROCEDURE
+END MODULE
+
+IMPORT Sr
+BEGIN
+    Sr.Run()
+END

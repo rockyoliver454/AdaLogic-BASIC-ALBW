@@ -1,0 +1,17 @@
+-- 274 | String case: convert a string to upper and lower case.
+BEGIN
+    LET s AS STRING = "AdaLogic42 Basic!"
+    LET upper AS STRING = ""
+    LET lower AS STRING = ""
+    FOR i = 1 TO LEN(s)
+        LET c AS S32 = ASC(MID$(s, i, 1))
+        LET u AS S32 = c
+        LET l AS S32 = c
+        IF c >= 97 ANDALSO c <= 122 THEN u = c - 32 END IF
+        IF c >= 65 ANDALSO c <= 90 THEN l = c + 32 END IF
+        upper = upper | CHR(u)
+        lower = lower | CHR(l)
+    END FOR
+    PRINT upper
+    PRINT lower
+END

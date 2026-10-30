@@ -1,0 +1,37 @@
+-- 402 | Gapful numbers: n >= 100 divisible by first-digit*10 + last-digit; first 30.
+DECLARE MODULE Gapful
+    FUNCTION IsGapful(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gapful
+    FUNCTION IsGapful(n AS S64) AS S32
+        IF n < 100 THEN RETURN 0 END IF
+        LET last AS S64 = n MOD 10
+        LET m AS S64 = n
+        WHILE m >= 10
+            m = m / 10
+        END WHILE
+        IF n MOD (m * 10 + last) = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 100
+        WHILE found < 30
+            IF IsGapful(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Gapful
+BEGIN
+    Gapful.Run()
+END

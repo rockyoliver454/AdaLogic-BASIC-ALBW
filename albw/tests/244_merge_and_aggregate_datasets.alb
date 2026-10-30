@@ -1,0 +1,46 @@
+-- 244 | Merge and aggregate datasets: patients joined to visits by ID.
+BEGIN
+    STRICT patient_id[5] AS S32
+    STRICT patient_name[5] AS STRING
+    STRICT last_visit[5] AS STRING
+    STRICT score_sum[5] AS F64
+    STRICT score_count[5] AS S32
+    patient_id[0]=1001; patient_name[0]="Hopper"
+    patient_id[1]=2002; patient_name[1]="Gosling"
+    patient_id[2]=3003; patient_name[2]="Kemeny"
+    patient_id[3]=4004; patient_name[3]="Wirth"
+    patient_id[4]=5005; patient_name[4]="Kurtz"
+
+    STRICT visit_id[8] AS S32
+    STRICT visit_date[8] AS STRING
+    STRICT visit_score[8] AS F64
+    STRICT has_score[8] AS S32
+    visit_id[0]=2002; visit_date[0]="2020-09-10"; visit_score[0]=6.8; has_score[0]=1
+    visit_id[1]=1001; visit_date[1]="2020-09-17"; visit_score[1]=5.5; has_score[1]=1
+    visit_id[2]=4004; visit_date[2]="2020-09-24"; visit_score[2]=8.4; has_score[2]=1
+    visit_id[3]=2002; visit_date[3]="2020-10-08"; has_score[3]=0
+    visit_id[4]=1001; visit_date[4]=""; visit_score[4]=6.6; has_score[4]=1
+    visit_id[5]=3003; visit_date[5]="2020-11-12"; has_score[5]=0
+    visit_id[6]=4004; visit_date[6]="2020-11-05"; visit_score[6]=7.0; has_score[6]=1
+    visit_id[7]=1001; visit_date[7]="2020-11-19"; visit_score[7]=5.3; has_score[7]=1
+
+    FOR v = 0 TO 7
+        FOR p = 0 TO 4
+            IF patient_id[p] = visit_id[v] THEN
+                IF LEN(visit_date[v]) > 0 THEN last_visit[p] = visit_date[v] END IF
+                IF has_score[v] THEN
+                    score_sum[p] = score_sum[p] + visit_score[v]
+                    score_count[p] = score_count[p] + 1
+                END IF
+            END IF
+        END FOR
+    END FOR
+
+    FOR p = 0 TO 4
+        IF score_count[p] > 0 THEN
+            PRINT patient_id[p] | " " | patient_name[p] | " " | last_visit[p] | " " | score_sum[p] | " " | score_sum[p] / score_count[p]
+        ELSE
+            PRINT patient_id[p] | " " | patient_name[p] | " " | last_visit[p] | " no scores"
+        END IF
+    END FOR
+END

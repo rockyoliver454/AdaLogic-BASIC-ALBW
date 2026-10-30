@@ -1,0 +1,50 @@
+-- 559 | IBAN: validate GB29 NWBK 6016 1331 9268 19 (valid) and a
+-- corrupted variant (invalid), via digit-wise mod-97.
+DECLARE MODULE Iban
+    FUNCTION ChkIban(s AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Iban
+    FUNCTION CharVal(c AS S64) AS S64
+        IF c >= 48 ANDALSO c <= 57 THEN RETURN c - 48 END IF
+        RETURN c - 55
+    END FUNCTION
+
+    FUNCTION ChkIban(s AS STRING) AS S32
+        -- rotate: move first 4 chars to end, expand alnum to digits,
+        -- stream mod 97
+        LET n AS S64 = LEN(s)
+        LET r AS STRING = ""
+        FOR i = 5 TO n
+            r = r | MID$(s, i, 1)
+        END FOR
+        FOR j = 1 TO 4
+            r = r | MID$(s, j, 1)
+        END FOR
+        LET rem AS S64 = 0
+        FOR k = 1 TO LEN(r)
+            LET c AS S64 = ASC(MID$(r, k, 1))
+            IF c >= 48 ANDALSO c <= 57 THEN
+                rem = (rem * 10 + c - 48) MOD 97
+            ELSE
+                LET v AS S64 = CharVal(c)
+                rem = (rem * 10 + v / 10) MOD 97
+                rem = (rem * 10 + v MOD 10) MOD 97
+            END IF
+        END FOR
+        IF rem = 1 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "GB29NWBK60161331926819: " | ChkIban("GB29NWBK60161331926819")
+        PRINT "GB82WEST12345698765432: " | ChkIban("GB82WEST12345698765432")
+        PRINT "GB29NWBK60161331926818: " | ChkIban("GB29NWBK60161331926818")
+    END PROCEDURE
+END MODULE
+
+IMPORT Iban
+BEGIN
+    Iban.Run()
+END

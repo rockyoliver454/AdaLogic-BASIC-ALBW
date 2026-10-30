@@ -1,0 +1,34 @@
+-- 954 | Cut a rectangle: a w x h grid rectangle sliced by a
+-- straight diagonal crosses w + h - gcd(w,h) unit squares.
+DECLARE MODULE Cr
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Cr
+    FUNCTION Gcd(a AS S64, b AS S64) AS S64
+        WHILE b <> 0
+            LET t AS S64 = a MOD b
+            a = b
+            b = t
+        END WHILE
+        RETURN a
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR i = 1 TO 5
+            LET w AS S64 = i
+            LET h AS S64 = 0
+            IF i = 1 THEN w = 5; h = 3 END IF
+            IF i = 2 THEN w = 10; h = 6 END IF
+            IF i = 3 THEN w = 7; h = 3 END IF
+            IF i = 4 THEN w = 8; h = 8 END IF
+            IF i = 5 THEN w = 12; h = 9 END IF
+            PRINT w | "x" | h | " -> " | w + h - Gcd(w, h) | " squares"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Cr
+BEGIN
+    Cr.Run()
+END

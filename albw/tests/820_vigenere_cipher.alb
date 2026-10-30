@@ -1,0 +1,21 @@
+-- Rosetta: Vigenere cipher
+-- Keyed polyalphabetic cipher on A-Z; exercises UCASE$/ASC/CHR/concat.
+BEGIN
+    LET pt AS STRING = UCASE$("Beware the Jabberwock my son")
+    LET kstr AS STRING = "VIGENERECIPHER"
+    LET ct AS STRING = ""
+    LET ki AS S32 = 1
+    FOR i = 1 TO LEN(pt)
+        LET ch AS STRING = MID$(pt, i, 1)
+        LET code AS S32 = ASC(ch)
+        IF code >= 65 AND code <= 90 THEN
+            LET kc AS S32 = ASC(MID$(kstr, ki, 1)) - 65
+            ct = ct | CHR((code - 65 + kc) MOD 26 + 65)
+            ki = ki + 1
+            IF ki > LEN(kstr) THEN
+                ki = 1
+            END IF
+        END IF
+    END FOR
+    PRINT ct
+END

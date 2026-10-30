@@ -1,0 +1,5 @@
+not true = false
+true and maybe = maybe
+false or maybe = maybe
+maybe implies false = maybe
+maybe equivalent true = maybe

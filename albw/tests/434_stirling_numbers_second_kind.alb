@@ -1,0 +1,32 @@
+-- 434 | Stirling numbers of the second kind: table for n = 0..10.
+DECLARE MODULE Stir2
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Stir2
+    STRICT s[122] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 120
+            s[i] = 0
+        END FOR
+        s[0 * 11 + 0 + 1] = 1
+        FOR n = 1 TO 10
+            FOR k = 1 TO n
+                s[n * 11 + k + 1] = k * s[(n - 1) * 11 + k + 1] + s[(n - 1) * 11 + (k - 1) + 1]
+            END FOR
+        END FOR
+        FOR n2 = 0 TO 10
+            LET ln AS STRING = ""
+            FOR k2 = 0 TO n2
+                ln = ln | s[n2 * 11 + k2 + 1] | " "
+            END FOR
+            PRINT ln
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Stir2
+BEGIN
+    Stir2.Run()
+END

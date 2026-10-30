@@ -1,0 +1,136 @@
+-- 266 | Element-wise operations: scalar-matrix and matrix-matrix arithmetic.
+DECLARE MODULE ElemWise
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ElemWise
+    STRICT a[9] AS S64
+    STRICT e[9] AS S64
+    STRICT res[9] AS S64
+
+    PROCEDURE Init()
+        a[0] = 7
+        a[1] = 11
+        a[2] = 13
+        a[3] = 17
+        a[4] = 19
+        a[5] = 23
+        a[6] = 29
+        a[7] = 31
+        a[8] = 37
+
+        e[0] = 1
+        e[1] = 1
+        e[2] = 1
+        e[3] = 2
+        e[4] = 1
+        e[5] = 1
+        e[6] = 1
+        e[7] = 2
+        e[8] = 1
+    END PROCEDURE
+
+    PROCEDURE PrintRes(label AS STRING)
+        LET out_line AS STRING = "("
+        FOR r = 0 TO 2
+            out_line = out_line | "("
+            FOR c = 0 TO 2
+                out_line = out_line | res[r * 3 + c]
+                IF c < 2 THEN out_line = out_line | "," END IF
+            END FOR
+            out_line = out_line | ")"
+            IF r < 2 THEN out_line = out_line | "," END IF
+        END FOR
+        out_line = out_line | ")"
+        PRINT label | " " | out_line
+    END PROCEDURE
+
+    PROCEDURE ScalarAdd(s AS S64)
+        FOR i = 0 TO 8
+            res[i] = a[i] + s
+        END FOR
+        PrintRes("M+s:")
+    END PROCEDURE
+
+    PROCEDURE ScalarSub(s AS S64)
+        FOR i = 0 TO 8
+            res[i] = a[i] - s
+        END FOR
+        PrintRes("M-s:")
+    END PROCEDURE
+
+    PROCEDURE ScalarMul(s AS S64)
+        FOR i = 0 TO 8
+            res[i] = a[i] * s
+        END FOR
+        PrintRes("M*s:")
+    END PROCEDURE
+
+    PROCEDURE ScalarDiv(s AS S64)
+        FOR i = 0 TO 8
+            res[i] = a[i] / s
+        END FOR
+        PrintRes("M/s:")
+    END PROCEDURE
+
+    PROCEDURE ScalarPow(s AS S64)
+        FOR i = 0 TO 8
+            res[i] = a[i] ** s
+        END FOR
+        PrintRes("M^s:")
+    END PROCEDURE
+
+    PROCEDURE MatAdd()
+        FOR i = 0 TO 8
+            res[i] = a[i] + a[i]
+        END FOR
+        PrintRes("M+M:")
+    END PROCEDURE
+
+    PROCEDURE MatSub()
+        FOR i = 0 TO 8
+            res[i] = a[i] - a[i]
+        END FOR
+        PrintRes("M-M:")
+    END PROCEDURE
+
+    PROCEDURE MatMul()
+        FOR i = 0 TO 8
+            res[i] = a[i] * a[i]
+        END FOR
+        PrintRes("M*M:")
+    END PROCEDURE
+
+    PROCEDURE MatDiv()
+        FOR i = 0 TO 8
+            res[i] = a[i] / a[i]
+        END FOR
+        PrintRes("M/M:")
+    END PROCEDURE
+
+    PROCEDURE MatPow()
+        FOR i = 0 TO 8
+            res[i] = a[i] ** e[i]
+        END FOR
+        PrintRes("M^E:")
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Init()
+        ScalarAdd(10)
+        ScalarSub(10)
+        ScalarMul(10)
+        ScalarDiv(10)
+        ScalarPow(2)
+        MatAdd()
+        MatSub()
+        MatMul()
+        MatDiv()
+        MatPow()
+    END PROCEDURE
+END MODULE
+
+IMPORT ElemWise
+BEGIN
+    ElemWise.Run()
+END

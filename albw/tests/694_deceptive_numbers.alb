@@ -1,0 +1,55 @@
+-- 694 | Deceptive numbers: composite n coprime to 10 that
+-- divide the repunit R(n-1). First ones below 3000.
+DECLARE MODULE Dec
+    FUNCTION Prime(n AS S64) AS S32
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+    FUNCTION Dec(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dec
+    FUNCTION Prime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION Gcd(x AS S64, y AS S64) AS S64
+        LET m AS S64 = x
+        LET nn AS S64 = y
+        LET r AS S64 = m MOD nn
+        WHILE r <> 0
+            m = nn
+            nn = r
+            r = m MOD nn
+        END WHILE
+        RETURN nn
+    END FUNCTION
+
+    FUNCTION Dec(n AS S64) AS S32
+        IF Prime(n) = 1 THEN RETURN 0 END IF
+        IF Gcd(n, 10) <> 1 THEN RETURN 0 END IF
+        -- is R(n-1) divisible by n? iterate repunit mod n
+        LET r AS S64 = 0
+        FOR i = 1 TO n - 1
+            r = (r * 10 + 1) MOD n
+        END FOR
+        IF r = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 3 TO 3000
+            IF Dec(n) = 1 THEN PRINT n END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Dec
+BEGIN
+    Dec.Run()
+END

@@ -1,0 +1,28 @@
+-- 415 | Multiplicative order: order of each unit modulo 13.
+DECLARE MODULE MulOrd
+    FUNCTION OrdOf(a AS S64, m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MulOrd
+    FUNCTION OrdOf(a AS S64, m AS S64) AS S64
+        LET v AS S64 = a MOD m
+        LET k AS S64 = 1
+        WHILE v <> 1
+            v = (v * a) MOD m
+            k = k + 1
+        END WHILE
+        RETURN k
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR a = 1 TO 12
+            PRINT "a=" | a | " order=" | OrdOf(a, 13)
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT MulOrd
+BEGIN
+    MulOrd.Run()
+END

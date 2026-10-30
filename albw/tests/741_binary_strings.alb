@@ -1,0 +1,71 @@
+-- 741 | Binary strings: bitwise ops on 0/1 strings and
+-- conversion to integers.
+DECLARE MODULE Bin
+    FUNCTION BAnd(a AS STRING, b AS STRING) AS STRING
+    FUNCTION BOr(a AS STRING, b AS STRING) AS STRING
+    FUNCTION BXor(a AS STRING, b AS STRING) AS STRING
+    FUNCTION ToInt(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bin
+    FUNCTION BAnd(a AS STRING, b AS STRING) AS STRING
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(a)
+            IF MID$(a, i, 1) = "1" ANDALSO MID$(b, i, 1) = "1" THEN
+                r = r | "1"
+            ELSE
+                r = r | "0"
+            END IF
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION BOr(a AS STRING, b AS STRING) AS STRING
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(a)
+            IF MID$(a, i, 1) = "1" ORELSE MID$(b, i, 1) = "1" THEN
+                r = r | "1"
+            ELSE
+                r = r | "0"
+            END IF
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION BXor(a AS STRING, b AS STRING) AS STRING
+        LET r AS STRING = ""
+        FOR i = 1 TO LEN(a)
+            IF MID$(a, i, 1) <> MID$(b, i, 1) THEN
+                r = r | "1"
+            ELSE
+                r = r | "0"
+            END IF
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION ToInt(s AS STRING) AS S64
+        LET v AS S64 = 0
+        FOR i = 1 TO LEN(s)
+            v = v * 2
+            IF MID$(s, i, 1) = "1" THEN v = v + 1 END IF
+        END FOR
+        RETURN v
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET a AS STRING = "1011"
+        LET b AS STRING = "0110"
+        PRINT a | " AND " | b | " = " | BAnd(a, b)
+        PRINT a | " OR  " | b | " = " | BOr(a, b)
+        PRINT a | " XOR " | b | " = " | BXor(a, b)
+        PRINT a | " = " | ToInt(a)
+        PRINT b | " = " | ToInt(b)
+    END PROCEDURE
+END MODULE
+
+IMPORT Bin
+BEGIN
+    Bin.Run()
+END

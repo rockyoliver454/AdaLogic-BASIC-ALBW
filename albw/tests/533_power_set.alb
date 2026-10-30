@@ -1,0 +1,32 @@
+-- 533 | Power set: enumerate all 16 subsets of {a,b,c,d} by bitmask.
+DECLARE MODULE PS
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PS
+    STRICT el[4] AS STRING
+
+    PROCEDURE Run()
+        el[1] = "a"
+        el[2] = "b"
+        el[3] = "c"
+        el[4] = "d"
+        FOR mask = 0 TO 15
+            LET s AS STRING = "{"
+            LET first AS S32 = 1
+            FOR bit = 0 TO 3
+                IF mask / (2 ^ bit) MOD 2 = 1 THEN
+                    IF first = 0 THEN s = s | "," END IF
+                    s = s | el[bit + 1]
+                    first = 0
+                END IF
+            END FOR
+            PRINT s | "}"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT PS
+BEGIN
+    PS.Run()
+END

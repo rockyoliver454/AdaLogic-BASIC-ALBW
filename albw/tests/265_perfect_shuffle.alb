@@ -1,0 +1,52 @@
+-- 265 | Perfect shuffle: out-faro shuffle cycle length for several deck sizes.
+DECLARE MODULE PerfectShuffle
+    FUNCTION ShuffleCount(n AS S32) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PerfectShuffle
+    STRICT deck[10000] AS S32
+    STRICT tmp[10000] AS S32
+
+    FUNCTION InOrder(n AS S32) AS S32
+        FOR i = 0 TO n - 1
+            IF deck[i] <> i THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION ShuffleCount(n AS S32) AS S32
+        FOR i = 0 TO n - 1
+            deck[i] = i
+        END FOR
+        LET half AS S32 = n / 2
+        LET count AS S32 = 0
+        WHILE 1
+            FOR i = 0 TO half - 1
+                tmp[i * 2] = deck[i]
+                tmp[i * 2 + 1] = deck[half + i]
+            END FOR
+            FOR i = 0 TO n - 1
+                deck[i] = tmp[i]
+            END FOR
+            count = count + 1
+            IF InOrder(n) THEN RETURN count END IF
+        END WHILE
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT ShuffleCount(8)
+        PRINT ShuffleCount(24)
+        PRINT ShuffleCount(52)
+        PRINT ShuffleCount(100)
+        PRINT ShuffleCount(1020)
+        PRINT ShuffleCount(1024)
+        PRINT ShuffleCount(10000)
+    END PROCEDURE
+END MODULE
+
+IMPORT PerfectShuffle
+BEGIN
+    PerfectShuffle.Run()
+END

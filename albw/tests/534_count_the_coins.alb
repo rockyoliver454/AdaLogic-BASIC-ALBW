@@ -1,0 +1,45 @@
+-- 534 | Count the coins: ways to make change for $1 from US coins
+-- {1,5,10,25,50,100} = 293; and {1,5,10,25} = 242.
+DECLARE MODULE Coins
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Coins
+    STRICT dp[101] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 100
+            dp[i] = 0
+        END FOR
+        dp[0] = 1
+        LET c1 AS S64 = 1
+        LET c2 AS S64 = 5
+        LET c3 AS S64 = 10
+        LET c4 AS S64 = 25
+        FOR v = c1 TO 100
+            dp[v] = dp[v] + dp[v - c1]
+        END FOR
+        FOR v2 = c2 TO 100
+            dp[v2] = dp[v2] + dp[v2 - c2]
+        END FOR
+        FOR v3 = c3 TO 100
+            dp[v3] = dp[v3] + dp[v3 - c3]
+        END FOR
+        FOR v4 = c4 TO 100
+            dp[v4] = dp[v4] + dp[v4 - c4]
+        END FOR
+        PRINT "quarter set: " | dp[100]
+        FOR v5 = 50 TO 100
+            dp[v5] = dp[v5] + dp[v5 - 50]
+        END FOR
+        FOR v6 = 100 TO 100
+            dp[v6] = dp[v6] + dp[v6 - 100]
+        END FOR
+        PRINT "all coins: " | dp[100]
+    END PROCEDURE
+END MODULE
+
+IMPORT Coins
+BEGIN
+    Coins.Run()
+END

@@ -1,0 +1,25 @@
+-- stdlib wave 2: alb_ds (fixed-capacity stack + linear map on static
+-- arrays) and alb_io (Slurp/Spill/Append/Exists over the memfs/hostfs
+-- file builtins). Deterministic: memfs keeps t.txt in-process.
+
+INCLUDE "alb_ds"
+INCLUDE "alb_io"
+
+BEGIN
+    AlbDs.Push(7)
+    AlbDs.Push(9)
+    PRINT AlbDs.Pop()
+    PRINT AlbDs.Top()
+    PRINT AlbDs.Depth()
+    AlbDs.MapSet("ans", 42)
+    AlbDs.MapSet("x", 7)
+    PRINT AlbDs.MapGet("ans")
+    PRINT AlbDs.MapHas("x")
+    PRINT AlbDs.MapHas("zz")
+    PRINT AlbDs.MapCount()
+    AlbIO.Spill("t.txt", "hello")
+    PRINT AlbIO.Exists("t.txt")
+    PRINT AlbIO.Slurp("t.txt")
+    AlbIO.Append("t.txt", "+more")
+    PRINT AlbIO.Slurp("t.txt")
+END

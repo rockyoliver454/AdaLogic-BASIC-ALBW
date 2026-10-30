@@ -1,0 +1,13 @@
+-- Rosetta: File input/output
+-- Whole-file read, seeked partial read, sequential reads.
+BEGIN
+LET w = OPEN("data.bin", "w")
+WRITE w, "0123456789ABCDEF"
+CLOSE w
+LET r = OPEN("data.bin", "r")
+PRINT READ(r, 4)
+FILESEEK(r, 10)
+PRINT READ(r, 6)
+PRINT "size=" | FILELEN("data.bin")
+CLOSE r
+END

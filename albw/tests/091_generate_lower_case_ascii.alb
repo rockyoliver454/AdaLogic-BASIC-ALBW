@@ -1,0 +1,8 @@
+-- 091 | Generate lower case ASCII alphabet.
+BEGIN
+    LET s AS STRING = "";
+    FOR c = 97 TO 122
+        s = s | CHR(c);
+    END FOR
+    PRINT$ s;
+END

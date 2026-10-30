@@ -1,0 +1,117 @@
+-- 974 | SHA-256: FIPS 180-4 over 32-bit words (masked S64).
+-- Prints SHA-256("abc") = ba7816bf...
+DECLARE MODULE S2
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE S2
+    STRICT w[64] AS S64
+    STRICT kk[64] AS S64
+    STRICT msg[64] AS S64
+
+    FUNCTION Rrx(v AS S64, n AS S64) AS S64
+        v = v AND 4294967295
+        RETURN ((v / (2 ^ n)) OR (v * (2 ^ (32 - n)) AND 4294967295)) AND 4294967295
+    END FUNCTION
+
+    FUNCTION Srx(v AS S64, n AS S64) AS S64
+        RETURN (v AND 4294967295) / (2 ^ n)
+    END FUNCTION
+
+    FUNCTION Hx(v AS S64) AS STRING
+        LET h AS STRING = "0123456789abcdef"
+        LET s AS STRING = ""
+        FOR b = 0 TO 3
+            LET bt AS S64 = (v / (2 ^ ((3 - b) * 8))) MOD 256
+            s = s | MID$(h, bt / 16 + 1, 1) | MID$(h, bt MOD 16 + 1, 1)
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Kfill()
+        kk[0] = 1116352408; kk[1] = 1899447441; kk[2] = 3049323471; kk[3] = 3921009573
+        kk[4] = 961987163; kk[5] = 1508970993; kk[6] = 2453635748; kk[7] = 2870763221
+        kk[8] = 3624381080; kk[9] = 310598401; kk[10] = 607225278; kk[11] = 1426881987
+        kk[12] = 1925078388; kk[13] = 2162078206; kk[14] = 2614888103; kk[15] = 3248222580
+        kk[16] = 3835390401; kk[17] = 4022224774; kk[18] = 264347078; kk[19] = 604807628
+        kk[20] = 770255983; kk[21] = 1249150122; kk[22] = 1555081692; kk[23] = 1996064986
+        kk[24] = 2554220882; kk[25] = 2821834349; kk[26] = 2952996808; kk[27] = 3210313671
+        kk[28] = 3336571891; kk[29] = 3584528711; kk[30] = 113926993; kk[31] = 338241895
+        kk[32] = 666307205; kk[33] = 773529912; kk[34] = 1294757372; kk[35] = 1396182291
+        kk[36] = 1695183700; kk[37] = 1986661051; kk[38] = 2177026350; kk[39] = 2456956037
+        kk[40] = 2730485921; kk[41] = 2820302411; kk[42] = 3259730800; kk[43] = 3345764771
+        kk[44] = 3516065817; kk[45] = 3600352804; kk[46] = 4094571909; kk[47] = 275423344
+        kk[48] = 430227734; kk[49] = 506948616; kk[50] = 659060556; kk[51] = 883997877
+        kk[52] = 958139571; kk[53] = 1322822218; kk[54] = 1537002063; kk[55] = 1747873779
+        kk[56] = 1955562222; kk[57] = 2024104815; kk[58] = 2227730452; kk[59] = 2361852424
+        kk[60] = 2428436474; kk[61] = 2756734187; kk[62] = 3204031479; kk[63] = 3329325298
+    END PROCEDURE
+
+    PROCEDURE Hash(s AS STRING)
+        Kfill()
+        FOR i = 1 TO 64
+            msg[i] = 0
+        END FOR
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            msg[i] = ASC(MID$(s, i, 1))
+        END FOR
+        msg[n + 1] = 128
+        LET bits AS S64 = n * 8
+        msg[61] = (bits / 16777216) MOD 256
+        msg[62] = (bits / 65536) MOD 256
+        msg[63] = (bits / 256) MOD 256
+        msg[64] = bits MOD 256
+        FOR i = 0 TO 15
+            w[i] = msg[i * 4 + 1] * 16777216 + msg[i * 4 + 2] * 65536 + msg[i * 4 + 3] * 256 + msg[i * 4 + 4]
+        END FOR
+        FOR i = 16 TO 63
+            LET s0 AS S64 = (Rrx(w[i - 15], 7) XOR Rrx(w[i - 15], 18) XOR Srx(w[i - 15], 3)) AND 4294967295
+            LET s1 AS S64 = (Rrx(w[i - 2], 17) XOR Rrx(w[i - 2], 19) XOR Srx(w[i - 2], 10)) AND 4294967295
+            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) AND 4294967295
+        END FOR
+        LET a AS S64 = 1779033703
+        LET b AS S64 = 3144134277
+        LET c AS S64 = 1013904242
+        LET d AS S64 = 2773480762
+        LET e AS S64 = 1359893119
+        LET f AS S64 = 2600822924
+        LET g AS S64 = 528734635
+        LET h AS S64 = 1541459225
+        FOR i = 0 TO 63
+            LET bs1 AS S64 = (Rrx(e, 6) XOR Rrx(e, 11) XOR Rrx(e, 25)) AND 4294967295
+            LET ch AS S64 = ((e AND f) XOR ((4294967295 - e) AND g)) AND 4294967295
+            LET t1 AS S64 = (h + bs1 + ch + kk[i] + w[i]) AND 4294967295
+            LET bs0 AS S64 = (Rrx(a, 2) XOR Rrx(a, 13) XOR Rrx(a, 22)) AND 4294967295
+            LET mj AS S64 = ((a AND b) XOR (a AND c) XOR (b AND c)) AND 4294967295
+            LET t2 AS S64 = (bs0 + mj) AND 4294967295
+            h = g
+            g = f
+            f = e
+            e = (d + t1) AND 4294967295
+            d = c
+            c = b
+            b = a
+            a = (t1 + t2) AND 4294967295
+        END FOR
+        a = (a + 1779033703) AND 4294967295
+        b = (b + 3144134277) AND 4294967295
+        c = (c + 1013904242) AND 4294967295
+        d = (d + 2773480762) AND 4294967295
+        e = (e + 1359893119) AND 4294967295
+        f = (f + 2600822924) AND 4294967295
+        g = (g + 528734635) AND 4294967295
+        h = (h + 1541459225) AND 4294967295
+        PRINT "sha256(" | s | ")=" | Hx(a) | Hx(b) | Hx(c) | Hx(d) | Hx(e) | Hx(f) | Hx(g) | Hx(h)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Hash("abc")
+        Hash("")
+    END PROCEDURE
+END MODULE
+
+IMPORT S2
+BEGIN
+    S2.Run()
+END

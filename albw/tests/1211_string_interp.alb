@@ -1,0 +1,18 @@
+-- String interpolation: backtick strings expand {expr} into | concat.
+LET x    AS S64    = 42
+LET name AS STRING = "forge"
+
+BEGIN
+    PRINT `x={x}, name={name}!`
+    PRINT `sum={x + 8} mid={MID("abcdef", 2, 3)}`
+    PRINT `nest={UPPER("ab")}-{(x * 2) MOD 10}`
+    PRINT `edge={x}`
+    PRINT `{x}=edge`
+    PRINT `empty={""}hole`
+    PRINT "plain {x} stays literal"
+    PRINT `lit {{brace} end`
+    PRINT `free } brace ok`
+    PRINT `nested={ `in={x}` } out`
+    LET s AS STRING = `two {x} and {x + 1}`
+    PRINT s
+END

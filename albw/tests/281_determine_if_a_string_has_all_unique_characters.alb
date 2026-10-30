@@ -1,0 +1,20 @@
+-- 281 | Determine if a string has all unique characters.
+BEGIN
+    STRICT words[3] AS STRING
+    words[0] = "abc"
+    words[1] = "aba"
+    words[2] = "Alb"
+
+    FOR w = 0 TO 2
+        LET s AS STRING = words[w]
+        LET unique AS S32 = 1
+        FOR i = 1 TO LEN(s)
+            LET j AS S32 = i + 1
+            WHILE j <= LEN(s)
+                IF ASC(MID$(s, i, 1)) = ASC(MID$(s, j, 1)) THEN unique = 0 END IF
+                j = j + 1
+            END WHILE
+        END FOR
+        PRINT unique
+    END FOR
+END

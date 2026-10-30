@@ -1,0 +1,71 @@
+-- 964 | S-expressions: parse a nested list like
+-- ((data "quoted" 123) (more (a b c))) and print the tree.
+DECLARE MODULE Se
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Se
+    STRICT src[1] AS STRING
+    STRICT cur[1] AS S64
+
+    FUNCTION Pk() AS S64
+        WHILE cur[1] <= LEN(src[1]) ANDALSO ASC(MID$(src[1], cur[1], 1)) = 32
+            cur[1] = cur[1] + 1
+        END WHILE
+        IF cur[1] > LEN(src[1]) THEN RETURN 0 - 1 END IF
+        RETURN ASC(MID$(src[1], cur[1], 1))
+    END FUNCTION
+
+    FUNCTION Pad(d AS S64) AS STRING
+        LET s AS STRING = ""
+        FOR i = 1 TO d * 2
+            s = s | " "
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Node(d AS S64)
+        IF Pk() = ASC("(") THEN
+            cur[1] = cur[1] + 1
+            PRINT Pad(d) | "("
+            WHILE Pk() <> ASC(")") ANDALSO Pk() >= 0
+                Node(d + 1)
+            END WHILE
+            cur[1] = cur[1] + 1
+            RETURN
+        END IF
+        IF Pk() = ASC("!") THEN
+            cur[1] = cur[1] + 1
+            LET j AS S64 = cur[1]
+            WHILE j <= LEN(src[1]) ANDALSO ASC(MID$(src[1], j, 1)) <> ASC("!")
+                j = j + 1
+            END WHILE
+            PRINT Pad(d) | "str " | MID$(src[1], cur[1], j - cur[1])
+            cur[1] = j + 1
+            RETURN
+        END IF
+        LET j AS S64 = cur[1]
+        WHILE j <= LEN(src[1])
+            LET c AS S64 = ASC(MID$(src[1], j, 1))
+            IF c = 32 ORELSE c = ASC("(") ORELSE c = ASC(")") THEN
+                PRINT Pad(d) | "atom " | MID$(src[1], cur[1], j - cur[1])
+                cur[1] = j
+                RETURN
+            END IF
+            j = j + 1
+        END WHILE
+        PRINT Pad(d) | "atom " | MID$(src[1], cur[1], j - cur[1])
+        cur[1] = j
+    END PROCEDURE
+
+    PROCEDURE Run()
+        src[1] = "((data !quoted text! 123 4.5) (more (a b c)))"
+        cur[1] = 1
+        Node(0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Se
+BEGIN
+    Se.Run()
+END

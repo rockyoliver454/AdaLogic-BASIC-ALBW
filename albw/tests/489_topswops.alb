@@ -1,0 +1,63 @@
+-- 489 | Topswops: maximum number of flips before the top card is 1,
+-- over all permutations of 1..n, for n = 1..8.
+DECLARE MODULE Tops
+    PROCEDURE Gen(k AS S64, n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tops
+    STRICT perm[10] AS S64
+    STRICT deck[10] AS S64
+    STRICT best[1] AS S64
+    STRICT g_n[1] AS S64
+
+    PROCEDURE Simulate()
+        LET n AS S64 = g_n[1]
+        FOR i = 1 TO n
+            deck[i] = perm[i]
+        END FOR
+        LET steps AS S64 = 0
+        WHILE deck[1] <> 1
+            LET k AS S64 = deck[1]
+            FOR j = 1 TO k / 2
+                LET t AS S64 = deck[j]
+                deck[j] = deck[k - j + 1]
+                deck[k - j + 1] = t
+            END FOR
+            steps = steps + 1
+        END WHILE
+        IF steps > best[1] THEN best[1] = steps END IF
+    END PROCEDURE
+
+    PROCEDURE Gen(k AS S64)
+        IF k = 1 THEN
+            Simulate()
+            RETURN
+        END IF
+        FOR i = 1 TO k
+            Gen(k - 1)
+            LET a AS S64 = i
+            IF k MOD 2 = 1 THEN a = 1 END IF
+            LET t AS S64 = perm[a]
+            perm[a] = perm[k]
+            perm[k] = t
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 1 TO 8
+            FOR i = 1 TO n
+                perm[i] = i
+            END FOR
+            best[1] = 0
+            g_n[1] = n
+            Gen(n)
+            PRINT "n=" | n | " max=" | best[1]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Tops
+BEGIN
+    Tops.Run()
+END

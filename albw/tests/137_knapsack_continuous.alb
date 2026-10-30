@@ -1,0 +1,27 @@
+-- 137 | Knapsack continuous: greedy by value/weight ratio.
+BEGIN
+    STRICT wt[3] AS F64;
+    STRICT vl[3] AS F64;
+    wt[0]=10.0; vl[0]=60.0;
+    wt[1]=20.0; vl[1]=100.0;
+    wt[2]=30.0; vl[2]=120.0;
+    FOR i = 0 TO 1
+        FOR j = 0 TO 1 - i
+            IF vl[j] / wt[j] < vl[j + 1] / wt[j + 1] THEN
+                LET tw AS F64 = wt[j]; wt[j] = wt[j + 1]; wt[j + 1] = tw;
+                LET tv AS F64 = vl[j]; vl[j] = vl[j + 1]; vl[j + 1] = tv;
+            END IF
+        END FOR
+    END FOR
+    LET cap AS F64 = 50.0;
+    LET total AS F64 = 0.0;
+    FOR i = 0 TO 2
+        LET take AS F64 = wt[i];
+        IF take > cap THEN
+            take = cap;
+        END IF
+        total = total + vl[i] * take / wt[i];
+        cap = cap - take;
+    END FOR
+    PRINT total;
+END

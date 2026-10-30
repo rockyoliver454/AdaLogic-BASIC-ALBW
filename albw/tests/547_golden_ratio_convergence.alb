@@ -1,0 +1,33 @@
+-- 547 | Golden ratio/Convergence: iterate phi = 1 + 1/phi until the
+-- change falls below 1e-5, reporting iteration count and error vs
+-- the true ratio.
+DECLARE MODULE ModuleGR
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE ModuleGR
+    PROCEDURE Run()
+        LET phi AS F64 = 1.0
+        LET it AS S64 = 0
+        LET done AS S32 = 0
+        WHILE done = 0
+            LET nxt AS F64 = 1.0 + 1.0 / phi
+            LET d AS F64 = nxt - phi
+            IF d < 0.0 THEN d = 0.0 - d END IF
+            phi = nxt
+            it = it + 1
+            IF d < 0.00001 THEN done = 1 END IF
+        END WHILE
+        LET truePhi AS F64 = (1.0 + SQRT(5.0)) / 2.0
+        LET err AS F64 = phi - truePhi
+        IF err < 0.0 THEN err = 0.0 - err END IF
+        PRINT "iterations: " | it
+        PRINT "phi ~= " | phi
+        PRINT "error: " | err
+    END PROCEDURE
+END MODULE
+
+IMPORT ModuleGR
+BEGIN
+    ModuleGR.Run()
+END

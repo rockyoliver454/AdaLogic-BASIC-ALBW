@@ -1,0 +1,36 @@
+-- 796 | Bernstein basis polynomials: B_{k,n}(x) = C(n,k)
+-- x^k (1-x)^(n-k). Print basis values for n=4 at x=0.25.
+DECLARE MODULE Bb
+    FUNCTION Comb(n AS S64, k AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bb
+    FUNCTION Comb(n AS S64, k AS S64) AS S64
+        LET c AS S64 = 1
+        FOR i = 1 TO k
+            c = c * (n + 1 - i) / i
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET x AS F64 = 0.25
+        LET n AS S64 = 4
+        FOR k = 0 TO n
+            LET v AS F64 = Comb(n, k) * x ^ k * (1.0 - x) ^ (n - k)
+            PRINT "B" | k | "," | n | "(0.25)=" | v
+        END FOR
+        -- basis sums to 1
+        LET s AS F64 = 0.0
+        FOR k = 0 TO n
+            s = s + Comb(n, k) * x ^ k * (1.0 - x) ^ (n - k)
+        END FOR
+        PRINT "sum=" | s
+    END PROCEDURE
+END MODULE
+
+IMPORT Bb
+BEGIN
+    Bb.Run()
+END

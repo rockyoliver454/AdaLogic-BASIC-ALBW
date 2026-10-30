@@ -1,0 +1,50 @@
+-- 552 | Substitution cipher: map via keyword cipher
+-- "LEMONAIDE" alphabet, encrypt and decrypt.
+DECLARE MODULE Sub
+    FUNCTION Clean(ch AS STRING) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sub
+    STRICT alpha[26] AS S64
+
+    PROCEDURE Build()
+        -- keyword cipher for "LEMONAID" (dedup) + rest of alphabet
+        LET kw AS STRING = "LEMONAIDBFGHJKPQRSTUVWXYZ"
+        FOR i = 1 TO 26
+            alpha[i] = ASC(MID$(kw, i, 1))
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Build()
+        LET plain AS STRING = "FLEE AT ONCE WE ARE DISCOVERED"
+        LET enc AS STRING = ""
+        FOR i = 1 TO LEN(plain)
+            LET c AS S64 = ASC(MID$(plain, i, 1))
+            IF c >= 65 ANDALSO c <= 90 THEN
+                enc = enc | CHR(alpha[c - 64])
+            ELSE
+                enc = enc | MID$(plain, i, 1)
+            END IF
+        END FOR
+        PRINT enc
+        LET dec AS STRING = ""
+        FOR j = 1 TO LEN(enc)
+            LET c2 AS S64 = ASC(MID$(enc, j, 1))
+            IF c2 >= 65 ANDALSO c2 <= 90 THEN
+                FOR p = 1 TO 26
+                    IF alpha[p] = c2 THEN dec = dec | CHR(64 + p) END IF
+                END FOR
+            ELSE
+                dec = dec | MID$(enc, j, 1)
+            END IF
+        END FOR
+        PRINT dec
+    END PROCEDURE
+END MODULE
+
+IMPORT Sub
+BEGIN
+    Sub.Run()
+END

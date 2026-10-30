@@ -1,0 +1,11 @@
+DECLARE MODULE M
+    PROCEDURE SayHello()
+        PRINT$ "hello from function"
+    END PROCEDURE
+END DECLARE MODULE
+
+MODULE M
+    PROCEDURE SayHello()
+        PRINT$ "hello from function"
+    END PROCEDURE
+END MODULE

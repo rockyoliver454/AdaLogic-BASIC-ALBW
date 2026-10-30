@@ -1,0 +1,49 @@
+-- 849 | Bifid cipher: encrypt "FLEEATONCE" with square
+-- "BGWKZQPNDSIOAXEFCLUMTHYVR" (whole message one period)
+-- -> "UAEOLWRINS" (Wikipedia example).
+DECLARE MODULE Bf
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bf
+    STRICT pp[26] AS S64
+    STRICT sq[26] AS S64
+    STRICT rw[32] AS S64
+    STRICT cl[32] AS S64
+
+    PROCEDURE Run()
+        LET ky AS STRING = "BGWKZQPNDSIOAXEFCLUMTHYVR"
+        FOR i = 1 TO 25
+            sq[i] = ASC(MID$(ky, i, 1))
+            pp[sq[i] - 64] = i
+        END FOR
+        LET msg AS STRING = "FLEEATONCE"
+        LET n AS S64 = LEN(msg)
+        FOR i = 1 TO n
+            LET p AS S64 = pp[ASC(MID$(msg, i, 1)) - 64]
+            rw[i] = (p - 1) / 5
+            cl[i] = (p - 1) MOD 5
+        END FOR
+        -- merged stream = all rows then all cols; re-pair
+        LET rs AS STRING = ""
+        FOR i = 1 TO n
+            LET r AS S64 = 0
+            LET c AS S64 = 0
+            IF i <= (n + 1) / 2 THEN
+                r = rw[i * 2 - 1]
+                c = rw[i * 2]
+            ELSE
+                LET j AS S64 = i - (n + 1) / 2
+                r = cl[j * 2 - 1]
+                c = cl[j * 2]
+            END IF
+            rs = rs | CHR(sq[r * 5 + c + 1])
+        END FOR
+        PRINT "cipher: " | rs
+    END PROCEDURE
+END MODULE
+
+IMPORT Bf
+BEGIN
+    Bf.Run()
+END

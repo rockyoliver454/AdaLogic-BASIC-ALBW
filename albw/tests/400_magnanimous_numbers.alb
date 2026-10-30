@@ -1,0 +1,48 @@
+-- 400 | Magnanimous numbers: every insertion of '+' between digits sums to a prime; first 30.
+DECLARE MODULE Magnanimous
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION IsMagn(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Magnanimous
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 THEN RETURN 0 END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IsMagn(n AS S64) AS S32
+        LET p AS S64 = 10
+        WHILE p <= n
+            IF IsPrime(n / p + n MOD p) = 0 THEN RETURN 0 END IF
+            p = p * 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 30
+            IF IsMagn(n) = 1 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Magnanimous
+BEGIN
+    Magnanimous.Run()
+END

@@ -1,0 +1,27 @@
+-- 119 | Hofstadter Q sequence -- Q(n)=Q(n-Q(n-1))+Q(n-Q(n-2)), print Q(1..10)
+DECLARE MODULE Q
+    FUNCTION Q(n AS S32) AS S32
+END MODULE
+
+STRICT qv[64] AS S32;
+
+MODULE Q
+    FUNCTION Q(n AS S32) AS S32
+        IF n <= 2 THEN
+            RETURN 1
+        END IF
+        RETURN qv[n - qv[n - 1]] + qv[n - qv[n - 2]]
+    END FUNCTION
+END MODULE
+
+BEGIN
+    qv[1] = 1
+    qv[2] = 1
+    LET i AS S32 = 0
+    FOR i = 3 TO 10
+        qv[i] = Q.Q(i)
+    END FOR
+    FOR i = 1 TO 10
+        PRINT qv[i]
+    END FOR
+END

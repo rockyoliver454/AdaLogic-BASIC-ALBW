@@ -1,0 +1,25 @@
+-- 1003 | Read a file line by line: write a three-line file,
+-- read it, then emit each line in order.
+BEGIN
+LET h = OPEN("rosetta_lines.dat", "w")
+WRITE h, "first line" | CHR(10) | "second line" | CHR(10) | "third line" | CHR(10)
+CLOSE h
+LET r = OPEN("rosetta_lines.dat", "r")
+LET whole AS STRING = READ(r, FILELEN("rosetta_lines.dat"))
+CLOSE r
+LET n AS S64 = LEN(whole)
+LET i AS S64 = 1
+LET ln AS S64 = 0
+WHILE i <= n
+    LET j AS S64 = i
+    WHILE j <= n ANDALSO ASC(MID$(whole, j, 1)) <> 10
+        j = j + 1
+    END WHILE
+    IF j > i THEN
+        ln = ln + 1
+        PRINT "line " | ln | ": " | MID$(whole, i, j - i)
+    END IF
+    i = j + 1
+END WHILE
+PRINT "lines=" | ln
+END

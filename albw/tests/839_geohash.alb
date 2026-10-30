@@ -1,0 +1,109 @@
+-- 839 | Geohash: encode lat/lon to base32 geohash and decode
+-- back. Example: (42.605, -5.603) -> "ezs42..." .
+DECLARE MODULE Gh
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Gh
+    STRICT b32[32] AS S64
+
+    PROCEDURE Init()
+        -- base32 alphabet: 0123456789bcdefghjkmnpqrstuvwxyz
+        b32[1] = 48; b32[2] = 49; b32[3] = 50; b32[4] = 51
+        b32[5] = 52; b32[6] = 53; b32[7] = 54; b32[8] = 55
+        b32[9] = 56; b32[10] = 57; b32[11] = 98; b32[12] = 99
+        b32[13] = 100; b32[14] = 101; b32[15] = 102; b32[16] = 103
+        b32[17] = 104; b32[18] = 106; b32[19] = 107; b32[20] = 109
+        b32[21] = 110; b32[22] = 112; b32[23] = 113; b32[24] = 114
+        b32[25] = 115; b32[26] = 116; b32[27] = 117; b32[28] = 118
+        b32[29] = 119; b32[30] = 120; b32[31] = 121; b32[32] = 122
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Init()
+        -- encode (42.605, -5.603) at precision 5 -> "ezs42"
+        LET lat AS F64 = 42.605
+        LET lon AS F64 = 0.0 - 5.603
+        LET lalo AS F64 = 0.0 - 90.0
+        LET lahi AS F64 = 90.0
+        LET lnlo AS F64 = 0.0 - 180.0
+        LET lnhi AS F64 = 180.0
+        LET s AS STRING = ""
+        LET prec AS S64 = 5
+        -- bits into groups of 5 -> base32 chars
+        lalo = 0.0 - 90.0
+        lahi = 90.0
+        lnlo = 0.0 - 180.0
+        lnhi = 180.0
+        LET acc AS S64 = 0
+        LET nb AS S64 = 0
+        FOR i = 1 TO prec * 5
+            LET b AS S64 = 0
+            IF i MOD 2 = 1 THEN
+                LET mid AS F64 = (lnlo + lnhi) / 2.0
+                IF lon >= mid THEN
+                    b = 1
+                    lnlo = mid
+                ELSE
+                    lnhi = mid
+                END IF
+            ELSE
+                LET mid AS F64 = (lalo + lahi) / 2.0
+                IF lat >= mid THEN
+                    b = 1
+                    lalo = mid
+                ELSE
+                    lahi = mid
+                END IF
+            END IF
+            acc = acc * 2 + b
+            nb = nb + 1
+            IF nb = 5 THEN
+                s = s | CHR(b32[acc + 1])
+                acc = 0
+                nb = 0
+            END IF
+        END FOR
+        PRINT "geohash(42.605,-5.603,5)=" | s
+        -- decode "ezs42" back to bbox centre
+        LET dlalo AS F64 = 0.0 - 90.0
+        LET dlahi AS F64 = 90.0
+        LET dlnlo AS F64 = 0.0 - 180.0
+        LET dlnhi AS F64 = 180.0
+        -- decode char by char (e,z,s,4,2 -> 4,31,26,15,13? compute)
+        STRICT dv[6] AS S64
+        dv[1] = 14; dv[2] = 31; dv[3] = 26; dv[4] = 15; dv[5] = 13
+        -- wait: indices of e,z,s,4,2 in alphabet:
+        -- e=14? alphabet idx:0=0,1=1,...,9=9,b=10,c=11,d=12,e=13,
+        -- f=14,g=15,h=16,j=17,k=18,m=19,n=20,p=21,q=22,r=23,s=24,
+        -- t=25,u=26,v=27,w=28,x=29,y=30,z=31
+        dv[1] = 13; dv[2] = 31; dv[3] = 24; dv[4] = 4; dv[5] = 2
+        FOR i = 1 TO 25
+            LET ch AS S64 = (i - 1) / 5 + 1
+            LET bit AS S64 = (dv[ch] / (2 ^ (4 - ((i - 1) MOD 5)))) MOD 2
+            IF i MOD 2 = 1 THEN
+                LET mid AS F64 = (dlnlo + dlnhi) / 2.0
+                IF bit = 1 THEN
+                    dlnlo = mid
+                ELSE
+                    dlnhi = mid
+                END IF
+            ELSE
+                LET mid AS F64 = (dlalo + dlahi) / 2.0
+                IF bit = 1 THEN
+                    dlalo = mid
+                ELSE
+                    dlahi = mid
+                END IF
+            END IF
+        END FOR
+        LET clat AS F64 = (dlalo + dlahi) / 2.0
+        LET clon AS F64 = (dlnlo + dlnhi) / 2.0
+        PRINT "decoded centre lat=" | clat | " lon=" | clon
+    END PROCEDURE
+END MODULE
+
+IMPORT Gh
+BEGIN
+    Gh.Run()
+END

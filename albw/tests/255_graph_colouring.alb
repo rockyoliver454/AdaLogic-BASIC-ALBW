@@ -1,0 +1,197 @@
+-- 255 | Graph colouring: greedy vertex colouring for four example graphs.
+DECLARE MODULE GraphColour
+    PROCEDURE RunAll()
+END DECLARE MODULE
+
+MODULE GraphColour
+    LET max_nodes AS S32 = 9
+    STRICT adj[81] AS S32
+    STRICT deg[9] AS S32
+    STRICT colour[9] AS S32
+    STRICT used[9] AS S32
+    STRICT present[9] AS S32
+
+    PROCEDURE ClearGraph()
+        FOR i = 0 TO max_nodes - 1
+            deg[i] = 0
+            colour[i] = -1
+            present[i] = 0
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE IncludeNode(u AS S32)
+        present[u] = 1
+    END PROCEDURE
+
+    PROCEDURE AddEdge(u AS S32, v AS S32)
+        adj[u * max_nodes + deg[u]] = v
+        deg[u] = deg[u] + 1
+        present[u] = 1
+        present[v] = 1
+    END PROCEDURE
+
+    PROCEDURE AddUndirected(u AS S32, v AS S32)
+        AddEdge(u, v)
+        AddEdge(v, u)
+    END PROCEDURE
+
+    PROCEDURE SortAdjacencies(last AS S32)
+        FOR u = 0 TO last
+            FOR i = 0 TO deg[u] - 2
+                FOR j = i + 1 TO deg[u] - 1
+                    IF adj[u * max_nodes + j] < adj[u * max_nodes + i] THEN
+                        LET temporary AS S32 = adj[u * max_nodes + i]
+                        adj[u * max_nodes + i] = adj[u * max_nodes + j]
+                        adj[u * max_nodes + j] = temporary
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE ColourGraph(last AS S32)
+        FOR u = 0 TO last
+            FOR c = 0 TO last
+                used[c] = 0
+            END FOR
+            FOR i = 0 TO deg[u] - 1
+                LET v AS S32 = adj[u * max_nodes + i]
+                IF colour[v] >= 0 THEN
+                    used[colour[v]] = 1
+                END IF
+            END FOR
+            FOR c = 0 TO last
+                IF used[c] = 0 THEN
+                    colour[u] = c
+                    BREAK
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+
+    FUNCTION CountColours(last AS S32) AS S32
+        LET count AS S32 = 0
+        FOR c = 0 TO last
+            used[c] = 0
+        END FOR
+        FOR u = 0 TO last
+            IF colour[u] >= 0 ANDALSO used[colour[u]] = 0 THEN
+                used[colour[u]] = 1
+                count = count + 1
+            END IF
+        END FOR
+        RETURN count
+    END FUNCTION
+
+    PROCEDURE RunExample(name AS STRING, last AS S32)
+        SortAdjacencies(last)
+        ColourGraph(last)
+
+        PRINT name
+
+        LET edge_count AS S32 = 0
+        FOR u = 0 TO last
+            IF present[u] = 1 THEN
+                FOR i = 0 TO deg[u] - 1
+                    LET v AS S32 = adj[u * max_nodes + i]
+                    IF u < v THEN
+                        LET out_line AS STRING = "       " | u | "-" | v | ": Colour: " | colour[u] | ", " | colour[v]
+                        PRINT out_line
+                        edge_count = edge_count + 1
+                    END IF
+                END FOR
+                IF deg[u] = 0 THEN
+                    LET out_line AS STRING = "         " | u | ": Colour: " | colour[u]
+                    PRINT out_line
+                END IF
+            END IF
+        END FOR
+
+        LET colour_count AS S32 = CountColours(last)
+        LET nodes AS S32 = 0
+        FOR u = 0 TO last
+            IF present[u] = 1 THEN nodes = nodes + 1 END IF
+        END FOR
+        LET summary1 AS STRING = "    #Nodes: " | nodes
+        LET summary2 AS STRING = "    #Edges: " | edge_count
+        LET summary3 AS STRING = "  #Colours: " | colour_count
+        PRINT summary1
+        PRINT summary2
+        PRINT summary3
+    END PROCEDURE
+
+    PROCEDURE Ex1()
+        ClearGraph()
+        AddUndirected(0, 1)
+        AddUndirected(1, 2)
+        AddUndirected(2, 0)
+        IncludeNode(3)
+        RunExample("Ex1", 3)
+    END PROCEDURE
+
+    PROCEDURE Ex2()
+        ClearGraph()
+        AddUndirected(1, 6)
+        AddUndirected(1, 7)
+        AddUndirected(1, 8)
+        AddUndirected(2, 5)
+        AddUndirected(2, 7)
+        AddUndirected(2, 8)
+        AddUndirected(3, 5)
+        AddUndirected(3, 6)
+        AddUndirected(3, 8)
+        AddUndirected(4, 5)
+        AddUndirected(4, 6)
+        AddUndirected(4, 7)
+        RunExample("Ex2", 8)
+    END PROCEDURE
+
+    PROCEDURE Ex3()
+        ClearGraph()
+        AddUndirected(1, 4)
+        AddUndirected(1, 6)
+        AddUndirected(1, 8)
+        AddUndirected(3, 2)
+        AddUndirected(3, 6)
+        AddUndirected(3, 8)
+        AddUndirected(5, 2)
+        AddUndirected(5, 4)
+        AddUndirected(5, 8)
+        AddUndirected(7, 2)
+        AddUndirected(7, 4)
+        AddUndirected(7, 6)
+        RunExample("Ex3", 8)
+    END PROCEDURE
+
+    PROCEDURE Ex4()
+        ClearGraph()
+        AddUndirected(1, 6)
+        AddUndirected(1, 7)
+        AddUndirected(1, 8)
+        AddUndirected(2, 5)
+        AddUndirected(2, 7)
+        AddUndirected(2, 8)
+        AddUndirected(3, 5)
+        AddUndirected(3, 6)
+        AddUndirected(3, 8)
+        AddUndirected(4, 5)
+        AddUndirected(4, 6)
+        AddUndirected(4, 7)
+        RunExample("Ex4", 8)
+    END PROCEDURE
+
+    PROCEDURE RunAll()
+        Ex1()
+        PRINT ""
+        Ex2()
+        PRINT ""
+        Ex3()
+        PRINT ""
+        Ex4()
+    END PROCEDURE
+END MODULE
+
+IMPORT GraphColour
+BEGIN
+    GraphColour.RunAll()
+END

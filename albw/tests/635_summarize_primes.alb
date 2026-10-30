@@ -1,0 +1,41 @@
+-- 635 | Summarize primes: count, sum, min and max of primes in
+-- each century 0..999.
+DECLARE MODULE Sump
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sump
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR c = 0 TO 9
+            LET cnt AS S64 = 0
+            LET sum AS S64 = 0
+            LET mn AS S64 = 0
+            LET mx AS S64 = 0
+            FOR n = c * 100 TO c * 100 + 99
+                IF IsPrime(n) = 1 THEN
+                    cnt = cnt + 1
+                    sum = sum + n
+                    IF mn = 0 THEN mn = n END IF
+                    mx = n
+                END IF
+            END FOR
+            PRINT c * 100 | "s: n=" | cnt | " sum=" | sum | " " | mn | ".." | mx
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sump
+BEGIN
+    Sump.Run()
+END

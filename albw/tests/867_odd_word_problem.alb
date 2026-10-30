@@ -1,0 +1,43 @@
+-- 867 | Odd word problem: text is words separated by spaces,
+-- ended by '.'. Even words print as-is, odd-positioned words
+-- are reversed. (1-indexed words.)
+DECLARE MODULE Ow
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ow
+    PROCEDURE Run()
+        LET txt AS STRING = "this is the odd word problem example text."
+        LET n AS S64 = LEN(txt)
+        LET wd AS STRING = ""
+        LET wn AS S64 = 0
+        LET rs AS STRING = ""
+        FOR i = 1 TO n
+            LET c AS S64 = ASC(MID$(txt, i, 1))
+            IF c = 32 ORELSE c = 46 THEN
+                IF LEN(wd) > 0 THEN
+                    wn = wn + 1
+                    IF wn MOD 2 = 1 THEN
+                        LET rv AS STRING = ""
+                        FOR k = 1 TO LEN(wd)
+                            rv = MID$(wd, k, 1) | rv
+                        END FOR
+                        rs = rs | rv | " "
+                    ELSE
+                        rs = rs | wd | " "
+                    END IF
+                    wd = ""
+                END IF
+            ELSE
+                wd = wd | CHR(c)
+            END IF
+        END FOR
+        PRINT rs
+        PRINT "words=" | wn
+    END PROCEDURE
+END MODULE
+
+IMPORT Ow
+BEGIN
+    Ow.Run()
+END

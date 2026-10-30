@@ -1,0 +1,38 @@
+-- 950 | Distance and Bearing: haversine distance + initial
+-- bearing between two lat/lon points (the RC example uses
+-- Nashville->Los Angeles airports).
+DECLARE MODULE Db
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Db
+    PROCEDURE Run()
+        -- BNA 36.12N -86.68 ; LAX 33.94N -118.4
+        LET la1 AS F64 = 36.12 * 0.017453292519943295
+        LET lo1 AS F64 = 0.0 - 86.68 * 0.017453292519943295
+        LET la2 AS F64 = 33.94 * 0.017453292519943295
+        LET lo2 AS F64 = 0.0 - 118.4 * 0.017453292519943295
+        LET dla AS F64 = la2 - la1
+        LET dlo AS F64 = lo2 - lo1
+        LET s1 AS F64 = SIN(dla / 2.0)
+        LET s2 AS F64 = SIN(dlo / 2.0)
+        LET a AS F64 = s1 * s1 + COS(la1) * COS(la2) * s2 * s2
+        LET c AS F64 = 2.0 * ATAN(SQRT(a) / SQRT(1.0 - a))
+        LET d AS F64 = 6371.0 * c
+        PRINT "distance=" | d | " km"
+        -- bearing
+        LET y AS F64 = SIN(dlo) * COS(la2)
+        LET x AS F64 = COS(la1) * SIN(la2) - SIN(la1) * COS(la2) * COS(dlo)
+        LET br AS F64 = ATAN(y / x)
+        -- fix quadrant
+        IF x < 0.0 THEN br = br + 3.141592653589793 END IF
+        LET bd AS F64 = br / 0.017453292519943295
+        IF bd < 0.0 THEN bd = bd + 360.0 END IF
+        PRINT "bearing=" | bd | " deg"
+    END PROCEDURE
+END MODULE
+
+IMPORT Db
+BEGIN
+    Db.Run()
+END

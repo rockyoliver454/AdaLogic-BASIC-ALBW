@@ -1,0 +1,51 @@
+-- 928 | Passphrase generator: seeded pick of 4 words from a
+-- small word list (diceware-style).
+DECLARE MODULE Pp
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pp
+    STRICT sd[1] AS S64
+    STRICT wl[20] AS STRING
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        wl[1] = "apple"
+        wl[2] = "brave"
+        wl[3] = "cinder"
+        wl[4] = "delta"
+        wl[5] = "ember"
+        wl[6] = "frost"
+        wl[7] = "grove"
+        wl[8] = "haven"
+        wl[9] = "input"
+        wl[10] = "jewel"
+        wl[11] = "knack"
+        wl[12] = "lumen"
+        wl[13] = "mirth"
+        wl[14] = "noble"
+        wl[15] = "onyx"
+        wl[16] = "plumb"
+        wl[17] = "quilt"
+        wl[18] = "riven"
+        wl[19] = "stone"
+        wl[20] = "tulip"
+        sd[1] = 60125
+        LET s AS STRING = ""
+        FOR i = 1 TO 4
+            s = s | wl[Nxt() MOD 20 + 1]
+            IF i < 4 THEN s = s | "-" END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Pp
+BEGIN
+    Pp.Run()
+END

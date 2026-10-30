@@ -1,0 +1,49 @@
+-- 427 | Partition function P: p(n) via the pentagonal-number recurrence.
+-- Shows p(23), p(123), p(1234), p(12345).
+DECLARE MODULE Part
+    FUNCTION Compute(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Part
+    STRICT p[346] AS S64
+
+    FUNCTION Compute(n AS S64) AS S64
+        RETURN p[n]
+    END FUNCTION
+
+    PROCEDURE Run()
+        p[0] = 1
+        FOR n = 1 TO 345
+            LET total AS S64 = 0
+            LET k AS S64 = 1
+            LET done AS S32 = 0
+            WHILE done = 0
+                LET g1 AS S64 = k * (3 * k - 1) / 2
+                LET g2 AS S64 = k * (3 * k + 1) / 2
+                IF g1 > n ANDALSO g2 > n THEN
+                    done = 1
+                ELSE
+                    IF k MOD 2 = 1 THEN
+                        IF g1 <= n THEN total = total + p[n - g1] END IF
+                        IF g2 <= n THEN total = total + p[n - g2] END IF
+                    ELSE
+                        IF g1 <= n THEN total = total - p[n - g1] END IF
+                        IF g2 <= n THEN total = total - p[n - g2] END IF
+                    END IF
+                    k = k + 1
+                END IF
+            END WHILE
+            p[n] = total
+        END FOR
+        PRINT "p(23)=" | Compute(23)
+        PRINT "p(123)=" | Compute(123)
+        PRINT "p(234)=" | Compute(234)
+        PRINT "p(345)=" | Compute(345)
+    END PROCEDURE
+END MODULE
+
+IMPORT Part
+BEGIN
+    Part.Run()
+END

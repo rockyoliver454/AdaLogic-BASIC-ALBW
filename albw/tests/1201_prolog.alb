@@ -1,0 +1,36 @@
+-- Restricted Datalog: PREDICATE decls enforce a closed-world name+arity
+-- contract; facts, ASSERT/RETRACT, arity-1 conjunctive RULE chains
+-- with cut commitment, FINDALL, ?- queries, KNOWS_CHANGE watches.
+LET hits AS S64 = 0
+STRICT res[8] AS S64
+PREDICATE parent(U64)
+PREDICATE sibling(U64)
+PREDICATE height(U64)
+PREDICATE grand(U64)
+PREDICATE tall(U64)
+RULE grand(X) :- parent(X), sibling(X).
+RULE tall(X) :- height(X).
+parent(5).
+sibling(5).
+height(9).
+ASSERT parent(3)
+FINDALL parent(X) INTO res
+PRINT res[0]
+PRINT res[1]
+PRINT res[2]
+IF ?- grand(5) THEN
+  PRINT "grand5"
+ELSE
+  PRINT "nogrand"
+END IF
+IF ?- tall(9) THEN
+  PRINT "tall9"
+ELSE
+  PRINT "notall"
+END IF
+ON KNOWS_CHANGE parent(X)
+  hits = hits + 1
+END
+ASSERT parent(11)
+RETRACT parent(2)
+PRINT hits

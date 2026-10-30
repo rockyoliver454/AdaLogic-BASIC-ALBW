@@ -1,0 +1,37 @@
+-- 409 | Fibonacci n-step number sequences: tribonacci and tetranacci, first 15 each.
+DECLARE MODULE NStep
+    PROCEDURE Show(k AS S32)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NStep
+    STRICT t[32] AS S64
+    PROCEDURE Show(k AS S32)
+        FOR i = 0 TO k - 1
+            t[i] = 0
+        END FOR
+        t[k - 1] = 1
+        FOR i = k TO 14 + k
+            LET acc AS S64 = 0
+            FOR j = i - k TO i - 1
+                acc = acc + t[j]
+            END FOR
+            t[i] = acc
+        END FOR
+        LET s AS STRING = k | "-step: "
+        FOR i = k - 1 TO 14 + k - 1
+            s = s | t[i] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(3)
+        Show(4)
+    END PROCEDURE
+END MODULE
+
+IMPORT NStep
+BEGIN
+    NStep.Run()
+END

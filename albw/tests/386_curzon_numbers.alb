@@ -1,0 +1,39 @@
+-- 386 | Curzon numbers: n where 2n+1 divides 2^n+1; first 50.
+DECLARE MODULE Curzon
+    FUNCTION PowMod(b AS S64, e AS S64, m AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Curzon
+    FUNCTION PowMod(b AS S64, e AS S64, m AS S64) AS S64
+        LET r AS S64 = 1
+        LET bb AS S64 = b MOD m
+        LET ee AS S64 = e
+        WHILE ee > 0
+            IF ee MOD 2 = 1 THEN r = (r * bb) MOD m END IF
+            bb = (bb * bb) MOD m
+            ee = ee / 2
+        END WHILE
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET found AS S32 = 0
+        LET n AS S64 = 1
+        WHILE found < 50
+            LET m AS S64 = 2 * n + 1
+            IF PowMod(2, n, m) + 1 = m ORELSE PowMod(2, n, m) + 1 - m = 0 THEN
+                s = s | n | " "
+                found = found + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Curzon
+BEGIN
+    Curzon.Run()
+END

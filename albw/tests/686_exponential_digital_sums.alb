@@ -1,0 +1,39 @@
+-- 686 | Exponential digital sums: n such that the digit sum
+-- of n^k equals n for some k > 1. First ones below 100.
+DECLARE MODULE Eds
+    FUNCTION Dsum(v AS S64) AS S64
+    FUNCTION Eds(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Eds
+    FUNCTION Dsum(v AS S64) AS S64
+        LET s AS S64 = 0
+        LET w AS S64 = v
+        WHILE w > 0
+            s = s + w MOD 10
+            w = w / 10
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    FUNCTION Eds(n AS S64) AS S32
+        LET p AS S64 = n * n
+        FOR k = 2 TO 12
+            IF Dsum(p) = n THEN RETURN 1 END IF
+            IF p <= 9000000000000000000 / n THEN p = p * n END IF
+        END FOR
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 99
+            IF Eds(n) = 1 THEN PRINT n END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Eds
+BEGIN
+    Eds.Run()
+END

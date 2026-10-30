@@ -1,0 +1,43 @@
+-- 933 | Verify distribution uniformity/Chi-squared test:
+-- roll a seeded d6 600 times, compute the chi-squared
+-- statistic vs uniform expectation; verdict at df=5.
+DECLARE MODULE Chi
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Chi
+    STRICT sd[1] AS S64
+    STRICT ct[7] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 32768
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 12321
+        FOR i = 1 TO 600
+            LET f2 AS S64 = Nxt() MOD 6 + 1
+            ct[f2] = ct[f2] + 1
+        END FOR
+        LET e AS F64 = 100.0
+        LET chi AS F64 = 0.0
+        FOR f = 1 TO 6
+            LET d AS F64 = ct[f] - e
+            chi = chi + d * d / e
+            PRINT "face " | f | ": " | ct[f]
+        END FOR
+        PRINT "chi2=" | chi
+        IF chi < 11.07 THEN
+            PRINT "uniform (p>0.05, df=5)"
+        ELSE
+            PRINT "not uniform"
+        END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Chi
+BEGIN
+    Chi.Run()
+END

@@ -1,0 +1,56 @@
+-- 937 | Two bullet roulette: 6-chamber revolver loaded with 2
+-- bullets; classic question — if the first click is empty, do
+-- you spin or pull again? Enumerate cases exactly.
+DECLARE MODULE Tb
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Tb
+    PROCEDURE Run()
+        -- bullets adjacent (loaded consecutively): of the 6
+        -- empty pulls, 3 are followed by empty -> pull again 3/4
+        -- is wrong; correct: with adjacent bullets, of the 4
+        -- positions that give a click, 1 is followed by a bullet
+        -- for pull-again (3/4 survive) vs respin 4/6 survive.
+        -- bullets random: 5 empty positions, 2 preceded by a
+        -- bullet-free? enumerate both variants.
+        -- Adjacent case: chambers 1..6, bullets at b,b+1.
+        -- First pull clicks empty -> b+2..b+5 mod6 are the
+        -- positions; of those, position before b is the only
+        -- dangerous next. So pull-again survives 3/4.
+        -- Spin again: survives 4/6 = 2/3.
+        PRINT "adjacent bullets:"
+        PRINT "  pull again survives 3/4"
+        PRINT "  respin survives 2/3 -> pull again better"
+        -- random bullets: 15 ways to place 2 in 6; after click,
+        -- 10 orders remain consistent... enumerate directly:
+        LET stay AS S64 = 0
+        LET stot AS S64 = 0
+        FOR b1 = 1 TO 6
+            FOR b2 = 1 TO 6
+                IF b1 < b2 THEN
+                    -- chamber 1 fires at trigger pull; for each
+                    -- pair, chamber after an empty chamber:
+                    -- consider first click = chamber c empty,
+                    -- next = c+1
+                    FOR c = 1 TO 6
+                        IF c <> b1 ANDALSO c <> b2 THEN
+                            -- click happened at c
+                            LET nx AS S64 = c MOD 6 + 1
+                            stot = stot + 1
+                            IF nx <> b1 ANDALSO nx <> b2 THEN
+                                stay = stay + 1
+                            END IF
+                        END IF
+                    END FOR
+                END IF
+            END FOR
+        END FOR
+        PRINT "random bullets: pull-again survives " | stay | "/" | stot
+    END PROCEDURE
+END MODULE
+
+IMPORT Tb
+BEGIN
+    Tb.Run()
+END

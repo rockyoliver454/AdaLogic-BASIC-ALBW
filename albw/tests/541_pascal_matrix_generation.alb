@@ -1,0 +1,40 @@
+-- 541 | Pascal matrix generation: lower triangular Pascal matrix
+-- L[6,6] where L[i,j] = C(i-1, j-1).
+DECLARE MODULE PM
+    FUNCTION C(n AS S64, k AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PM
+    STRICT m[36] AS S64
+
+    FUNCTION C(n AS S64, k AS S64) AS S64
+        IF k < 0 ORELSE k > n THEN RETURN 0 END IF
+        LET r AS S64 = 1
+        FOR i = 1 TO k
+            r = r * (n - k + i) / i
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET n AS S64 = 6
+        FOR i = 1 TO n
+            FOR j = 1 TO n
+                m[i * n + j - n] = C(i - 1, j - 1)
+            END FOR
+        END FOR
+        FOR r = 1 TO n
+            LET s AS STRING = ""
+            FOR c = 1 TO n
+                s = s | m[r * n + c - n] | " "
+            END FOR
+            PRINT s
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT PM
+BEGIN
+    PM.Run()
+END

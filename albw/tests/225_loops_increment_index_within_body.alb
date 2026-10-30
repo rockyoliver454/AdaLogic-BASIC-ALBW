@@ -1,0 +1,34 @@
+-- 225 | Increment loop index within body: find 42 primes while changing the candidate.
+DECLARE MODULE PrimeStep
+    FUNCTION IsPrime(n AS S64) AS S32
+END DECLARE MODULE
+
+MODULE PrimeStep
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n = 2 ORELSE n = 3 THEN RETURN 1 END IF
+        IF n MOD 2 = 0 ORELSE n MOD 3 = 0 THEN RETURN 0 END IF
+        LET divisor AS S64 = 5
+        WHILE divisor * divisor <= n
+            IF n MOD divisor = 0 ORELSE n MOD (divisor + 2) = 0 THEN
+                RETURN 0
+            END IF
+            divisor = divisor + 6
+        END WHILE
+        RETURN 1
+    END FUNCTION
+END MODULE
+
+IMPORT PrimeStep
+BEGIN
+    LET candidate AS S64 = 42
+    LET prime_count AS S32 = 0
+    WHILE prime_count < 42
+        candidate = candidate + 1
+        IF PrimeStep.IsPrime(candidate) THEN
+            prime_count = prime_count + 1
+            PRINT prime_count | ": " | candidate
+            candidate = candidate + candidate - 1
+        END IF
+    END WHILE
+END

@@ -1,0 +1,4 @@
+stem | top-right=units top-left=tens
+     | bottom-right=hundreds bottom-left=thousands
+1234 -> unit=4 tens=3 hundreds=2 thousands=1
+9999 -> all four quadrants filled

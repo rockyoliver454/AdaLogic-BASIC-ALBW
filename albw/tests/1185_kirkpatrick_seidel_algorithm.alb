@@ -1,0 +1,215 @@
+VERSION 1.0
+
+STRICT px[16] AS S64
+STRICT py[16] AS S64
+STRICT ids[16] AS S64
+STRICT onh[16] AS S64
+LET npt AS S64 = 12
+
+
+PROCEDURE SortRange(lo AS S64, hi AS S64)
+    LET i AS S64 = lo
+    WHILE i < hi
+        LET j AS S64 = i + 1
+        WHILE j <= hi
+            IF px[ids[j]] < px[ids[i]] ORELSE (px[ids[j]] = px[ids[i]] ANDALSO py[ids[j]] < py[ids[i]]) THEN
+                LET t AS S64 = ids[i]
+                ids[i] = ids[j]
+                ids[j] = t
+            END IF
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE UpperKS(lo AS S64, hi AS S64)
+    IF hi - lo + 1 <= 2 THEN
+        onh[ids[lo]] = 1
+        onh[ids[hi]] = 1
+        RETURN
+    END IF
+    LET mid AS S64 = (lo + hi) / 2
+    LET bax AS S64 = -1
+    LET bbx AS S64 = -1
+    LET bn AS S64 = 0
+    LET bd AS S64 = 1
+    LET a AS S64 = lo
+    WHILE a <= mid
+        LET b AS S64 = mid + 1
+        WHILE b <= hi
+            LET ax AS S64 = px[ids[a]]
+            LET ay AS S64 = py[ids[a]]
+            LET bxv AS S64 = px[ids[b]]
+            LET byv AS S64 = py[ids[b]]
+            IF bxv > ax THEN
+                LET allb AS S64 = 1
+                LET p AS S64 = 0
+                WHILE p < npt
+                    LET cx AS S64 = px[p] - ax
+                    LET cy AS S64 = py[p] - ay
+                    LET cr AS S64 = (bxv - ax) * cy - (byv - ay) * cx
+                    IF cr > 0 THEN
+                        allb = 0
+                    END IF
+                    p = p + 1
+                END WHILE
+                IF allb = 1 THEN
+                    LET mx AS S64 = px[ids[mid]]
+                    LET num AS S64 = (byv - ay) * (mx - ax) + ay * (bxv - ax)
+                    LET den AS S64 = bxv - ax
+                    IF bax < 0 ORELSE num * bd > bn * den THEN
+                        bax = ids[a]
+                        bbx = ids[b]
+                        bn = num
+                        bd = den
+                    END IF
+                END IF
+            END IF
+            b = b + 1
+        END WHILE
+        a = a + 1
+    END WHILE
+    IF bax < 0 THEN
+        RETURN
+    END IF
+    onh[bax] = 1
+    onh[bbx] = 1
+    LET xa AS S64 = px[bax]
+    LET xb AS S64 = px[bbx]
+    LET lo2 AS S64 = lo
+    WHILE lo2 <= hi ANDALSO px[ids[lo2]] <= xa
+        lo2 = lo2 + 1
+    END WHILE
+    LET hi2 AS S64 = hi
+    WHILE hi2 >= lo ANDALSO px[ids[hi2]] >= xb
+        hi2 = hi2 - 1
+    END WHILE
+    UpperKS(lo, lo2 - 1)
+    UpperKS(hi2 + 1, hi)
+END PROCEDURE
+
+
+BEGIN
+    px[0] = 10 py[0] = 5  px[1] = 8 py[1] = 9   px[2] = 5 py[2] = 10
+    px[3] = 2 py[3] = 9   px[4] = 0 py[4] = 5   px[5] = 2 py[5] = 1
+    px[6] = 5 py[6] = 0   px[7] = 8 py[7] = 1   px[8] = 5 py[8] = 5
+    px[9] = 4 py[9] = 6   px[10] = 6 py[10] = 3 px[11] = 5 py[11] = 7
+
+    LET i AS S64 = 0
+    WHILE i < npt
+        ids[i] = i
+        i = i + 1
+    END WHILE
+    SortRange(0, npt - 1)
+    UpperKS(0, npt - 1)
+
+    LET i2 AS S64 = 0
+    WHILE i2 < npt
+        IF onh[i2] = 1 THEN
+            LET a2 AS S64 = 0
+            WHILE a2 < npt
+                IF a2 <> i2 THEN
+                    LET b2 AS S64 = a2 + 1
+                    WHILE b2 < npt
+                        IF b2 <> i2 THEN
+                            LET c2 AS S64 = b2 + 1
+                            WHILE c2 < npt
+                                IF c2 <> i2 THEN
+                                    LET d1x AS S64 = px[b2] - px[a2]
+                                    LET d1y AS S64 = py[b2] - py[a2]
+                                    LET d2x AS S64 = px[c2] - px[b2]
+                                    LET d2y AS S64 = py[c2] - py[b2]
+                                    LET d3x AS S64 = px[a2] - px[c2]
+                                    LET d3y AS S64 = py[a2] - py[c2]
+                                    LET s1 AS S64 = d1x * (py[i2] - py[a2]) - d1y * (px[i2] - px[a2])
+                                    LET s2 AS S64 = d2x * (py[i2] - py[b2]) - d2y * (px[i2] - px[b2])
+                                    LET s3 AS S64 = d3x * (py[i2] - py[c2]) - d3y * (px[i2] - px[c2])
+                                    IF (s1 > 0 ANDALSO s2 > 0 ANDALSO s3 > 0) ORELSE (s1 < 0 ANDALSO s2 < 0 ANDALSO s3 < 0) THEN
+                                        onh[i2] = 0
+                                        a2 = npt
+                                        b2 = npt
+                                        c2 = npt
+                                    END IF
+                                END IF
+                                c2 = c2 + 1
+                            END WHILE
+                        END IF
+                        b2 = b2 + 1
+                    END WHILE
+                END IF
+                a2 = a2 + 1
+            END WHILE
+        END IF
+        i2 = i2 + 1
+    END WHILE
+    LET ucnt AS S64 = 0
+    i = 0
+    WHILE i < npt
+        IF onh[i] = 1 THEN
+            ucnt = ucnt + 1
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "upper hull vertices=" | ucnt
+
+    i = 0
+    WHILE i < npt
+        py[i] = 0 - py[i]
+        i = i + 1
+    END WHILE
+    SortRange(0, npt - 1)
+    UpperKS(0, npt - 1)
+
+    i2 = 0
+    WHILE i2 < npt
+        IF onh[i2] = 1 THEN
+            LET a2 AS S64 = 0
+            WHILE a2 < npt
+                IF a2 <> i2 THEN
+                    LET b2 AS S64 = a2 + 1
+                    WHILE b2 < npt
+                        IF b2 <> i2 THEN
+                            LET c2 AS S64 = b2 + 1
+                            WHILE c2 < npt
+                                IF c2 <> i2 THEN
+                                    LET e1x AS S64 = px[b2] - px[a2]
+                                    LET e1y AS S64 = py[b2] - py[a2]
+                                    LET e2x AS S64 = px[c2] - px[b2]
+                                    LET e2y AS S64 = py[c2] - py[b2]
+                                    LET e3x AS S64 = px[a2] - px[c2]
+                                    LET e3y AS S64 = py[a2] - py[c2]
+                                    LET t1 AS S64 = e1x * (py[i2] - py[a2]) - e1y * (px[i2] - px[a2])
+                                    LET t2 AS S64 = e2x * (py[i2] - py[b2]) - e2y * (px[i2] - px[b2])
+                                    LET t3 AS S64 = e3x * (py[i2] - py[c2]) - e3y * (px[i2] - px[c2])
+                                    IF (t1 > 0 ANDALSO t2 > 0 ANDALSO t3 > 0) ORELSE (t1 < 0 ANDALSO t2 < 0 ANDALSO t3 < 0) THEN
+                                        onh[i2] = 0
+                                        a2 = npt
+                                        b2 = npt
+                                        c2 = npt
+                                    END IF
+                                END IF
+                                c2 = c2 + 1
+                            END WHILE
+                        END IF
+                        b2 = b2 + 1
+                    END WHILE
+                END IF
+                a2 = a2 + 1
+            END WHILE
+        END IF
+        i2 = i2 + 1
+    END WHILE
+    LET hull AS S64 = 0
+    i = 0
+    WHILE i < npt
+        IF onh[i] = 1 THEN
+            py[i] = 0 - py[i]
+            hull = hull + 1
+            PRINT "hull vertex (" | px[i] | "," | py[i] | ")"
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "convex hull vertices=" | hull
+END

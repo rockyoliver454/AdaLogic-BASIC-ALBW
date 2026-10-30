@@ -1,0 +1,84 @@
+-- 961 | Compiler/syntax analyzer: recursive-descent parse of
+-- expr -> term {+|- term}; term -> factor {*|/ factor};
+-- factor -> num | (expr). Print the parse tree.
+DECLARE MODULE Sy
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sy
+    STRICT src[1] AS STRING
+    STRICT cur[1] AS S64
+
+    FUNCTION Pk2() AS S64
+        WHILE cur[1] <= LEN(src[1]) ANDALSO ASC(MID$(src[1], cur[1], 1)) = 32
+            cur[1] = cur[1] + 1
+        END WHILE
+        IF cur[1] > LEN(src[1]) THEN RETURN 0 - 1 END IF
+        RETURN ASC(MID$(src[1], cur[1], 1))
+    END FUNCTION
+
+    FUNCTION Number() AS S64
+        LET v AS S64 = 0
+        WHILE Pk2() >= ASC("0") ANDALSO Pk2() <= ASC("9")
+            v = v * 10 + Pk2() - ASC("0")
+            cur[1] = cur[1] + 1
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Factor(d AS S64) AS S64
+        IF Pk2() = ASC("(") THEN
+            cur[1] = cur[1] + 1
+            LET v AS S64 = Expr(d + 1)
+            cur[1] = cur[1] + 1
+            RETURN v
+        END IF
+        LET v AS S64 = Number()
+        PRINT Indent(d) | "num " | v
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Term(d AS S64) AS S64
+        LET v AS S64 = Factor(d + 1)
+        WHILE Pk2() = ASC("*") ORELSE Pk2() = ASC("/")
+            LET o AS S64 = Pk2()
+            cur[1] = cur[1] + 1
+            PRINT Indent(d) | MID$(src[1], cur[1] - 1, 1)
+            LET r AS S64 = Factor(d + 1)
+            IF o = ASC("*") THEN v = v * r ELSE v = v / r END IF
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Expr(d AS S64) AS S64
+        LET v AS S64 = Term(d + 1)
+        WHILE Pk2() = ASC("+") ORELSE Pk2() = ASC("-")
+            LET o AS S64 = Pk2()
+            cur[1] = cur[1] + 1
+            PRINT Indent(d) | MID$(src[1], cur[1] - 1, 1)
+            LET r AS S64 = Term(d + 1)
+            IF o = ASC("+") THEN v = v + r ELSE v = v - r END IF
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    FUNCTION Indent(d AS S64) AS STRING
+        LET s AS STRING = ""
+        FOR i = 1 TO d * 2
+            s = s | " "
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        src[1] = "2+3*(4-1)"
+        cur[1] = 1
+        LET r AS S64 = Expr(0)
+        PRINT "value=" | r
+    END PROCEDURE
+END MODULE
+
+IMPORT Sy
+BEGIN
+    Sy.Run()
+END

@@ -1,0 +1,45 @@
+-- 243 | Collections: ordered mutable values with duplicates.
+DECLARE MODULE Collection
+    PROCEDURE Add(value AS S32)
+    PROCEDURE RemoveAt(index_value AS S32)
+    FUNCTION Count() AS S32
+    FUNCTION Item(index_value AS S32) AS S32
+END DECLARE MODULE
+
+MODULE Collection
+    STRICT items[16] AS S32
+    LET item_count AS S32 = 0
+
+    PROCEDURE Add(value AS S32)
+        items[item_count] = value
+        item_count = item_count + 1
+    END PROCEDURE
+
+    PROCEDURE RemoveAt(index_value AS S32)
+        FOR i = index_value TO item_count - 2
+            items[i] = items[i + 1]
+        END FOR
+        item_count = item_count - 1
+    END PROCEDURE
+
+    FUNCTION Count() AS S32
+        RETURN item_count
+    END FUNCTION
+
+    FUNCTION Item(index_value AS S32) AS S32
+        RETURN items[index_value]
+    END FUNCTION
+END MODULE
+
+IMPORT Collection
+BEGIN
+    Collection.Add(4)
+    Collection.Add(7)
+    Collection.Add(7)
+    Collection.Add(9)
+    Collection.RemoveAt(1)
+    PRINT "count = " | Collection.Count()
+    FOR i = 0 TO Collection.Count() - 1
+        PRINT Collection.Item(i)
+    END FOR
+END

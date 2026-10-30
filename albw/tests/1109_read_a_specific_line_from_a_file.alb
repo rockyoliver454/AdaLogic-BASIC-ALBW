@@ -1,0 +1,27 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("lines5.txt", "w")
+    WRITE h, "one" | CHR(10) | "two" | CHR(10) | "three" | CHR(10) | "four" | CHR(10) | "five" | CHR(10)
+    CLOSE h
+
+    LET r AS S64 = OPEN("lines5.txt", "r")
+    LET whole AS STRING = READ(r, FILELEN("lines5.txt"))
+    CLOSE r
+    whole = whole | CHR(10)
+
+    LET want AS S64 = 3
+    LET ln_no AS S64 = 1
+    LET start AS S64 = 1
+    LET i AS S64 = 1
+    WHILE i <= LEN(whole)
+        IF ASC(MID$(whole, i, 1)) = 10 THEN
+            IF ln_no = want THEN
+                PRINT "line" | want | "=" | MID$(whole, start, i - start)
+            END IF
+            ln_no = ln_no + 1
+            start = i + 1
+        END IF
+        i = i + 1
+    END WHILE
+END

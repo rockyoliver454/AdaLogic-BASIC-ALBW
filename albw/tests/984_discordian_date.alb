@@ -1,0 +1,56 @@
+-- 984 | Discordian date: convert 2025-04-19 (Gregorian) to
+-- Discordian: weekday, season day, YOLD, St Tib handling.
+DECLARE MODULE Dd
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Dd
+    STRICT md[13] AS S64
+    FUNCTION Leap(y AS S64) AS S64
+        RETURN (y MOD 4 = 0 ANDALSO y MOD 100 <> 0) ORELSE y MOD 400 = 0
+    END FUNCTION
+
+    PROCEDURE Conv(y AS S64, mo AS S64, dy AS S64)
+        md[1] = 0; md[2] = 31; md[3] = 59; md[4] = 90; md[5] = 120; md[6] = 151
+        md[7] = 181; md[8] = 212; md[9] = 243; md[10] = 273; md[11] = 304; md[12] = 334
+        LET doy AS S64 = md[mo] + dy
+        IF mo > 2 ANDALSO Leap(y) <> 0 THEN doy = doy + 1 END IF
+        -- St. Tib's day: Feb 29 -> day 60 of year
+        IF Leap(y) <> 0 ANDALSO mo = 2 ANDALSO dy = 29 THEN
+            PRINT y | "-" | mo | "-" | dy | " = St. Tib's Day, YOLD " | y + 1166
+            RETURN
+        END IF
+        -- Discordian: 5 seasons x 73 days; day-of-year minus
+        -- St Tib adjustment (days after Feb 29 shift)
+        LET dd AS S64 = doy
+        IF Leap(y) <> 0 ANDALSO doy > 60 THEN dd = dd - 1 END IF
+        LET season AS S64 = (dd - 1) / 73
+        LET sday AS S64 = (dd - 1) MOD 73 + 1
+        LET wday AS S64 = (dd - 1) MOD 5
+        LET sn AS STRING = "?"
+        IF season = 0 THEN sn = "Chaos" END IF
+        IF season = 1 THEN sn = "Discord" END IF
+        IF season = 2 THEN sn = "Confusion" END IF
+        IF season = 3 THEN sn = "Bureaucracy" END IF
+        IF season = 4 THEN sn = "The Aftermath" END IF
+        LET wn AS STRING = "?"
+        IF wday = 0 THEN wn = "Sweetmorn" END IF
+        IF wday = 1 THEN wn = "Boomtime" END IF
+        IF wday = 2 THEN wn = "Pungenday" END IF
+        IF wday = 3 THEN wn = "Prickle-Prickle" END IF
+        IF wday = 4 THEN wn = "Setting Orange" END IF
+        PRINT y | "-" | mo | "-" | dy | " = " | wn | ", " | sn | " " | sday | ", YOLD " | y + 1166
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Conv(2025, 4, 19)
+        Conv(2024, 2, 29)
+        Conv(2024, 3, 1)
+        Conv(2025, 1, 5)
+    END PROCEDURE
+END MODULE
+
+IMPORT Dd
+BEGIN
+    Dd.Run()
+END

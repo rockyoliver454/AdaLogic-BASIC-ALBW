@@ -1,0 +1,31 @@
+-- 676 | Verify distribution uniformity/Naive: roll a
+-- deterministic 7-sided die (LCG) 7000 times and report the
+-- face counts.
+DECLARE MODULE Vu
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Vu
+    STRICT cnt[8] AS S64
+    STRICT st[1] AS S64
+
+    PROCEDURE Run()
+        st[1] = 12345
+        FOR i = 0 TO 7
+            cnt[i] = 0
+        END FOR
+        FOR r = 1 TO 7000
+            st[1] = (st[1] * 1103515245 + 12345) MOD 2147483648
+            LET face AS S64 = st[1] MOD 7
+            cnt[face] = cnt[face] + 1
+        END FOR
+        FOR f = 0 TO 6
+            PRINT f | ": " | cnt[f]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Vu
+BEGIN
+    Vu.Run()
+END

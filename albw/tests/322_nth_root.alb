@@ -1,0 +1,38 @@
+-- 322 | Nth root: integer nth root of non-negative integers.
+DECLARE MODULE NthRoot
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE NthRoot
+    FUNCTION NthRoot(v AS S32, n AS S32) AS S32
+        LET lo AS S32 = 0
+        LET hi AS S32 = v
+        WHILE hi - lo > 1
+            LET mid AS S32 = (lo + hi) / 2
+            LET p AS S32 = 1
+            FOR i = 1 TO n
+                p = p * mid
+                IF p > v THEN p = v + 1 END IF
+            END FOR
+            IF p <= v THEN
+                lo = mid
+            ELSE
+                hi = mid
+            END IF
+        END WHILE
+        RETURN lo
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT NthRoot(729, 3)
+        PRINT NthRoot(1024, 5)
+        PRINT NthRoot(81, 4)
+        PRINT NthRoot(100, 2)
+        PRINT NthRoot(999, 3)
+    END PROCEDURE
+END MODULE
+
+IMPORT NthRoot
+BEGIN
+    NthRoot.Run()
+END

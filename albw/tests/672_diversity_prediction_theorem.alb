@@ -1,0 +1,42 @@
+-- 672 | Diversity prediction theorem: average of squared errors
+-- of individual guesses minus squared error of the collective
+-- average equals the diversity of guesses.
+DECLARE MODULE Div
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Div
+    STRICT g[5] AS F64
+
+    PROCEDURE Run()
+        LET truth AS F64 = 50.0
+        g[1] = 30.0
+        g[2] = 45.0
+        g[3] = 55.0
+        g[4] = 60.0
+        g[5] = 70.0
+        LET avg AS F64 = 0.0
+        FOR i = 1 TO 5
+            avg = avg + g[i]
+        END FOR
+        avg = avg / 5.0
+        LET indiv AS F64 = 0.0
+        LET div2 AS F64 = 0.0
+        FOR j = 1 TO 5
+            indiv = indiv + (g[j] - truth) * (g[j] - truth)
+            div2 = div2 + (g[j] - avg) * (g[j] - avg)
+        END FOR
+        indiv = indiv / 5.0
+        div2 = div2 / 5.0
+        LET coll AS F64 = (avg - truth) * (avg - truth)
+        PRINT "individual err: " | indiv
+        PRINT "collective err: " | coll
+        PRINT "diversity: " | div2
+        PRINT "indiv = coll + div: " | (coll + div2)
+    END PROCEDURE
+END MODULE
+
+IMPORT Div
+BEGIN
+    Div.Run()
+END

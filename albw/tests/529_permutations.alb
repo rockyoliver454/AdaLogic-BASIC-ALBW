@@ -1,0 +1,42 @@
+-- 529 | Permutations: all 24 permutations of [1,2,3,4] via Heap's
+-- algorithm.
+DECLARE MODULE Perms
+    PROCEDURE Gen(k AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Perms
+    STRICT a[4] AS S64
+
+    PROCEDURE Emit()
+        PRINT a[1] | a[2] | a[3] | a[4]
+    END PROCEDURE
+
+    PROCEDURE Gen(k AS S64)
+        IF k = 1 THEN
+            Emit()
+            RETURN
+        END IF
+        FOR i = 1 TO k
+            Gen(k - 1)
+            LET p AS S64 = i
+            IF k MOD 2 = 1 THEN p = 1 END IF
+            LET t AS S64 = a[p]
+            a[p] = a[k]
+            a[k] = t
+        END FOR
+    END PROCEDURE
+
+    PROCEDURE Run()
+        a[1] = 1
+        a[2] = 2
+        a[3] = 3
+        a[4] = 4
+        Gen(4)
+    END PROCEDURE
+END MODULE
+
+IMPORT Perms
+BEGIN
+    Perms.Run()
+END

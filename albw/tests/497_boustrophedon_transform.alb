@@ -1,0 +1,42 @@
+-- 497 | Boustrophedon transform of (1,0,0,0,...): yields the Euler
+-- zigzag numbers 1,1,1,2,5,16,61,272,...
+DECLARE MODULE Bous
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bous
+    STRICT t[210] AS S64
+
+    -- cell(n,k) stored at t[n*16 + k + 1]; rows alternate direction.
+    -- row 0 = {s0} = {1}; odd rows fill left->right, even right->left,
+    -- starting with the next input term s_n (which is 0 for n>0).
+    PROCEDURE Run()
+        FOR i = 0 TO 209
+            t[i] = 0
+        END FOR
+        t[0 * 16 + 0 + 1] = 1
+        LET s AS STRING = "1 "
+        FOR n = 1 TO 12
+            IF n MOD 2 = 1 THEN
+                t[n * 16 + 0 + 1] = 0
+                FOR k = 1 TO n
+                    t[n * 16 + k + 1] = t[n * 16 + (k - 1) + 1] + t[(n - 1) * 16 + (k - 1) + 1]
+                END FOR
+                s = s | t[n * 16 + n + 1] | " "
+            ELSE
+                t[n * 16 + n + 1] = 0
+                FOR k2 = 1 TO n
+                    LET kk AS S64 = n - k2
+                    t[n * 16 + kk + 1] = t[n * 16 + (kk + 1) + 1] + t[(n - 1) * 16 + kk + 1]
+                END FOR
+                s = s | t[n * 16 + 0 + 1] | " "
+            END IF
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Bous
+BEGIN
+    Bous.Run()
+END

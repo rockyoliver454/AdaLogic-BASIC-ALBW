@@ -1,0 +1,41 @@
+-- 237 | Stack: fixed-capacity LIFO push, peek, pop, and count.
+DECLARE MODULE IntStack
+    PROCEDURE Push(value AS S32)
+    FUNCTION Top() AS S32
+    FUNCTION Pop() AS S32
+    FUNCTION Count() AS S32
+END DECLARE MODULE
+
+MODULE IntStack
+    STRICT items[16] AS S32
+    LET item_count AS S32 = 0
+
+    PROCEDURE Push(value AS S32)
+        items[item_count] = value
+        item_count = item_count + 1
+    END PROCEDURE
+
+    FUNCTION Top() AS S32
+        RETURN items[item_count - 1]
+    END FUNCTION
+
+    FUNCTION Pop() AS S32
+        item_count = item_count - 1
+        RETURN items[item_count]
+    END FUNCTION
+
+    FUNCTION Count() AS S32
+        RETURN item_count
+    END FUNCTION
+END MODULE
+
+IMPORT IntStack
+BEGIN
+    IntStack.Push(10)
+    IntStack.Push(20)
+    IntStack.Push(30)
+    PRINT "top = " | IntStack.Top()
+    WHILE IntStack.Count() > 0
+        PRINT IntStack.Pop()
+    END WHILE
+END

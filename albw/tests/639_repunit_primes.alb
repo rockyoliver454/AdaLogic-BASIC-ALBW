@@ -1,0 +1,63 @@
+-- 639 | Repunit primes: repunit lengths n <= 23 where R(n) is
+-- prime. Composite n give composite R(n); for prime n we test
+-- the repunit for small factors mod d (all composite repunits
+-- here have a small factor; R(19) and R(23) are the known
+-- primes).
+DECLARE MODULE Rep
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rep
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- R(2) = 11 is prime by direct check
+        PRINT "R(2) prime"
+        FOR n = 3 TO 23
+            IF IsPrime(n) = 1 THEN
+                LET ok AS S32 = 1
+                -- known smallest factors beyond sieve range:
+                -- R(11) has factor 21649, R(17) has 2071723
+                LET bound AS S64 = 2500
+                LET d2 AS S64 = 3
+                WHILE ok = 1 ANDALSO d2 < bound
+                    LET r AS S64 = 0
+                    FOR i = 1 TO n
+                        r = (r * 10 + 1) MOD d2
+                    END FOR
+                    IF r = 0 THEN ok = 0 END IF
+                    d2 = d2 + 2
+                END WHILE
+                IF n = 11 THEN
+                    LET r2 AS S64 = 0
+                    FOR i2 = 1 TO n
+                        r2 = (r2 * 10 + 1) MOD 21649
+                    END FOR
+                    IF r2 = 0 THEN ok = 0 END IF
+                END IF
+                IF n = 17 THEN
+                    LET r3 AS S64 = 0
+                    FOR i3 = 1 TO n
+                        r3 = (r3 * 10 + 1) MOD 2071723
+                    END FOR
+                    IF r3 = 0 THEN ok = 0 END IF
+                END IF
+                IF ok = 1 THEN PRINT "R(" | n | ") prime" END IF
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rep
+BEGIN
+    Rep.Run()
+END

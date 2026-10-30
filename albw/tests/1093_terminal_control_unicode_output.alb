@@ -1,0 +1,8 @@
+VERSION 1.0
+
+
+BEGIN
+    PRINT "snowman: " | CHR(226) | CHR(152) | CHR(131)
+    PRINT "euro: " | CHR(226) | CHR(130) | CHR(172)
+    PRINT "check: " | CHR(226) | CHR(156) | CHR(147)
+END

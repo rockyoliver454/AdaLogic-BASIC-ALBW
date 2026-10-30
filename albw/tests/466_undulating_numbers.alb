@@ -1,0 +1,39 @@
+-- 466 | Undulating numbers: pattern abab... in base 10, all below
+-- 10000 plus count below 1,000,000.
+DECLARE MODULE Undu
+    FUNCTION IsUndu(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Undu
+    FUNCTION IsUndu(n AS S64) AS S32
+        IF n < 100 THEN RETURN 0 END IF
+        LET a AS S64 = n MOD 10
+        LET b AS S64 = (n / 10) MOD 10
+        IF a = b THEN RETURN 0 END IF
+        LET t AS S64 = n
+        WHILE t >= 10
+            IF t MOD 100 <> b * 10 + a THEN RETURN 0 END IF
+            t = t / 100
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 100 TO 9999
+            IF IsUndu(n) = 1 THEN s = s | n | " " END IF
+        END FOR
+        PRINT s
+        LET cnt AS S64 = 0
+        FOR m = 100 TO 999999
+            IF IsUndu(m) = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "count=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT Undu
+BEGIN
+    Undu.Run()
+END

@@ -1,0 +1,19 @@
+VERSION 1.0
+
+STRICT nts[12] AS STRING
+
+
+BEGIN
+    nts[0] = "C" nts[1] = "C#" nts[2] = "D" nts[3] = "D#" nts[4] = "E" nts[5] = "F"
+    nts[6] = "F#" nts[7] = "G" nts[8] = "G#" nts[9] = "A" nts[10] = "A#" nts[11] = "B"
+    LET i AS S64 = 0
+    WHILE i < 12
+        LET st AS S64 = i - 9
+        LET f AS F64 = 440.0
+        LET e AS F64 = st
+        f = f * EXP(e * 0.057762265046662109)
+        LET cents AS S64 = ROUND(f * 100.0)
+        PRINT nts[i] | "4 " | (cents / 100) | "." | (cents - (cents / 100) * 100) | " Hz"
+        i = i + 1
+    END WHILE
+END

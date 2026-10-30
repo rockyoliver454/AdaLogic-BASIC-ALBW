@@ -1,0 +1,21 @@
+-- 1219 | VERIFY (fatal on transcription errors — none here, so it
+-- runs through), OUT "<file>" writes the BRF transcript at block
+-- point, and row readback (name.rows/name_rowbrf + Nemeth.Row*).
+BEGIN
+    BRAILLE VERIFY AS blk OUT "1219_blk.brf"
+The quick brown fox
+END BRAILLE
+    NEMETH VERIFY AS mx OUT "1219_mx.brf"
+x^2
+y+1
+END NEMETH
+    PRINT "blk=" | blk.brf | " e=" | blk.errs
+    PRINT "mx_rows=" | mx.rows | " r1=[" | mx.rowbrf(1) | "]"
+    PRINT "eng_rows=" | Nemeth.RowCount() | " eng0=[" | Nemeth.RowBrf(0) | "]"
+    LET h = OPEN("1219_blk.brf", "r")
+    PRINT "file=[" | READ(h, 0) | "]"
+    CLOSE h
+    LET m = OPEN("1219_mx.brf", "r")
+    PRINT "mfile=[" | READ(m, 0) | "]"
+    CLOSE m
+END

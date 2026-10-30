@@ -1,0 +1,42 @@
+-- 245 | Set of real numbers: interval membership and finite-set operations.
+DECLARE MODULE RealSets
+    FUNCTION Closed(x AS F64, low AS F64, high AS F64) AS S32
+    FUNCTION BothOpen(x AS F64, low AS F64, high AS F64) AS S32
+    FUNCTION LeftBothOpen(x AS F64, low AS F64, high AS F64) AS S32
+    FUNCTION RightBothOpen(x AS F64, low AS F64, high AS F64) AS S32
+END DECLARE MODULE
+
+MODULE RealSets
+    FUNCTION Closed(x AS F64, low AS F64, high AS F64) AS S32
+        IF x >= low ANDALSO x <= high THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+    FUNCTION BothOpen(x AS F64, low AS F64, high AS F64) AS S32
+        IF x > low ANDALSO x < high THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+    FUNCTION LeftBothOpen(x AS F64, low AS F64, high AS F64) AS S32
+        IF x > low ANDALSO x <= high THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+    FUNCTION RightBothOpen(x AS F64, low AS F64, high AS F64) AS S32
+        IF x >= low ANDALSO x < high THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+END MODULE
+
+IMPORT RealSets
+BEGIN
+    FOR n = 0 TO 2
+        LET x AS F64 = n
+        LET union_value AS S32 = 0
+        LET intersection_value AS S32 = 0
+        LET difference_open AS S32 = 0
+        LET difference_closed AS S32 = 0
+        IF RealSets.LeftBothOpen(x,0.0,1.0) = 1 ORELSE RealSets.RightBothOpen(x,0.0,2.0) = 1 THEN union_value = 1 END IF
+        IF RealSets.RightBothOpen(x,0.0,2.0) = 1 ANDALSO RealSets.LeftBothOpen(x,1.0,2.0) = 1 THEN intersection_value = 1 END IF
+        IF RealSets.RightBothOpen(x,0.0,3.0) = 1 ANDALSO RealSets.BothOpen(x,0.0,1.0) = 0 THEN difference_open = 1 END IF
+        IF RealSets.RightBothOpen(x,0.0,3.0) = 1 ANDALSO RealSets.Closed(x,0.0,1.0) = 0 THEN difference_closed = 1 END IF
+        PRINT n | ": union=" | union_value | " intersection=" | intersection_value | " diff-open=" | difference_open | " diff-closed=" | difference_closed
+    END FOR
+END

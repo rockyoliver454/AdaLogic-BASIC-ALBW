@@ -1,0 +1,6 @@
+-- Negative: LAMBDA param type kinds must match the target ROUTINE alias.
+TYPE Cmp IS ROUTINE(a AS S64, b AS S64) AS S32;
+BEGIN
+    LET f AS Cmp = LAMBDA(a AS S64, b AS F64) AS S32 => a - b
+    PRINT f(1, 2)
+END

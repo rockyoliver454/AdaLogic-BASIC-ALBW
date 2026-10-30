@@ -1,0 +1,32 @@
+-- 437 | Euclid-Mullin sequence: first 16 terms.
+DECLARE MODULE EucMul
+    FUNCTION SmallestFactor(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE EucMul
+    FUNCTION SmallestFactor(n AS S64) AS S64
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN d END IF
+            d = d + 1
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET prod AS S64 = 1
+        LET s AS STRING = ""
+        FOR i = 1 TO 16
+            LET nxt AS S64 = SmallestFactor(prod + 1)
+            s = s | nxt | " "
+            prod = prod * nxt
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT EucMul
+BEGIN
+    EucMul.Run()
+END

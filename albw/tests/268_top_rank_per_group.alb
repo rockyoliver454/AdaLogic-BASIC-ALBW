@@ -1,0 +1,110 @@
+-- 268 | Top rank per group: top 3 salaries in each department.
+BEGIN
+    STRICT names[13] AS STRING
+    STRICT ids[13] AS STRING
+    STRICT depts[13] AS STRING
+    STRICT salaries[13] AS S32
+    STRICT used[13] AS S32
+    STRICT dept_order[4] AS STRING
+
+    names[0] = "Tyler Bennett"
+    ids[0] = "E10297"
+    salaries[0] = 32000
+    depts[0] = "D101"
+
+    names[1] = "John Rappl"
+    ids[1] = "E21437"
+    salaries[1] = 47000
+    depts[1] = "D050"
+
+    names[2] = "George Woltman"
+    ids[2] = "E00127"
+    salaries[2] = 53500
+    depts[2] = "D101"
+
+    names[3] = "Adam Smith"
+    ids[3] = "E63535"
+    salaries[3] = 18000
+    depts[3] = "D202"
+
+    names[4] = "Claire Buckman"
+    ids[4] = "E39876"
+    salaries[4] = 27800
+    depts[4] = "D202"
+
+    names[5] = "David McClellan"
+    ids[5] = "E04242"
+    salaries[5] = 41500
+    depts[5] = "D101"
+
+    names[6] = "Rich Holcomb"
+    ids[6] = "E01234"
+    salaries[6] = 49500
+    depts[6] = "D202"
+
+    names[7] = "Nathan Adams"
+    ids[7] = "E41298"
+    salaries[7] = 21900
+    depts[7] = "D050"
+
+    names[8] = "Richard Potter"
+    ids[8] = "E43128"
+    salaries[8] = 15900
+    depts[8] = "D101"
+
+    names[9] = "David Motsinger"
+    ids[9] = "E27002"
+    salaries[9] = 19250
+    depts[9] = "D202"
+
+    names[10] = "Tim Sampair"
+    ids[10] = "E03033"
+    salaries[10] = 27000
+    depts[10] = "D101"
+
+    names[11] = "Kim Arlich"
+    ids[11] = "E10001"
+    salaries[11] = 57000
+    depts[11] = "D190"
+
+    names[12] = "Timothy Grove"
+    ids[12] = "E16398"
+    salaries[12] = 29900
+    depts[12] = "D190"
+
+    dept_order[0] = "D050"
+    dept_order[1] = "D101"
+    dept_order[2] = "D190"
+    dept_order[3] = "D202"
+
+    FOR d = 0 TO 3
+        LET dept AS STRING = dept_order[d]
+        PRINT "Department " | dept
+        FOR i = 0 TO 12
+            used[i] = 0
+        END FOR
+        FOR rank = 1 TO 3
+            LET best AS S32 = -1
+            LET best_sal AS S32 = -1
+            FOR i = 0 TO 12
+                IF used[i] = 0 THEN
+                    LET same_dept AS S32 = 1
+                    IF LEN(depts[i]) <> LEN(dept) THEN same_dept = 0 END IF
+                    FOR c = 1 TO LEN(dept)
+                        IF ASC(MID$(depts[i], c, 1)) <> ASC(MID$(dept, c, 1)) THEN same_dept = 0 END IF
+                    END FOR
+                    IF same_dept = 1 ANDALSO salaries[i] > best_sal THEN
+                        best_sal = salaries[i]
+                        best = i
+                    END IF
+                END IF
+            END FOR
+            IF best >= 0 THEN
+                used[best] = 1
+                LET out_line AS STRING = "  " | salaries[best] | " " | names[best]
+                PRINT out_line
+            END IF
+        END FOR
+        PRINT ""
+    END FOR
+END

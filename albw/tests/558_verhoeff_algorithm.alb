@@ -1,0 +1,70 @@
+-- 558 | Verhoeff algorithm: dihedral group D5 check digit.
+-- 236 -> 3; 12345 -> 1; 123456789012 -> 0.
+DECLARE MODULE Verh
+    FUNCTION Chk(s AS STRING) AS S64
+    FUNCTION Valid(s AS STRING) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Verh
+    STRICT d5[100] AS S64
+    STRICT inv[10] AS S64
+    STRICT prm[80] AS S64
+
+    PROCEDURE LoadTbl()
+        LET dd AS STRING = "0123456789123406789523401789563401289567401239567859876043216598710432765982104387659321049876543210"
+        FOR i = 0 TO 99
+            d5[i] = ASC(MID$(dd, i + 1, 1)) - 48
+        END FOR
+        inv[0] = 0
+        inv[1] = 4
+        inv[2] = 3
+        inv[3] = 2
+        inv[4] = 1
+        inv[5] = 5
+        inv[6] = 6
+        inv[7] = 7
+        inv[8] = 8
+        inv[9] = 9
+        -- permutation table: sigma^i(j), i=0..7
+        LET ps AS STRING = "01234567891576283094580379614289160435279453126870428657390127938064157046913258"
+        FOR k = 0 TO 79
+            prm[k] = ASC(MID$(ps, k + 1, 1)) - 48
+        END FOR
+    END PROCEDURE
+
+    FUNCTION Chk(s AS STRING) AS S64
+        LET c AS S64 = 0
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            LET p AS S64 = prm[(i MOD 8) * 10 + ASC(MID$(s, n - i + 1, 1)) - 48]
+            c = d5[c * 10 + p]
+        END FOR
+        RETURN inv[c]
+    END FUNCTION
+
+    FUNCTION Valid(s AS STRING) AS S32
+        LET c AS S64 = 0
+        LET n AS S64 = LEN(s)
+        FOR i = 1 TO n
+            LET p AS S64 = prm[((i - 1) MOD 8) * 10 + ASC(MID$(s, n - i + 1, 1)) - 48]
+            c = d5[c * 10 + p]
+        END FOR
+        IF c = 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        LoadTbl()
+        PRINT "chk(236) = " | Chk("236")
+        PRINT "chk(12345) = " | Chk("12345")
+        PRINT "chk(123456789012) = " | Chk("123456789012")
+        PRINT "valid(2363) = " | Valid("2363")
+        PRINT "valid(2364) = " | Valid("2364")
+    END PROCEDURE
+END MODULE
+
+IMPORT Verh
+BEGIN
+    Verh.Run()
+END

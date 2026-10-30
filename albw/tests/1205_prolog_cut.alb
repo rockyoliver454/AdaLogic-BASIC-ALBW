@@ -1,0 +1,3 @@
+PREDICATE parent(U64)
+parent(5).
+!

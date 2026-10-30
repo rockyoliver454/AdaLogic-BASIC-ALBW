@@ -1,0 +1,40 @@
+-- 343 | Casting out nines: digital roots via the additive method and via mod 9.
+DECLARE MODULE Co9
+    FUNCTION AdditiveRoot(n AS S64) AS S64
+    FUNCTION Mod9Root(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Co9
+    FUNCTION AdditiveRoot(n AS S64) AS S64
+        LET m AS S64 = n
+        WHILE m >= 10
+            LET s AS S64 = 0
+            WHILE m > 0
+                s = s + m MOD 10
+                m = m / 10
+            END WHILE
+            m = s
+        END WHILE
+        RETURN m
+    END FUNCTION
+
+    FUNCTION Mod9Root(n AS S64) AS S64
+        LET r AS S64 = n MOD 9
+        IF r = 0 ANDALSO n > 0 THEN r = 9 END IF
+        RETURN r
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 20
+            PRINT n | " additive=" | AdditiveRoot(n) | " mod9=" | Mod9Root(n)
+        END FOR
+        PRINT 1234 | " -> " | AdditiveRoot(1234)
+        PRINT 9999 | " -> " | Mod9Root(9999)
+    END PROCEDURE
+END MODULE
+
+IMPORT Co9
+BEGIN
+    Co9.Run()
+END

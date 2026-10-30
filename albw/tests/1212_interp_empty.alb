@@ -1,0 +1,3 @@
+BEGIN
+    PRINT `empty {} hole`
+END

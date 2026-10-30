@@ -1,0 +1,59 @@
+-- 768 | Function frequency: count word frequencies in text
+-- and print the most common words.
+DECLARE MODULE Ff
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ff
+    STRICT wds[60] AS STRING
+    STRICT cnt[60] AS S64
+
+    PROCEDURE Run()
+        LET txt AS STRING = "the quick brown fox jumps over the lazy dog the fox was quick"
+        LET nw AS S64 = 0
+        LET i AS S64 = 1
+        LET n AS S64 = LEN(txt)
+        WHILE i <= n
+            LET w AS STRING = ""
+            WHILE i <= n ANDALSO ASC(MID$(txt, i, 1)) <> 32
+                w = w | MID$(txt, i, 1)
+                i = i + 1
+            END WHILE
+            IF w <> "" THEN
+                LET got AS S32 = 0
+                FOR k = 1 TO nw
+                    IF wds[k] = w THEN
+                        cnt[k] = cnt[k] + 1
+                        got = 1
+                    END IF
+                END FOR
+                IF got = 0 THEN
+                    nw = nw + 1
+                    wds[nw] = w
+                    cnt[nw] = 1
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        FOR a = 1 TO nw
+            FOR b = a + 1 TO nw
+                IF cnt[b] > cnt[a] THEN
+                    LET tc AS S64 = cnt[a]
+                    cnt[a] = cnt[b]
+                    cnt[b] = tc
+                    LET tw AS STRING = wds[a]
+                    wds[a] = wds[b]
+                    wds[b] = tw
+                END IF
+            END FOR
+        END FOR
+        FOR k = 1 TO nw
+            PRINT wds[k] | " " | cnt[k]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ff
+BEGIN
+    Ff.Run()
+END

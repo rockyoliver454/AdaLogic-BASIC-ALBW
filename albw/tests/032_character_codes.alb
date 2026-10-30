@@ -1,0 +1,8 @@
+-- 043 | Character codes -- print ASCII codes of "ABCabc"
+BEGIN
+    LET s AS STRING = "ABCabc"
+    LET i AS S32 = 0
+    FOR i = 0 TO LEN(s) - 1
+        PRINT ASC(MID$(s, i + 1, 1))
+    END FOR
+END

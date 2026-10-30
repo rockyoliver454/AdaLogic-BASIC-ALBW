@@ -1,0 +1,33 @@
+BEGIN
+    LET count = 0
+    LET n = 0
+    WHILE count < 20
+        LET sum = 0
+        LET t = n
+        LET dcount = 0
+        WHILE t > 0
+            dcount = dcount + 1
+            t = t / 10
+        END WHILE
+        IF dcount = 0 THEN
+            dcount = 1
+        END IF
+        t = n
+        WHILE t > 0
+            LET d = t MOD 10
+            LET p = 1
+            LET i = 0
+            WHILE i < dcount
+                p = p * d
+                i = i + 1
+            END WHILE
+            sum = sum + p
+            t = t / 10
+        END WHILE
+        IF sum = n THEN
+            PRINT$ n
+            count = count + 1
+        END IF
+        n = n + 1
+    END WHILE
+END

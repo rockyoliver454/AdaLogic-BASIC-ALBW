@@ -1,0 +1,12 @@
+BEGIN
+    LET n = 6
+    WHILE n <> 1
+        PRINT$ n
+        IF n MOD 2 = 0 THEN
+            n = n / 2
+        ELSE
+            n = 3 * n + 1
+        END IF
+    END WHILE
+    PRINT$ n
+END

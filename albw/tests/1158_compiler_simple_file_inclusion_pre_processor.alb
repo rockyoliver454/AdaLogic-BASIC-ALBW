@@ -1,0 +1,37 @@
+VERSION 1.0
+
+BEGIN
+    LET h AS S64 = OPEN("inc_part.alb", "w")
+    WRITE h, "LET x = 99" | CHR(10)
+    CLOSE h
+    LET m AS S64 = OPEN("main_src.alb", "w")
+    WRITE m, "VERSION 1.0" | CHR(10) | "#include inc_part.alb" | CHR(10) | "BEGIN" | CHR(10) | "PRINT x" | CHR(10) | "END" | CHR(10)
+    CLOSE m
+
+    LET r AS S64 = OPEN("main_src.alb", "r")
+    LET whole AS STRING = READ(r, FILELEN("main_src.alb"))
+    CLOSE r
+    whole = whole | CHR(10)
+
+    LET res AS STRING = ""
+    LET st AS S64 = 1
+    LET i AS S64 = 1
+    WHILE i <= LEN(whole)
+        IF ASC(MID$(whole, i, 1)) = 10 THEN
+            LET ln AS STRING = MID$(whole, st, i - st)
+            IF LEFT$(ln, 8) = "#include" THEN
+                LET fn AS STRING = MID$(ln, 10, LEN(ln) - 9)
+                LET ir AS S64 = OPEN(fn, "r")
+                LET inc AS STRING = READ(ir, FILELEN(fn))
+                CLOSE ir
+                res = res | inc | CHR(10)
+            ELSE
+                res = res | ln | CHR(10)
+            END IF
+            st = i + 1
+        END IF
+        i = i + 1
+    END WHILE
+    PRINT "--- preprocessed ---"
+    PRINT res
+END

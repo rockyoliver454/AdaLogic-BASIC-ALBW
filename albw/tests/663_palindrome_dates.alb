@@ -1,0 +1,39 @@
+-- 663 | Palindrome dates: dates in 2020-2029 whose MMDDYYYY
+-- representation is palindromic.
+DECLARE MODULE Pd2
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Pd2
+    PROCEDURE Run()
+        STRICT dig[8] AS S64
+        FOR y = 2020 TO 2029
+            FOR m = 1 TO 12
+                FOR d = 1 TO 31
+                    LET v AS S64 = m * 1000000 + d * 10000 + y
+                    LET s AS STRING = ""
+                    IF m < 10 THEN s = "0" END IF
+                    s = s | m
+                    IF d < 10 THEN s = s | "0" END IF
+                    s = s | d | y
+                    LET pal AS S32 = 1
+                    FOR i = 1 TO 4
+                        IF MID$(s, i, 1) <> MID$(s, 9 - i, 1) THEN pal = 0 END IF
+                    END FOR
+                    -- validate day against month
+                    LET dim AS S64 = 31
+                    IF m = 4 ORELSE m = 6 ORELSE m = 9 ORELSE m = 11 THEN dim = 30 END IF
+                    IF m = 2 THEN dim = 29 END IF
+                    IF pal = 1 ANDALSO d <= dim THEN
+                        PRINT s
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Pd2
+BEGIN
+    Pd2.Run()
+END

@@ -1,0 +1,61 @@
+-- 242 | Same fringe: differently shaped trees with equal leaf sequences.
+DECLARE MODULE Fringe
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fringe
+    STRICT a_left[5] AS S32
+    STRICT a_right[5] AS S32
+    STRICT a_value[5] AS S32
+    STRICT b_left[5] AS S32
+    STRICT b_right[5] AS S32
+    STRICT b_value[5] AS S32
+    STRICT leaves_a[3] AS S32
+    STRICT leaves_b[3] AS S32
+    LET count_a AS S32 = 0
+    LET count_b AS S32 = 0
+
+    PROCEDURE CollectA(node AS S32)
+        IF a_left[node] < 0 ANDALSO a_right[node] < 0 THEN
+            leaves_a[count_a] = a_value[node]
+            count_a = count_a + 1
+        ELSE
+            IF a_left[node] >= 0 THEN CollectA(a_left[node]) END IF
+            IF a_right[node] >= 0 THEN CollectA(a_right[node]) END IF
+        END IF
+    END PROCEDURE
+
+    PROCEDURE CollectB(node AS S32)
+        IF b_left[node] < 0 ANDALSO b_right[node] < 0 THEN
+            leaves_b[count_b] = b_value[node]
+            count_b = count_b + 1
+        ELSE
+            IF b_left[node] >= 0 THEN CollectB(b_left[node]) END IF
+            IF b_right[node] >= 0 THEN CollectB(b_right[node]) END IF
+        END IF
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 0 TO 4
+            a_left[i] = -1; a_right[i] = -1
+            b_left[i] = -1; b_right[i] = -1
+        END FOR
+        a_left[0] = 1; a_right[0] = 2; a_left[2] = 3; a_right[2] = 4
+        a_value[1] = 1; a_value[3] = 2; a_value[4] = 3
+        b_left[0] = 1; b_right[0] = 4; b_left[1] = 2; b_right[1] = 3
+        b_value[2] = 1; b_value[3] = 2; b_value[4] = 3
+        CollectA(0); CollectB(0)
+        LET equal_flag AS S32 = 1
+        IF count_a <> count_b THEN equal_flag = 0 END IF
+        FOR i = 0 TO count_a - 1
+            IF leaves_a[i] <> leaves_b[i] THEN equal_flag = 0 END IF
+            PRINT leaves_a[i]
+        END FOR
+        PRINT "same fringe = " | equal_flag
+    END PROCEDURE
+END MODULE
+
+IMPORT Fringe
+BEGIN
+    Fringe.Run()
+END

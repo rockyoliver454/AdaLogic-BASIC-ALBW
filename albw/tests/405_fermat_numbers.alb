@@ -1,0 +1,33 @@
+-- 405 | Fermat numbers: F(n) = 2^(2^n) + 1 for n = 0..5, with small-factor checks.
+DECLARE MODULE Fermat
+    FUNCTION SmallestFactor(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fermat
+    FUNCTION SmallestFactor(n AS S64) AS S64
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN d END IF
+            d = d + 2
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 0 TO 4
+            LET f AS S64 = (2 ^ (2 ^ n)) + 1
+            LET g AS S64 = SmallestFactor(f)
+            IF g = f THEN
+                PRINT "F" | n | " = " | f | " prime"
+            ELSE
+                PRINT "F" | n | " = " | f | " composite, factor " | g
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Fermat
+BEGIN
+    Fermat.Run()
+END

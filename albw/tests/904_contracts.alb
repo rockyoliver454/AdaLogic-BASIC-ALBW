@@ -1,0 +1,50 @@
+-- REQUIRE/ENSURE contracts (Ada-style).
+-- REQUIRE fires on entry (fault 21); ENSURE before every exit (fault 22).
+-- RESULT inside ENSURE names the pending return value.
+-- This test exercises only passing contracts; fault paths verified by
+-- scratch programs (a fired contract is a nonzero exit).
+
+STRICT total[1] AS S32
+total[0] = 0
+
+PROCEDURE Deposit(amt AS S32) REQUIRE amt > 0
+    total[0] = total[0] + amt
+END PROCEDURE
+
+FUNCTION HalfOf(v AS S32) AS S32
+    REQUIRE v >= 0
+    ENSURE RESULT >= 0
+    RETURN v / 2
+END FUNCTION
+
+FUNCTION Inc(x AS S32) AS S32
+    ENSURE RESULT = x + 1
+    RETURN x + 1
+END FUNCTION
+
+-- Multiple RETURN paths: ENSURE re-checks at each.
+FUNCTION AbsVal(x AS S32) AS S32
+    ENSURE RESULT >= 0
+    IF x < 0 THEN
+        RETURN 0 - x
+    END IF
+    RETURN x
+END FUNCTION
+
+Deposit(50);
+Deposit(25);
+PRINT total[0]
+
+PRINT HalfOf(10)
+PRINT Inc(41)
+PRINT AbsVal(-7)
+PRINT AbsVal(3)
+
+-- Procedure ENSURE checks state after the body ran.
+STRICT flag[1] AS S32
+flag[0] = 0
+PROCEDURE Mark() ENSURE flag[0] = 1
+    flag[0] = 1
+END PROCEDURE
+Mark();
+PRINT flag[0]

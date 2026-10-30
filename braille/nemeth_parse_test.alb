@@ -1,0 +1,43 @@
+--  nemeth_parse_test.alb - parser layer smoke
+INCLUDE "nemeth.albi"
+IMPORT Nemeth
+
+PROCEDURE T(s AS STRING)
+    Nemeth.Transcribe(s)
+    PRINT s | "  =>  [" | Nemeth.ToBrf() | "]  errs=" | Nemeth.ErrCount()
+    LET i AS S64 = 0
+    WHILE i < Nemeth.ErrCount()
+        PRINT "    ! " | Nemeth.ErrText(i)
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+BEGIN
+    T("3+4 = 7")
+    T("x^2")
+    T("x^2+3")
+    T("x_1^2")
+    T("x^{n+1}")
+    T("2/3")
+    T("\frac{1}{2}")
+    T("a+b/c")
+    T("2 1/2")
+    T("\sqrt{5}")
+    T("\sqrt{x}")
+    T("\sqrt[3]{8}")
+    T("\frac{1}{x/2}")
+    T("x/(y/z)")
+    T("sin(x)")
+    T("sin x")
+    T("a <= b")
+    T("x in A")
+    T("\infty")
+    T("\alpha + \beta")
+    T("f'(x)")
+    T("\sum_{i=1}^{n}")
+    T("|x|")
+    T("(x")
+    T("x)")
+    T("\foo")
+    T("a&b")
+END

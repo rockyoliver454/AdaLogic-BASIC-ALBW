@@ -1,0 +1,35 @@
+-- 487 | Inventory sequence: first 50 terms. Count occurrences of k
+-- in the prefix; when the count term is 0, reset to k+1.
+DECLARE MODULE Inv
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Inv
+    STRICT a[51] AS S64
+    STRICT cnt[400] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 399
+            cnt[i] = 0
+        END FOR
+        LET k AS S64 = 0
+        LET idx AS S64 = 0
+        WHILE idx < 50
+            LET c AS S64 = cnt[k]
+            idx = idx + 1
+            a[idx] = c
+            cnt[c] = cnt[c] + 1
+            IF c = 0 THEN k = 0 ELSE k = k + 1 END IF
+        END WHILE
+        LET s AS STRING = ""
+        FOR j = 1 TO 50
+            s = s | a[j] | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT Inv
+BEGIN
+    Inv.Run()
+END

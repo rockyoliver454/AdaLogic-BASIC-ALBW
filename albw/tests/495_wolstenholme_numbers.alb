@@ -1,0 +1,62 @@
+-- 495 | Wolstenholme's theorem: verify that numerator(H(p-1)) is
+-- divisible by p^2 for primes p = 5..29, computed mod p^3.
+DECLARE MODULE Wolst
+    FUNCTION Inv(a AS S64, m AS S64) AS S64
+    FUNCTION IsPrime(n AS S64) AS S32
+    PROCEDURE Show(p AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Wolst
+    FUNCTION Inv(a AS S64, m AS S64) AS S64
+        LET t AS S64 = 0
+        LET nt AS S64 = 1
+        LET r AS S64 = m
+        LET nr AS S64 = a MOD m
+        WHILE nr <> 0
+            LET q AS S64 = r / nr
+            LET tt AS S64 = t - q * nt
+            t = nt
+            nt = tt
+            LET rr AS S64 = r - q * nr
+            r = nr
+            nr = rr
+        END WHILE
+        IF t < 0 THEN t = t + m END IF
+        RETURN t
+    END FUNCTION
+
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Show(p AS S64)
+        LET m AS S64 = p * p * p
+        LET h AS S64 = 0
+        FOR i = 1 TO p - 1
+            h = (h + Inv(i, m)) MOD m
+        END FOR
+        PRINT "p=" | p | " H mod p^2 = " | h MOD (p * p)
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR p = 5 TO 29
+            IF IsPrime(p) = 1 THEN Show(p) END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Wolst
+BEGIN
+    Wolst.Run()
+END

@@ -1,0 +1,27 @@
+-- 078 | File extensions: text after the last dot.
+DECLARE MODULE Fx
+    FUNCTION Ext(path AS STRING) AS STRING
+END DECLARE MODULE
+
+MODULE Fx
+    FUNCTION Ext(path AS STRING) AS STRING
+        LET last AS S32 = 0;
+        FOR i = 1 TO LEN(path)
+            IF MID$(path, i, 1) = "." THEN
+                last = i;
+            END IF
+        END FOR
+        IF last = 0 THEN
+            RETURN ""
+        END IF
+        RETURN MID$(path, last + 1, LEN(path) - last)
+    END FUNCTION
+END MODULE
+
+IMPORT Fx
+BEGIN
+    PRINT$ Fx.Ext("archive.tar.gz");
+    PRINT$ Fx.Ext("README.md");
+    PRINT$ Fx.Ext("noext");
+    PRINT$ Fx.Ext(".hidden");
+END

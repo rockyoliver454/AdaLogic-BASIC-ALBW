@@ -1,0 +1,22 @@
+-- 319 | Safe addition: check for S32 overflow before adding.
+BEGIN
+    LET max_s32 AS S64 = 2147483647
+    STRICT aa[3] AS S32
+    STRICT bb[3] AS S32
+    aa[0] = 1000000
+    bb[0] = 2000000
+    aa[1] = 2147483640
+    bb[1] = 100
+    aa[2] = -2147483640
+    bb[2] = -100
+
+    FOR i = 0 TO 2
+        LET wide AS S64 = aa[i]
+        wide = wide + bb[i]
+        IF wide > max_s32 ORELSE wide < 0 - max_s32 - 1 THEN
+            PRINT "overflow: " | aa[i] | " + " | bb[i]
+        ELSE
+            PRINT aa[i] | " + " | bb[i] | " = " | wide
+        END IF
+    END FOR
+END

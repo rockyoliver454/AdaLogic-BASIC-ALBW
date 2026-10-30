@@ -1,0 +1,51 @@
+-- 882 | Flipping bits game: start from a random bit row,
+-- goal is all zeros; each move flips a bit and its right
+-- neighbour. Seeded; solver uses the greedy left-to-right
+-- strategy which is optimal for this puzzle.
+DECLARE MODULE Fb
+    FUNCTION Nxt() AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fb
+    STRICT sd[1] AS S64
+    STRICT bt[11] AS S64
+
+    FUNCTION Nxt() AS S64
+        sd[1] = (sd[1] * 1103515245 + 12345) MOD 2147483648
+        RETURN (sd[1] / 65536) MOD 2
+    END FUNCTION
+
+    PROCEDURE Run()
+        sd[1] = 5150
+        FOR i = 1 TO 10
+            bt[i] = Nxt()
+        END FOR
+        LET s AS STRING = "start: "
+        FOR i = 1 TO 10
+            s = s | bt[i]
+        END FOR
+        PRINT s
+        LET mv AS S64 = 0
+        FOR i = 1 TO 9
+            IF bt[i] = 1 THEN
+                bt[i] = 1 - bt[i]
+                bt[i + 1] = 1 - bt[i + 1]
+                mv = mv + 1
+            END IF
+        END FOR
+        s = "end:   "
+        FOR i = 1 TO 10
+            s = s | bt[i]
+        END FOR
+        PRINT s
+        PRINT "moves=" | mv
+        IF bt[10] = 0 THEN PRINT "solved" END IF
+        IF bt[10] = 1 THEN PRINT "unsolvable row" END IF
+    END PROCEDURE
+END MODULE
+
+IMPORT Fb
+BEGIN
+    Fb.Run()
+END

@@ -1,0 +1,66 @@
+-- IEEE-grade math: fdlibm-style ports verified against correctly
+-- rounded reference values (tolerance ~5e-15, i.e. a few ulp).
+STRICT ok[1] AS S32
+STRICT tol[1] AS F64
+ok[0] = 1
+tol[0] = 0.000000000000005
+
+FUNCTION Check(name AS S32, got AS F64, want AS F64) AS S32
+    --  Scale tolerance by |want|: absolute 5e-15 is sub-ulp for
+    --  results like EXP(10.5) = 36315 (1ulp ~ 7e-12).
+    IF ABS(got - want) > tol[0] * (1.0 + ABS(want)) THEN
+        PRINT "FAIL " | name | " got=" | got | " want=" | want
+        ok[0] = 0
+    END IF
+    RETURN 0
+END FUNCTION
+
+Check(1, SIN(1.0), 0.8414709848078965)
+Check(2, COS(1.0), 0.5403023058681397)
+Check(3, SIN(10.0), -0.5440211108893698)
+Check(4, COS(10.0), -0.8390715290764524)
+Check(5, TAN(0.5), 0.5463024898437905)
+Check(6, EXP(1.0), 2.718281828459045)
+Check(7, EXP(10.5), 36315.50267424663)
+Check(8, LN(2.0), 0.6931471805599453)
+Check(9, LN(10.0), 2.302585092994046)
+Check(10, LOG2(8.0), 3.0)
+Check(11, LOG10(1000.0), 3.0)
+Check(12, ATAN(1.0), 0.7853981633974483)
+Check(13, ATAN2(1.0, 1.7320508075688772), 0.5235987755982988)
+Check(14, ASIN(0.5), 0.5235987755982989)
+Check(15, ACOS(0.5), 1.0471975511965979)
+Check(16, SQRT(2.0), 1.4142135623730951)
+Check(17, POW(2.0, 0.5), 1.4142135623730951)
+Check(18, POW(1.1, 10.0), 2.5937424601000023)
+
+-- Large-argument reduction quality: sin^2+cos^2 must hold to ~ulp
+-- even after range reduction (the old Taylor version drifted badly).
+LET x AS F64 = 12345.6789
+Check(19, SIN(x) * SIN(x) + COS(x) * COS(x), 1.0)
+x = -9876.54321
+Check(20, SIN(x) * SIN(x) + COS(x) * COS(x), 1.0)
+x = 314159.2653589793
+Check(21, SIN(x) * SIN(x) + COS(x) * COS(x), 1.0)
+
+-- Odd/even symmetry.
+Check(22, SIN(-1.0), -0.8414709848078965)
+Check(23, COS(-2.5), -0.8011436155469337)
+
+-- Elementary ops are LLVM intrinsics now — exact.
+Check(24, FLOOR(-2.5), -3.0)
+Check(25, CEIL(-2.5), -2.0)
+Check(26, TRUNC(-2.9), -2.0)
+Check(27, ROUND(2.5), 3.0)
+Check(28, ROUND(-2.5), -3.0)
+Check(29, SQRT(1024.0), 32.0)
+Check(30, ABS(-17.25), 17.25)
+
+-- TAN past pi: quadrant bookkeeping through rem_pio2.
+Check(31, TAN(3.6651914291880923), 0.5773502691896257)
+
+IF ok[0] = 1 THEN
+    PRINT "ieee-math: all checks within tolerance"
+ELSE
+    PRINT "ieee-math: FAILURES above"
+END IF

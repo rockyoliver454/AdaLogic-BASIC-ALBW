@@ -1,0 +1,15 @@
+-- 011 | Array concatenation: append two arrays into a third.
+BEGIN
+    STRICT a[3] AS S32;
+    STRICT b[3] AS S32;
+    STRICT c[6] AS S32;
+    a[0] = 1; a[1] = 2; a[2] = 3;
+    b[0] = 4; b[1] = 5; b[2] = 6;
+    FOR i = 0 TO 2
+        c[i] = a[i];
+        c[i + 3] = b[i];
+    END FOR
+    FOR i = 0 TO 5
+        PRINT c[i];
+    END FOR
+END

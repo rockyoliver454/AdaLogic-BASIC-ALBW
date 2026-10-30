@@ -1,0 +1,5 @@
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{},"resources":{}},"serverInfo":{"name":"alb-mcp-braille","version":"0.1.0"}}}
+{"jsonrpc":"2.0","id":2,"result":{"resources":[{"uri":"alb://braille/poem","name":"poem","mimeType":"application/json"},{"uri":"alb://nemeth/mx","name":"mx","mimeType":"application/json"}]}}
+{"jsonrpc":"2.0","id":3,"result":{"contents":[{"uri":"alb://braille/poem","mimeType":"application/json","text":"{\"brf\":\",! QK BR[N FOX \",\"uni\":\"⠠⠮⠀⠟⠅⠀⠃⠗⠪⠝⠀⠋⠕⠭⠀\",\"ncells\":15,\"errors\":0,\"errorText\":[]}"}]}}
+{"jsonrpc":"2.0","id":4,"result":{"contents":[{"uri":"alb://nemeth/mx","mimeType":"application/json","text":"{\"brf\":\";X^2\\\"\\n\",\"uni\":\"⠰⠭⠘⠆⠐\\n\",\"ncells\":6,\"errors\":0,\"errorText\":[],\"latex\":\"x^{2}\\\\\\\\\\n\",\"mathml\":\"<math><msup><mi>x</mi><mn>2</mn></msup><mspace linebreak='newline'/></math>\",\"rsrc\":\"x^{2}\\\\n\"}"}]}}
+{"jsonrpc":"2.0","id":5,"error":{"code":-32602,"message":"unknown resource: alb://braille/nope"}}

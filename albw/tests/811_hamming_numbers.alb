@@ -1,0 +1,42 @@
+-- 109 | Hamming numbers -- first 20 regular numbers (2^a 3^b 5^c)
+DECLARE MODULE H
+    FUNCTION Min3(a AS S32, b AS S32, c AS S32) AS S32
+END MODULE
+
+MODULE H
+    FUNCTION Min3(a AS S32, b AS S32, c AS S32) AS S32
+        LET m AS S32 = a
+        IF b < m THEN
+            m = b
+        END IF
+        IF c < m THEN
+            m = c
+        END IF
+        RETURN m
+    END FUNCTION
+END MODULE
+
+BEGIN
+    STRICT h[20] AS S32;
+    h[0] = 1
+    LET i2 AS S32 = 0
+    LET i3 AS S32 = 0
+    LET i5 AS S32 = 0
+    LET i AS S32 = 0
+    FOR i = 1 TO 19
+        LET n AS S32 = H.Min3(2 * h[i2], 3 * h[i3], 5 * h[i5])
+        h[i] = n
+        IF n = 2 * h[i2] THEN
+            i2 = i2 + 1
+        END IF
+        IF n = 3 * h[i3] THEN
+            i3 = i3 + 1
+        END IF
+        IF n = 5 * h[i5] THEN
+            i5 = i5 + 1
+        END IF
+    END FOR
+    FOR i = 0 TO 19
+        PRINT h[i]
+    END FOR
+END

@@ -1,0 +1,8 @@
+seed 1 = 1
+seed 2 = 5
+seed 3 = 69
+seed 4 = 1665
+seed 5 = 2129
+seed 6 = 25739
+seed 7 = 29631
+(S64 limit: n^4+n+1 overflows for n > ~31000)

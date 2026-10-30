@@ -1,0 +1,38 @@
+-- 667 | Nautical bell: bells strike every half hour on watch;
+-- show bell patterns for a sequence of half-hour marks.
+DECLARE MODULE Bell
+    PROCEDURE Show(h AS S64, m AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bell
+    PROCEDURE Show(h AS S64, m AS S64)
+        -- total half-hours elapsed within a 4-hour watch
+        LET wmin AS S64 = (h MOD 4) * 60 + m
+        LET bells AS S64 = (wmin / 30) MOD 8
+        IF bells = 0 THEN bells = 8 END IF
+        LET s AS STRING = h | ":" 
+        IF m < 10 THEN s = s | "0" END IF
+        s = s | m | " -> "
+        LET b AS S64 = bells
+        WHILE b >= 2
+            s = s | "[]"
+            b = b - 2
+        END WHILE
+        IF b = 1 THEN s = s | "." END IF
+        PRINT s
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Show(4, 30)
+        Show(5, 0)
+        Show(6, 30)
+        Show(8, 0)
+        Show(0, 30)
+    END PROCEDURE
+END MODULE
+
+IMPORT Bell
+BEGIN
+    Bell.Run()
+END

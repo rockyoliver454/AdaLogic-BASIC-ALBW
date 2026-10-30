@@ -1,0 +1,8 @@
+BEGIN
+    LET n = 42
+    IF n MOD 2 = 0 THEN
+        PRINT$ "even"
+    ELSE
+        PRINT$ "odd"
+    END IF
+END

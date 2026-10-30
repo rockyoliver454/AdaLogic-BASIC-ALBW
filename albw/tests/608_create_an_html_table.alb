@@ -1,0 +1,29 @@
+-- 608 | Create an HTML table from data rows.
+DECLARE MODULE Html
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Html
+    STRICT name[3] AS STRING
+    STRICT val[3] AS S64
+
+    PROCEDURE Run()
+        name[1] = "alpha"
+        name[2] = "beta"
+        name[3] = "gamma"
+        val[1] = 10
+        val[2] = 25
+        val[3] = 7
+        PRINT "<table>"
+        PRINT "<tr><th>name</th><th>value</th></tr>"
+        FOR i = 1 TO 3
+            PRINT "<tr><td>" | name[i] | "</td><td>" | val[i] | "</td></tr>"
+        END FOR
+        PRINT "</table>"
+    END PROCEDURE
+END MODULE
+
+IMPORT Html
+BEGIN
+    Html.Run()
+END

@@ -1,0 +1,32 @@
+-- 435 | Stirling numbers of the first kind (signed): table n = 0..10.
+DECLARE MODULE Stir1
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Stir1
+    STRICT s[122] AS S64
+
+    PROCEDURE Run()
+        FOR i = 0 TO 120
+            s[i] = 0
+        END FOR
+        s[0 * 11 + 0 + 1] = 1
+        FOR n = 1 TO 10
+            FOR k = 1 TO n
+                s[n * 11 + k + 1] = s[(n - 1) * 11 + (k - 1) + 1] - (n - 1) * s[(n - 1) * 11 + k + 1]
+            END FOR
+        END FOR
+        FOR n2 = 0 TO 10
+            LET ln AS STRING = ""
+            FOR k2 = 0 TO n2
+                ln = ln | s[n2 * 11 + k2 + 1] | " "
+            END FOR
+            PRINT ln
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Stir1
+BEGIN
+    Stir1.Run()
+END

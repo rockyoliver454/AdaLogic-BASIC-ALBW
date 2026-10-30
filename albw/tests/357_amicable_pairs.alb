@@ -1,0 +1,36 @@
+-- 357 | Amicable pairs: all pairs with both members below 20000.
+DECLARE MODULE Amicable
+    FUNCTION PropSum(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Amicable
+    FUNCTION PropSum(n AS S64) AS S64
+        IF n <= 1 THEN RETURN 0 END IF
+        LET s AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN
+                s = s + d
+                LET o AS S64 = n / d
+                IF o <> d THEN s = s + o END IF
+            END IF
+            d = d + 1
+        END WHILE
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR a = 2 TO 19999
+            LET b AS S64 = PropSum(a)
+            IF b > a ANDALSO PropSum(b) = a THEN
+                PRINT a | " " | b
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Amicable
+BEGIN
+    Amicable.Run()
+END

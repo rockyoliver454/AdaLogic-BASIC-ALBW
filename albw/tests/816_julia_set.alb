@@ -1,0 +1,28 @@
+-- Rosetta: Julia set -- same escape-time render with a fixed complex
+-- constant c = -0.8 + 0.156i and z starting at the pixel point.
+BEGIN
+    LET chars AS STRING = " .:-=+*#%@"
+    LET cr AS F64 = -0.8
+    LET ci AS F64 = 0.156
+    FOR row = 0 TO 14
+        LET zy0 AS F64 = -1.0 + (row * 2.0) / 14.0
+        LET rline AS STRING = ""
+        FOR col = 0 TO 49
+            LET zx AS F64 = -1.7 + (col * 3.4) / 49.0
+            LET zy AS F64 = zy0
+            LET it AS S32 = 0
+            WHILE it < 80 AND zx * zx + zy * zy < 4.0
+                LET nx AS F64 = zx * zx - zy * zy + cr
+                zy = 2.0 * zx * zy + ci
+                zx = nx
+                it = it + 1
+            END WHILE
+            LET idx AS S32 = it / 9
+            IF idx > 9 THEN
+                idx = 9
+            END IF
+            rline = rline | MID$(chars, idx + 1, 1)
+        END FOR
+        PRINT$ rline
+    END FOR
+END

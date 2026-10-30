@@ -1,0 +1,67 @@
+-- 782 | Babylonian spiral: each next step is a lattice vector whose
+-- squared length is the smallest value STRICTLY greater than the
+-- previous step's (and a sum of two squares); among equal-length
+-- candidates choose the one bending most "clockwise" -- i.e.
+-- cross(prev,step) < 0 with maximal dot product (turn closest to 0).
+-- First 40 points.
+DECLARE MODULE Bs
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Bs
+    STRICT xs[41] AS S64
+    STRICT ys[41] AS S64
+
+    PROCEDURE Run()
+        xs[1] = 0
+        ys[1] = 0
+        xs[2] = 0
+        ys[2] = 1
+        LET dprev AS S64 = 1
+        FOR n = 3 TO 40
+            LET px AS S64 = xs[n - 1] - xs[n - 2]
+            LET py AS S64 = ys[n - 1] - ys[n - 2]
+            -- smallest step length^2 exceeding dprev
+            LET bestn AS S64 = 0 - 1
+            LET bestd AS S64 = 0
+            LET sx AS S64 = 0
+            LET sy AS S64 = 0
+            FOR dx = 0 - 16 TO 16
+                FOR dy = 0 - 16 TO 16
+                    IF dx <> 0 ORELSE dy <> 0 THEN
+                        LET nn AS S64 = dx * dx + dy * dy
+                        IF nn > dprev THEN
+                            LET cr AS S64 = px * dy - py * dx
+                            IF cr < 0 THEN
+                                IF bestn = 0 - 1 ORELSE nn < bestn THEN
+                                    bestn = nn
+                                    bestd = px * dx + py * dy
+                                    sx = dx
+                                    sy = dy
+                                ELSEIF nn = bestn THEN
+                                    LET dp AS S64 = px * dx + py * dy
+                                    IF dp > bestd THEN
+                                        bestd = dp
+                                        sx = dx
+                                        sy = dy
+                                    END IF
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                END FOR
+            END FOR
+            xs[n] = xs[n - 1] + sx
+            ys[n] = ys[n - 1] + sy
+            dprev = bestn
+        END FOR
+        FOR n = 1 TO 40
+            PRINT "(" | xs[n] | "," | ys[n] | ")"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Bs
+BEGIN
+    Bs.Run()
+END

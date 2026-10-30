@@ -1,0 +1,49 @@
+-- 560 | CRC-32: table-driven implementation over "123456789",
+-- expected 0xCBF43926 (also check "The quick brown fox...").
+DECLARE MODULE Crc
+    FUNCTION Upd(s AS STRING) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Crc
+    STRICT tbl[256] AS S64
+
+    PROCEDURE LoadTbl()
+        FOR i = 0 TO 255
+            LET c AS S64 = i
+            FOR b = 0 TO 7
+                IF c MOD 2 = 1 THEN
+                    c = 3988292384 XOR (c / 2)
+                ELSE
+                    c = c / 2
+                END IF
+            END FOR
+            tbl[i] = c
+        END FOR
+    END PROCEDURE
+
+    FUNCTION Upd(s AS STRING) AS S64
+        LET crc AS S64 = 4294967295
+        FOR i = 1 TO LEN(s)
+            LET ix AS S64 = (crc XOR ASC(MID$(s, i, 1))) MOD 256
+            LET hi AS S64 = crc / 256
+            IF hi < 0 THEN hi = hi + 16777216 END IF
+            crc = hi XOR tbl[ix]
+            IF crc < 0 THEN crc = crc + 4294967296 END IF
+        END FOR
+        RETURN crc XOR 4294967295
+    END FUNCTION
+
+    PROCEDURE Run()
+        LoadTbl()
+        LET c1 AS S64 = Upd("123456789")
+        PRINT "crc32(123456789) = " | c1
+        LET c2 AS S64 = Upd("The quick brown fox jumps over the lazy dog")
+        PRINT "crc32(fox) = " | c2
+    END PROCEDURE
+END MODULE
+
+IMPORT Crc
+BEGIN
+    Crc.Run()
+END

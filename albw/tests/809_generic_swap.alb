@@ -1,0 +1,9 @@
+BEGIN
+    LET a = 7
+    LET b = 9
+    LET t = a
+    a = b
+    b = t
+    PRINT$ a
+    PRINT$ b
+END

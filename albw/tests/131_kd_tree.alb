@@ -1,0 +1,95 @@
+-- 131 | K-d tree: 2D points, median build, nearest-neighbor query.
+DECLARE MODULE K
+    PROCEDURE Build()
+    FUNCTION Nearest(qx AS F64, qy AS F64) AS S32
+END DECLARE MODULE
+
+MODULE K
+    --  8 points; kd node = index into px/py, children lf/rt indices
+    STRICT px[8] AS F64;
+    STRICT py[8] AS F64;
+    STRICT lf[8] AS S32;
+    STRICT rt[8] AS S32;
+    STRICT order[8] AS S32;
+    LET best AS S32 = -1;
+    LET bestd AS F64 = 0.0;
+    PROCEDURE SortRange(lo AS S32, hi AS S32, axis AS S32)
+        FOR i = lo TO hi - 1 THEN
+            FOR j = lo TO hi - 1 - i + lo THEN
+                LET a AS S32 = order[j];
+                LET b AS S32 = order[j + 1];
+                LET swap AS S32 = 0;
+                IF axis = 0 ANDALSO px[a] > px[b] THEN
+                    swap = 1;
+                END IF
+                IF axis = 1 ANDALSO py[a] > py[b] THEN
+                    swap = 1;
+                END IF
+                IF swap = 1 THEN
+                    order[j] = b;
+                    order[j + 1] = a;
+                END IF
+            END FOR
+        END FOR
+    END PROCEDURE
+    FUNCTION Make(lo AS S32, hi AS S32, depth AS S32) AS S32
+        IF lo > hi THEN
+            RETURN -1
+        END IF
+        SortRange(lo, hi, depth MOD 2);
+        LET mid AS S32 = (lo + hi) / 2;
+        LET u AS S32 = order[mid];
+        lf[u] = Make(lo, mid - 1, depth + 1);
+        rt[u] = Make(mid + 1, hi, depth + 1);
+        RETURN u
+    END FUNCTION
+    PROCEDURE Build()
+        px[0]=2.0; py[0]=3.0;   px[1]=5.0; py[1]=4.0;
+        px[2]=9.0; py[2]=6.0;   px[3]=4.0; py[3]=7.0;
+        px[4]=8.0; py[4]=1.0;   px[5]=7.0; py[5]=2.0;
+        px[6]=1.0; py[6]=9.0;   px[7]=6.0; py[7]=5.0;
+        FOR i = 0 TO 7 THEN
+            order[i] = i;
+        END FOR
+        LET r AS S32 = Make(0, 7, 0);
+        PRINT$ "root pt: " | px[r] | "," | py[r];
+    END PROCEDURE
+    PROCEDURE Visit(u AS S32, qx AS F64, qy AS F64, depth AS S32)
+        IF u < 0 THEN
+            RETURN
+        END IF
+        LET dd AS F64 = (px[u] - qx) * (px[u] - qx) + (py[u] - qy) * (py[u] - qy);
+        IF best < 0 ORELSE dd < bestd THEN
+            best = u;
+            bestd = dd;
+        END IF
+        LET axis AS S32 = depth MOD 2;
+        LET diff AS F64 = qx - px[u];
+        IF axis = 1 THEN
+            diff = qy - py[u];
+        END IF
+        LET near AS S32 = lf[u];
+        LET far AS S32 = rt[u];
+        IF diff > 0.0 THEN
+            near = rt[u];
+            far = lf[u];
+        END IF
+        Visit(near, qx, qy, depth + 1);
+        IF diff * diff < bestd THEN
+            Visit(far, qx, qy, depth + 1);
+        END IF
+    END PROCEDURE
+    FUNCTION Nearest(qx AS F64, qy AS F64) AS S32
+        best = -1;
+        bestd = 0.0;
+        Visit(4, qx, qy, 0);
+        RETURN best
+    END FUNCTION
+END MODULE
+
+IMPORT K
+BEGIN
+    K.Build();
+    LET u AS S32 = K.Nearest(9.0, 2.0);
+    PRINT$ "nearest to (9,2): idx " | u;
+END

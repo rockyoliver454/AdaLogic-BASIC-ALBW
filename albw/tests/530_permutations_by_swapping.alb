@@ -1,0 +1,56 @@
+-- 530 | Permutations by swapping: Johnson-Trotter algorithm on
+-- [1,2,3,4].
+DECLARE MODULE JT
+    PROCEDURE Emit()
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE JT
+    STRICT a[5] AS S64
+    STRICT dir[5] AS S64
+
+    PROCEDURE Emit()
+        PRINT a[1] | a[2] | a[3] | a[4]
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR i = 1 TO 4
+            a[i] = i
+            dir[i] = -1
+        END FOR
+        dir[5] = 0
+        Emit()
+        LET more AS S32 = 1
+        WHILE more = 1
+            LET mx AS S64 = 0
+            LET mpos AS S64 = 0
+            FOR i2 = 1 TO 4
+                LET nxt AS S64 = i2 + dir[i2]
+                IF nxt >= 1 ANDALSO nxt <= 4 ANDALSO a[i2] > a[nxt] ANDALSO a[i2] > mx THEN
+                    mx = a[i2]
+                    mpos = i2
+                END IF
+            END FOR
+            IF mpos = 0 THEN
+                more = 0
+            ELSE
+                LET np AS S64 = mpos + dir[mpos]
+                LET tv AS S64 = a[mpos]
+                a[mpos] = a[np]
+                a[np] = tv
+                LET td AS S64 = dir[mpos]
+                dir[mpos] = dir[np]
+                dir[np] = td
+                FOR j = 1 TO 4
+                    IF a[j] > mx THEN dir[j] = 0 - dir[j] END IF
+                END FOR
+                Emit()
+            END IF
+        END WHILE
+    END PROCEDURE
+END MODULE
+
+IMPORT JT
+BEGIN
+    JT.Run()
+END

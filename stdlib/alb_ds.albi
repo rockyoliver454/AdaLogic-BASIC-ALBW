@@ -1,0 +1,78 @@
+-- ============================================================================
+-- alb_ds — fixed-capacity data structures on static arrays.
+--
+-- IntStack: Push/Pop/Top/Depth on STK[256]. IntMap: string→S64 via
+-- parallel KEYS/VALS arrays, linear scan — honest O(n), sized for
+-- config/symbol tables (128 entries), not hash-scale data. Pop on an
+-- empty stack returns 0; MapGet on a missing key returns 0 —
+-- MapHas exists so 0-valued entries aren't ambiguous.
+--
+--   AlbDs.Push(7)  AlbDs.Push(9)  PRINT AlbDs.Pop()     -- 9
+--   AlbDs.MapSet("ans", 42)       PRINT AlbDs.MapGet("ans")
+-- ============================================================================
+
+MODULE AlbDs
+    STRICT STK[256] AS S64
+    LET depth AS S32 = 0
+
+    STRICT KEYS[128] AS STRING
+    STRICT VALS[128] AS S64
+    LET entries AS S32 = 0
+
+    PROCEDURE Push(v AS S64)
+        IF depth >= 256 THEN RETURN END IF
+        STK[depth] = v
+        depth = depth + 1
+    END PROCEDURE
+
+    FUNCTION Pop() AS S64
+        IF depth <= 0 THEN RETURN 0 END IF
+        depth = depth - 1
+        RETURN STK[depth]
+    END FUNCTION
+
+    FUNCTION Top() AS S64
+        IF depth <= 0 THEN RETURN 0 END IF
+        RETURN STK[depth - 1]
+    END FUNCTION
+
+    FUNCTION Depth() AS S32
+        RETURN depth
+    END FUNCTION
+
+    PRIVATE FUNCTION Loc(k AS STRING) AS S32
+        FOR p = 0 TO entries - 1
+            IF KEYS[p] = k THEN RETURN p END IF
+        END FOR
+        RETURN -1
+    END FUNCTION
+
+    PROCEDURE MapSet(k AS STRING, v AS S64)
+        LET ix AS S32 = Loc(k)
+        IF ix < 0 THEN
+            IF entries < 128 THEN
+                ix = entries
+                entries = entries + 1
+            END IF
+        END IF
+        IF ix >= 0 THEN
+            KEYS[ix] = k
+            VALS[ix] = v
+        END IF
+    END PROCEDURE
+
+    FUNCTION MapHas(k AS STRING) AS S32
+        IF Loc(k) >= 0 THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    FUNCTION MapGet(k AS STRING) AS S64
+        LET ix AS S32 = Loc(k)
+        IF ix < 0 THEN RETURN 0 END IF
+        RETURN VALS[ix]
+    END FUNCTION
+
+    FUNCTION MapCount() AS S32
+        RETURN entries
+    END FUNCTION
+END MODULE

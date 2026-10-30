@@ -1,0 +1,51 @@
+-- 743 | Imaginary base numbers: Gaussian integers in base
+-- (i-1), i.e. quater-imaginary style binary digits.
+DECLARE MODULE Ib
+    FUNCTION ToB(re AS S64, im AS S64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ib
+    STRICT dg[40] AS S64
+
+    FUNCTION ToB(re AS S64, im AS S64) AS STRING
+        -- divide by (i-1): remainder = (re+im) mod 2
+        -- (a+bi)/(i-1): a+bi = (i-1)(x+yi)+r, r in {0,1}
+        LET a AS S64 = re
+        LET b AS S64 = im
+        LET cnt AS S64 = 0
+        WHILE a <> 0 ORELSE b <> 0
+            LET r AS S64 = (a + b) MOD 2
+            IF r < 0 THEN r = r + 2 END IF
+            cnt = cnt + 1
+            dg[cnt] = r
+            -- a+bi - r = (i-1)(x+yi) => x+yi = ((b-a+r) + (r-a-b)i)/2
+            LET na AS S64 = (b - a + r) / 2
+            LET nb AS S64 = (r - a - b) / 2
+            a = na
+            b = nb
+        END WHILE
+        LET s AS STRING = ""
+        LET i AS S64 = cnt
+        WHILE i >= 1
+            s = s | dg[i]
+            i = i - 1
+        END WHILE
+        IF s = "" THEN s = "0" END IF
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT "1 -> " | ToB(1, 0)
+        PRINT "2 -> " | ToB(2, 0)
+        PRINT "i -> " | ToB(0, 1)
+        PRINT "1+i -> " | ToB(1, 1)
+        PRINT "5 -> " | ToB(5, 0)
+        PRINT "-2 -> " | ToB(0 - 2, 0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Ib
+BEGIN
+    Ib.Run()
+END

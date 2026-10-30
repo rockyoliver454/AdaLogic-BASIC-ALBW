@@ -1,0 +1,96 @@
+-- 493 | Pan base non-primes: decimal digit strings that are composite
+-- when reinterpreted in EVERY base where they are valid. First 40,
+-- first 20 odd, and count <= 1000.
+DECLARE MODULE PanB
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION IsPan(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PanB
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION IsPan(n AS S64) AS S32
+        IF n < 10 THEN
+            IF IsPrime(n) = 1 THEN RETURN 0 END IF
+            RETURN 1
+        END IF
+        IF n MOD 10 = 0 ANDALSO n > 10 THEN RETURN 1 END IF
+        LET maxd AS S64 = 0
+        LET g AS S64 = 0
+        LET t AS S64 = n
+        WHILE t > 0
+            LET dig AS S64 = t MOD 10
+            IF dig > maxd THEN maxd = dig END IF
+            LET aa AS S64 = g
+            LET bb AS S64 = dig
+            WHILE bb <> 0
+                LET tt AS S64 = bb
+                bb = aa MOD bb
+                aa = tt
+            END WHILE
+            g = aa
+            t = t / 10
+        END WHILE
+        IF g > 1 THEN RETURN 1 END IF
+        FOR b = maxd + 1 TO n
+            LET v AS S64 = 0
+            LET t2 AS S64 = n
+            LET place AS S64 = 1
+            WHILE t2 > 0
+                v = v + (t2 MOD 10) * place
+                place = place * b
+                t2 = t2 / 10
+            END WHILE
+            IF IsPrime(v) = 1 THEN RETURN 0 END IF
+        END FOR
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 2
+        LET got AS S64 = 0
+        LET odds AS STRING = ""
+        LET oddgot AS S64 = 0
+        LET cnt AS S64 = 0
+        WHILE got < 40
+            IF IsPan(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+        n = 3
+        WHILE oddgot < 20
+            IF n MOD 2 = 1 ANDALSO IsPan(n) = 1 THEN
+                odds = odds | n | " "
+                oddgot = oddgot + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT odds
+        FOR m = 2 TO 500
+            IF IsPan(m) = 1 THEN cnt = cnt + 1 END IF
+        END FOR
+        PRINT "count<500=" | cnt
+    END PROCEDURE
+END MODULE
+
+IMPORT PanB
+BEGIN
+    PanB.Run()
+END

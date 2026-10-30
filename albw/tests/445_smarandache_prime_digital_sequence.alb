@@ -1,0 +1,51 @@
+-- 445 | Smarandache prime-digital sequence: first 25 primes whose
+-- digits are all prime (2,3,5,7).
+DECLARE MODULE SmaPD
+    FUNCTION IsPrime(n AS S64) AS S32
+    FUNCTION AllPrimeDigits(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE SmaPD
+    FUNCTION IsPrime(n AS S64) AS S32
+        IF n < 2 THEN RETURN 0 END IF
+        IF n MOD 2 = 0 THEN
+            IF n = 2 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        LET d AS S64 = 3
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN 0 END IF
+            d = d + 2
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    FUNCTION AllPrimeDigits(n AS S64) AS S32
+        WHILE n > 0
+            LET d AS S64 = n MOD 10
+            IF d <> 2 ANDALSO d <> 3 ANDALSO d <> 5 ANDALSO d <> 7 THEN RETURN 0 END IF
+            n = n / 10
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        LET n AS S64 = 2
+        LET got AS S64 = 0
+        WHILE got < 25
+            IF IsPrime(n) = 1 ANDALSO AllPrimeDigits(n) = 1 THEN
+                s = s | n | " "
+                got = got + 1
+            END IF
+            n = n + 1
+        END WHILE
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT SmaPD
+BEGIN
+    SmaPD.Run()
+END

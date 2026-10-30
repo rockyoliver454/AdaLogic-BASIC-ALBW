@@ -1,0 +1,83 @@
+-- 825 | Sum and product puzzle: x,y in 2..99. S knows x+y,
+-- P knows x*y. P: "I don't know". S: "I knew that". P: "now I
+-- know". S: "now I know too". Classic answer: (4,13).
+DECLARE MODULE Sp
+    FUNCTION Nf(v AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Sp
+    STRICT sok[198] AS S64    -- sums 4..198 viable after S's statement
+    STRICT pc[9802] AS S64    -- products: count of S-viable factor pairs
+    STRICT sc[198] AS S64     -- sums: count of unique products
+
+    FUNCTION Nf(v AS S64) AS S64
+        -- number of factor pairs (a,b), 2<=a<=b<=99, a*b=v
+        LET c AS S64 = 0
+        FOR a = 2 TO 99
+            IF v MOD a = 0 THEN
+                LET b AS S64 = v / a
+                IF b >= a ANDALSO b <= 99 THEN c = c + 1 END IF
+            END IF
+        END FOR
+        RETURN c
+    END FUNCTION
+
+    PROCEDURE Run()
+        -- stage 1: S knew P didn't know => for sum s, every legal
+        -- decomposition (a in [2,99], b=s-a in [a,99]) has Nf>1
+        FOR s = 4 TO 198
+            sok[s] = 1
+            FOR a = 2 TO 99
+                LET b AS S64 = s - a
+                IF b >= a ANDALSO b <= 99 THEN
+                    IF Nf(a * b) <= 1 THEN sok[s] = 0 END IF
+                END IF
+            END FOR
+        END FOR
+        -- stage 2: P now knows => products with exactly one
+        -- factor pair whose sum is S-viable
+        FOR p = 4 TO 9801
+            LET cnt AS S64 = 0
+            FOR a = 2 TO 99
+                IF p MOD a = 0 THEN
+                    LET b AS S64 = p / a
+                    IF b >= a ANDALSO b <= 99 THEN
+                        IF sok[a + b] = 1 THEN cnt = cnt + 1 END IF
+                    END IF
+                END IF
+            END FOR
+            pc[p] = cnt
+        END FOR
+        -- stage 3: S now knows => viable sums with exactly one
+        -- decomposition whose product was unique at stage 2
+        FOR s = 4 TO 198
+            sc[s] = 0
+            IF sok[s] = 1 THEN
+                FOR a = 2 TO 99
+                    LET b AS S64 = s - a
+                    IF b >= a ANDALSO b <= 99 THEN
+                        IF pc[a * b] = 1 THEN sc[s] = sc[s] + 1 END IF
+                    END IF
+                END FOR
+            END IF
+        END FOR
+        FOR s = 4 TO 198
+            IF sok[s] = 1 ANDALSO sc[s] = 1 THEN
+                FOR a = 2 TO 99
+                    LET b AS S64 = s - a
+                    IF b >= a ANDALSO b <= 99 THEN
+                        IF pc[a * b] = 1 THEN
+                            PRINT "x=" | a | " y=" | b | " sum=" | s | " prod=" | a * b
+                        END IF
+                    END IF
+                END FOR
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Sp
+BEGIN
+    Sp.Run()
+END

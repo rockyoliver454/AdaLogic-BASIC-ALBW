@@ -1,0 +1,734 @@
+VERSION 1.0
+
+STRICT SK[64] AS S64
+STRICT SW[64] AS S64
+STRICT SH[8] AS S64
+STRICT SBUF[80] AS S64
+STRICT MW[16] AS S64
+STRICT R1[80] AS S64
+STRICT R2[80] AS S64
+STRICT S1[80] AS S64
+STRICT S2[80] AS S64
+STRICT RBUF[80] AS S64
+STRICT PL[32] AS S64
+STRICT DG[32] AS S64
+LET H0 AS S64 = 0
+LET H1 AS S64 = 0
+LET H2 AS S64 = 0
+LET H3 AS S64 = 0
+LET H4 AS S64 = 0
+
+
+FUNCTION RotL(x AS S64, r AS S64) AS S64
+    LET e AS S64 = 32 - r
+    LET v AS S64 = x SHL r
+    v = v AND $FFFFFFFF
+    LET w AS S64 = x SHR e
+    RETURN v + w
+END FUNCTION
+
+
+FUNCTION RotR(x AS S64, r AS S64) AS S64
+    LET e AS S64 = 32 - r
+    LET v AS S64 = x SHR r
+    LET w AS S64 = (x SHL e) AND $FFFFFFFF
+    RETURN v + w
+END FUNCTION
+
+
+FUNCTION F1n(x AS S64, y AS S64, z AS S64) AS S64
+    RETURN x XOR y XOR z
+END FUNCTION
+
+
+FUNCTION F2n(x AS S64, y AS S64, z AS S64) AS S64
+    RETURN (x AND y) OR ((NOT x) AND z)
+END FUNCTION
+
+
+FUNCTION F3n(x AS S64, y AS S64, z AS S64) AS S64
+    RETURN (x OR (NOT y)) XOR z
+END FUNCTION
+
+
+FUNCTION F4n(x AS S64, y AS S64, z AS S64) AS S64
+    RETURN (x AND z) OR (y AND (NOT z))
+END FUNCTION
+
+
+FUNCTION F5n(x AS S64, y AS S64, z AS S64) AS S64
+    RETURN x XOR (y OR (NOT z))
+END FUNCTION
+
+
+PROCEDURE ShaBlock()
+    LET i AS S64 = 16
+    WHILE i < 64
+        LET w15 AS S64 = SW[i - 15]
+        LET w2 AS S64 = SW[i - 2]
+        LET s0 AS S64 = RotR(w15, 7) XOR RotR(w15, 18) XOR (w15 SHR 3)
+        LET s1 AS S64 = RotR(w2, 17) XOR RotR(w2, 19) XOR (w2 SHR 10)
+        SW[i] = (SW[i - 16] + s0 + SW[i - 7] + s1) AND $FFFFFFFF
+        i = i + 1
+    END WHILE
+    LET a AS S64 = SH[0]
+    LET b AS S64 = SH[1]
+    LET c AS S64 = SH[2]
+    LET d AS S64 = SH[3]
+    LET e AS S64 = SH[4]
+    LET f AS S64 = SH[5]
+    LET g AS S64 = SH[6]
+    LET h AS S64 = SH[7]
+    i = 0
+    WHILE i < 64
+        LET bs1 AS S64 = RotR(e, 6) XOR RotR(e, 11) XOR RotR(e, 25)
+        LET ch AS S64 = (e AND f) + ((NOT e) AND g)
+        LET t1 AS S64 = (h + bs1 + ch + SK[i] + SW[i]) AND $FFFFFFFF
+        LET bs0 AS S64 = RotR(a, 2) XOR RotR(a, 13) XOR RotR(a, 22)
+        LET mj AS S64 = (a AND b) XOR (a AND c) XOR (b AND c)
+        h = g
+        g = f
+        f = e
+        e = (d + t1) AND $FFFFFFFF
+        d = c
+        c = b
+        b = a
+        a = (t1 + bs0 + mj) AND $FFFFFFFF
+        i = i + 1
+    END WHILE
+    SH[0] = (SH[0] + a) AND $FFFFFFFF
+    SH[1] = (SH[1] + b) AND $FFFFFFFF
+    SH[2] = (SH[2] + c) AND $FFFFFFFF
+    SH[3] = (SH[3] + d) AND $FFFFFFFF
+    SH[4] = (SH[4] + e) AND $FFFFFFFF
+    SH[5] = (SH[5] + f) AND $FFFFFFFF
+    SH[6] = (SH[6] + g) AND $FFFFFFFF
+    SH[7] = (SH[7] + h) AND $FFFFFFFF
+END PROCEDURE
+
+
+PROCEDURE ShaInit()
+    SH[0] = $6A09E667
+    SH[1] = $BB67AE85
+    SH[2] = $3C6EF372
+    SH[3] = $A54FF53A
+    SH[4] = $510E527F
+    SH[5] = $9B05688C
+    SH[6] = $1F83D9AB
+    SH[7] = $5BE0CD19
+END PROCEDURE
+
+
+PROCEDURE ShaBytes(n AS S64)
+    LET total AS S64 = n + 1
+    WHILE total MOD 64 <> 56
+        total = total + 1
+    END WHILE
+    total = total + 8
+    LET nblk AS S64 = total / 64
+    LET blk AS S64 = 0
+    WHILE blk < nblk
+        LET i AS S64 = 0
+        WHILE i < 16
+            SW[i] = 0
+            i = i + 1
+        END WHILE
+        i = 0
+        WHILE i < 64
+            LET gi AS S64 = blk * 64 + i
+            LET bv AS S64 = 0
+            IF gi < n THEN
+                bv = SBUF[gi]
+            ELSE
+                IF gi = n THEN
+                    bv = 128
+                END IF
+            END IF
+            LET wi AS S64 = i / 4
+            LET rm AS S64 = i - wi * 4
+            SW[wi] = SW[wi] + bv * (1 SHL ((3 - rm) * 8))
+            i = i + 1
+        END WHILE
+        IF blk = nblk - 1 THEN
+            SW[15] = n * 8
+        END IF
+        ShaBlock()
+        blk = blk + 1
+    END WHILE
+END PROCEDURE
+
+
+PROCEDURE RipeInit()
+    H0 = $67452301
+    H1 = $EFCDAB89
+    H2 = $98BADCFE
+    H3 = $10325476
+    H4 = $C3D2E1F0
+END PROCEDURE
+
+
+PROCEDURE RipeBlock()
+    LET h0 AS S64 = H0
+    LET h1 AS S64 = H1
+    LET h2 AS S64 = H2
+    LET h3 AS S64 = H3
+    LET h4 AS S64 = H4
+    LET a1 AS S64 = h0
+    LET b1 AS S64 = h1
+    LET c1 AS S64 = h2
+    LET d1 AS S64 = h3
+    LET e1 AS S64 = h4
+    LET a2 AS S64 = h0
+    LET b2 AS S64 = h1
+    LET c2 AS S64 = h2
+    LET d2 AS S64 = h3
+    LET e2 AS S64 = h4
+    LET j AS S64 = 0
+    WHILE j < 80
+        LET rd AS S64 = j / 16
+        LET f AS S64 = 0
+        LET kk AS S64 = 0
+        IF rd = 0 THEN
+            f = F1n(b1, c1, d1)
+            kk = 0
+        ELSE
+            IF rd = 1 THEN
+                f = F2n(b1, c1, d1)
+                kk = $5A827999
+            ELSE
+                IF rd = 2 THEN
+                    f = F3n(b1, c1, d1)
+                    kk = $6ED9EBA1
+                ELSE
+                    IF rd = 3 THEN
+                        f = F4n(b1, c1, d1)
+                        kk = $8F1BBCDC
+                    ELSE
+                        f = F5n(b1, c1, d1)
+                        kk = $A953FD4E
+                    END IF
+                END IF
+            END IF
+        END IF
+        LET tv AS S64 = (a1 + f + MW[R1[j]] + kk) AND $FFFFFFFF
+        tv = (RotL(tv, S1[j]) + e1) AND $FFFFFFFF
+        a1 = e1
+        e1 = d1
+        d1 = RotL(c1, 10)
+        c1 = b1
+        b1 = tv
+        IF rd = 0 THEN
+            f = F5n(b2, c2, d2)
+            kk = $50A28BE6
+        ELSE
+            IF rd = 1 THEN
+                f = F4n(b2, c2, d2)
+                kk = $5C4DD124
+            ELSE
+                IF rd = 2 THEN
+                    f = F3n(b2, c2, d2)
+                    kk = $6D703EF3
+                ELSE
+                    IF rd = 3 THEN
+                        f = F2n(b2, c2, d2)
+                        kk = $7A6D76E9
+                    ELSE
+                        f = F1n(b2, c2, d2)
+                        kk = 0
+                    END IF
+                END IF
+            END IF
+        END IF
+        tv = (a2 + f + MW[R2[j]] + kk) AND $FFFFFFFF
+        tv = (RotL(tv, S2[j]) + e2) AND $FFFFFFFF
+        a2 = e2
+        e2 = d2
+        d2 = RotL(c2, 10)
+        c2 = b2
+        b2 = tv
+        j = j + 1
+    END WHILE
+    LET tt AS S64 = (h1 + c1 + d2) AND $FFFFFFFF
+    H1 = (h2 + d1 + e2) AND $FFFFFFFF
+    H2 = (h3 + e1 + a2) AND $FFFFFFFF
+    H3 = (h4 + a1 + b2) AND $FFFFFFFF
+    H4 = (h0 + b1 + c2) AND $FFFFFFFF
+    H0 = tt
+END PROCEDURE
+
+
+PROCEDURE RipeBytes(n AS S64)
+    LET i AS S64 = 0
+    WHILE i < 16
+        MW[i] = 0
+        i = i + 1
+    END WHILE
+    i = 0
+    WHILE i < n
+        LET wi AS S64 = i / 4
+        LET sh AS S64 = (i - wi * 4) * 8
+        MW[wi] = MW[wi] + RBUF[i] * (1 SHL sh)
+        i = i + 1
+    END WHILE
+    LET wi2 AS S64 = n / 4
+    LET sh2 AS S64 = (n - wi2 * 4) * 8
+    MW[wi2] = MW[wi2] + 128 * (1 SHL sh2)
+    MW[14] = n * 8
+    RipeBlock()
+END PROCEDURE
+
+
+PROCEDURE ShaDigestToRBUF()
+    LET i AS S64 = 0
+    WHILE i < 8
+        LET j AS S64 = 0
+        WHILE j < 4
+            RBUF[i * 4 + j] = (SH[i] SHR ((3 - j) * 8)) AND 255
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+END PROCEDURE
+
+
+BEGIN
+    SK[0] = 1116352408 SK[1] = 1899447441 SK[2] = 3049323471 SK[3] = 3921009573
+    SK[4] = 961987163 SK[5] = 1508970993 SK[6] = 2453635748 SK[7] = 2870763221
+    SK[8] = 3624381080 SK[9] = 310598401 SK[10] = 607225278 SK[11] = 1426881987
+    SK[12] = 1925078388 SK[13] = 2162078206 SK[14] = 2614888103 SK[15] = 3248222580
+    SK[16] = 3835390401 SK[17] = 4022224774 SK[18] = 264347078 SK[19] = 604807628
+    SK[20] = 770255983 SK[21] = 1249150122 SK[22] = 1555081692 SK[23] = 1996064986
+    SK[24] = 2554220882 SK[25] = 2821834349 SK[26] = 2952996808 SK[27] = 3210313671
+    SK[28] = 3336571891 SK[29] = 3584528711 SK[30] = 113926993 SK[31] = 338241895
+    SK[32] = 666307205 SK[33] = 773529912 SK[34] = 1294757372 SK[35] = 1396182291
+    SK[36] = 1695183700 SK[37] = 1986661051 SK[38] = 2177026350 SK[39] = 2456956037
+    SK[40] = 2730485921 SK[41] = 2820302411 SK[42] = 3259730800 SK[43] = 3345764771
+    SK[44] = 3516065817 SK[45] = 3600352804 SK[46] = 4094571909 SK[47] = 275423344
+    SK[48] = 430227734 SK[49] = 506948616 SK[50] = 659060556 SK[51] = 883997877
+    SK[52] = 958139571 SK[53] = 1322822218 SK[54] = 1537002063 SK[55] = 1747873779
+    SK[56] = 1955562222 SK[57] = 2024104815 SK[58] = 2227730452 SK[59] = 2361852424
+    SK[60] = 2428436474 SK[61] = 2756734187 SK[62] = 3204031479 SK[63] = 3329325298
+
+    R1[0] = 0
+    R1[1] = 1
+    R1[2] = 2
+    R1[3] = 3
+    R1[4] = 4
+    R1[5] = 5
+    R1[6] = 6
+    R1[7] = 7
+    R1[8] = 8
+    R1[9] = 9
+    R1[10] = 10
+    R1[11] = 11
+    R1[12] = 12
+    R1[13] = 13
+    R1[14] = 14
+    R1[15] = 15
+    R1[16] = 7
+    R1[17] = 4
+    R1[18] = 13
+    R1[19] = 1
+    R1[20] = 10
+    R1[21] = 6
+    R1[22] = 15
+    R1[23] = 3
+    R1[24] = 12
+    R1[25] = 0
+    R1[26] = 9
+    R1[27] = 5
+    R1[28] = 2
+    R1[29] = 14
+    R1[30] = 11
+    R1[31] = 8
+    R1[32] = 3
+    R1[33] = 10
+    R1[34] = 14
+    R1[35] = 4
+    R1[36] = 9
+    R1[37] = 15
+    R1[38] = 8
+    R1[39] = 1
+    R1[40] = 2
+    R1[41] = 7
+    R1[42] = 0
+    R1[43] = 6
+    R1[44] = 13
+    R1[45] = 11
+    R1[46] = 5
+    R1[47] = 12
+    R1[48] = 1
+    R1[49] = 9
+    R1[50] = 11
+    R1[51] = 10
+    R1[52] = 0
+    R1[53] = 8
+    R1[54] = 12
+    R1[55] = 4
+    R1[56] = 13
+    R1[57] = 3
+    R1[58] = 7
+    R1[59] = 15
+    R1[60] = 14
+    R1[61] = 5
+    R1[62] = 6
+    R1[63] = 2
+    R1[64] = 4
+    R1[65] = 0
+    R1[66] = 5
+    R1[67] = 9
+    R1[68] = 7
+    R1[69] = 12
+    R1[70] = 2
+    R1[71] = 10
+    R1[72] = 14
+    R1[73] = 1
+    R1[74] = 3
+    R1[75] = 8
+    R1[76] = 11
+    R1[77] = 6
+    R1[78] = 15
+    R1[79] = 13
+    R2[0] = 5
+    R2[1] = 14
+    R2[2] = 7
+    R2[3] = 0
+    R2[4] = 9
+    R2[5] = 2
+    R2[6] = 11
+    R2[7] = 4
+    R2[8] = 13
+    R2[9] = 6
+    R2[10] = 15
+    R2[11] = 8
+    R2[12] = 1
+    R2[13] = 10
+    R2[14] = 3
+    R2[15] = 12
+    R2[16] = 6
+    R2[17] = 11
+    R2[18] = 3
+    R2[19] = 7
+    R2[20] = 0
+    R2[21] = 13
+    R2[22] = 5
+    R2[23] = 10
+    R2[24] = 14
+    R2[25] = 15
+    R2[26] = 8
+    R2[27] = 12
+    R2[28] = 4
+    R2[29] = 9
+    R2[30] = 1
+    R2[31] = 2
+    R2[32] = 15
+    R2[33] = 5
+    R2[34] = 1
+    R2[35] = 3
+    R2[36] = 7
+    R2[37] = 14
+    R2[38] = 6
+    R2[39] = 9
+    R2[40] = 11
+    R2[41] = 8
+    R2[42] = 12
+    R2[43] = 2
+    R2[44] = 10
+    R2[45] = 0
+    R2[46] = 4
+    R2[47] = 13
+    R2[48] = 8
+    R2[49] = 6
+    R2[50] = 4
+    R2[51] = 1
+    R2[52] = 3
+    R2[53] = 11
+    R2[54] = 15
+    R2[55] = 0
+    R2[56] = 5
+    R2[57] = 12
+    R2[58] = 2
+    R2[59] = 13
+    R2[60] = 9
+    R2[61] = 7
+    R2[62] = 10
+    R2[63] = 14
+    R2[64] = 12
+    R2[65] = 15
+    R2[66] = 10
+    R2[67] = 4
+    R2[68] = 1
+    R2[69] = 5
+    R2[70] = 8
+    R2[71] = 7
+    R2[72] = 6
+    R2[73] = 2
+    R2[74] = 13
+    R2[75] = 14
+    R2[76] = 0
+    R2[77] = 3
+    R2[78] = 9
+    R2[79] = 11
+    S1[0] = 11
+    S1[1] = 14
+    S1[2] = 15
+    S1[3] = 12
+    S1[4] = 5
+    S1[5] = 8
+    S1[6] = 7
+    S1[7] = 9
+    S1[8] = 11
+    S1[9] = 13
+    S1[10] = 14
+    S1[11] = 15
+    S1[12] = 6
+    S1[13] = 7
+    S1[14] = 9
+    S1[15] = 8
+    S1[16] = 7
+    S1[17] = 6
+    S1[18] = 8
+    S1[19] = 13
+    S1[20] = 11
+    S1[21] = 9
+    S1[22] = 7
+    S1[23] = 15
+    S1[24] = 7
+    S1[25] = 12
+    S1[26] = 15
+    S1[27] = 9
+    S1[28] = 11
+    S1[29] = 7
+    S1[30] = 13
+    S1[31] = 12
+    S1[32] = 11
+    S1[33] = 13
+    S1[34] = 6
+    S1[35] = 7
+    S1[36] = 14
+    S1[37] = 9
+    S1[38] = 13
+    S1[39] = 15
+    S1[40] = 14
+    S1[41] = 8
+    S1[42] = 13
+    S1[43] = 6
+    S1[44] = 5
+    S1[45] = 12
+    S1[46] = 7
+    S1[47] = 5
+    S1[48] = 11
+    S1[49] = 12
+    S1[50] = 14
+    S1[51] = 15
+    S1[52] = 14
+    S1[53] = 15
+    S1[54] = 9
+    S1[55] = 8
+    S1[56] = 9
+    S1[57] = 14
+    S1[58] = 5
+    S1[59] = 6
+    S1[60] = 8
+    S1[61] = 6
+    S1[62] = 5
+    S1[63] = 12
+    S1[64] = 9
+    S1[65] = 15
+    S1[66] = 5
+    S1[67] = 11
+    S1[68] = 6
+    S1[69] = 8
+    S1[70] = 13
+    S1[71] = 12
+    S1[72] = 5
+    S1[73] = 12
+    S1[74] = 13
+    S1[75] = 14
+    S1[76] = 11
+    S1[77] = 8
+    S1[78] = 5
+    S1[79] = 6
+    S2[0] = 8
+    S2[1] = 9
+    S2[2] = 9
+    S2[3] = 11
+    S2[4] = 13
+    S2[5] = 15
+    S2[6] = 15
+    S2[7] = 5
+    S2[8] = 7
+    S2[9] = 7
+    S2[10] = 8
+    S2[11] = 11
+    S2[12] = 14
+    S2[13] = 14
+    S2[14] = 12
+    S2[15] = 6
+    S2[16] = 9
+    S2[17] = 13
+    S2[18] = 15
+    S2[19] = 7
+    S2[20] = 12
+    S2[21] = 8
+    S2[22] = 9
+    S2[23] = 11
+    S2[24] = 7
+    S2[25] = 7
+    S2[26] = 12
+    S2[27] = 7
+    S2[28] = 6
+    S2[29] = 15
+    S2[30] = 13
+    S2[31] = 11
+    S2[32] = 9
+    S2[33] = 7
+    S2[34] = 15
+    S2[35] = 11
+    S2[36] = 8
+    S2[37] = 6
+    S2[38] = 6
+    S2[39] = 14
+    S2[40] = 12
+    S2[41] = 13
+    S2[42] = 5
+    S2[43] = 14
+    S2[44] = 13
+    S2[45] = 13
+    S2[46] = 7
+    S2[47] = 5
+    S2[48] = 15
+    S2[49] = 5
+    S2[50] = 8
+    S2[51] = 11
+    S2[52] = 14
+    S2[53] = 14
+    S2[54] = 6
+    S2[55] = 14
+    S2[56] = 6
+    S2[57] = 9
+    S2[58] = 12
+    S2[59] = 9
+    S2[60] = 12
+    S2[61] = 5
+    S2[62] = 15
+    S2[63] = 8
+    S2[64] = 8
+    S2[65] = 5
+    S2[66] = 12
+    S2[67] = 9
+    S2[68] = 12
+    S2[69] = 5
+    S2[70] = 14
+    S2[71] = 6
+    S2[72] = 8
+    S2[73] = 13
+    S2[74] = 6
+    S2[75] = 5
+    S2[76] = 15
+    S2[77] = 13
+    S2[78] = 11
+    S2[79] = 11
+
+    LET pk AS STRING = "0450863AD64A87AE8A2FE83C1AF1A8403CB53F53E486D8511DAD8A04887E5B23522CD470243453A299FA9E77237716103ABC11A1DF38855ED6F2EE187E9C582BA6"
+    LET i AS S64 = 0
+    WHILE i < 65
+        LET hv AS S64 = ASC(MID$(pk, i * 2 + 1, 1))
+        LET lv AS S64 = ASC(MID$(pk, i * 2 + 2, 1))
+        IF hv > 64 THEN
+            hv = hv - 55
+        ELSE
+            hv = hv - 48
+        END IF
+        IF lv > 64 THEN
+            lv = lv - 55
+        ELSE
+            lv = lv - 48
+        END IF
+        SBUF[i] = hv * 16 + lv
+        i = i + 1
+    END WHILE
+
+    ShaInit()
+    ShaBytes(65)
+    ShaDigestToRBUF()
+    RipeInit()
+    RipeBytes(32)
+
+    PL[0] = 0
+    STRICT hws[5] AS S64
+    hws[0] = H0 hws[1] = H1 hws[2] = H2 hws[3] = H3 hws[4] = H4
+    i = 0
+    WHILE i < 5
+        LET j AS S64 = 0
+        WHILE j < 4
+            PL[1 + i * 4 + j] = (hws[i] SHR (j * 8)) AND 255
+            j = j + 1
+        END WHILE
+        i = i + 1
+    END WHILE
+
+    i = 0
+    WHILE i < 21
+        SBUF[i] = PL[i]
+        i = i + 1
+    END WHILE
+    ShaInit()
+    ShaBytes(21)
+    ShaDigestToRBUF()
+    i = 0
+    WHILE i < 32
+        SBUF[i] = RBUF[i]
+        i = i + 1
+    END WHILE
+    ShaInit()
+    ShaBytes(32)
+
+    i = 0
+    WHILE i < 4
+        PL[21 + i] = (SH[0] SHR ((3 - i) * 8)) AND 255
+        i = i + 1
+    END WHILE
+
+    LET zc AS S64 = 0
+    LET zi AS S64 = 0
+    WHILE zi < 25
+        IF PL[zi] = 0 THEN
+            zc = zc + 1
+        ELSE
+            zi = 25
+        END IF
+        zi = zi + 1
+    END WHILE
+    LET b58 AS STRING = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    LET digs AS STRING = ""
+    LET done AS S64 = 0
+    WHILE done = 0
+        LET carry AS S64 = 0
+        i = 0
+        WHILE i < 25
+            LET cur AS S64 = carry * 256 + PL[i]
+            PL[i] = cur / 58
+            carry = cur - PL[i] * 58
+            i = i + 1
+        END WHILE
+        digs = MID$(b58, carry + 1, 1) | digs
+        LET nonzero AS S64 = 0
+        i = 0
+        WHILE i < 25
+            IF PL[i] <> 0 THEN
+                nonzero = 1
+            END IF
+            i = i + 1
+        END WHILE
+        done = 1 - nonzero
+    END WHILE
+    zi = 0
+    WHILE zi < zc
+        digs = "1" | digs
+        zi = zi + 1
+    END WHILE
+    PRINT "address=" | digs
+    PRINT "expected=16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
+    PRINT "match=" | (digs = "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM")
+END

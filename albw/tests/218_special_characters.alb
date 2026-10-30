@@ -1,0 +1,6 @@
+-- 218 | Special characters: tab, quote, and backslash via character codes.
+BEGIN
+    PRINT "tab:" | CHR(9) | "end"
+    PRINT "quote:" | CHR(34)
+    PRINT "backslash:" | CHR(92)
+END

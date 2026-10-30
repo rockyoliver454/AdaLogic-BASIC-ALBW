@@ -1,0 +1,47 @@
+-- 611 | Formatted numeric output: fixed-width, fixed-precision
+-- number formatting built by hand.
+DECLARE MODULE Fmt
+    FUNCTION Fxd(x AS F64, places AS S64) AS STRING
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fmt
+    FUNCTION Fxd(x AS F64, places AS S64) AS STRING
+        LET neg AS S32 = 0
+        IF x < 0.0 THEN
+            neg = 1
+            x = 0.0 - x
+        END IF
+        LET whole AS S64 = 0
+        LET rem AS F64 = x
+        WHILE rem >= 1.0
+            rem = rem - 1.0
+            whole = whole + 1
+        END WHILE
+        LET s AS STRING = ""
+        IF neg = 1 THEN s = "-" END IF
+        s = s | whole | "."
+        FOR i = 1 TO places
+            rem = rem * 10.0
+            LET d AS S64 = 0
+            WHILE rem >= 1.0
+                rem = rem - 1.0
+                d = d + 1
+            END WHILE
+            s = s | d
+        END FOR
+        RETURN s
+    END FUNCTION
+
+    PROCEDURE Run()
+        PRINT Fxd(3.14159265, 4)
+        PRINT Fxd(2.718281828, 2)
+        PRINT Fxd(0.0 - 1.5, 3)
+        PRINT Fxd(123.456, 0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Fmt
+BEGIN
+    Fmt.Run()
+END

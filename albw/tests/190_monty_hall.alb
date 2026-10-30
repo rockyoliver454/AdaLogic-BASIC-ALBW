@@ -1,0 +1,19 @@
+-- 190 | Monty Hall: switch wins about 2/3 of games.
+BEGIN
+    LET seed AS S64 = 99;
+    LET sw AS S64 = 0;
+    LET st AS S64 = 0;
+    FOR i = 1 TO 3000
+        seed = (seed * 1103515245 + 12345) MOD 2147483648;
+        LET car AS S64 = seed MOD 3;
+        seed = (seed * 1103515245 + 12345) MOD 2147483648;
+        LET pick AS S64 = seed MOD 3;
+        IF pick = car THEN
+            st = st + 1;
+        ELSE
+            sw = sw + 1;
+        END IF
+    END FOR
+    PRINT$ "stay:   " | st;
+    PRINT$ "switch: " | sw;
+END

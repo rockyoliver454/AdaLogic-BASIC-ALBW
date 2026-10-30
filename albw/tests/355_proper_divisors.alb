@@ -1,0 +1,31 @@
+-- 355 | Proper divisors: list them for n = 1..10, plus the count for 36.
+DECLARE MODULE PropDiv
+    PROCEDURE Show(n AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE PropDiv
+    PROCEDURE Show(n AS S64)
+        LET s AS STRING = n | ": 1"
+        LET c AS S32 = 1
+        FOR d = 2 TO n - 1
+            IF n MOD d = 0 THEN
+                s = s | " " | d
+                c = c + 1
+            END IF
+        END FOR
+        PRINT s | " (count " | c | ")"
+    END PROCEDURE
+
+    PROCEDURE Run()
+        FOR n = 1 TO 10
+            Show(n)
+        END FOR
+        Show(36)
+    END PROCEDURE
+END MODULE
+
+IMPORT PropDiv
+BEGIN
+    PropDiv.Run()
+END

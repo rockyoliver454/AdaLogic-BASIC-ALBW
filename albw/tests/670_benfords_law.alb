@@ -1,0 +1,42 @@
+-- 670 | Benford's law: leading-digit frequencies of the first
+-- 100 Fibonacci numbers vs Benford percentages.
+DECLARE MODULE Ben
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Ben
+    STRICT cnt[10] AS S64
+    STRICT fb[100] AS F64
+
+    PROCEDURE Run()
+        fb[1] = 1.0
+        fb[2] = 1.0
+        FOR i = 3 TO 99
+            fb[i] = fb[i - 1] + fb[i - 2]
+        END FOR
+        FOR i = 0 TO 9
+            cnt[i] = 0
+        END FOR
+        FOR j = 1 TO 99
+            LET v AS F64 = fb[j]
+            WHILE v >= 10.0
+                v = v / 10.0
+            END WHILE
+            LET d AS S64 = 0
+            WHILE v >= 1.0
+                v = v - 1.0
+                d = d + 1
+            END WHILE
+            cnt[d] = cnt[d] + 1
+        END FOR
+        FOR d2 = 1 TO 9
+            LET bf AS F64 = LN(1.0 + 1.0 / d2) / LN(10.0) * 100.0
+            PRINT d2 | ": " | cnt[d2] | "% (benford " | bf | "%)"
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Ben
+BEGIN
+    Ben.Run()
+END

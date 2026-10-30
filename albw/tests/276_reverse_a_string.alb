@@ -1,0 +1,9 @@
+-- 276 | Reverse a string: reverse the characters of a string.
+BEGIN
+    LET s AS STRING = "AdaLogic"
+    LET rev AS STRING = ""
+    FOR i = LEN(s) TO 1 STEP -1
+        rev = rev | MID$(s, i, 1)
+    END FOR
+    PRINT rev
+END

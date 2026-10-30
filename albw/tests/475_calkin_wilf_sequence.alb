@@ -1,0 +1,26 @@
+-- 475 | Calkin-Wilf sequence: first 20 terms a(n)/a(n+1) where a is
+-- the fusc sequence.
+DECLARE MODULE CW
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE CW
+    STRICT a[64] AS S64
+
+    PROCEDURE Run()
+        a[1] = 0
+        a[2] = 1
+        FOR n = 1 TO 20
+            a[2 * n + 1] = a[n + 1]
+            a[2 * n + 2] = a[n + 1] + a[n + 2]
+        END FOR
+        FOR i = 2 TO 21
+            PRINT a[i] | "/" | a[i + 1]
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT CW
+BEGIN
+    CW.Run()
+END

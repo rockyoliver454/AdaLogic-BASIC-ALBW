@@ -1,0 +1,45 @@
+-- 462 | Product of min and max prime factors: for n = 2..50.
+DECLARE MODULE MinMax
+    FUNCTION MinFactor(n AS S64) AS S64
+    FUNCTION MaxFactor(n AS S64) AS S64
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE MinMax
+    FUNCTION MinFactor(n AS S64) AS S64
+        LET d AS S64 = 2
+        WHILE d * d <= n
+            IF n MOD d = 0 THEN RETURN d END IF
+            d = d + 1
+        END WHILE
+        RETURN n
+    END FUNCTION
+
+    FUNCTION MaxFactor(n AS S64) AS S64
+        LET m AS S64 = n
+        LET best AS S64 = 1
+        LET d AS S64 = 2
+        WHILE d * d <= m
+            WHILE m MOD d = 0
+                best = d
+                m = m / d
+            END WHILE
+            d = d + 1
+        END WHILE
+        IF m > 1 THEN best = m END IF
+        RETURN best
+    END FUNCTION
+
+    PROCEDURE Run()
+        LET s AS STRING = ""
+        FOR n = 2 TO 50
+            s = s | MinFactor(n) * MaxFactor(n) | " "
+        END FOR
+        PRINT s
+    END PROCEDURE
+END MODULE
+
+IMPORT MinMax
+BEGIN
+    MinMax.Run()
+END

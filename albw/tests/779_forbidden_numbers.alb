@@ -1,0 +1,45 @@
+-- 779 | Forbidden numbers: largest integer not expressible as
+-- a sum of the given coin sizes, plus count of such values.
+DECLARE MODULE Fb
+    PROCEDURE Solve(a AS S64, b AS S64, c AS S64)
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Fb
+    STRICT ok[401] AS S32
+
+    PROCEDURE Solve(a AS S64, b AS S64, c AS S64)
+        LET lim AS S64 = 400
+        FOR i = 1 TO lim
+            ok[i] = 0
+        END FOR
+        ok[1] = 1
+        -- index 1 represents value 0
+        FOR i = 1 TO lim
+            LET v AS S64 = i - 1
+            IF v >= a ANDALSO ok[i - a] = 1 THEN ok[i] = 1 END IF
+            IF v >= b ANDALSO ok[i - b] = 1 THEN ok[i] = 1 END IF
+            IF c > 0 ANDALSO v >= c ANDALSO ok[i - c] = 1 THEN ok[i] = 1 END IF
+        END FOR
+        LET mx AS S64 = 0 - 1
+        LET cn AS S64 = 0
+        FOR i = 2 TO lim
+            IF ok[i] = 0 THEN
+                mx = i - 1
+                cn = cn + 1
+            END IF
+        END FOR
+        PRINT "{" | a | "," | b | "," | c | "}: largest=" | mx | " count=" | cn
+    END PROCEDURE
+
+    PROCEDURE Run()
+        Solve(4, 9, 0)
+        Solve(6, 9, 20)
+        Solve(5, 7, 0)
+    END PROCEDURE
+END MODULE
+
+IMPORT Fb
+BEGIN
+    Fb.Run()
+END

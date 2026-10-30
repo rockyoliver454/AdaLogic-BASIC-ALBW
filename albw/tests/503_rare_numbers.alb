@@ -1,0 +1,45 @@
+-- 503 | Rare numbers: n below 1,000,000 that are not palindromes and
+-- where n - rev(n) and n + rev(n) are both perfect squares.
+DECLARE MODULE Rare
+    FUNCTION Rev(n AS S64) AS S64
+    FUNCTION IsSq(n AS S64) AS S32
+    PROCEDURE Run()
+END DECLARE MODULE
+
+MODULE Rare
+    FUNCTION Rev(n AS S64) AS S64
+        LET v AS S64 = 0
+        WHILE n > 0
+            v = v * 10 + n MOD 10
+            n = n / 10
+        END WHILE
+        RETURN v
+    END FUNCTION
+
+    FUNCTION IsSq(n AS S64) AS S32
+        IF n < 0 THEN RETURN 0 END IF
+        LET r AS S64 = n ^ 0.5
+        WHILE r * r > n
+            r = r - 1
+        END WHILE
+        WHILE (r + 1) * (r + 1) <= n
+            r = r + 1
+        END WHILE
+        IF r * r = n THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE Run()
+        FOR n = 1 TO 999999
+            LET rv AS S64 = Rev(n)
+            IF rv <> n THEN
+                IF IsSq(n - rv) = 1 ANDALSO IsSq(n + rv) = 1 THEN PRINT n END IF
+            END IF
+        END FOR
+    END PROCEDURE
+END MODULE
+
+IMPORT Rare
+BEGIN
+    Rare.Run()
+END

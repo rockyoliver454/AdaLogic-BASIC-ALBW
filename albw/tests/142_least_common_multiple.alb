@@ -1,0 +1,26 @@
+-- 142 | Least common multiple via GCD.
+DECLARE MODULE M
+    FUNCTION Gcd(a AS S32, b AS S32) AS S32
+    FUNCTION Lcm(a AS S32, b AS S32) AS S32
+END DECLARE MODULE
+
+MODULE M
+    FUNCTION Gcd(a AS S32, b AS S32) AS S32
+        WHILE b <> 0
+            LET t AS S32 = b;
+            b = a MOD b;
+            a = t;
+        END WHILE
+        RETURN a
+    END FUNCTION
+    FUNCTION Lcm(a AS S32, b AS S32) AS S32
+        RETURN a / Gcd(a, b) * b
+    END FUNCTION
+END MODULE
+
+IMPORT M
+BEGIN
+    PRINT M.Lcm(12, 18);
+    PRINT M.Lcm(7, 5);
+    PRINT M.Lcm(21, 6);
+END
