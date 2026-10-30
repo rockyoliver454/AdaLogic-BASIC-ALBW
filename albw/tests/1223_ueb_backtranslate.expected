@@ -1,0 +1,12 @@
+t1='the quick brown fox jumps over 13 lazy dogs'
+t2='Algebra in middle school'
+t3='I will go to the store and buy 2,500 eggs.'
+t4='He said knowledge is power'
+t5='"can't" won't it's 50% off (sale) [now] {go}'
+uni->Algebra in middle school
+brf->Algebra in middle school
+g1='plain uncontracted text here'
+para='a
+
+i'
+bad='a' errs=1 first=FromBrf: bad char '~'

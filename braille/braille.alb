@@ -156,37 +156,78 @@ FUNCTION BrNemeth(txt AS STRING) AS STRING
 END FUNCTION
 
 --  envelope for decode/render calls:  the payload is one string
---  under a named JSON key, plus the Nemeth error ledger.
-FUNCTION BrTextResult(k AS STRING, v AS STRING) AS STRING
-    LET ne AS S64 = Nemeth.ErrCount()
+--  under a named JSON key, plus the named engine's error ledger.
+FUNCTION BrTextResult(sys AS STRING, k AS STRING, v AS STRING) AS STRING
+    LET ne AS S64 = 0
     LET ok AS STRING = "false"
+    IF sys = "nemeth" THEN
+        ne = Nemeth.ErrCount()
+    ELSE
+        ne = Ueb.ErrCount()
+    END IF
     IF ne = 0 THEN
         ok = "true"
     END IF
-    RETURN `{{"ok":{ok},{JQ(k)}:{JQ(v)},"errors":{ne},"err":{BrErrJson("nemeth")}}`
+    RETURN `{{"ok":{ok},{JQ(k)}:{JQ(v)},"errors":{ne},"err":{BrErrJson(sys)}}`
 END FUNCTION
 
 --  B2 export:  math source -> canonical LaTeX / presentation MathML.
 --  Reset() clears the ledger + refills tables, then the render runs.
 FUNCTION BrLatex(txt AS STRING) AS STRING
     Nemeth.Reset()
-    RETURN BrTextResult("latex", Nemeth.ToLatex(txt))
+    RETURN BrTextResult("nemeth", "latex", Nemeth.ToLatex(txt))
 END FUNCTION
 
 FUNCTION BrMathml(txt AS STRING) AS STRING
     Nemeth.Reset()
-    RETURN BrTextResult("mathml", Nemeth.ToMathML(txt))
+    RETURN BrTextResult("nemeth", "mathml", Nemeth.ToMathML(txt))
 END FUNCTION
 
 --  B1b back-translation:  Nemeth cells -> canonical source.
 --  FromBrf/FromUni reset the ledger themselves; decode problems
 --  (bad chars, unclosed constructs, stray markers) land in "err".
 FUNCTION BrUnbrf(txt AS STRING) AS STRING
-    RETURN BrTextResult("src", Nemeth.FromBrf(txt))
+    RETURN BrTextResult("nemeth", "src", Nemeth.FromBrf(txt))
 END FUNCTION
 
 FUNCTION BrUnuni(txt AS STRING) AS STRING
-    RETURN BrTextResult("src", Nemeth.FromUni(txt))
+    RETURN BrTextResult("nemeth", "src", Nemeth.FromUni(txt))
+END FUNCTION
+
+--  UEB back-translation:  literary cells -> text.
+FUNCTION BrUebUnbrf(txt AS STRING) AS STRING
+    RETURN BrTextResult("ueb", "src", Ueb.FromBrf(txt))
+END FUNCTION
+
+FUNCTION BrUebUnuni(txt AS STRING) AS STRING
+    RETURN BrTextResult("ueb", "src", Ueb.FromUni(txt))
+END FUNCTION
+
+--  one-call decode dispatcher:  sys = "ueb" | "nemeth" (ueb covers
+--  grade 1 too - uncontracted input just has nothing to expand).
+--  Format sniffs the input:  any U+2800-block char means unicode
+--  braille, otherwise BRF ascii.
+FUNCTION BrDecode(sys AS STRING, txt AS STRING) AS STRING
+    LET i AS S64 = 1
+    LET uni AS S64 = 0
+    LET c AS STRING = ""
+    WHILE i <= LEN(txt)
+        c = MID(txt, i, 1)
+        IF c >= CHR(10240) AND c <= CHR(10495) THEN
+            uni = 1
+        END IF
+        i = i + 1
+    END WHILE
+    IF sys = "nemeth" ORELSE sys = "math" ORELSE sys = "n" THEN
+        IF uni = 1 THEN
+            RETURN BrUnuni(txt)
+        END IF
+        RETURN BrUnbrf(txt)
+    END IF
+    IF uni = 1 THEN
+        RETURN BrUebUnuni(txt)
+    END IF
+    RETURN BrUebUnbrf(txt)
 END FUNCTION
 
 --  one-call dispatcher:  sys = "ueb" | "ueb-g1" | "nemeth"
@@ -208,7 +249,7 @@ FUNCTION BrTranslate(sys AS STRING, txt AS STRING) AS STRING
 END FUNCTION
 
 FUNCTION BrInfo() AS STRING
-    RETURN `{{"app":"braille","engines":["ueb","ueb-g1","nemeth"],"formats":["brf","uni","cells","latex","mathml","src"],"ueb":{{"grade":2,"contractions":"ICEB 10.1-10.9 inventory","gaps":"greedy longest-match; no typeforms/foreign/tables"},"nemeth":{{"grammar":"latex-ish + asciimath superset","spatial":"matrix/cases/binom/stacked/long-division","export":["latex","mathml"],"back":"brf/uni cells -> canonical source (round-trip verified)","gaps":"no array colspecs/display envs"}}`
+    RETURN `{{"app":"braille","engines":["ueb","ueb-g1","nemeth"],"formats":["brf","uni","cells","latex","mathml","src"],"ueb":{{"grade":2,"contractions":"ICEB 10.1-10.9 inventory","back":"brf/uni cells -> literary text (g1+g2; lettersign/contraction expansion)","gaps":"greedy longest-match; no typeforms/foreign/tables"},"nemeth":{{"grammar":"latex-ish + asciimath superset","spatial":"matrix/cases/binom/stacked/long-division","export":["latex","mathml"],"back":"brf/uni cells -> canonical source (round-trip verified)","gaps":"no array colspecs/display envs"}}`
 END FUNCTION
 
 -- ---------------------------------------------------------------
@@ -222,6 +263,9 @@ MCP SERVER "braille"
     TOOL BrMathml AS "br_mathml" DESCRIPTION "math expression -> presentation MathML (B2 export)"
     TOOL BrUnbrf AS "br_unbrf" DESCRIPTION "Nemeth BRF ascii -> canonical math source (back-translation; reads embossed/BRF files)"
     TOOL BrUnuni AS "br_ununi" DESCRIPTION "Nemeth unicode braille -> canonical math source (back-translation)"
+    TOOL BrUebUnbrf AS "br_ueb_unbrf" DESCRIPTION "UEB BRF ascii -> literary text (back-translation; grade 1 and grade 2 input)"
+    TOOL BrUebUnuni AS "br_ueb_ununi" DESCRIPTION "UEB unicode braille -> literary text (back-translation; grade 1 and grade 2 input)"
+    TOOL BrDecode AS "br_decode" DESCRIPTION "braille -> text dispatcher: sys=ueb|nemeth; format auto-detected (unicode braille vs BRF ascii)"
     TOOL BrTranslate AS "br_translate" DESCRIPTION "dispatch by system: sys=ueb|ueb-g1|nemeth, txt=input string"
     RESOURCE "alb://braille/status" -> BrInfo AS "engine status + capability notes"
 END MCP

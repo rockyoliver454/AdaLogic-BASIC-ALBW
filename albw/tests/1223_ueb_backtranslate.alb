@@ -1,0 +1,44 @@
+-- 1223:  UEB back-translation (literary braille -> text)
+--  FromCells/FromBrf/FromUni decode the contracted cell stream back
+--  to plain text:  wordsigns/groupsigns expand, caps/numeric/grade-1
+--  indicators consumed, lettersigns fire before apostrophes and
+--  inside enclosing punctuation.  Forward transcription is one-way
+--  contracted, so the check is decode(cells) = expected text.
+INCLUDE "ueb.albi"
+IMPORT Ueb
+
+PROCEDURE RT(tag AS STRING, s AS STRING)
+    LET t AS STRING = ""
+    CALL Ueb.Transcribe(s)
+    t = Ueb.ToText()
+    PRINT tag | "='" | t | "'"
+END PROCEDURE
+
+BEGIN
+    CALL RT("t1", "the quick brown fox jumps over 13 lazy dogs")
+    CALL RT("t2", "Algebra in middle school")
+    CALL RT("t3", "I will go to the store and buy 2,500 eggs.")
+    CALL RT("t4", "He said knowledge is power")
+
+    --  lettersign rule:  letter bounded by punctuation keeps its
+    --  word meaning (can't/it's/go in braces);  a letter AFTER the
+    --  apostrophe is a plain letter (won't, not *won'that*)
+    CALL RT("t5", CHR(34) | "can't" | CHR(34) | " won't it's 50% off (sale) [now] {go}")
+
+    --  alternate inputs:  unicode braille + BRF ascii
+    CALL Ueb.Transcribe("Algebra in middle school")
+    PRINT "uni->" | Ueb.FromUni(Ueb.ToUni())
+    PRINT "brf->" | Ueb.FromBrf(Ueb.ToBrf())
+
+    --  grade-1 input decodes too (nothing to expand)
+    CALL Ueb.TranscribeG1("plain uncontracted text here")
+    PRINT "g1='" | Ueb.ToText() | "'"
+
+    --  paragraph break survives decode (forward folds \n to a blank
+    --  cell;  the decode side maps LF input back to CHR(10))
+    PRINT "para='" | Ueb.FromUni(CHR(10241) | CHR(10) | CHR(10) | CHR(10250)) | "'"
+
+    --  error ledger:  foreign chars report, never guess
+    LET r AS STRING = Ueb.FromBrf("A~")
+    PRINT "bad='" | r | "' errs=" | Ueb.ErrCount() | " first=" | Ueb.ErrText(0)
+END

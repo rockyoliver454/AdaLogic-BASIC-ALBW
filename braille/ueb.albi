@@ -59,6 +59,33 @@ DECLARE MODULE Ueb
     PROCEDURE Seg(s AS STRING)           -- transcribe, no Reset (mixed)
 
     FUNCTION BrfChar(c AS S64) AS S64    -- brf ascii for a cell
+
+    --  back-translation:  cell stream -> literary text.
+    --  Not a canonical source;  output is plain text (contractions
+    --  expanded, caps/numeric/grade-1 indicators consumed).  Cells
+    --  that double as punctuation resolve by position:  the group
+    --  reading is used only where its mask legally fires.
+    FUNCTION FromCells(n AS S64) AS STRING
+    FUNCTION ToText() AS STRING
+    FUNCTION FromBrf(b AS STRING) AS STRING
+    FUNCTION FromUni(u AS STRING) AS STRING
+    FUNCTION UbIsLet(c AS S64) AS S64
+    FUNCTION UbDigit(c AS S64) AS STRING
+    FUNCTION UbVwlPrev(k AS S64) AS S64
+    FUNCTION UbPkLen(pk AS S64) AS S64
+    FUNCTION UbPkCell(pk AS S64, j AS S64) AS S64
+    FUNCTION UbPkAt(pk AS S64, pos AS S64) AS S64
+    FUNCTION UbPair(c1 AS S64, c2 AS S64) AS STRING
+    FUNCTION UbPunc1(c AS S64, pos AS S64) AS STRING
+    FUNCTION UbUgAt(pos AS S64) AS S64
+    FUNCTION UbUw1(c AS S64) AS S64
+    FUNCTION UbPunctAt(pos AS S64) AS S64
+    FUNCTION UbUiAt(c1 AS S64, c2 AS S64) AS S64
+    PROCEDURE UbOut(t AS STRING)
+    PROCEDURE UbEmitLet(idx AS S64)
+    PROCEDURE UbEmitWord(t AS STRING)
+    PROCEDURE UbWord(w0 AS S64, w1 AS S64)
+    FUNCTION UbInit(n AS S64) AS STRING
 END DECLARE MODULE
 
 MODULE Ueb
@@ -2192,5 +2219,608 @@ CALL Reset()
 CALL Seg(s)
         ug1 = 0
     END PROCEDURE
+
+    -- ---------------------------------------------------------------
+    --  back-translation:  cell stream -> literary text.
+    --  Words split on blank cells;  indicators consumed:  caps (32),
+    --  numeric (60), grade-1 (48).  Contraction cells that double as
+    --  punctuation resolve by position — the group reading is used
+    --  only where its mask legally fires.
+    -- ---------------------------------------------------------------
+    STRICT ub_cell[#U_MAX] AS S64
+    LET ub_nc  AS S64 = 0
+    LET ub_txt AS STRING = ""
+    LET ub_w   AS STRING = ""
+    LET ub_w0  AS S64 = 0
+    LET ub_w1  AS S64 = 0
+    LET ub_cap AS S64 = 0      --  1 = cap next letter, 2 = cap word
+    LET ub_g1  AS S64 = 0      --  grade-1 word mode
+    LET ub_punc AS S64 = 0     --  prev position was boundary (lettersign)
+
+    --  cell -> literary letter index (0-25) or -1
+    FUNCTION UbIsLet(c AS S64) AS S64
+        LET k AS S64 = 0
+        WHILE k < 26
+            IF ulet[k] = c THEN RETURN k END IF
+            k = k + 1
+        END WHILE
+        RETURN 0 - 1
+    END FUNCTION
+
+    --  cell -> digit text under numeric mode:  a-j = 1-0;  plus a
+    --  lenient path for encoders that emit the cell whose BRF ascii
+    --  is the digit (⠔ = '9', ⠖ = '6').
+    FUNCTION UbDigit(c AS S64) AS STRING
+        LET k AS S64 = 0
+        k = UbIsLet(c)
+        IF k >= 0 AND k < 10 THEN
+            IF k = 9 THEN RETURN "0" END IF
+            RETURN CHR(49 + k)
+        END IF
+        IF c >= 0 AND c < 64 THEN
+            IF ubrfa[c] >= 48 AND ubrfa[c] <= 57 THEN
+                RETURN CHR(ubrfa[c])
+            END IF
+        END IF
+        RETURN ""
+    END FUNCTION
+
+    --  preceding-letter check for vwl groupsigns:
+    --  1 = consonant before (ound/ong/ount),  2 = vowel-or-y before
+    --  (bb/cc/ff/gg),  3 = 'n' before (ess)
+    FUNCTION UbVwlPrev(k AS S64) AS S64
+        LET a AS S64 = 0
+        IF LEN(ub_w) = 0 THEN RETURN 0 END IF
+        a = ASC(MID(ub_w, LEN(ub_w), 1))
+        IF a >= 65 AND a <= 90 THEN a = a + 32 END IF
+        IF a < 97 ORELSE a > 122 THEN RETURN 0 END IF
+        IF k = 1 THEN
+            IF a <> 97 AND a <> 101 AND a <> 105 AND a <> 111 AND
+               a <> 117 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF k = 2 THEN
+            IF a = 97 ORELSE a = 101 ORELSE a = 105 ORELSE a = 111
+               ORELSE a = 117 ORELSE a = 121 THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF k = 3 THEN
+            IF a = 110 THEN RETURN 1 END IF
+        END IF
+        RETURN 0
+    END FUNCTION
+
+    PROCEDURE UbOut(t AS STRING)
+        ub_txt = ub_txt | t
+        ub_w = ub_w | t
+    END PROCEDURE
+
+    PROCEDURE UbEmitLet(idx AS S64)
+        IF ub_cap > 0 THEN
+            CALL UbOut(CHR(65 + idx))
+            IF ub_cap = 1 THEN ub_cap = 0 END IF
+        ELSE
+            CALL UbOut(CHR(97 + idx))
+        END IF
+        ub_punc = 0
+    END PROCEDURE
+
+    --  emit a whole expansion;  caps apply to its first letter
+    PROCEDURE UbEmitWord(t AS STRING)
+        LET k AS S64 = 0
+        LET a AS S64 = 0
+        LET ch AS STRING = ""
+        k = 1
+        WHILE k <= LEN(t)
+            ch = MID(t, k, 1)
+            a = ASC(ch)
+            IF a >= 97 AND a <= 122 AND ub_cap > 0 THEN
+                CALL UbOut(CHR(a - 32))
+                IF ub_cap = 1 THEN ub_cap = 0 END IF
+            ELSE
+                CALL UbOut(ch)
+            END IF
+            k = k + 1
+        END WHILE
+        ub_punc = 0
+    END PROCEDURE
+
+    FUNCTION UbPkLen(pk AS S64) AS S64
+        RETURN pk / 1099511627776
+    END FUNCTION
+
+    FUNCTION UbPkCell(pk AS S64, j AS S64) AS S64
+        RETURN (pk / (256 ^ j)) AND 255
+    END FUNCTION
+
+    --  does pack pk match the cells at pos?  bounds vs word end.
+    FUNCTION UbPkAt(pk AS S64, pos AS S64) AS S64
+        LET n AS S64 = 0
+        LET j AS S64 = 0
+        n = UbPkLen(pk)
+        IF pos + n > ub_w1 THEN RETURN 0 END IF
+        WHILE j < n
+            IF ub_cell[pos + j] <> UbPkCell(pk, j) THEN RETURN 0 END IF
+            j = j + 1
+        END WHILE
+        RETURN 1
+    END FUNCTION
+
+    --  two-cell punctuation (prefix + second cell)
+    FUNCTION UbPair(c1 AS S64, c2 AS S64) AS STRING
+        IF c1 = 16 THEN
+            IF c2 = 35 THEN RETURN "(" END IF
+            IF c2 = 28 THEN RETURN ")" END IF
+            IF c2 = 20 THEN RETURN "*" END IF
+            IF c2 = 22 THEN RETURN "+" END IF
+            IF c2 = 54 THEN RETURN "=" END IF
+        ELSEIF c1 = 40 THEN
+            IF c2 = 35 THEN RETURN "[" END IF
+            IF c2 = 28 THEN RETURN "]" END IF
+            IF c2 = 36 THEN RETURN "_" END IF
+            IF c2 = 52 THEN RETURN "%" END IF
+            IF c2 = 33 THEN RETURN "`" END IF
+        ELSEIF c1 = 56 THEN
+            IF c2 = 35 THEN RETURN "{" END IF
+            IF c2 = 28 THEN RETURN "}" END IF
+            IF c2 = 12 THEN RETURN "/" END IF
+            IF c2 = 33 THEN RETURN CHR(92) END IF
+            IF c2 = 57 THEN RETURN "#" END IF
+            IF c2 = 51 THEN RETURN "|" END IF
+        ELSEIF c1 = 8 THEN
+            IF c2 = 35 THEN RETURN "<" END IF
+            IF c2 = 28 THEN RETURN ">" END IF
+            IF c2 = 1 THEN RETURN "@" END IF
+            IF c2 = 47 THEN RETURN "&" END IF
+            IF c2 = 20 THEN RETURN "~" END IF
+            IF c2 = 34 THEN RETURN "^" END IF
+            IF c2 = 14 THEN RETURN "$" END IF
+        END IF
+        RETURN ""
+    END FUNCTION
+
+    --  single-cell punctuation by position
+    FUNCTION UbPunc1(c AS S64, pos AS S64) AS STRING
+        IF c = 2 THEN RETURN "," END IF
+        IF c = 6 THEN RETURN ";" END IF
+        IF c = 18 THEN RETURN ":" END IF
+        IF c = 50 THEN RETURN "." END IF
+        IF c = 22 THEN RETURN "!" END IF
+        IF c = 36 THEN RETURN "-" END IF
+        IF c = 4 THEN RETURN "'" END IF
+        IF c = 52 THEN RETURN CHR(34) END IF
+        IF c = 38 THEN
+            IF pos = ub_w0 THEN RETURN CHR(34) END IF
+            RETURN "?"
+        END IF
+        RETURN ""
+    END FUNCTION
+
+    --  single-cell wordsign (alphabetic / strong) lookup
+    FUNCTION UbUw1(c AS S64) AS S64
+        LET k AS S64 = 0
+        WHILE k < uw_n
+            IF UbPkLen(uw_pk[k]) = 1 AND
+               UbPkCell(uw_pk[k], 0) = c THEN RETURN k END IF
+            k = k + 1
+        END WHILE
+        RETURN 0 - 1
+    END FUNCTION
+
+    --  would cells at pos decode as punctuation?  used for the
+    --  lettersign rule:  a letter bounded by punctuation keeps its
+    --  word meaning (can't = ⠉⠄⠞, it's = ⠭⠄⠎, (it) too).
+    FUNCTION UbPunctAt(pos AS S64) AS S64
+        LET c AS S64 = 0
+        LET nx2 AS S64 = 0
+        LET pp2 AS STRING = ""
+        IF pos >= ub_w1 THEN RETURN 1 END IF
+        c = ub_cell[pos]
+        nx2 = 0 - 1
+        IF pos + 1 < ub_w1 THEN nx2 = ub_cell[pos + 1] END IF
+        IF UbIsLet(c) >= 0 THEN RETURN 0 END IF
+        IF c = 32 ORELSE c = 60 THEN RETURN 0 END IF
+        IF c = 16 ORELSE c = 24 ORELSE c = 56 ORELSE c = 40 ORELSE
+           c = 8 THEN
+            --  prefix cell:  punctuation only if the pair is punct
+            --  AND not a contraction pair
+            IF nx2 < 0 THEN RETURN 0 END IF
+            IF UbUiAt(c, nx2) >= 0 THEN RETURN 0 END IF
+            IF c = 40 AND UbUgAt(pos) >= 0 THEN RETURN 0 END IF
+            IF UbPair(c, nx2) <> "" THEN RETURN 1 END IF
+            RETURN 0
+        END IF
+        IF c = 48 THEN
+            IF UbUgAt(pos) >= 0 THEN RETURN 0 END IF
+            IF nx2 >= 0 AND UbIsLet(nx2) >= 0 THEN RETURN 0 END IF
+            RETURN 1
+        END IF
+        --  a groupsign-legal cell is content, not a boundary
+        IF UbUgAt(pos) >= 0 THEN RETURN 0 END IF
+        IF UbPunc1(c, pos) <> "" THEN RETURN 1 END IF
+        RETURN 0
+    END FUNCTION
+
+    --  initial-letter contraction ui entry for the pair (c1,c2)
+    FUNCTION UbUiAt(c1 AS S64, c2 AS S64) AS S64
+        LET k AS S64 = 0
+        WHILE k < ui_n
+            IF UbPkLen(ui_pk[k]) = 2 AND
+               UbPkCell(ui_pk[k], 0) = c1 AND
+               UbPkCell(ui_pk[k], 1) = c2 THEN
+                RETURN k
+            END IF
+            k = k + 1
+        END WHILE
+        RETURN 0 - 1
+    END FUNCTION
+
+    --  groupsign starting at pos:  longest match whose position mask
+    --  allows it (1=start 2=mid 4=end;  whole-word spans start+end).
+    --  vwl=2 needs a consonant letter already emitted.  Equal-length
+    --  packs prefer the shortest expansion (ceive over eceivin).
+    FUNCTION UbUgAt(pos AS S64) AS S64
+        LET k AS S64 = 0
+        LET best AS S64 = 0
+        LET bl AS S64 = 0
+        LET bt AS S64 = 0
+        LET n AS S64 = 0
+        LET mask AS S64 = 0
+        best = 0 - 1
+        bl = 0
+        bt = 0
+        k = 0
+        WHILE k < ug_n
+            n = UbPkLen(ug_pk[k])
+            IF n > 0 AND UbPkAt(ug_pk[k], pos) = 1 THEN
+                mask = 0
+                IF pos = ub_w0 THEN mask = mask + 1 END IF
+                IF pos + n = ub_w1 THEN mask = mask + 4 END IF
+                IF mask = 0 THEN mask = 2 END IF
+                IF (ug_mask[k] AND mask) <> 0 THEN
+                    IF ug_vwl[k] = 0 ORELSE UbVwlPrev(ug_vwl[k]) = 1 THEN
+                        IF n > bl ORELSE
+                           (n = bl AND LEN(ug_txt[k]) < bt) THEN
+                            best = k
+                            bl = n
+                            bt = LEN(ug_txt[k])
+                        END IF
+                    END IF
+                END IF
+            END IF
+            k = k + 1
+        END WHILE
+        RETURN best
+    END FUNCTION
+
+    --  decode one word slice [w0,w1) of ub_cell into ub_txt
+    PROCEDURE UbWord(w0 AS S64, w1 AS S64)
+        LET pos AS S64 = 0
+        LET n AS S64 = 0
+        LET c AS S64 = 0
+        LET c2 AS S64 = 0
+        LET nx AS S64 = 0
+        LET k AS S64 = 0
+        LET li AS S64 = 0
+        LET dn AS S64 = 0
+        LET done AS S64 = 0
+        LET pp AS STRING = ""
+        LET d AS STRING = ""
+        ub_w0 = w0
+        ub_w1 = w1
+        ub_w = ""
+        ub_g1 = 0
+        ub_punc = 1
+        --  caps indicators:  one = next letter, 2+ = word caps
+        pos = w0
+        WHILE pos < w1 AND ub_cell[pos] = 32
+            pos = pos + 1
+        END WHILE
+        n = pos - w0
+        IF n >= 2 THEN ub_cap = 2
+        ELSEIF n = 1 THEN ub_cap = 1 END IF
+        IF pos >= w1 THEN RETURN END IF
+        --  whole-word match:  wordsigns + whole-word shortforms
+        IF w1 - pos <= 5 THEN
+            k = 0
+            WHILE k < uw_n
+                IF UbPkLen(uw_pk[k]) = w1 - pos AND
+                   UbPkAt(uw_pk[k], pos) = 1 THEN
+                    CALL UbEmitWord(uw_txt[k])
+                    RETURN
+                END IF
+                k = k + 1
+            END WHILE
+        END IF
+        --  grade-1 word indicator at word start
+        IF ub_cell[pos] = 48 THEN
+            ub_g1 = 1
+            pos = pos + 1
+            IF pos < w1 AND ub_cell[pos] = 48 THEN
+                pos = pos + 1
+            END IF
+        END IF
+        WHILE pos < w1
+            c = ub_cell[pos]
+            nx = 0 - 1
+            IF pos + 1 < w1 THEN nx = ub_cell[pos + 1] END IF
+            IF c = 32 THEN
+                IF nx = 32 THEN
+                    ub_cap = 2
+                    pos = pos + 2
+                ELSE
+                    ub_cap = 1
+                    pos = pos + 1
+                END IF
+            ELSEIF c = 60 THEN
+                --  numeric run:  a-j digits;  ⠂/⠲ separators when a
+                --  digit follows;  BRF-shaped digits leniently.
+                pos = pos + 1
+                dn = 0
+                done = 0
+                WHILE pos < w1 AND done = 0
+                    c2 = ub_cell[pos]
+                    li = UbIsLet(c2)
+                    nx = 0 - 1
+                    IF pos + 1 < w1 THEN nx = ub_cell[pos + 1] END IF
+                    IF li >= 0 AND li < 10 THEN
+                        IF li = 9 THEN CALL UbOut("0")
+                        ELSE CALL UbOut(CHR(49 + li)) END IF
+                        dn = dn + 1
+                        pos = pos + 1
+                    ELSEIF (c2 = 2 ORELSE c2 = 50) AND nx >= 0 AND
+                           UbIsLet(nx) >= 0 AND UbIsLet(nx) < 10 THEN
+                        IF c2 = 2 THEN CALL UbOut(",")
+                        ELSE CALL UbOut(".") END IF
+                        pos = pos + 1
+                    ELSE
+                        d = UbDigit(c2)
+                        IF d <> "" AND c2 <> 2 AND c2 <> 50 THEN
+                            CALL UbOut(d)
+                            dn = dn + 1
+                            pos = pos + 1
+                        ELSE
+                            done = 1
+                        END IF
+                    END IF
+                END WHILE
+                IF dn = 0 THEN
+CALL UErr("cells: number sign with no digits")
+                END IF
+                ub_punc = 0
+            ELSEIF c = 48 THEN
+                --  ⠰x:  final-letter groupsign where it legally fires,
+                --  else the grade-1 symbol indicator (literal letter).
+                k = 0 - 1
+                IF ub_g1 = 0 AND nx >= 0 THEN k = UbUgAt(pos) END IF
+                IF k >= 0 THEN
+                    CALL UbEmitWord(ug_txt[k])
+                    pos = pos + UbPkLen(ug_pk[k])
+                ELSEIF nx >= 0 AND UbIsLet(nx) >= 0 THEN
+                    CALL UbEmitLet(UbIsLet(nx))
+                    pos = pos + 2
+                ELSEIF nx = 48 THEN
+                    ub_g1 = 1
+                    pos = pos + 2
+                ELSE
+CALL UErr("cells: bad grade-1 indicator")
+                    pos = pos + 1
+                END IF
+            ELSEIF c = 16 ORELSE c = 24 ORELSE c = 56 THEN
+                k = 0 - 1
+                IF ub_g1 = 0 AND nx >= 0 THEN k = UbUiAt(c, nx) END IF
+                IF k >= 0 THEN
+                    CALL UbEmitWord(ui_txt[k])
+                    pos = pos + 2
+                ELSE
+                    pp = ""
+                    IF nx >= 0 THEN pp = UbPair(c, nx) END IF
+                    IF pp <> "" THEN
+                        CALL UbOut(pp)
+                        ub_punc = 1
+                        pos = pos + 2
+                    ELSE
+CALL UErr("cells: bad dot-prefix cell " | c)
+                        pos = pos + 1
+                    END IF
+                END IF
+            ELSEIF c = 40 ORELSE c = 8 THEN
+                k = 0 - 1
+                IF c = 40 AND ub_g1 = 0 AND nx >= 0 THEN
+                    k = UbUgAt(pos)
+                END IF
+                IF k >= 0 THEN
+                    CALL UbEmitWord(ug_txt[k])
+                    pos = pos + UbPkLen(ug_pk[k])
+                ELSE
+                    pp = ""
+                    IF nx >= 0 THEN pp = UbPair(c, nx) END IF
+                    IF pp <> "" THEN
+                        CALL UbOut(pp)
+                        ub_punc = 1
+                        pos = pos + 2
+                    ELSE
+CALL UErr("cells: bad prefix cell " | c)
+                        pos = pos + 1
+                    END IF
+                END IF
+            ELSE
+                k = 0 - 1
+                IF ub_g1 = 0 THEN k = UbUgAt(pos) END IF
+                IF k >= 0 THEN
+                    CALL UbEmitWord(ug_txt[k])
+                    pos = pos + UbPkLen(ug_pk[k])
+                ELSE
+                    li = UbIsLet(c)
+                    IF li >= 0 THEN
+                        --  lettersign rule:  a letter bounded by
+                        --  punctuation keeps its word meaning
+                        --  (can't = ⠉⠄⠞, it's = ⠭⠄⠎, (it) too)
+                        k = 0 - 1
+                        IF ub_g1 = 0 AND ub_punc = 1 AND
+                           UbPunctAt(pos + 1) = 1 THEN
+                            k = UbUw1(c)
+                        END IF
+                        IF k >= 0 THEN
+                            CALL UbEmitWord(uw_txt[k])
+                        ELSE
+                            CALL UbEmitLet(li)
+                        END IF
+                        pos = pos + 1
+                    ELSE
+                        pp = UbPunc1(c, pos)
+                        IF pp <> "" THEN
+                            CALL UbOut(pp)
+                            --  an apostrophe continues the word
+                            --  (can't / it's):  not a boundary
+                            IF c <> 4 THEN ub_punc = 1 END IF
+                            pos = pos + 1
+                        ELSE
+CALL UErr("cells: unmapped cell " | c)
+                            pos = pos + 1
+                        END IF
+                    END IF
+                END IF
+            END IF
+        END WHILE
+    END PROCEDURE
+
+    --  run the reader over ub_cell[0..n-1]
+    FUNCTION UbInit(n AS S64) AS STRING
+        LET i AS S64 = 0
+        LET w0 AS S64 = 0
+        LET seen AS S64 = 0
+CALL FillUTabs()
+        ub_nc = n
+        IF ub_nc > #U_MAX THEN ub_nc = #U_MAX END IF
+        ub_txt = ""
+        ub_cap = 0
+        ub_g1 = 0
+        i = 0
+        w0 = 0
+        seen = 0
+        WHILE i <= ub_nc
+            IF i = ub_nc ORELSE ub_cell[i] = 0 ORELSE
+               ub_cell[i] = #U_LF THEN
+                IF i > w0 THEN
+                    IF seen = 1 THEN ub_txt = ub_txt | " " END IF
+                    CALL UbWord(w0, i)
+                    seen = 1
+                END IF
+                IF i < ub_nc AND ub_cell[i] = #U_LF THEN
+                    ub_txt = ub_txt | CHR(10)
+                    seen = 0
+                END IF
+                w0 = i + 1
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN ub_txt
+    END FUNCTION
+
+    --  cells -> literary text.  Reads ucell[0..n-1].
+    FUNCTION FromCells(n AS S64) AS STRING
+        LET i AS S64 = 0
+        uen = 0
+        i = 0
+        WHILE i < n AND i < #U_MAX
+            ub_cell[i] = ucell[i]
+            i = i + 1
+        END WHILE
+        RETURN UbInit(i)
+    END FUNCTION
+
+    --  current engine transcript -> text
+    FUNCTION ToText() AS STRING
+        RETURN FromCells(ucnt)
+    END FUNCTION
+
+    --  BRF ascii -> text:  reverse lookup through ubrfa[].
+    FUNCTION FromBrf(b AS STRING) AS STRING
+        LET i AS S64 = 0
+        LET n AS S64 = 0
+        LET ch AS STRING = ""
+        LET v AS S64 = 0
+        LET c AS S64 = 0
+        LET hit AS S64 = 0
+CALL FillUTabs()
+        n = LEN(b)
+        ub_nc = 0
+        uen = 0
+        i = 1
+        WHILE i <= n
+            ch = MID(b, i, 1)
+            v = ASC(ch)
+            IF v = 10 THEN
+                IF ub_nc < #U_MAX THEN
+                    ub_cell[ub_nc] = #U_LF
+                    ub_nc = ub_nc + 1
+                END IF
+            ELSE
+                hit = 0 - 1
+                c = 0
+                WHILE c < 64
+                    IF ubrfa[c] = v THEN hit = c END IF
+                    c = c + 1
+                END WHILE
+                IF hit >= 0 THEN
+                    IF ub_nc < #U_MAX THEN
+                        ub_cell[ub_nc] = hit
+                        ub_nc = ub_nc + 1
+                    END IF
+                ELSEIF ch <> CHR(9) AND ch <> CHR(13) THEN
+CALL UErr("FromBrf: bad char '" | ch | "'")
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN UbInit(ub_nc)
+    END FUNCTION
+
+    --  unicode braille (U+2800 block) -> text.  ASCII space is the
+    --  blank cell;  tab/CR are paste junk;  anything else reports.
+    FUNCTION FromUni(u AS STRING) AS STRING
+        LET i AS S64 = 0
+        LET n AS S64 = 0
+        LET ch AS STRING = ""
+        LET c AS S64 = 0
+        LET hit AS S64 = 0
+CALL FillUTabs()
+        n = LEN(u)
+        ub_nc = 0
+        uen = 0
+        i = 1
+        WHILE i <= n
+            ch = MID(u, i, 1)
+            IF ch = CHR(10) THEN
+                IF ub_nc < #U_MAX THEN
+                    ub_cell[ub_nc] = #U_LF
+                    ub_nc = ub_nc + 1
+                END IF
+            ELSE
+                hit = 0 - 1
+                c = 0
+                WHILE c < 64
+                    IF ch = CHR(10240 + c) THEN hit = c END IF
+                    c = c + 1
+                END WHILE
+                IF hit >= 0 THEN
+                    IF ub_nc < #U_MAX THEN
+                        ub_cell[ub_nc] = hit
+                        ub_nc = ub_nc + 1
+                    END IF
+                ELSEIF ch = " " THEN
+                    IF ub_nc < #U_MAX THEN
+                        ub_cell[ub_nc] = 0
+                        ub_nc = ub_nc + 1
+                    END IF
+                ELSEIF ch <> CHR(9) AND ch <> CHR(13) THEN
+CALL UErr("FromUni: non-braille char '" | ch | "'")
+                END IF
+            END IF
+            i = i + 1
+        END WHILE
+        RETURN UbInit(ub_nc)
+    END FUNCTION
 
 END MODULE

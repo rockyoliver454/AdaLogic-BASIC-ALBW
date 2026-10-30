@@ -1336,6 +1336,12 @@ package body Emit_Native_TypeScript is
                return VK_F64;
             end if;
             return VK_Number;
+         when AST_Const_Ref =>
+            --  #NAME defines emit `let X: number = <int>` (Sym_Const is
+            --  registered VK_Number at AST_Const_Decl). Without this the
+            --  equality gate saw VK_Unknown and emitted a raw `===` — a
+            --  BigInt64Array element `===` number constant never matches.
+            return VK_Number;
          when AST_Unary_Minus =>
             return Infer_Expr_Kind (Node.Left_Child);
          when AST_BinOp =>
