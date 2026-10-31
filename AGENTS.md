@@ -36,8 +36,18 @@ output.
 
 ## Portability (albw runs on POSIX)
 
-ALBW passes its full suite on **Windows and Linux** (GNAT 15 / 14.2
-verified; FreeBSD/macOS are the same POSIX path).
+ALBW passes its full suite on **Windows, Linux, and FreeBSD** (GNAT 15 /
+14.2 / 12.4 verified; macOS is the same POSIX path).
+
+- **FreeBSD notes** (verified on 15.1-RELEASE): the Ada toolchain is
+  `lang/gnat12` — binaries live in **`/usr/local/gnat12/bin`**, not on
+  PATH (`export PATH=/usr/local/gnat12/bin:$PATH` before gprbuild).
+  `npm i -g typescript` now lands **typescript-go 7.x** (native binary,
+  `tsc --version` 7.0.2) — output is byte-identical to classic tsc and
+  it accepts the same flags. `pkg install gnat12 gprbuild node22
+  npm-node22 git` is the whole toolchain. `albw --tsc` needs a
+  `tsconfig.json` beside the output (only `--build`/`--library` write
+  one); without it, pass tsc flags directly.
 
 - Host constants live in **`src/CORE/alb_platform.*`**
   (`Dir_Sep`/`Path_Sep`/`On_Windows`/`Is_List_Sep`/`Temp_Dir`). Never

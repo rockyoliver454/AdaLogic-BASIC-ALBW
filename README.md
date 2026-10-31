@@ -11,7 +11,7 @@ Node runs.
 | | |
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
-| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` |
+| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` · `albw-release-0.1.0-freebsd-x64.tar.gz` |
 | **Suite** | 1,166 numbered fixtures (`albw/tests/`) — PASS=1078 Linux / PASS=1078 Windows |
 
 ## Layout
