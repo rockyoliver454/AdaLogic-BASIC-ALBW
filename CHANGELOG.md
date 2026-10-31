@@ -1,5 +1,22 @@
 # Changelog — ALBW
 
+## Unreleased
+
+- **FreeBSD port**: full suite green on FreeBSD 15.1 (GNAT 12.4 via
+  `lang/gnat12`) — zero code changes over the Linux POSIX path.
+  FreeBSD release tarball ships the native `tsc` (typescript-go 7.x,
+  byte-identical output).
+- **UEB back-translation**: `Ueb.FromCells`/`FromBrf`/`FromUni` +
+  `BrDecode`/`br_ueb_unbrf`/`br_ueb_ununi`/`br_decode` tools — Grade
+  1/2 literary braille → text with contraction expansion, indicators,
+  lettersign/wordsign punctuation semantics, paragraph preservation.
+- **Emitter fix**: `AST_Const_Ref` now infers `VK_Number` — strict
+  `BigInt64Array` cells compared against `#` constants no longer
+  emit raw `===` (silently never-equal). Fixture 1223 covers it.
+- **Nemeth decode glue guard**: `\name` symbol packs followed by a
+  letter cell decode space-delimited (TeX rule); `FromUni` accepts
+  ASCII space as the blank cell, skips tab/CR, names foreign chars.
+
 ## 0.1.0 — dedicated repository
 
 - First ALBW-dedicated repo: compiler src + 1,166-fixture suite +

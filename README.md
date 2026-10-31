@@ -12,7 +12,7 @@ Node runs.
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
 | **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` · `albw-release-0.1.0-freebsd-x64.tar.gz` |
-| **Suite** | 1,166 numbered fixtures (`albw/tests/`) — PASS=1078 Linux / PASS=1078 Windows |
+| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, and FreeBSD** |
 
 ## Layout
 
@@ -36,12 +36,20 @@ release/              albw / albw.cmd launchers + packaging scripts
 
 ## Build
 
-GNAT + GPRbuild (any modern toolchain: GNAT 14+ verified on Linux,
-GNAT 15 on Windows):
+GNAT + GPRbuild — verified toolchains:
+
+| platform | compiler | notes |
+|---|---|---|
+| Windows | GNAT 15 | `bin/albw.exe` |
+| Linux (Debian 13) | GNAT 14.2 | `bin/albw` |
+| FreeBSD 15.1 | GNAT 12.4 (`pkg install gnat12`) | binaries in `/usr/local/gnat12/bin` |
 
 ```text
 gprbuild -P albw.gpr albw        →  bin/albw  (bin/albw.exe on Windows)
 ```
+
+Runtime needs Node + tsc (`pkg install node22 npm-node22` on FreeBSD,
+then `npm i -g typescript`).
 
 ## Use
 
@@ -81,10 +89,11 @@ python3 albw/runnerw.py --from 1 --to 1222    # full suite
 `braille/braille.alb` is a production MCP server (stdin JSON-RPC):
 
 `br_ueb` · `br_ueb_g1` · `br_nemeth` · `br_translate` · `br_latex` ·
-`br_mathml` · `br_unbrf` · `br_ununi` — forward transcription
-(liblouis-verified: 13,747-word stratified + 12,000-word corpora at
-100%) and verified bidirectional Nemeth
-(`Transcribe(FromCells(x)) ≡ Transcribe(x)`).
+`br_mathml` · `br_unbrf` · `br_ununi` · `br_ueb_unbrf` · `br_ueb_ununi`
+· `br_decode` — forward transcription (liblouis-verified: 13,747-word
+stratified + 12,000-word corpora at 100%), verified bidirectional
+Nemeth (`Transcribe(FromCells(x)) ≡ Transcribe(x)`), and UEB
+back-translation (Grade 1/2 literary → text, contractions expanded).
 
 ```text
 echo {"jsonrpc":"2.0","id":1,"method":"tools/call",
