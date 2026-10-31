@@ -8,6 +8,11 @@ compiles `.alb` source to **TypeScript**, then `tsc` → CommonJS → Node —
 or browser via the `--build` HTML shell. One source, every OS where
 Node runs.
 
+> **RockyBASIC → AdaLog DSL → AdaLogic BASIC → ALBW.** ALBW began as
+> the fourth backend — after FASM, C, and the FASM-16 DOS/8088
+> emitter — and grew into the primary, day-to-day ALB compiler.
+> See [HISTORY.md](HISTORY.md).
+
 | | |
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
