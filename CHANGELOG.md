@@ -11,6 +11,11 @@
   pkgsrc has no `gprbuild` binary; the build uses `gnatmake` with
   `-aI` source paths (see README). Release tarball bundles node26 +
   typescript with a `tsc` wrapper (bin symlinks don't resolve).
+- **OpenBSD port**: full suite green on OpenBSD 8.0 (1,079 PASS /
+  0 FAIL, GNAT 16.1 via `pkg_add gnat`) — zero code changes.
+  OpenBSD's `wxallowed` mount model means no relocatable bundled
+  node — the release ships albw + stdlib only and relies on
+  `pkg_add node npm` (+ `npm i -g typescript`).
 - **UEB back-translation**: `Ueb.FromCells`/`FromBrf`/`FromUni` +
   `BrDecode`/`br_ueb_unbrf`/`br_ueb_ununi`/`br_decode` tools — Grade
   1/2 literary braille → text with contraction expansion, indicators,

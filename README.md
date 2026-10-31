@@ -11,8 +11,8 @@ Node runs.
 | | |
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
-| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` · `albw-release-0.1.0-freebsd-x64.tar.gz` · `albw-release-0.1.0-netbsd-x64.tar.gz` |
-| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, FreeBSD, and NetBSD** |
+| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-{linux,freebsd,netbsd,openbsd}-x64.tar.gz` |
+| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, FreeBSD, NetBSD, and OpenBSD** |
 
 ## Layout
 
@@ -44,12 +44,13 @@ GNAT + GPRbuild — verified toolchains:
 | Linux (Debian 13) | GNAT 14.2 | `bin/albw` |
 | FreeBSD 15.1 | GNAT 12.4 (`pkg install gnat12`) | binaries in `/usr/local/gnat12/bin` |
 | NetBSD 11.0 | GNAT 14.3 (`pkg_add gcc14-gnat`) | binaries in `/usr/pkg/gcc14-gnat/bin`; no gprbuild — build via `gnatmake` (below) |
+| OpenBSD 8.0 | GNAT 16.1 (`pkg_add gnat`) | on PATH as `gnatmake`; no gprbuild — same `gnatmake` recipe |
 
 ```text
 gprbuild -P albw.gpr albw        →  bin/albw  (bin/albw.exe on Windows)
 ```
 
-NetBSD's pkgsrc ships no `gprbuild` binary — `gnatmake` substitutes
+The BSDs ship no `gprbuild` binary — `gnatmake` substitutes
 (the `.gpr` only declares source dirs + main):
 
 ```text
@@ -59,7 +60,12 @@ gnatmake src/albw.adb -aIsrc -aIsrc/COMPILER -aIsrc/CORE -aIsrc/EMITTER \
 ```
 
 Runtime needs Node + tsc (`pkg install node22 npm-node22` on FreeBSD,
-`pkg_add nodejs` on NetBSD, then `npm i -g typescript`).
+`pkg_add nodejs` on NetBSD, `pkg_add node npm` on OpenBSD — or
+`pkg_add typescript` there — then `npm i -g typescript`).
+
+**OpenBSD note**: a bundled/relocatable node cannot run outside a
+`wxallowed` filesystem (`/usr/local` by default) — the OpenBSD
+release ships no `deps/`; install node/tsc from packages.
 
 ## Use
 

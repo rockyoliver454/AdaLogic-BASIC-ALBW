@@ -36,8 +36,9 @@ output.
 
 ## Portability (albw runs on POSIX)
 
-ALBW passes its full suite on **Windows, Linux, FreeBSD, and NetBSD**
-(GNAT 15 / 14.2 / 12.4 / 14.3 verified; macOS is the same POSIX path).
+ALBW passes its full suite on **Windows, Linux, FreeBSD, NetBSD, and
+OpenBSD** (GNAT 15 / 14.2 / 12.4 / 14.3 / 16.1 verified; macOS is the
+same POSIX path).
 
 - **FreeBSD notes** (verified on 15.1-RELEASE): the Ada toolchain is
   `lang/gnat12` — binaries live in **`/usr/local/gnat12/bin`**, not on
@@ -60,6 +61,18 @@ ALBW passes its full suite on **Windows, Linux, FreeBSD, and NetBSD**
   tsc 7 rejects `module:"none"`/`outFile` in generated tsconfigs (same
   `--build` caveat as FreeBSD) and ignores symlinks when resolving
   `import` in bin shims — the release packages a `tsc` wrapper script.
+
+- **OpenBSD notes** (verified on 8.0 amd64): `pkg_add gnat node git
+  python` — GNAT 16.1 lands on PATH as `gnatmake` (egcc driver); no
+  gprbuild, same `gnatmake -aI` recipe as NetBSD. `doas` ships but is
+  unconfigured by default — `su - root -c` needs a pty. **wxallowed**:
+  node/V8 can only execute from a `wxallowed` filesystem (`/usr/local`
+  by default) — a relocatable bundled node Trace/BPT-traps when run
+  from `/home`, so the OpenBSD release ships no `deps/` and relies on
+  `pkg_add node npm` (+ `npm i -g typescript` or `pkg_add
+  typescript`). Linker prints cosmetic `sprintf`/`strcpy` warnings
+  from libgnat.a — normal OpenBSD ld noise. `typescript-6.0.3` is a
+  package if npm's 7.x is unwanted.
 
 - Host constants live in **`src/CORE/alb_platform.*`**
   (`Dir_Sep`/`Path_Sep`/`On_Windows`/`Is_List_Sep`/`Temp_Dir`). Never

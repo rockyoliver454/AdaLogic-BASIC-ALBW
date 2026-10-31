@@ -1,14 +1,14 @@
 # ALBW Roadmap
 
 The feature-complete ALB backend — first-class on **Windows, Linux,
-FreeBSD, and NetBSD** today; macOS rides the same POSIX path
-(toolchain exercise, no code work expected).
+FreeBSD, NetBSD, and OpenBSD** today; macOS rides the same POSIX
+path (toolchain exercise, no code work expected).
 
 ## Now
 
 - **Repo independence**: ALBW sources, suite, stdlib, braille engines
   live here; the monorepo keeps the other 21 backends.
-- **Releases**: `albw-release-VERSION-{win,linux,freebsd,netbsd}-x64` bundles —
+- **Releases**: `albw-release-VERSION-{win,linux,freebsd,netbsd,openbsd}-x64` bundles —
   compiler + stdlib + Node/tsc toolchain + braille suite.
 
 ## Near
