@@ -11,8 +11,8 @@ Node runs.
 | | |
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
-| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` · `albw-release-0.1.0-freebsd-x64.tar.gz` |
-| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, and FreeBSD** |
+| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-linux-x64.tar.gz` · `albw-release-0.1.0-freebsd-x64.tar.gz` · `albw-release-0.1.0-netbsd-x64.tar.gz` |
+| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, FreeBSD, and NetBSD** |
 
 ## Layout
 
@@ -30,7 +30,7 @@ albw/
 stdlib/               .albi stdlib modules (alb_str/fmt/io/ds/sort/conv + ueb + nemeth)
 malbr-testing/lib/    mathkit.albi (ALB_LIB member)
 braille/              production braille engine: UEB G1/G2 + Nemeth,
-                      MCP driver with 8 tools, liblouis-diff harnesses
+                      MCP driver with 11 tools, liblouis-diff harnesses
 release/              albw / albw.cmd launchers + packaging scripts
 ```
 
@@ -43,13 +43,23 @@ GNAT + GPRbuild — verified toolchains:
 | Windows | GNAT 15 | `bin/albw.exe` |
 | Linux (Debian 13) | GNAT 14.2 | `bin/albw` |
 | FreeBSD 15.1 | GNAT 12.4 (`pkg install gnat12`) | binaries in `/usr/local/gnat12/bin` |
+| NetBSD 11.0 | GNAT 14.3 (`pkg_add gcc14-gnat`) | binaries in `/usr/pkg/gcc14-gnat/bin`; no gprbuild — build via `gnatmake` (below) |
 
 ```text
 gprbuild -P albw.gpr albw        →  bin/albw  (bin/albw.exe on Windows)
 ```
 
+NetBSD's pkgsrc ships no `gprbuild` binary — `gnatmake` substitutes
+(the `.gpr` only declares source dirs + main):
+
+```text
+mkdir -p obj bin
+gnatmake src/albw.adb -aIsrc -aIsrc/COMPILER -aIsrc/CORE -aIsrc/EMITTER \
+        -aIsrc/MATH -aIsrc/SECURITY -aIsrc/TYPES -D obj -o bin/albw
+```
+
 Runtime needs Node + tsc (`pkg install node22 npm-node22` on FreeBSD,
-then `npm i -g typescript`).
+`pkg_add nodejs` on NetBSD, then `npm i -g typescript`).
 
 ## Use
 

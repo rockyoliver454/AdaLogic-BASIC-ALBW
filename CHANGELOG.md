@@ -6,6 +6,11 @@
   `lang/gnat12`) — zero code changes over the Linux POSIX path.
   FreeBSD release tarball ships the native `tsc` (typescript-go 7.x,
   byte-identical output).
+- **NetBSD port**: full suite green on NetBSD 11.0 (1,079 PASS /
+  0 FAIL, GNAT 14.3 via `pkg_add gcc14-gnat`) — zero code changes.
+  pkgsrc has no `gprbuild` binary; the build uses `gnatmake` with
+  `-aI` source paths (see README). Release tarball bundles node26 +
+  typescript with a `tsc` wrapper (bin symlinks don't resolve).
 - **UEB back-translation**: `Ueb.FromCells`/`FromBrf`/`FromUni` +
   `BrDecode`/`br_ueb_unbrf`/`br_ueb_ununi`/`br_decode` tools — Grade
   1/2 literary braille → text with contraction expansion, indicators,

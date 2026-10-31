@@ -36,8 +36,8 @@ output.
 
 ## Portability (albw runs on POSIX)
 
-ALBW passes its full suite on **Windows, Linux, and FreeBSD** (GNAT 15 /
-14.2 / 12.4 verified; macOS is the same POSIX path).
+ALBW passes its full suite on **Windows, Linux, FreeBSD, and NetBSD**
+(GNAT 15 / 14.2 / 12.4 / 14.3 verified; macOS is the same POSIX path).
 
 - **FreeBSD notes** (verified on 15.1-RELEASE): the Ada toolchain is
   `lang/gnat12` — binaries live in **`/usr/local/gnat12/bin`**, not on
@@ -48,6 +48,18 @@ ALBW passes its full suite on **Windows, Linux, and FreeBSD** (GNAT 15 /
   npm-node22 git` is the whole toolchain. `albw --tsc` needs a
   `tsconfig.json` beside the output (only `--build`/`--library` write
   one); without it, pass tsc flags directly.
+
+- **NetBSD notes** (verified on 11.0-RELEASE amd64): the Ada toolchain
+  is `pkgsrc gcc14-gnat` — binaries live in **`/usr/pkg/gcc14-gnat/bin`**.
+  **No `gprbuild` binary exists in pkgsrc** — `gnatmake` substitutes:
+  `gnatmake src/albw.adb -aIsrc -aIsrc/COMPILER -aIsrc/CORE
+  -aIsrc/EMITTER -aIsrc/MATH -aIsrc/SECURITY -aIsrc/TYPES -D obj
+  -o bin/albw`. `pkg_add gcc14-gnat git nodejs python314` +
+  `npm i -g typescript` is the whole toolchain (node26, tsc 7.0.2 —
+  byte-identical `braille.js` SHA256). No sudo — `su` (needs a pty).
+  tsc 7 rejects `module:"none"`/`outFile` in generated tsconfigs (same
+  `--build` caveat as FreeBSD) and ignores symlinks when resolving
+  `import` in bin shims — the release packages a `tsc` wrapper script.
 
 - Host constants live in **`src/CORE/alb_platform.*`**
   (`Dir_Sep`/`Path_Sep`/`On_Windows`/`Is_List_Sep`/`Temp_Dir`). Never

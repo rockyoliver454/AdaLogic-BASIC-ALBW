@@ -33,7 +33,7 @@ console.log('=== braille mcp smoke ===');
 //  tools/list
 g.__mcp('{"jsonrpc":"2.0","id":1,"method":"tools/list"}');
 const names = g.__mcpLast().result.tools.map(t => t.name).sort();
-ok(names.join(',') === 'br_nemeth,br_translate,br_ueb,br_ueb_g1',
+ok(names.join(',') === 'br_decode,br_latex,br_mathml,br_nemeth,br_translate,br_ueb,br_ueb_g1,br_ueb_unbrf,br_ueb_ununi,br_unbrf,br_ununi',
    'tools/list', names.join(','));
 
 //  ueb g2 - the showcase sentence
