@@ -19,7 +19,7 @@ BEGIN
     AddNode("library", -1, "")
     AddNode("book", 0, "")
     AddNode("title", 1, "Rosetta ALB")
-    AddNode("author", 1, "Devin")
+    AddNode("author", 1, "Rocky")
     AddNode("book", 0, "")
     AddNode("title", 4, "Compiler Craft")
 

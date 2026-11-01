@@ -38,13 +38,13 @@ BEGIN
     LET ti AS S64 = AddTag("title", "", bk)
     txt[ti] = "Rosetta ALB"
     LET au AS S64 = AddTag("author", "", bk)
-    txt[au] = "Devin"
+    txt[au] = "Rocky"
     LET bk2 AS S64 = AddTag("book", " id=" | CHR(34) | "2" | CHR(34) | "", lib)
     LET ti2 AS S64 = AddTag("title", "", bk2)
     txt[ti2] = "Compiler Craft"
 
     PRINT "<library>"
-    PRINT "  <book id=" | CHR(34) | "1" | CHR(34) | "><title>Rosetta ALB</title><author>Devin</author></book>"
+    PRINT "  <book id=" | CHR(34) | "1" | CHR(34) | "><title>Rosetta ALB</title><author>Rocky</author></book>"
     PRINT "  <book id=" | CHR(34) | "2" | CHR(34) | "><title>Compiler Craft</title></book>"
     PRINT "</library>"
     PRINT "nodes=" | (nn - 1)

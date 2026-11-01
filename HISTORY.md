@@ -46,15 +46,17 @@ written entirely by hand, before assistants were a real part of the
 craft. **AdaLogic BASIC has had AI coding assistance from the
 get-go**, and each generation of tooling has left its mark:
 
-- **GitHub Copilot** — the earliest assisted work, where the first
-  AdaLogic BASIC emitters took shape.
-- **Gemini** — continued emitter and language expansion.
-- **Cursor, Claude, and ChatGPT** — used in different situations as
-  the compiler, suite, and runtime grew: backend work, stdlib,
-  fixtures, debugging.
-- **Devin** — the current phase: the dedicated ALBW repository, the
-  POSIX ports, the UEB back-translation work, silent-miscompile
-  fixes, and the five-platform verification effort.
+- **GitHub Copilot** — assistance provided for the earliest work,
+  where the first AdaLogic BASIC emitters took shape.
+- **Gemini** — assistance provided for continued emitter and
+  language expansion.
+- **Cursor, Claude, and ChatGPT** — assistance provided in different
+  situations as the compiler, suite, and runtime grew: backend work,
+  stdlib, fixtures, debugging.
+- **Devin** — assistance provided for the current phase: the
+  dedicated ALBW repository, the POSIX ports, the UEB
+  back-translation work, silent-miscompile fixes, and the
+  five-platform verification effort.
 
 The compiler itself is written in Ada 2012 and builds with GNAT —
 no AI toolchain in the artifact, only in the process.
