@@ -1,0 +1,45 @@
+-- 1228 | ENABLE WASM extended surface: (type) decls + bare type refs
+-- on funcs (implicit params occupy local indices), mutable/immutable
+-- globals, (start) init, select, br_table with named labels, folded
+-- if with (result)/else, and trunc/convert numeric casts.
+ENABLE WASM
+(module
+  (type $bin (func (param i32 i32) (result i32)))
+  (global $g (mut i32) (i32.const 5))
+  (global $h i32 (i32.const 7))
+  (func $init
+    i32.const 42  global.set $g)
+  (start $init)
+  (func (export "gsum") (result i32)
+    global.get $g  global.get $h  i32.add)
+  (func $typed (export "typed") (type $bin)
+    local.get 0  local.get 1  i32.sub)
+  (func (export "sel") (param $c i32) (result i32)
+    i32.const 10  i32.const 20  local.get $c  select)
+  (func (export "brt") (param $x i32) (result i32)
+    block $a
+      block $b
+        local.get $x  br_table $a $b
+      end
+      i32.const 100  return
+    end
+    i32.const 200)
+  (func (export "fif") (param $x i32) (result i32)
+    (if (result i32) (i32.gt_s (local.get $x) (i32.const 0))
+      (then (i32.const 1))
+      (else (i32.const -1))))
+  (func (export "cvt") (param $x f64) (result i32)
+    local.get $x  i32.trunc_f64_s)
+  (func (export "fc") (param $x i32) (result f64)
+    local.get $x  f64.convert_i32_s))
+END ENABLE
+
+BEGIN
+    PRINT "gsum=" | gsum()
+    PRINT "typed=" | typed(50, 8)
+    PRINT "sel=" | sel(1) | "," | sel(0)
+    PRINT "brt=" | brt(0) | "," | brt(1)
+    PRINT "fif=" | fif(9) | "," | fif(-9)
+    PRINT "cvt=" | cvt(3.99)
+    PRINT "fc=" | fc(7)
+END

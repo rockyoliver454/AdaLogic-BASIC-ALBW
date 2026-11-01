@@ -108,6 +108,17 @@ same POSIX path).
   numeric routine).
 - `MCP_Scratch` lives under `Alb_Platform.Temp_Dir` (`TEMP`→`TMP`→cwd
   win; `TMPDIR`→`/tmp` POSIX).
+- **`ENABLE WASM ... END ENABLE`** holds verbatim WAT; `wat_assembler`
+  (EMITTER dir) assembles it at compile time and the module is
+  instantiated synchronously ahead of `Emit_Top_Level_Range` — no
+  fetch, no loader race. Function exports auto-bind via
+  `Register_Routine` + `albWasmBindings` (collision = fatal); wasm
+  imports resolve ONLY against `ALB_WASM_HOST_IMPORTS.alb`, and
+  `EXPORT_WASM` registrations must emit BEFORE embedded
+  instantiation (`Emit_Wasm_Host_Registrations` is idempotent —
+  `Wasm_Host_Regs_Emitted`). Assembler scope is MVP+memory; the
+  `Toks` Pos base is Src-1-based — `Lex` normalizes `S'First` so
+  buffer slices (Enable_Inner_Text) work. Fixtures 1224–1227.
 
 ## Braille engines (`stdlib/ueb.albi`, `stdlib/nemeth.albi`)
 

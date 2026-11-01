@@ -1,0 +1,13 @@
+-- 1227 | NEGATIVE: malformed WAT inside ENABLE WASM must fatal at
+-- compile time with a line-numbered assembler diagnostic -- never
+-- emit a partial/wrong module.
+ENABLE WASM
+(module
+  (func (export "ok") (result i32)
+    i32.const 1)
+  (bogus_field 1 2 3))
+END ENABLE
+
+BEGIN
+    PRINT "unreachable"
+END

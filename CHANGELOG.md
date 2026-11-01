@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **`ENABLE WASM ... END ENABLE`**: verbatim WAT blocks are assembled
+  to wasm binaries at compile time by a new bounded WAT assembler
+  (`src/EMITTER/wat_assembler.*` — MVP + linear memory + active data
+  segments; flat and folded instrs, named labels, dec/hex literals,
+  string escapes). The emitted TS instantiates each module
+  synchronously ahead of top-level code — unlike `IMPORT_WASM` fetch
+  loaders there is no async race, so `BEGIN` bodies can call exports
+  immediately. Function exports auto-bind as ALB routines through
+  `albWasmBindings`; wasm imports resolve against the `alb`
+  host-import surface populated by `EXPORT_WASM` (its registrations
+  now emit before embedded instantiation). Name collisions and
+  malformed WAT are compile-time fatals with line numbers.
+  Fixtures 1224–1227.
 - **FreeBSD port**: full suite green on FreeBSD 15.1 (GNAT 12.4 via
   `lang/gnat12`) — zero code changes over the Linux POSIX path.
   FreeBSD release tarball ships the native `tsc` (typescript-go 7.x,

@@ -467,6 +467,11 @@ package Tokenizer is
       Tok_Inline_Javascript_Block, -- Entire INLINEJAVASCRIPT / INLINE JAVASCRIPT ... END ENABLE expression block
       Tok_Enable_Rust_Block, -- Entire ENABLERUST / ENABLE_RUST / ENABLE RUST ... END ENABLE block, raw text
       Tok_Inline_Rust_Block, -- Entire INLINERUST / INLINE_RUST / INLINE RUST ... END ENABLE expression block
+      Tok_Enable_Wasm_Block, -- Entire ENABLEWASM / ENABLE_WASM / ENABLE WASM ... END ENABLE block, raw text.
+                           -- WAT source assembled to a wasm module by the TS backend
+                           -- (embedded bytes, synchronous instantiate — no fetch).
+      Tok_Inline_Wasm_Block, -- Entire INLINEWASM / INLINE_WASM / INLINE WASM ... END ENABLE block.
+                           -- Reserved: rejected loud by the TS backend (no expr form yet).
 
       -- BRAILLE / NEMETH raw multiline data blocks (ALBW only):
       -- a lone BRAILLE or NEMETH keyword at line start opens a verbatim

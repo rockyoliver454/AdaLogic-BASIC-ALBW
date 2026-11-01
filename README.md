@@ -90,6 +90,31 @@ Emitted-TS runtime is dead-code-trimmed by default
 (`--rt-trim=off`, `--rt-keep=<name>` to override) — hello-world emits
 ~9 KB instead of ~87 KB.
 
+## ENABLE WASM — embedded WebAssembly
+
+`ENABLE WASM ... END ENABLE` holds verbatim WAT text; the compiler
+assembles it to wasm bytes (`src/EMITTER/wat_assembler.adb`) and emits
+a synchronous `WebAssembly.Instance` before top-level code — no fetch,
+no async loader race, so `BEGIN` bodies call exports immediately:
+
+```alb
+ENABLE WASM
+(module
+  (func (export "add") (param i32 i32) (result i32)
+    local.get 0  local.get 1  i32.add))
+END ENABLE
+
+BEGIN
+    PRINT add(40, 2)   →  42
+```
+
+Function exports auto-bind as ALB routines (i32/f32/f64 params pass as
+numbers; i64 marshals via BigInt). Each block is one independent module;
+imports resolve only against the `alb` host surface populated by
+`EXPORT_WASM`. Scope: MVP + linear memory + data segments — tables,
+`call_indirect`, SIMD, and multi-value are deliberately rejected at
+assemble time.
+
 ## Fixture sidecars
 
 | file | meaning |

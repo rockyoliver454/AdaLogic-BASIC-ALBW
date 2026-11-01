@@ -356,6 +356,9 @@ package AST is
       AST_Inline_Javascript_Expr,  -- Token_Index points tae Tok_Inline_Javascript_Block raw source. Not implemented in any backends yet.
       AST_Enable_Rust_Block, -- Token_Index points tae Tok_Enable_Rust_Block raw source. MALBR: verbatim file-scope Rust items.
       AST_Inline_Rust_Expr,  -- Token_Index points tae Tok_Inline_Rust_Block raw source. MALBR: rejected (use ENABLE RUST).
+      AST_Enable_Wasm_Block, -- Token_Index points tae Tok_Enable_Wasm_Block raw source. ALBW: WAT assembled
+                             -- to an embedded wasm module (synchronous instantiate, auto-bound exports).
+      AST_Inline_Wasm_Expr,  -- Token_Index points tae Tok_Inline_Wasm_Block raw source. ALBW: rejected.
 
       -- MCP (Model Context Protocol) server surface. ALBW-only:
       -- the emitted program speaks newline-delimited JSON-RPC 2.0 on

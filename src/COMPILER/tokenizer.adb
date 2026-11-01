@@ -1385,6 +1385,40 @@ package body Tokenizer is
                      end if;
                   end;
 
+               elsif (Sub = "ENABLE" and then Next_Word_Is (I + Len, "WASM"))
+                 or else Sub = "ENABLEWASM" or else Sub = "ENABLE_WASM"
+               then
+                  declare
+                     Block_Len : Natural := 0;
+                     Found     : Boolean := False;
+                  begin
+                     Scan_Java_Block (I, Block_Len, Found);
+
+                     if Found then
+                        Commit_Token (Tok_Enable_Wasm_Block, Block_Len);
+                     else
+                        Set_Error (Err_Lex_Unclosed_String, Token_Line, Token_Col);
+                        Commit_Token (Tok_Error, Block_Len);
+                     end if;
+                  end;
+
+               elsif (Sub = "INLINE" and then Next_Word_Is (I + Len, "WASM"))
+                 or else Sub = "INLINEWASM" or else Sub = "INLINE_WASM"
+               then
+                  declare
+                     Block_Len : Natural := 0;
+                     Found     : Boolean := False;
+                  begin
+                     Scan_Java_Block (I, Block_Len, Found);
+
+                     if Found then
+                        Commit_Token (Tok_Inline_Wasm_Block, Block_Len);
+                     else
+                        Set_Error (Err_Lex_Unclosed_String, Token_Line, Token_Col);
+                        Commit_Token (Tok_Error, Block_Len);
+                     end if;
+                  end;
+
                --  BRAILLE / NEMETH raw data blocks: contextual openers.
                --  A lone keyword at line start opens a verbatim block
                --  terminated by a line holding only END / END <WORD>.

@@ -1,0 +1,43 @@
+-- 1224 | ENABLE WASM ... END ENABLE: WAT source is assembled to wasm
+-- bytes at COMPILE time (wat_assembler), embedded as a Uint8Array and
+-- instantiated synchronously before BEGIN runs -- no fetch and no
+-- async loader race, so top-level code can call exports immediately.
+-- Covers flat + folded instrs, named labels/br, named + numeric
+-- locals, locals vec, and auto-binding of function exports.
+ENABLE WASM
+(module
+  (memory 1)
+  (func $add (export "add") (param i32 i32) (result i32)
+    local.get 0  local.get 1  i32.add)
+  (func $mul (export "mul") (param $a i32) (param $b i32) (result i32)
+    (i32.mul (local.get $a) (local.get $b)))
+  (func $fib (export "fib") (param $n i32) (result i32)
+    (local $i i32) (local $acc i32) (local $nx i32)
+    i32.const 1  local.set $nx
+    block $done
+      loop $lp
+        (if (i32.ge_s (local.get $i) (local.get $n)) (then (br $done)))
+        local.get $acc  local.get $nx  i32.add
+        local.get $nx  local.set $acc
+        local.set $nx
+        local.get $i  i32.const 1  i32.add  local.set $i
+        br $lp
+      end
+    end
+    local.get $acc)
+  (func (export "bump") (param $x i64) (result i64)
+    local.get $x  i64.const 1  i64.add)
+  (func (export "storeit") (param $v i32)
+    i32.const 0  local.get $v  i32.store)
+  (func (export "fetchit") (result i32)
+    i32.const 0  i32.load))
+END ENABLE
+
+BEGIN
+    PRINT "add=" | add(40, 2)
+    PRINT "mul=" | mul(6, 7)
+    PRINT "fib=" | fib(10)
+    PRINT "bump=" | bump(41)
+    storeit(99)
+    PRINT "fetch=" | fetchit()
+END

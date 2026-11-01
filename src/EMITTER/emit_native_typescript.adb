@@ -35,6 +35,9 @@ with Ada.Text_IO;           use Ada.Text_IO;
 with Compiler_State; use Compiler_State;
 with Tokenizer;      use Tokenizer;
 with AST;            use AST;
+with Wat_Assembler;
+
+use type Wat_Assembler.Value_Type;
 
 package body Emit_Native_TypeScript is
 
@@ -170,6 +173,45 @@ package body Emit_Native_TypeScript is
    Predicates : array (1 .. Max_Predicates) of Predicate_Record;
    Foreign_Imports : array (1 .. Max_Foreign_Bindings) of Foreign_Binding_Record;
    Foreign_Exports : array (1 .. Max_Foreign_Bindings) of Foreign_Binding_Record;
+
+   --  ENABLE WASM ... END ENABLE: embedded WAT modules, assembled to
+   --  wasm bytes at compile time.  Function exports auto-bind to ALB
+   --  routines; instantiation is synchronous (no fetch, no loader race)
+   --  and lands before top-level code so BEGIN bodies can call them.
+   Max_Embedded_Mods    : constant := 64;
+   Max_Embedded_Exports : constant := 1024;
+   Max_Wasm_Byte_Arena  : constant := 1_048_576;
+
+   type Embedded_Exp_Rec is record
+      Active       : Boolean := False;
+      Name         : Unbounded_String := To_Unbounded_String ("");
+      JS_Name      : Unbounded_String := To_Unbounded_String ("");
+      Param_Count  : Natural := 0;
+      Params       : Wat_Assembler.Param_Vec := (others => Wat_Assembler.VT_I32);
+      Result_Count : Natural := 0;
+      Results      : Wat_Assembler.Result_Vec := (others => Wat_Assembler.VT_I32);
+      Mod_Idx      : Natural := 0;
+   end record;
+   type Embedded_Mod_Rec is record
+      Active     : Boolean := False;
+      Byte_Off   : Natural := 0;
+      Byte_Count : Natural := 0;
+      Exp_Off    : Natural := 0;   -- 0-based start into Embedded_Exps
+      Exp_Cnt    : Natural := 0;
+   end record;
+   Wasm_Byte_Arena : Wat_Assembler.Byte_Vec (1 .. Max_Wasm_Byte_Arena);
+   Wasm_Arena_N    : Natural := 0;
+   Embedded_Mods   : array (1 .. Max_Embedded_Mods) of Embedded_Mod_Rec;
+   Embedded_Mod_N  : Natural := 0;
+   Embedded_Exps   : array (1 .. Max_Embedded_Exports) of Embedded_Exp_Rec;
+   Embedded_Exp_N  : Natural := 0;
+   --  scratch buffers for the Scan-time assemble call — package level
+   --  because a 256 KiB local would blow the POSIX stack
+   Scan_Wasm_Bytes   : Wat_Assembler.Byte_Vec (1 .. Wat_Assembler.Max_Output_Bytes);
+   Scan_Wasm_Exports : Wat_Assembler.Export_Array;
+   --  EXPORT_WASM host-import registrations move ahead of embedded
+   --  instantiation when needed; flag keeps them single-emitted.
+   Wasm_Host_Regs_Emitted : Boolean := False;
 
    --  TYPE aliases: range types map to their base kind; routine types
    --  are opaque function values (VK_Number storage, JS is dynamic).
@@ -1047,6 +1089,18 @@ package body Emit_Native_TypeScript is
       Need_Process_Runtime := False;
       Need_Compat_Runtime := False;
       Need_Wasm_Loaders := False;
+      --  ENABLE WASM embedded-module tables; per-element clears on the
+      --  big ones (POSIX-stack rule), arena just rewinds its counter.
+      for I in 1 .. Embedded_Mod_N loop
+         Embedded_Mods (I) := (others => <>);
+      end loop;
+      for I in 1 .. Embedded_Exp_N loop
+         Embedded_Exps (I) := (others => <>);
+      end loop;
+      Embedded_Mod_N := 0;
+      Embedded_Exp_N := 0;
+      Wasm_Arena_N := 0;
+      Wasm_Host_Regs_Emitted := False;
       Shoebox_Root := U ("");
       Stride_Depth := 0;
       Stride_Step_Stack := (others => U (""));
@@ -3140,6 +3194,93 @@ package body Emit_Native_TypeScript is
             when AST_Mcp_Pump | AST_Mcp_Listen =>
                Need_Mcp_Runtime := True;
 
+            when AST_Enable_Wasm_Block =>
+               --  ENABLE WASM ... END ENABLE: assemble the WAT inner
+               --  text at compile time into a wasm module; its function
+               --  exports auto-bind as ALB-callable routines.
+               declare
+                  BN  : Natural := 0;
+                  EN  : Natural := 0;
+                  ER  : Unbounded_String := To_Unbounded_String ("");
+                  M   : Natural;
+               begin
+                  if Embedded_Mod_N >= Max_Embedded_Mods then
+                     raise Program_Error with
+                       "ENABLE WASM module table overflow";
+                  end if;
+                  Wat_Assembler.Assemble
+                    (Enable_Inner_Text (Tree (Curr).Token_Index),
+                     Scan_Wasm_Bytes, BN, Scan_Wasm_Exports, EN, ER);
+                  if Length (ER) > 0 then
+                     raise Program_Error with
+                       "ENABLE WASM: " & To_String (ER);
+                  end if;
+                  if BN = 0 then
+                     raise Program_Error with
+                       "ENABLE WASM produced an empty module";
+                  end if;
+                  if Wasm_Arena_N + BN > Max_Wasm_Byte_Arena then
+                     raise Program_Error with
+                       "ENABLE WASM byte arena overflow";
+                  end if;
+                  Embedded_Mod_N := Embedded_Mod_N + 1;
+                  M := Embedded_Mod_N;
+                  Embedded_Mods (M).Active := True;
+                  Embedded_Mods (M).Byte_Off := Wasm_Arena_N + 1;
+                  Embedded_Mods (M).Byte_Count := BN;
+                  Embedded_Mods (M).Exp_Off := Embedded_Exp_N;
+                  for I in 1 .. BN loop
+                     Wasm_Byte_Arena (Wasm_Arena_N + I) :=
+                       Scan_Wasm_Bytes (I);
+                  end loop;
+                  Wasm_Arena_N := Wasm_Arena_N + BN;
+                  --  auto-bind function exports as ALB-callable routines
+                  for E in 1 .. EN loop
+                     if Scan_Wasm_Exports (E).Is_Function then
+                        declare
+                           ENam  : constant String :=
+                             To_String (Scan_Wasm_Exports (E).Name);
+                           JS    : constant String := Scoped_Name (ENam);
+                           Modes : Param_Mode_List :=
+                             (others => Param_In);
+                           RK    : Value_Kind := VK_Number;
+                        begin
+                           if Embedded_Exp_N >= Max_Embedded_Exports then
+                              raise Program_Error with
+                                "ENABLE WASM export table overflow";
+                           end if;
+                           if Find_Routine (JS) /= 0 then
+                              raise Program_Error with
+                                "ENABLE WASM export '" & ENam &
+                                "' collides with an existing routine";
+                           end if;
+                           Embedded_Exp_N := Embedded_Exp_N + 1;
+                           Embedded_Exps (Embedded_Exp_N).Active := True;
+                           Embedded_Exps (Embedded_Exp_N).Name := U (ENam);
+                           Embedded_Exps (Embedded_Exp_N).JS_Name := U (JS);
+                           Embedded_Exps (Embedded_Exp_N).Mod_Idx := M;
+                           Embedded_Exps (Embedded_Exp_N).Param_Count :=
+                             Scan_Wasm_Exports (E).Param_Count;
+                           Embedded_Exps (Embedded_Exp_N).Params :=
+                             Scan_Wasm_Exports (E).Params;
+                           Embedded_Exps (Embedded_Exp_N).Result_Count :=
+                             Scan_Wasm_Exports (E).Result_Count;
+                           Embedded_Exps (Embedded_Exp_N).Results :=
+                             Scan_Wasm_Exports (E).Results;
+                           if Scan_Wasm_Exports (E).Result_Count = 0 then
+                              RK := VK_Unknown;
+                           end if;
+                           Register_Routine
+                             (ENam, JS,
+                              Scan_Wasm_Exports (E).Param_Count,
+                              Modes, RK);
+                        end;
+                     end if;
+                  end loop;
+                  Embedded_Mods (M).Exp_Cnt :=
+                    Embedded_Exp_N - Embedded_Mods (M).Exp_Off;
+               end;
+
             when others =>
                if Tree (Curr).Left_Child > 0 then
                   Scan_Features (Tree (Curr).Left_Child);
@@ -4355,6 +4496,10 @@ package body Emit_Native_TypeScript is
               Expr (Node.Right_Child) & ")";
          when AST_Inline_Typescript_Expr =>
             return "(" & Enable_Inner_Text (Node.Token_Index) & ")";
+         when AST_Inline_Wasm_Expr =>
+            raise Program_Error with
+              "INLINE WASM is not supported — embed modules with " &
+              "ENABLE WASM ... END ENABLE";
          when others =>
             return "0";
       end case;
@@ -5053,6 +5198,149 @@ package body Emit_Native_TypeScript is
       New_Line_Emit;
    end Emit_Foreign_Loaders;
 
+   --  EXPORT_WASM host-import registrations.  These must land BEFORE
+   --  any synchronous embedded-module instantiation so a wasm
+   --  (import "alb" "cb") sees the alb.* surface.  The flag keeps the
+   --  block single-emitted whether the early or the late path runs.
+   procedure Emit_Wasm_Host_Registrations is
+   begin
+      if Wasm_Host_Regs_Emitted then
+         return;
+      end if;
+      Wasm_Host_Regs_Emitted := True;
+      for I in 1 .. Foreign_Export_Count loop
+         if Foreign_Exports (I).Active
+           and then Foreign_Exports (I).Link_Kind = Foreign_WASM
+         then
+            Line ("ALB_WASM_HOST_IMPORTS.alb[" &
+                  Escape_TS_String (To_String (Foreign_Exports (I).Name)) &
+                  "] = (...args: any[]) => (" &
+                  To_String (Foreign_Exports (I).JS_Name) &
+                  " as any)(...args);");
+         end if;
+      end loop;
+   end Emit_Wasm_Host_Registrations;
+
+   --  ENABLE WASM: emit each assembled module as inline bytes +
+   --  synchronous WebAssembly.Module/Instance — no fetch, no async
+   --  race.  Function exports land in albWasmBindings under their
+   --  scoped JS name, then get a typed wrapper (i64 params coerce via
+   --  BigInt, i64 results via Number — the wasm ABI is BigInt).
+   procedure Emit_Embedded_Wasm is
+   begin
+      if Embedded_Mod_N = 0 then
+         return;
+      end if;
+      Emit_Wasm_Host_Registrations;
+      for M in 1 .. Embedded_Mod_N loop
+         declare
+            B0  : constant Natural := Embedded_Mods (M).Byte_Off;
+            BN  : constant Natural := Embedded_Mods (M).Byte_Count;
+            Tag : constant String :=
+              Ada.Strings.Fixed.Trim (Natural'Image (M), Ada.Strings.Both);
+         begin
+            Line ("const __alb_wasm_bytes" & Tag & " = new Uint8Array([");
+            declare
+               Chunk : Unbounded_String := To_Unbounded_String ("");
+               CN    : Natural := 0;
+            begin
+               for I in 0 .. BN - 1 loop
+                  Append
+                    (Chunk,
+                     Ada.Strings.Fixed.Trim
+                       (Wat_Assembler.Wasm_Byte'Image
+                          (Wasm_Byte_Arena (B0 + I)),
+                        Ada.Strings.Both));
+                  Append (Chunk, ",");
+                  CN := CN + 1;
+                  if CN >= 1024 then
+                     Line (To_String (Chunk));
+                     Chunk := To_Unbounded_String ("");
+                     CN := 0;
+                  end if;
+               end loop;
+               if CN > 0 then
+                  Line (To_String (Chunk));
+               end if;
+            end;
+            Line ("]);");
+            Line ("const __alb_wasm_mod" & Tag &
+                  " = new WebAssembly.Instance(new WebAssembly.Module(" &
+                  "__alb_wasm_bytes" & Tag &
+                  "), ALB_WASM_HOST_IMPORTS as WebAssembly.Imports);");
+            for E in Embedded_Mods (M).Exp_Off + 1 ..
+                     Embedded_Mods (M).Exp_Off + Embedded_Mods (M).Exp_Cnt
+            loop
+               Line ("albWasmBindings[" &
+                     Escape_TS_String (To_String (Embedded_Exps (E).JS_Name)) &
+                     "] = __alb_wasm_mod" & Tag & ".exports[" &
+                     Escape_TS_String (To_String (Embedded_Exps (E).Name)) &
+                     "] as (...args: any[]) => any;");
+            end loop;
+         end;
+      end loop;
+
+      --  typed wrappers: ALB-visible function surface per export
+      for E in 1 .. Embedded_Exp_N loop
+         declare
+            Ex : constant Embedded_Exp_Rec := Embedded_Exps (E);
+         begin
+            Emit ("function " & To_String (Ex.JS_Name) & "(");
+            for P in 1 .. Ex.Param_Count loop
+               if P > 1 then
+                  Emit (", ");
+               end if;
+               Emit ("__w" &
+                     Ada.Strings.Fixed.Trim
+                       (Natural'Image (P), Ada.Strings.Both) & ": number");
+            end loop;
+            Emit ("): " &
+                  (if Ex.Result_Count = 0 then "void" else "number") &
+                  " {");
+            New_Line_Emit;
+            Indent_Level := Indent_Level + 1;
+            Line ("const __alb_wasm_fn = albWasmBindings[" &
+                  Escape_TS_String (To_String (Ex.JS_Name)) & "];");
+            Line ("if (typeof __alb_wasm_fn !== 'function') ALB_FATAL(" &
+                  Escape_TS_String
+                    ("ENABLE WASM export missing: " & To_String (Ex.Name)) &
+                  ");");
+            declare
+               Args : Unbounded_String := To_Unbounded_String ("");
+            begin
+               for P in 1 .. Ex.Param_Count loop
+                  if P > 1 then
+                     Append (Args, ", ");
+                  end if;
+                  if Ex.Params (P) = Wat_Assembler.VT_I64 then
+                     --  wasm i64 args arrive as BigInt
+                     Append
+                       (Args, "BigInt(Math.trunc(__w" &
+                        Ada.Strings.Fixed.Trim
+                          (Natural'Image (P), Ada.Strings.Both) & "))");
+                  else
+                     Append
+                       (Args, "__w" &
+                        Ada.Strings.Fixed.Trim
+                          (Natural'Image (P), Ada.Strings.Both));
+                  end if;
+               end loop;
+               if Ex.Result_Count = 0 then
+                  Line ("__alb_wasm_fn(" & To_String (Args) & ");");
+                  Line ("return;");
+               else
+                  --  wasm i64 results arrive as BigInt — Number() it
+                  Line ("return Number(__alb_wasm_fn(" & To_String (Args) &
+                        "));");
+               end if;
+            end;
+            Indent_Level := Indent_Level - 1;
+            Line ("}");
+         end;
+      end loop;
+      New_Line_Emit;
+   end Emit_Embedded_Wasm;
+
    procedure Emit_Module_Exports is
       Any_ES_Exports     : Boolean := False;
       Any_WASM_Exports   : Boolean := False;
@@ -5074,15 +5362,10 @@ package body Emit_Native_TypeScript is
       end loop;
 
       if Any_WASM_Exports then
-         for I in 1 .. Foreign_Export_Count loop
-            if Foreign_Exports (I).Active and then Foreign_Exports (I).Link_Kind = Foreign_WASM then
-               Line ("ALB_WASM_HOST_IMPORTS.alb[" &
-                     Escape_TS_String (To_String (Foreign_Exports (I).Name)) &
-                     "] = (...args: any[]) => (" &
-                     To_String (Foreign_Exports (I).JS_Name) &
-                     " as any)(...args);");
-            end if;
-         end loop;
+         --  registrations may already be out (embedded modules need
+         --  them ahead of synchronous instantiation); the flag makes
+         --  the helper idempotent.
+         Emit_Wasm_Host_Registrations;
          Line ("export { ALB_WASM_HOST_IMPORTS };");
          New_Line_Emit;
       end if;
@@ -9841,6 +10124,12 @@ package body Emit_Native_TypeScript is
          when AST_Enable_Typescript_Block =>
             Line (Enable_Inner_Text (Node.Token_Index));
 
+         when AST_Enable_Wasm_Block =>
+            --  the module bytes + bindings already emitted ahead of
+            --  top-level code by Emit_Embedded_Wasm (Scan_Features
+            --  assembled the WAT at compile time)
+            Line ("/* ENABLE WASM: embedded module instantiated above */");
+
          --  BRAILLE / NEMETH raw blocks lower to a transcription call
          --  on a compile-time static string literal.  No assignment or
          --  implicit print — the engine state is read back through
@@ -10271,6 +10560,10 @@ package body Emit_Native_TypeScript is
       --  (JS hoists decls, so early wiring is safe).
       Line ("if (typeof ALB_INIT_LOGIC === 'function') ALB_INIT_LOGIC();");
       Line ("if (typeof ALB_WATCH_DISPATCH === 'function') ALB_NOTIFY_KNOWS_CHANGE = ALB_WATCH_DISPATCH;");
+      --  ENABLE WASM modules instantiate synchronously here so BEGIN
+      --  bodies can call their exports immediately — unlike
+      --  IMPORT_WASM fetch loaders, there is no async race.
+      Emit_Embedded_Wasm;
       if Root_Index > 0 then
          Stmt_First := Statement_List_First (Root_Index);
          Listen_Idx := Find_Listen_Stmt (Stmt_First);

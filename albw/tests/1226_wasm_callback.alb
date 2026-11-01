@@ -1,0 +1,23 @@
+-- 1226 | wasm -> ALB callbacks: EXPORT_WASM registers the routine on
+-- ALB_WASM_HOST_IMPORTS.alb; those registrations are emitted BEFORE
+-- embedded-module instantiation so (import "alb" "Name" ...) resolves
+-- at instance creation.  The wasm import name is the ALB routine name.
+FUNCTION Callback(x AS S32) AS S32
+    RETURN x * 3 + 1
+END FUNCTION
+
+EXPORT_WASM FUNCTION Callback(x AS S32) AS S32
+
+ENABLE WASM
+(module
+  (import "alb" "Callback" (func $cb (param i32) (result i32)))
+  (func (export "go") (param i32) (result i32)
+    local.get 0  call $cb)
+  (func (export "twice") (param i32) (result i32)
+    local.get 0  call $cb  call $cb))
+END ENABLE
+
+BEGIN
+    PRINT "go=" | go(10)
+    PRINT "twice=" | twice(3)
+END

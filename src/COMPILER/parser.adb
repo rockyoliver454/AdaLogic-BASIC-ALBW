@@ -1151,7 +1151,8 @@ package body Parser is
                    Tok_Inline_C_Block | Tok_Inline_CSharp_Block |
                    Tok_Inline_Python_Block |
                    Tok_Inline_Lua_Block | Tok_Inline_Ruby_Block |
-                   Tok_Inline_Javascript_Block | Tok_Inline_Rust_Block then
+                   Tok_Inline_Javascript_Block | Tok_Inline_Rust_Block |
+                   Tok_Inline_Wasm_Block then
          declare
             NKind : Node_Kind;
          begin
@@ -1174,6 +1175,7 @@ package body Parser is
                when Tok_Inline_Ruby_Block => NKind := AST_Inline_Ruby_Expr;
                when Tok_Inline_Javascript_Block => NKind := AST_Inline_Javascript_Expr;
                when Tok_Inline_Rust_Block => NKind := AST_Inline_Rust_Expr;
+               when Tok_Inline_Wasm_Block => NKind := AST_Inline_Wasm_Expr;
                when others          => NKind := AST_Null;
             end case;
             
@@ -9387,6 +9389,14 @@ package body Parser is
 
       elsif T.Kind = Tok_Enable_Rust_Block then
          Allocate_Node (Tokens, State, Tree, AST_Enable_Rust_Block, Node, Success);
+         if not Success then
+            return;
+         end if;
+         Tree (Node).Token_Index := State.Current_Token;
+         State.Current_Token := State.Current_Token + 1;
+
+      elsif T.Kind = Tok_Enable_Wasm_Block then
+         Allocate_Node (Tokens, State, Tree, AST_Enable_Wasm_Block, Node, Success);
          if not Success then
             return;
          end if;
