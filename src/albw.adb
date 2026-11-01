@@ -260,12 +260,21 @@ procedure ALBW is
       Original_Dir : constant String := Ada.Directories.Current_Directory;
       Exit_Code    : Integer := -1;
       Ada_Args     : GNAT.OS_Lib.Argument_List (1 .. Args'Length);
+      Resolved     : GNAT.OS_Lib.String_Access;
    begin
       for I in Args'Range loop
          Ada_Args (I) := Args (I);
       end loop;
       Ada.Directories.Set_Directory (Working_Dir);
-      Exit_Code := GNAT.OS_Lib.Spawn (Program, Ada_Args);
+      -- POSIX GNAT.OS_Lib.Spawn does not search PATH for a bare program
+      -- name (execvp fallback is not used), so resolve it explicitly.
+      Resolved := GNAT.OS_Lib.Locate_Exec_On_Path (Program);
+      if Resolved /= null then
+         Exit_Code := GNAT.OS_Lib.Spawn (Resolved.all, Ada_Args);
+         GNAT.OS_Lib.Free (Resolved);
+      else
+         Exit_Code := GNAT.OS_Lib.Spawn (Program, Ada_Args);
+      end if;
       Ada.Directories.Set_Directory (Original_Dir);
       return Exit_Code = 0;
    exception

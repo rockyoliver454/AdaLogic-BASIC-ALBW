@@ -83,6 +83,10 @@ same POSIX path).
   bounded tables** — Ada builds the aggregate as a full-size stack
   temporary (~6 MB for `Symbols`; blew the 8 MB POSIX stack). Reset
   the live prefix per element — see `Reset_State`.
+- **`GNAT.OS_Lib.Spawn` does not PATH-search bare program names on
+  POSIX** (`Spawn("tsc")` fails, `Spawn("/usr/local/bin/tsc")` works;
+  Windows does search). Resolve through
+  `GNAT.OS_Lib.Locate_Exec_On_Path` first — see `Spawn_And_Check`.
 - Goldens must be **EOL-neutral** (`Put_Line` = `\r\n` win, `\n`
   POSIX): never assert emitted-file byte lengths; count lines.
 - `runnerw.py` is cross-platform; it passes `env` to the node stage

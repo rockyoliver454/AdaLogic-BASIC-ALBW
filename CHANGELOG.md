@@ -15,6 +15,10 @@
   now emit before embedded instantiation). Name collisions and
   malformed WAT are compile-time fatals with line numbers.
   Fixtures 1224–1227.
+- **`--tsc` fixed on POSIX**: `GNAT.OS_Lib.Spawn` does not PATH-search
+  a bare program name on POSIX (`Spawn("tsc")` never exec'd; the
+  failure looked like a tsc error). `Spawn_And_Check` now resolves
+  via `Locate_Exec_On_Path` first.
 - **FreeBSD port**: full suite green on FreeBSD 15.1 (GNAT 12.4 via
   `lang/gnat12`) — zero code changes over the Linux POSIX path.
   FreeBSD release tarball ships the native `tsc` (typescript-go 7.x,
