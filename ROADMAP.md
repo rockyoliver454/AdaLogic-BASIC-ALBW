@@ -1,14 +1,13 @@
 # ALBW Roadmap
 
 The feature-complete ALB backend — first-class on **Windows, Linux,
-FreeBSD, NetBSD, and OpenBSD** today; macOS rides the same POSIX
-path (toolchain exercise, no code work expected).
+FreeBSD, NetBSD, OpenBSD, and macOS** today.
 
 ## Now
 
 - **Repo independence**: ALBW sources, suite, stdlib, braille engines
   live here; the monorepo keeps the other 21 backends.
-- **Releases**: `albw-release-VERSION-{win,linux,freebsd,netbsd,openbsd}-x64` bundles —
+- **Releases**: `albw-release-VERSION-{win,linux,freebsd,netbsd,openbsd,macos}-x64` bundles —
   compiler + stdlib + Node/tsc toolchain + braille suite.
 
 ## Near
@@ -19,7 +18,9 @@ path (toolchain exercise, no code work expected).
 - ~~**B1a**: UEB/BRF → literary text back-translation~~ **done** —
   `Ueb.From*` + `br_decode` shipped (fixture 1223).
 - **C2**: UEB G1 compile-time fold.
-- **macOS** packaging run.
+- ~~**macOS** packaging run~~ **done** — self-contained x86_64 tarball
+  and `.dmg` via `release/package-macos.sh` (Alire GNAT 15.3.1 +
+  gprbuild 26.0.1).
 
 ## Later
 
