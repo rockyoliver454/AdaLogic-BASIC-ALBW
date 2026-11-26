@@ -36,9 +36,9 @@ output.
 
 ## Portability (albw runs on POSIX)
 
-ALBW passes its full suite on **Windows, Linux, FreeBSD, NetBSD, and
-OpenBSD** (GNAT 15 / 14.2 / 12.4 / 14.3 / 16.1 verified; macOS is the
-same POSIX path).
+ALBW passes its full suite on **Windows, Linux, FreeBSD, NetBSD,
+OpenBSD, and macOS** (GNAT 15 / 14.2 / 12.4 / 14.3 / 16.1 / 15.3.1
+verified; macOS 15.8.2 x86_64: 1,031 PASS / 0 FAIL).
 
 - **FreeBSD notes** (verified on 15.1-RELEASE): the Ada toolchain is
   `lang/gnat12` — binaries live in **`/usr/local/gnat12/bin`**, not on
@@ -73,6 +73,17 @@ same POSIX path).
   typescript`). Linker prints cosmetic `sprintf`/`strcpy` warnings
   from libgnat.a — normal OpenBSD ld noise. `typescript-6.0.3` is a
   package if npm's 7.x is unwanted.
+
+- **macOS notes** (verified on 15.8.2 x86_64 / Intel iMac): install the
+  Xcode Command Line Tools with `xcode-select --install` — GNAT links
+  through the system linker. `alr toolchain --select
+  gnat_native=15.3.1 gprbuild=26.0.1` provides native x86_64 binaries
+  under `~/.local/share/alire/toolchains/`; then `gprbuild -P albw.gpr
+  albw` — zero source changes. `release/package-macos.sh` builds the
+  self-contained tarball (compiler + stdlib + braille + Node 22 +
+  typescript-go 7.x under `deps/`). As on NetBSD, tsc 7 rejects the
+  `module:"none"`/`outFile` config that `--build` generates, so the
+  macOS package ships a `commonjs` `tsconfig.json` for `--tsc`.
 
 - Host constants live in **`src/CORE/alb_platform.*`**
   (`Dir_Sep`/`Path_Sep`/`On_Windows`/`Is_List_Sep`/`Temp_Dir`). Never

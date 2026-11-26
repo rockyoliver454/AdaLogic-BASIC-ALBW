@@ -41,6 +41,11 @@ desktop.ini
 release/albw-release-*/
 release/*.zip
 release/*.tar.gz
+/albw-release-*.tar.gz
+/albw-release-*.dmg
+
+# Local suite logs
+macos-suite*.txt
 
 # generated transpile outputs
 braille/*.ts

@@ -16,8 +16,8 @@ Node runs.
 | | |
 |---|---|
 | **License** | Apache 2.0 — see [LICENSE](LICENSE), [LICENSE-ALBW](LICENSE-ALBW.txt), [NOTICE](NOTICE) |
-| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-{linux,freebsd,netbsd,openbsd}-x64.tar.gz` |
-| **Suite** | 1,167 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, FreeBSD, NetBSD, and OpenBSD** |
+| **Releases** | `albw-release-0.1.0-win-x64.zip` · `albw-release-0.1.0-{linux,freebsd,netbsd,openbsd,macos}-x64.tar.gz` · `albw-release-0.1.0-macos-x64.dmg` |
+| **Suite** | 1,172 numbered fixtures (`albw/tests/`) — full suite green on **Windows, Linux, FreeBSD, NetBSD, OpenBSD, and macOS** (macOS: 1,031 PASS / 0 FAIL, GNAT 15.3.1) |
 
 ## Layout
 
@@ -50,6 +50,7 @@ GNAT + GPRbuild — verified toolchains:
 | FreeBSD 15.1 | GNAT 12.4 (`pkg install gnat12`) | binaries in `/usr/local/gnat12/bin` |
 | NetBSD 11.0 | GNAT 14.3 (`pkg_add gcc14-gnat`) | binaries in `/usr/pkg/gcc14-gnat/bin`; no gprbuild — build via `gnatmake` (below) |
 | OpenBSD 8.0 | GNAT 16.1 (`pkg_add gnat`) | on PATH as `gnatmake`; no gprbuild — same `gnatmake` recipe |
+| macOS 15 (Intel x86_64) | GNAT 15.3.1 + gprbuild 26.0.1 (Alire) | Xcode CLT required; `alr toolchain --select gnat_native=15.3.1 gprbuild=26.0.1` |
 
 ```text
 gprbuild -P albw.gpr albw        →  bin/albw  (bin/albw.exe on Windows)
@@ -66,11 +67,21 @@ gnatmake src/albw.adb -aIsrc -aIsrc/COMPILER -aIsrc/CORE -aIsrc/EMITTER \
 
 Runtime needs Node + tsc (`pkg install node22 npm-node22` on FreeBSD,
 `pkg_add nodejs` on NetBSD, `pkg_add node npm` on OpenBSD — or
-`pkg_add typescript` there — then `npm i -g typescript`).
+`pkg_add typescript` there — then `npm i -g typescript`). The macOS
+release bundles Node 22 + typescript-go 7.x under `deps/`.
 
 **OpenBSD note**: a bundled/relocatable node cannot run outside a
 `wxallowed` filesystem (`/usr/local` by default) — the OpenBSD
 release ships no `deps/`; install node/tsc from packages.
+
+**macOS note**: install the Xcode Command Line Tools first
+(`xcode-select --install`) — GNAT links through the system linker.
+Alire provides native x86_64 GNAT 15.3.1 + gprbuild 26.0.1; zero
+source changes were needed. `release/package-macos.sh VERSION NODE_HOME`
+builds `albw-release-VERSION-macos-x64.tar.gz` (compiler + stdlib +
+braille + bundled Node/tsc + a tsc-7-compatible `tsconfig.json`).
+`--build` still hits the known tsc-7 `module:"none"`/`outFile` warning
+(as on FreeBSD/NetBSD) but emits working JS; `--tsc` is clean.
 
 ## Use
 
@@ -127,7 +138,7 @@ assemble time.
 | `.timeout` | per-fixture timeout override |
 
 ```text
-python3 albw/runnerw.py --from 1 --to 1222    # full suite
+python3 albw/runnerw.py --from 1 --to 1172    # full suite
 ```
 
 ## Braille / Nemeth channel

@@ -33,6 +33,13 @@
   OpenBSD's `wxallowed` mount model means no relocatable bundled
   node — the release ships albw + stdlib only and relies on
   `pkg_add node npm` (+ `npm i -g typescript`).
+- **macOS port**: full suite green on macOS 15.8.2 x86_64 (Intel iMac,
+  1,031 PASS / 0 FAIL, GNAT 15.3.1 + gprbuild 26.0.1 via Alire) — zero
+  code changes. Xcode Command Line Tools provide the system linker.
+  `release/package-macos.sh` builds a self-contained tarball (compiler
+  + stdlib + braille + Node 22 + typescript-go 7.x under `deps/` and a
+  `commonjs` `tsconfig.json` for `--tsc`); a `.dmg` is produced from
+  that tarball for GitHub Releases.
 - **UEB back-translation**: `Ueb.FromCells`/`FromBrf`/`FromUni` +
   `BrDecode`/`br_ueb_unbrf`/`br_ueb_ununi`/`br_decode` tools — Grade
   1/2 literary braille → text with contraction expansion, indicators,
